@@ -302,6 +302,9 @@ Function ScanStringLen(Scanner)
 		Len = Len + 1;
 		Char = NextChar(Scanner);
 	EndDo;
+	If Char = Chars.LF Then
+		Scanner.Line = Scanner.Line + 1;
+	EndIf;
 	Return Len + ?(Char <> "", 1, 0);
 EndFunction // ScanStringLen()
 
