@@ -45,7 +45,7 @@ Procedure PrepareEnums()
 	Keywords = Enum(New Structure,
 		"If, Then, ElsIf, Else, EndIf, For, Each, In, To, While, Do, EndDo,
 		|Procedure, EndProcedure, Function, EndFunction,
-		|Var, Goto, Return, Continue, Break,
+		|Var, Return, Continue, Break,
 		|And, Or, Not,
 		|Try, Except, Raise, EndTry,
 		|New, Execute, Export"
@@ -131,7 +131,7 @@ Function Scan(Scanner)
 		Tok = Tokens.Number;
 	ElsIf Char = """" Or Char = "|" Then
 		Lit = ScanString(Scanner);
-		Tok = StringToken(Lit)
+		Tok = StringToken(Lit);
 	ElsIf Char = "'" Then
 		Lit = ScanDateTime(Scanner);
 		Tok = Tokens.DateTime;
