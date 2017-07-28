@@ -29,7 +29,7 @@ Procedure Translate(Command)
 	Scanner = Scanner(Source.GetText());
 	While Scan(Scanner) <> Tokens.Eof Do
 		If Verbose Then
-			Result.AddLine(StrTemplate("%1 -- `%2`", TokenToString[Scanner.Tok], Scanner.Lit));
+			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, TokenToString[Scanner.Tok], Scanner.Lit));
 		EndIf; 
 	EndDo; 
 	
@@ -43,7 +43,7 @@ EndProcedure // Translate()
 Procedure PrepareEnums()
 	
 	Keywords = Enum(New Structure,
-	    "If, Then, ElsIf, Else, EndIf, For, Each, In, To, While, Do, EndDo,
+		"If, Then, ElsIf, Else, EndIf, For, Each, In, To, While, Do, EndDo,
 		|Procedure, EndProcedure, Function, EndFunction,
 		|Var, Goto, Return, Continue, Break,
 		|And, Or, Not,
@@ -111,6 +111,7 @@ Function Scanner(Source)
 	
 	Scanner.Source = Source;
 	Scanner.Len = StrLen(Source);
+	Scanner.Line = 1;
 	Scanner.Pos = 0;
 	
 	Return Scanner;
@@ -167,7 +168,6 @@ Function Scan(Scanner)
 		If NextChar(Scanner) = "/" Then
 			Lit = ScanComment(Scanner);
 			Tok = Tokens.Comment;
-			NextChar(Scanner);
 		Else
 			Tok = Tokens.Div;
 		EndIf;
@@ -206,16 +206,15 @@ Function Scan(Scanner)
 	ElsIf Char = "&" Or Char = "#" Then
 		Lit = ScanComment(Scanner);
 		Tok = Tokens.Comment;
-		NextChar(Scanner);
 	Else
-		Raise "Unknoun char";
+		Raise "Unknown char";
 	EndIf; 
 	If ValueIsFilled(Lit) Then
 		Scanner.Lit = Lit;
 	Else
 		Scanner.Lit = Char;
 	EndIf; 	
-	Scanner.Tok = Tok;
+	Scanner.Tok = Tok; 
 	Return Tok;
 EndFunction // Scan() 
 
@@ -223,7 +222,7 @@ EndFunction // Scan()
 Function NextChar(Scanner)
 	If Scanner.Char <> "" Then
 		Scanner.Pos = Scanner.Pos + 1;
-		Scanner.Char = Mid(Scanner.Source, Scanner.Pos, 1);
+		Scanner.Char = Mid(Scanner.Source, Scanner.Pos, 1); 
 	EndIf; 
 	Return Scanner.Char;
 EndFunction // NextChar()  
@@ -233,6 +232,9 @@ Function SkipWhitespace(Scanner)
 	Var Char;
 	Char = Scanner.Char;
 	While IsBlankString(Char) And Char <> "" Do
+		If Char = Chars.LF Then
+			Scanner.Line = Scanner.Line + 1;
+		EndIf; 
 		Char = NextChar(Scanner);
 	EndDo; 
 EndFunction // SkipWhitespace() 
@@ -342,7 +344,7 @@ Function Lookup(Lit)
 	If Not Keywords.Property(Lit, Tok) Then
 		Tok = Tokens.Ident;
 	EndIf; 
-    Return Tok;
+	Return Tok;
 EndFunction // Lookup() 
 
 &AtClientAtServerNoContext
