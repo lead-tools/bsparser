@@ -23,19 +23,74 @@ Var RelationalOperators;
 
 #Region EventHandlers
 
+&AtServer
+Procedure OnCreateAtServer(Cancel, StandardProcessing)
+	
+	If Parameters.Property("Source") Then
+		Verbose = Parameters.Verbose;
+		Output = Parameters.Output;
+		Source.SetText(Parameters.Source);
+	Else
+		Verbose = True;
+		Output = "AST";
+	EndIf; 
+	
+EndProcedure
+
+&AtClient
+Procedure Reopen(Command)
+	ReopenAtServer();
+	Close();
+	OpenForm(FormName, New Structure("Source, Verbose, Output", Source.GetText(), Verbose, Output));
+EndProcedure // Reopen()
+
+&AtServer
+Procedure ReopenAtServer()
+	
+	This = FormAttributeToValue("Object");
+	ExternalDataProcessors.Create(This.UsedFileName, False);
+	
+EndProcedure // ReopenAtServer() 
+
 &AtClient
 Procedure Translate(Command)
 	
-	InitEnums();
+	Init();
 	
 	Result.Clear();
 	
-	Scanner = Scanner(Source.GetText());
-	While Scan(Scanner) <> Tokens.Eof Do
-		If Verbose Then
-			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
-		EndIf; 
-	EndDo; 
+	If Output = "Lexems" Then
+		
+		Scanner = Scanner(Source.GetText());
+		While Scan(Scanner) <> Tokens.Eof Do
+			If Verbose Then
+				Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
+			EndIf; 
+		EndDo;
+		
+	ElsIf Output = "AST" Then
+		
+		Parser = Parser(Source.GetText());
+		ParseModule(Parser);
+		JSONWriter = New JSONWriter;
+		FileName = GetTempFileName(".json");
+		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
+		WriteJSON(JSONWriter, Parser.Decls);
+		JSONWriter.Close();
+		Result.Read(FileName);
+		
+	ElsIf Output = "Parser" Then
+		
+		Parser = Parser(Source.GetText());
+		ParseModule(Parser);
+		JSONWriter = New JSONWriter;
+		FileName = GetTempFileName(".json");
+		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
+		WriteJSON(JSONWriter, Parser);
+		JSONWriter.Close();
+		Result.Read(FileName);	
+		
+	EndIf; 
 	
 EndProcedure // Translate()
 
@@ -127,7 +182,7 @@ Function Tokens(Keywords)
 		
 		// Other
 		
-		|Illegal, Eof, Comment"
+		|Illegal, Eof, Comment, Preprocessor, Directive"
 		
 	);
 	
@@ -214,6 +269,10 @@ Function Scan(Scanner)
 			Lit = "<=";
 			Tok = Tokens.Leq;
 			NextChar(Scanner);
+		ElsIf Scanner.Char = ">" Then
+			Lit = "<>";
+			Tok = Tokens.Neq;
+			NextChar(Scanner);
 		Else
 			Tok = Tokens.Lss;
 		EndIf;
@@ -273,9 +332,12 @@ Function Scan(Scanner)
 		NextChar(Scanner);
 	ElsIf Char = "" Then
 		Tok = Tokens.Eof;
-	ElsIf Char = "&" Or Char = "#" Then
+	ElsIf Char = "&" Then
 		Lit = ScanComment(Scanner);
-		Tok = Tokens.Comment;
+		Tok = Tokens.Directive;
+	ElsIf Char = "#" Then
+		Lit = ScanComment(Scanner);
+		Tok = Tokens.Preprocessor;
 	Else
 		Raise "Unknown char";
 	EndIf; 
@@ -415,12 +477,11 @@ Function Object(Kind, Name, Type = Undefined)
 	Var Object;
 	
 	Object = New Structure(
-		"ThisType," // string (type of this structure)
 		"Kind,"     // string (one of ObjectKinds)
 		"Name,"     // string
 		"Type,"     // structure
 	,
-	"Object", Kind, Name, Type);
+	Kind, Name, Type);
 	
 	Return Object;
 	
@@ -429,7 +490,7 @@ EndFunction // Object()
 #Region Declarations
 
 &AtClientAtServerNoContext
-Function VarDecl(Object)
+Function VarDecl(Object, Init = False, Value = Undefined)
 	Var VarDecl;
 	
 	VarDecl = New Structure(
@@ -437,10 +498,28 @@ Function VarDecl(Object)
 		"Object,"   // structure (Object)
 	,
 	"VarDecl", Object);
-		
+	
+	If Init Then
+		VarDecl.Insert("Value", Value); // one of main types
+	EndIf; 
+	
 	Return VarDecl;
 	
 EndFunction // VarDecl() 
+
+&AtClientAtServerNoContext
+Function VarListDecl(VarList)
+	Var VarListDecl;
+	
+	VarListDecl = New Structure(
+		"ThisType," // string (type of this structure)
+		"VarList,"  // array (VarDecl)
+	,
+	"VarListDecl", VarList); 
+	
+	Return VarListDecl;
+	
+EndFunction // VarListDecl()
 
 &AtClientAtServerNoContext
 Function ProcDecl(Object, Statements)
@@ -470,7 +549,7 @@ Function FuncDecl(Object, Statements)
 		
 	Return FuncDecl;
 	
-EndFunction // FuncDecl() 
+EndFunction // FuncDecl()
 
 #EndRegion // Declarations 
 
@@ -592,7 +671,7 @@ Function IfStmt(Condition, ThenPart, ElsePart)
 	Var IfStmt;
 	
 	IfStmt = New Structure(
-	    "ThisType,"  // string (type of this structure)
+		"ThisType,"  // string (type of this structure)
 		"Condition," // structure (one of expressions)
 		"ThenPart,"  // array (one of statements)
 		"ElsePart,"  // array (one of statements)
@@ -647,15 +726,17 @@ Function Parser(Source)
 	
 	Parser = New Structure(
 		"Scanner," // structure (Scanner)
-		"Tok,"     // string(one of Tokens)
+		"Tok,"     // string (one of Tokens)
 		"Lit,"     // string
 		"Val,"     // number, string, date, true, false, undefined 
 		"Scope,"   // structure (Scope)
 		"Imports," // structure
+		"Decls,"   // array (one of declarations)
 	);
 	
 	Parser.Scanner = Scanner(Source);
 	Parser.Scope = Scope(Undefined);
+	Parser.Imports = New Structure;
 	
 	Return Parser;
 	
@@ -668,6 +749,9 @@ Function Next(Parser)
 	While Tok = Tokens.Comment Do
 		Tok = Scan(Parser.Scanner);
 	EndDo;  
+	While Tok = Tokens.Semicolon Do
+		Tok = Scan(Parser.Scanner);
+	EndDo;
 	Parser.Tok = Tok;
 	Parser.Lit = Parser.Scanner.Lit;
 	Parser.Val = Parser.Lit;
@@ -719,9 +803,9 @@ EndFunction // ParseUnaryExpr()
 Function ParseOperand(Parser)
 	Var Tok, Operand;
 	Tok = Parser.Tok;
-	If BasicLiterals.Find(Tok) Then
+	If BasicLiterals.Find(Tok) <> Undefined Then
 		Operand = BasicLit(Tok, Parser.Val); 
-	    Next(Parser);
+		Next(Parser);
 	ElsIf Tok = Tokens.Ident Then
 		Operand = ParseDesignator(Parser);
 	ElsIf Tok = Tokens.Lparen Then
@@ -740,6 +824,18 @@ Function ParseDesignator(Parser)
 	Selector = ParseSelector(Parser);
 	Return Designator(Object, Selector);
 EndFunction // ParseDesignator() 
+
+&AtClient
+Function ParseDesignatorList(Parser)
+	Var List;
+	List = New Array;
+	List.Add(ParseDesignator(Parser));
+	While Parser.Tok = Tokens.Comma Do
+		Next(Parser);
+		List.Add(ParseDesignator(Parser));
+	EndDo;  
+	Return List;
+EndFunction // ParseDesignatorList() 
 
 &AtClient
 Function ParseQualident(Parser)
@@ -762,7 +858,7 @@ EndFunction // ParseQualident()
 
 &AtClient 
 Function ParseSelector(Parser)
-	Var Tok, Attribute, Index;
+	Var Tok, Attribute, Index, Arguments;
 	Tok = Next(Parser);
 	If Tok = Tokens.Period Then
 		Next(Parser);
@@ -770,13 +866,15 @@ Function ParseSelector(Parser)
 		Attribute = Parser.Lit;
 		Return Selector(Attribute, Undefined, Undefined, ParseSelector(Parser));
 	ElsIf Tok = Tokens.Lbrack Then
+		Next(Parser);
 		Index = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
 		Return Selector(Undefined, Index, Undefined, ParseSelector(Parser));
 	ElsIf Tok = Tokens.Lparen Then
-		Index = ParseExprList(Parser);
+		Next(Parser);
+		Arguments = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rparen);
-		Return Selector(Undefined, Index, Undefined, ParseSelector(Parser));
+		Return Selector(Undefined, Undefined, Arguments, ParseSelector(Parser));
 	EndIf; 
 	Return Undefined;	
 EndFunction // ParseSelector()
@@ -858,32 +956,62 @@ Function ParseFuncDecl(Parser)
 	Var Scope, Object, Name;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
-	ScopeObjects = OpenScope(Parser).Objects;
+	ScopeObjects = Parser.Scope.Objects;
+	OpenScope(Parser);
 	Name = Parser.Lit; 
+	Next(Parser);
 	Object = Object(ObjectKinds.Function, Name, ParseFuncType(Parser)); 
 	ScopeObjects.Insert(Name, Object);
-	Next(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndFunction);
 	CloseScope(Parser);
+	Next(Parser);
 	Return FuncDecl(Object, Statements);
 EndFunction // ParseFuncDecl() 
 
 &AtClient
 Function ParseFuncType(Parser)
-	Var Parameters;
+	Var VarListDecl;
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
-	ParamList = ParseParamList(Parser);
-	Expect(Parser, Tokens.Lparen);
+	If Parser.Tok <> Tokens.Rparen Then
+		VarListDecl = ParseVarListDecl(Parser);
+	EndIf; 
+	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return FuncType(ParamList);
+	Return FuncType(VarListDecl);
 EndFunction // ParseFuncType()  
 
 &AtClient
-Function ParseParamList(Parser)
-	
-EndFunction // ParseParamList() 
+Function ParseVarListDecl(Parser)
+	Var VarList;
+	VarList = New Array;	
+	VarList.Add(ParseVarDecl(Parser));
+	While Parser.Tok = Tokens.Comma Do
+		Next(Parser);
+		VarList.Add(ParseVarDecl(Parser));
+	EndDo;
+	Return VarListDecl(VarList);
+EndFunction // ParseVarListDecl() 
+
+&AtClient
+Function ParseVarDecl(Parser)
+	Var Tok, Name, Object, VarDecl;
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	Tok = Next(Parser);
+	If Tok = Tokens.Eql Then
+		Tok = Next(Parser);
+		Object = Object(ObjectKinds.Variable, Name, Tok);
+		VarDecl = VarDecl(Object, True, Value(Tok, Parser.Lit));
+		Next(Parser);
+	Else
+		Object = Object(ObjectKinds.Variable, Name, Undefined);
+		VarDecl = VarDecl(Object);
+	EndIf;
+	Parser.Scope.Objects.Insert(Name, Object);
+	Return VarDecl;
+EndFunction // ParseVarDecl() 
 
 &AtClient
 Function ParseStatements(Parser)
@@ -892,6 +1020,9 @@ Function ParseStatements(Parser)
 	Stmt = ParseStmt(Parser);	
 	While Stmt <> Undefined Do
 		Statements.Add(Stmt);
+		If Parser.Tok = Tokens.Semicolon Then
+			Next(Parser);
+		EndIf;
 		Stmt = ParseStmt(Parser);
 	EndDo; 
 	Return Statements;
@@ -902,7 +1033,7 @@ Function ParseStmt(Parser)
 	Var Tok;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Ident Then
-		
+		Return ParseAssign(Parser);
 	ElsIf Tok = Tokens.If Then
 		Return ParseIfStmt(Parser);	
 	ElsIf Tok = Tokens.While Then
@@ -910,6 +1041,17 @@ Function ParseStmt(Parser)
 	EndIf; 
 	Return Undefined;
 EndFunction // ParseStmt(Parser)
+
+&AtClient
+Function ParseAssign(Parser)
+	Var Left, Right;
+	Left = ParseDesignatorList(Parser);
+	Expect(Parser, Tokens.Eql);
+	Next(Parser);
+	Right = ParseExprList(Parser);
+	// TODO: calls
+	Return AssignStmt(Left, Right);
+EndFunction // ParseAssign() 
 
 &AtClient
 Function ParseIfStmt(Parser)
@@ -943,19 +1085,47 @@ EndFunction // ParseWhileStmt(Parser)
 
 &AtClient
 Function ParseDecls(Parser)
-	
+	Var Tok, Decls;
+	Decls = New Array;
+	Tok = Parser.Tok;
+	While Tok <> Tokens.Eof Do
+		If Tok = Tokens.Var Then
+			Next(Parser);
+			Decls.Add(ParseVarListDecl(Parser));
+			If Parser.Tok = Tokens.Semicolon Then
+				Next(Parser);
+			EndIf; 
+		ElsIf Tok = Tokens.Function Then
+			Decls.Add(ParseFuncDecl(Parser));
+		Else
+			Raise "expected declaration";
+		EndIf;
+		Tok = Parser.Tok;
+	EndDo;
+	Return Decls;
 EndFunction // ParseDecls() 
+
+&AtClient
+Function ParseModule(Parser)
+	Next(Parser);
+	Parser.Decls = ParseDecls(Parser);
+EndFunction // ParseModule() 
 
 #EndRegion // Parser
 
 #Region Auxiliary  
+
+&AtClientAtServerNoContext
+Function Value(Tok, Lit)
+	Return Lit;
+EndFunction // Value()
 
 &AtClient
 Procedure Expect(Parser, Tok)
 	If Parser.Tok <> Tok Then
 		Raise "Expected " + Tok;
 	EndIf; 
-EndProcedure // Expect()  
+EndProcedure // Expect()
 
 &AtClient
 Function StringToken(Lit)
