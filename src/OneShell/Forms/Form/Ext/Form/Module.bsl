@@ -11,6 +11,9 @@ Var Tokens;
 Var ObjectKinds;
 
 &AtClient
+Var SelectorKinds;
+
+&AtClient
 Var UnaryOperations;
 
 &AtClient
@@ -152,7 +155,7 @@ Function Keywords()
 		|And, Or, Not,
 		|Try, Except, Raise, EndTry,
 		|New, Execute, Export,
-		|True, False, Undefined"
+		|True, False, Undefined, End"
 	);
 	
 	Return Keywords;
@@ -204,6 +207,20 @@ Function ObjectKinds()
 	Return ObjectKinds;
 	
 EndFunction // ObjectKinds() 
+
+&AtClientAtServerNoContext
+Function SelectorKinds()
+	Var SelectorKinds;
+	
+	SelectorKinds = Enum(New Structure,
+		"Ident,"
+		"Index,"
+		"Call,"
+	);
+	
+	Return SelectorKinds;
+	
+EndFunction // SelectorKinds()
 
 &AtClientAtServerNoContext
 Function Enum(Structure, Keys)
@@ -371,6 +388,19 @@ Function SkipWhitespace(Scanner)
 	EndDo; 
 EndFunction // SkipWhitespace() 
 
+&AtClient
+Function Skip(Parser, Token)
+	Var Tok, Scanner;
+	Scanner = Parser.Scanner;
+	Tok = Scanner.Tok;
+	While Tok = Token Do
+		Tok = Scan(Scanner);
+	EndDo;
+	Parser.Tok = Tok;
+	Parser.Lit = Scanner.Lit;
+	Return Tok;
+EndFunction // Skip()
+
 &AtClientAtServerNoContext
 Function ScanComment(Scanner)
 	Var Len, Char;
@@ -456,6 +486,8 @@ EndFunction // ScanDateTime()
 
 #Region AbstractSyntaxTree
 
+#Region Scope
+
 &AtClientAtServerNoContext
 Function Scope(Outer)
 	Var Scope;
@@ -487,6 +519,8 @@ Function Object(Kind, Name, Type = Undefined)
 	
 EndFunction // Object()
 
+#EndRegion // Scope
+
 #Region Declarations
 
 &AtClientAtServerNoContext
@@ -494,7 +528,7 @@ Function VarDecl(Object, Init = False, Value = Undefined)
 	Var VarDecl;
 	
 	VarDecl = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"Object,"   // structure (Object)
 	,
 	"VarDecl", Object);
@@ -512,7 +546,7 @@ Function VarListDecl(VarList)
 	Var VarListDecl;
 	
 	VarListDecl = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"VarList,"  // array (VarDecl)
 	,
 	"VarListDecl", VarList); 
@@ -526,7 +560,7 @@ Function ProcDecl(Object, Statements)
 	Var ProcDecl;
 	
 	ProcDecl = New Structure(
-		"ThisType,"   // string (type of this structure)
+		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
 		"Statements," // array (one of statements)
 	,
@@ -537,15 +571,16 @@ Function ProcDecl(Object, Statements)
 EndFunction // ProcDecl()
 
 &AtClientAtServerNoContext
-Function FuncDecl(Object, Statements)
+Function FuncDecl(Object, Decls, Statements)
 	Var FuncDecl;
 	
 	FuncDecl = New Structure(
-		"ThisType,"   // string (type of this structure)
+		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
+		"Decls,"      // array (one of declarations)
 		"Statements," // array (one of statements)
 	,
-	"FuncDecl", Object, Statements);
+	"FuncDecl", Object, Decls, Statements);
 		
 	Return FuncDecl;
 	
@@ -560,7 +595,7 @@ Function BasicLit(Kind, Value)
 	Var BasicLit;
 	
 	BasicLit = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"Kind,"     // string (one of Tokens)
 		"Value,"    // string
 	,
@@ -571,32 +606,33 @@ Function BasicLit(Kind, Value)
 EndFunction // BasicLit() 
 
 &AtClientAtServerNoContext
-Function Selector(Attribute, Index, Arguments, Next)
+Function Selector(Kind, Value)
 	Var Selector;
 	
 	Selector = New Structure(
-		"ThisType,"  // string (type of this structure)
-		"Attribute," // string
-		"Index,"     // array (one of expressions)
-		"Arguments," // array (one of expressions)
-		"Next,"      // structure (Selector)
+		"Kind,"      // string (one of SelectorKinds)
+		"Value,"     // string or array (one of expressions)
 	,
-	"Selector", Attribute, Index, Arguments, Next);
+	Kind, Value);
 	
 	Return Selector;
 	
 EndFunction // Selector()
 
 &AtClientAtServerNoContext
-Function Designator(Object, Selector)
+Function Designator(Object, Selectors, Call)
 	Var Designator;
 	
 	Designator = New Structure(
-		"ThisType,"  // string (type of this structure)
-		"Object,"    // structure (Object)
-		"Selector,"  // structure (Selector)
+		"NodeType," // string (type of this structure)
+		"Object,"   // structure (Object)
+		"Call,"     // boolean
 	,
-	"Designator", Object, Selector);
+	"Designator", Object, Call);
+	
+	If Selectors.Count() > 0 Then
+		Designator.Insert("Selectors", Selectors); // array (Selector)
+	EndIf; 
 	
 	Return Designator;
 	
@@ -607,7 +643,7 @@ Function UnaryExpr(Operator, Operand)
 	Var UnaryExpr;
 	
 	UnaryExpr = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"Operator," // string (one of Tokens)
 		"Operand,"  // one of expressions
 	,
@@ -622,7 +658,7 @@ Function BinaryExpr(Left, Operator, Right)
 	Var BinaryExpr;
 	
 	BinaryExpr = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"Left,"     // one of expressions
 		"Operator," // string (one of Tokens)
 		"Right,"    // one of expressions
@@ -633,6 +669,21 @@ Function BinaryExpr(Left, Operator, Right)
 	
 EndFunction // BinaryExpr()
 
+&AtClientAtServerNoContext
+Function RangeExpr(Left, Right)
+	Var RangeExpr;
+	
+	RangeExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"Left,"     // one of expressions
+		"Right,"    // one of expressions
+	,
+	"RangeExpr", Left, Right);
+	
+	Return RangeExpr;
+	
+EndFunction // RangeExpr()
+
 #EndRegion // Expressions
 
 #Region Statements
@@ -642,7 +693,7 @@ Function AssignStmt(Left, Right)
 	Var AssignStmt;
 	
 	AssignStmt = New Structure(
-		"ThisType," // string (type of this structure)
+		"NodeType," // string (type of this structure)
 		"Left,"     // array (Designator)
 		"Right,"    // array (one of expressions)
 	,
@@ -657,7 +708,7 @@ Function CallStmt(Designator)
 	Var CallStmt;
 	
 	CallStmt = New Structure(
-		"ThisType,"   // string (type of this structure)
+		"NodeType,"   // string (type of this structure)
 		"Designator," // structure (Designator)
 	,
 	"CallStmt", Designator);
@@ -667,16 +718,23 @@ Function CallStmt(Designator)
 EndFunction // CallStmt()
 
 &AtClientAtServerNoContext
-Function IfStmt(Condition, ThenPart, ElsePart)
+Function IfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
 	Var IfStmt;
 	
 	IfStmt = New Structure(
-		"ThisType,"  // string (type of this structure)
+		"NodeType,"  // string (type of this structure)
 		"Condition," // structure (one of expressions)
 		"ThenPart,"  // array (one of statements)
-		"ElsePart,"  // array (one of statements)
 	,
-	"IfStmt", Condition, ThenPart, ElsePart);
+	"IfStmt", Condition, ThenPart);
+	
+	If ElsIfPart <> Undefined Then
+		IfStmt.Insert("ElsIfPart", ElsIfPart); // array (IfStmt)
+	EndIf;
+	
+	If ElsePart <> Undefined Then
+		IfStmt.Insert("ElsePart", ElsePart); // array (one of statements)
+	EndIf; 
 	
 	Return IfStmt;
 	
@@ -687,7 +745,7 @@ Function WhileStmt(Condition, Statements)
 	Var WhileStmt;
 	
 	WhileStmt = New Structure(
-		"ThisType,"   // string (type of this structure)
+		"NodeType,"   // string (type of this structure)
 		"Condition,"  // structure (one of expressions)
 		"Statements," // array (one of statements)
 	,
@@ -696,6 +754,22 @@ Function WhileStmt(Condition, Statements)
 	Return WhileStmt;
 	
 EndFunction // WhileStmt()
+
+&AtClientAtServerNoContext
+Function ForStmt(Designator, Collection, Statements)
+	Var ForStmt;
+	
+	ForStmt = New Structure(
+		"NodeType,"   // string (type of this structure)
+		"Designator," // structure (Designator)
+		"Collection," // structure (one of expressions)
+		"Statements," // array (one of statements)
+	,
+	"ForStmt", Designator, Collection, Statements);
+	
+	Return ForStmt;
+	
+EndFunction // ForStmt()
 
 #EndRegion // Statements
 
@@ -706,7 +780,7 @@ Function FuncType(ParameterList)
 	Var FuncType;
 	
 	FuncType = New Structure(
-		"ThisType,"      // string (type of this structure)
+		"NodeType,"      // string (type of this structure)
 		"ParameterList," // array (boolean)
 	,
 	"FuncType", ParameterList);
@@ -745,15 +819,15 @@ EndFunction // Parser()
 &AtClient
 Function Next(Parser)
 	Var Tok;
-	Tok = Scan(Parser.Scanner);
-	While Tok = Tokens.Comment Do
-		Tok = Scan(Parser.Scanner);
-	EndDo;  
-	While Tok = Tokens.Semicolon Do
-		Tok = Scan(Parser.Scanner);
-	EndDo;
+	Scan(Parser.Scanner);
+	Tok = Skip(Parser, Tokens.Comment);
+	If Tok = Tokens.StringBeg Then
+		Parser.Lit = ParseString(Parser);
+		Tok = Tokens.String;
+	Else 
+		Parser.Lit = Parser.Scanner.Lit;
+	EndIf; 
 	Parser.Tok = Tok;
-	Parser.Lit = Parser.Scanner.Lit;
 	Parser.Val = Parser.Lit;
 	Return Tok;
 EndFunction // Next() 
@@ -787,6 +861,24 @@ Function CloseScope(Parser)
 EndFunction // CloseScope(Parser)
 
 &AtClient
+Function ParseString(Parser)
+	Var Scanner, Tok, List;
+	Scanner = Parser.Scanner;
+	List = New Array;
+	List.Add(Scanner.Lit);
+	Scan(Scanner);
+	Tok = Skip(Parser, Tokens.Comment);
+	While Tok = Tokens.StringMid Do
+		List.Add(Scanner.Lit);
+		Scan(Scanner);
+		Tok = Skip(Parser, Tokens.Comment);
+	EndDo; 
+	Expect(Scanner, Tokens.StringEnd);
+	List.Add(Scanner.Lit);	
+	Return StrConcat(List);
+EndFunction // ParseString() 
+
+&AtClient
 Function ParseUnaryExpr(Parser)
 	Var Operator;
 	Operator = Parser.Tok;
@@ -801,11 +893,20 @@ EndFunction // ParseUnaryExpr()
 
 &AtClient
 Function ParseOperand(Parser)
-	Var Tok, Operand;
+	Var Tok, StrList, Operand;
 	Tok = Parser.Tok;
 	If BasicLiterals.Find(Tok) <> Undefined Then
-		Operand = BasicLit(Tok, Parser.Val); 
-		Next(Parser);
+		If Tok = Tokens.String Then
+			StrList = New Array;
+			StrList.Add(Parser.Val);
+			While Next(Parser) = Tokens.String Do
+				StrList.Add(Parser.Val);
+			EndDo;
+			Operand = BasicLit(Tok, StrConcat(StrList, Chars.LF));
+		Else
+			Operand = BasicLit(Tok, Parser.Val); 
+			Next(Parser);
+		EndIf; 
 	ElsIf Tok = Tokens.Ident Then
 		Operand = ParseDesignator(Parser);
 	ElsIf Tok = Tokens.Lparen Then
@@ -819,10 +920,17 @@ EndFunction // ParseOperand()
 
 &AtClient 
 Function ParseDesignator(Parser)
-	Var Object, Selector;
+	Var Object, Selector, List, Call;
 	Object = ParseQualident(Parser);
+	List = New Array;
+	Call = False;
 	Selector = ParseSelector(Parser);
-	Return Designator(Object, Selector);
+	While Selector <> Undefined Do
+		List.Add(Selector);
+		Call = (Selector.Kind = "Call");
+		Selector = ParseSelector(Parser);
+	EndDo; 
+	Return Designator(Object, List, Call);
 EndFunction // ParseDesignator() 
 
 &AtClient
@@ -858,23 +966,25 @@ EndFunction // ParseQualident()
 
 &AtClient 
 Function ParseSelector(Parser)
-	Var Tok, Attribute, Index, Arguments;
+	Var Tok, Value;
 	Tok = Next(Parser);
 	If Tok = Tokens.Period Then
 		Next(Parser);
 		Expect(Parser, Tokens.Ident);
-		Attribute = Parser.Lit;
-		Return Selector(Attribute, Undefined, Undefined, ParseSelector(Parser));
+		Value = Parser.Lit;
+		Return Selector("Ident", Value);
 	ElsIf Tok = Tokens.Lbrack Then
 		Next(Parser);
-		Index = ParseExprList(Parser);
+		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Return Selector(Undefined, Index, Undefined, ParseSelector(Parser));
+		Return Selector("Index", Value);
 	ElsIf Tok = Tokens.Lparen Then
 		Next(Parser);
-		Arguments = ParseExprList(Parser);
+		If Parser.Tok <> Tokens.Rparen Then
+			Value = ParseExprList(Parser);
+		EndIf; 
 		Expect(Parser, Tokens.Rparen);
-		Return Selector(Undefined, Undefined, Arguments, ParseSelector(Parser));
+		Return Selector("Call", Value);
 	EndIf; 
 	Return Undefined;	
 EndFunction // ParseSelector()
@@ -953,20 +1063,21 @@ EndFunction // ParseExprList()
 
 &AtClient
 Function ParseFuncDecl(Parser)
-	Var Scope, Object, Name;
+	Var Scope, Object, Name, Decls;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	ScopeObjects = Parser.Scope.Objects;
-	OpenScope(Parser);
+	OpenScope(Parser);	
 	Name = Parser.Lit; 
 	Next(Parser);
 	Object = Object(ObjectKinds.Function, Name, ParseFuncType(Parser)); 
 	ScopeObjects.Insert(Name, Object);
+	Decls = ParseDecls(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndFunction);
+	Expect(Parser, Tokens.EndFunction, Tokens.End);
 	CloseScope(Parser);
 	Next(Parser);
-	Return FuncDecl(Object, Statements);
+	Return FuncDecl(Object, Decls, Statements);
 EndFunction // ParseFuncDecl() 
 
 &AtClient
@@ -1002,6 +1113,7 @@ Function ParseVarDecl(Parser)
 	Tok = Next(Parser);
 	If Tok = Tokens.Eql Then
 		Tok = Next(Parser);
+		// TODO: check token (basic lit)
 		Object = Object(ObjectKinds.Variable, Name, Tok);
 		VarDecl = VarDecl(Object, True, Value(Tok, Parser.Lit));
 		Next(Parser);
@@ -1020,9 +1132,6 @@ Function ParseStatements(Parser)
 	Stmt = ParseStmt(Parser);	
 	While Stmt <> Undefined Do
 		Statements.Add(Stmt);
-		If Parser.Tok = Tokens.Semicolon Then
-			Next(Parser);
-		EndIf;
 		Stmt = ParseStmt(Parser);
 	EndDo; 
 	Return Statements;
@@ -1031,43 +1140,61 @@ EndFunction // ParseStatements(Parser)
 &AtClient
 Function ParseStmt(Parser)
 	Var Tok;
-	Tok = Parser.Tok;
+	Tok = Skip(Parser, Tokens.Semicolon);
 	If Tok = Tokens.Ident Then
-		Return ParseAssign(Parser);
+		Return ParseAssignOrCall(Parser);
 	ElsIf Tok = Tokens.If Then
 		Return ParseIfStmt(Parser);	
 	ElsIf Tok = Tokens.While Then
 		Return ParseWhileStmt(Parser);
+	ElsIf Tok = Tokens.For Then
+		Return ParseForStmt(Parser);
 	EndIf; 
 	Return Undefined;
 EndFunction // ParseStmt(Parser)
 
 &AtClient
-Function ParseAssign(Parser)
+Function ParseAssignOrCall(Parser)
 	Var Left, Right;
 	Left = ParseDesignatorList(Parser);
+	If Left.Count() = 1 And Left[0].Call Then
+		Return CallStmt(Left);
+	EndIf; 
 	Expect(Parser, Tokens.Eql);
 	Next(Parser);
 	Right = ParseExprList(Parser);
-	// TODO: calls
 	Return AssignStmt(Left, Right);
-EndFunction // ParseAssign() 
+EndFunction // ParseAssignOrCall() 
 
 &AtClient
 Function ParseIfStmt(Parser)
-	Var Condition, ThenPart, ElsePart;
+	Var Tok, Condition, ThenPart, ElsePart;
+	Var ElsIfPart, ElsIfCond, ElsIfThen;
 	Next(Parser);
 	Condition = ParseExpression(Parser);
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
 	ThenPart = ParseStatements(Parser);
-	If Parser.Tok = Tokens.Else Then
+	Tok = Parser.Tok;
+	If Tok = Tokens.ElsIf Then
+		ElsIfPart = New Array;
+		While Tok = Tokens.ElsIf Do
+			Next(Parser);
+			ElsIfCond = ParseExpression(Parser); 
+			Expect(Parser, Tokens.Then);
+			Next(Parser);
+			ElsIfThen = ParseStatements(Parser);
+			ElsIfPart.Add(IfStmt(ElsIfCond, ElsIfThen));
+			Tok = Parser.Tok;
+		EndDo; 
+	EndIf; 
+	If Tok = Tokens.Else Then
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	Expect(Parser, Tokens.EndIf);
+	Expect(Parser, Tokens.EndIf, Tokens.End);
 	Next(Parser);
-	Return IfStmt(Condition, ThenPart, ElsePart);
+	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt(Parser)
 
 &AtClient
@@ -1078,10 +1205,39 @@ Function ParseWhileStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
+	Expect(Parser, Tokens.EndDo, Tokens.End);
 	Next(Parser);
 	Return WhileStmt(Condition, Statements)
 EndFunction // ParseWhileStmt(Parser)
+
+&AtClient
+Function ParseForStmt(Parser)
+	Var Designator, Left, Right, Collection, Statements;
+	Next(Parser);
+	Skip(Parser, Tokens.Each);
+	Expect(Parser, Tokens.Ident);
+	Designator = ParseDesignator(Parser);	
+	If Designator.Call Then
+		Raise "expected variable";
+	EndIf; 
+	If Parser.Tok = Tokens.Eql Then
+		Next(Parser);
+		Left = ParseExpression(Parser);
+		Expect(Parser, Tokens.To);
+		Next(Parser);
+		Right = ParseExpression(Parser);
+		Collection = RangeExpr(Left, Right);
+	ElsIf Parser.Tok = Tokens.In Then
+		Next(Parser);
+		Collection = ParseExpression(Parser);
+	EndIf;
+	Expect(Parser, Tokens.Do);
+	Next(Parser);
+	Statements = ParseStatements(Parser);
+	Expect(Parser, Tokens.EndDo, Tokens.End);
+	Next(Parser);
+	Return ForStmt(Designator, Collection, Statements);
+EndFunction // ParseForStmt()
 
 &AtClient
 Function ParseDecls(Parser)
@@ -1098,7 +1254,7 @@ Function ParseDecls(Parser)
 		ElsIf Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
 		Else
-			Raise "expected declaration";
+			Return Decls;
 		EndIf;
 		Tok = Parser.Tok;
 	EndDo;
@@ -1109,11 +1265,12 @@ EndFunction // ParseDecls()
 Function ParseModule(Parser)
 	Next(Parser);
 	Parser.Decls = ParseDecls(Parser);
+	Expect(Parser, Tokens.Eof);
 EndFunction // ParseModule() 
 
 #EndRegion // Parser
 
-#Region Auxiliary  
+#Region Auxiliary
 
 &AtClientAtServerNoContext
 Function Value(Tok, Lit)
@@ -1121,9 +1278,9 @@ Function Value(Tok, Lit)
 EndFunction // Value()
 
 &AtClient
-Procedure Expect(Parser, Tok)
-	If Parser.Tok <> Tok Then
-		Raise "Expected " + Tok;
+Procedure Expect(Parser, Tok1, Tok2 = Undefined)
+	If Parser.Tok <> Tok1 And Parser.Tok <> Tok2 Then 
+		Raise "Expected " + Tok1;
 	EndIf; 
 EndProcedure // Expect()
 
