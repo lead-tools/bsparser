@@ -1235,9 +1235,13 @@ Function ParseDesignator(Parser, AllowNewVar = False)
 			Object = Object(ObjectKinds.Variable, Name);
 			Parser.Scope.Objects.Insert(Name, Object);
 		Else
+<<<<<<< HEAD
 			If Verbose Then
 				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
 			EndIf; 
+=======
+			Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
+>>>>>>> 3d0bc7a24d18bf4a63a496f61f85f72c0c121233
 			Object = Object("Unknown", Name);
 		EndIf; 
 	EndIf; 
@@ -1874,7 +1878,11 @@ Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
 	If Stop Then
 		Raise ErrorText;
 	Else
+<<<<<<< HEAD
 		Message(ErrorText);
+=======
+	    Message(ErrorText);
+>>>>>>> 3d0bc7a24d18bf4a63a496f61f85f72c0c121233
 	EndIf; 
 EndProcedure // Error() 
 
