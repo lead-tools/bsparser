@@ -85,7 +85,7 @@ Procedure Translate(Command)
 		JSONWriter = New JSONWriter;
 		FileName = GetTempFileName(".json");
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
-		WriteJSON(JSONWriter, Parser.Decls);
+		WriteJSON(JSONWriter, Parser.Module);
 		JSONWriter.Close();
 		Result.Read(FileName, TextEncoding.UTF8);
 		
@@ -538,6 +538,20 @@ EndFunction // ScanDateTime()
 #EndRegion // Scanner
 
 #Region AbstractSyntaxTree
+
+&AtClientAtServerNoContext
+Function Module(Decls, Statements)
+	Var Module;
+	
+	Module = New Structure(
+		"Decls,"      // array (one of declarations)
+		"Statements," // array (one of statements)
+	,
+	Decls, Statements);
+		
+	Return Module;
+	
+EndFunction // Module() 
 
 #Region Scope
 
@@ -1059,13 +1073,15 @@ Function Parser(Source)
 		"Val,"     // number, string, date, true, false, undefined 
 		"Scope,"   // structure (Scope)
 		"Imports," // structure
-		"Decls,"   // array (one of declarations)
+		"Module,"  // structure (Module)
+		"Unknown," // structure as map[string](Object)
 		"IsFunc,"  // boolean
 	);
 	
 	Parser.Scanner = Scanner(Source);
 	Parser.Scope = Scope(Undefined);
 	Parser.Imports = New Structure;
+	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
 	
 	Parser.Scope.Objects.Insert("Structure", Object("Constructor", "Structure"));
@@ -1231,14 +1247,20 @@ Function ParseDesignator(Parser, AllowNewVar = False)
 		Selector = ParseSelector(Parser);
 	EndDo;
 	If Object = Undefined Then
-		If Not Call And AllowNewVar Then
-			Object = Object(ObjectKinds.Variable, Name);
-			Parser.Scope.Objects.Insert(Name, Object);
+		If Call Then
+			If Not Parser.Unknown.Property(Name, Object) Then
+				Object = Object("Unknown", Name);
+				Parser.Unknown.Insert(Name, Object);
+			EndIf;
 		Else
-			If Verbose Then
-				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
-			EndIf; 
-			Object = Object("Unknown", Name);
+			If AllowNewVar Then
+				Object = Object(ObjectKinds.Variable, Name);
+				Parser.Scope.Objects.Insert(Name, Object);
+			Else
+				If Verbose Then
+					Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
+				EndIf;  
+			EndIf;
 		EndIf; 
 	EndIf; 
 	Return Designator(Object, List, Call);
@@ -1406,9 +1428,15 @@ Function ParseFuncDecl(Parser)
 	OpenScope(Parser);	
 	Name = Parser.Lit; 
 	Next(Parser);
-	Object = Object(ObjectKinds.Function, Name, ParseSignature(Parser)); 
+	If Parser.Unknown.Property(Name, Object) Then
+		Object.Kind = ObjectKinds.Function;
+		Object.Insert("Type", ParseSignature(Parser));
+		Parser.Unknown.Delete(Name);
+	Else
+		Object = Object(ObjectKinds.Function, Name, ParseSignature(Parser)); 
+	EndIf; 
 	ScopeObjects.Insert(Name, Object);
-	Decls = ParseDecls(Parser);
+	Decls = ParseVarDecls(Parser);
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
@@ -1446,9 +1474,15 @@ Function ParseProcDecl(Parser)
 	OpenScope(Parser);	
 	Name = Parser.Lit; 
 	Next(Parser);
-	Object = Object(ObjectKinds.Procedure, Name, ParseSignature(Parser)); 
+	If Parser.Unknown.Property(Name, Object) Then
+		Object.Kind = ObjectKinds.Procedure;
+		Object.Insert("Type", ParseSignature(Parser));
+		Parser.Unknown.Delete(Name);
+	Else
+		Object = Object(ObjectKinds.Procedure, Name, ParseSignature(Parser)); 
+	EndIf;
 	ScopeObjects.Insert(Name, Object);
-	Decls = ParseDecls(Parser);
+	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndProcedure);
 	CloseScope(Parser);
@@ -1757,6 +1791,22 @@ Function ParseForStmt(Parser)
 EndFunction // ParseForStmt()
 
 &AtClient
+Function ParseVarDecls(Parser)
+	Var Tok, Decls;
+	Decls = New Array;
+	Tok = Parser.Tok;
+	While Tok = Tokens.Var Do
+		Next(Parser);
+		Decls.Add(ParseVarListDecl(Parser));
+		If Parser.Tok = Tokens.Semicolon Then
+			Next(Parser);
+		EndIf; 
+		Tok = Parser.Tok;
+	EndDo;
+	Return Decls;
+EndFunction // ParseVarDecls()
+
+&AtClient
 Function ParseDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
@@ -1783,7 +1833,12 @@ EndFunction // ParseDecls()
 &AtClient
 Function ParseModule(Parser)
 	Next(Parser);
-	Parser.Decls = ParseDecls(Parser);
+	Parser.Module = Module(ParseDecls(Parser), ParseStatements(Parser));
+	If Verbose Then
+		For Each Item In Parser.Unknown Do
+			Message(StrTemplate("Undeclared identifier `%1`", Item.Key)); 
+		EndDo;
+	EndIf; 
 	Expect(Parser, Tokens.Eof);
 EndFunction // ParseModule() 
 
