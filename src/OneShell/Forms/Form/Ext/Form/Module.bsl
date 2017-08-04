@@ -1733,7 +1733,7 @@ Function ParseForStmt(Parser)
 		Next(Parser);
 	EndIf; 
 	Expect(Parser, Tokens.Ident);
-	Designator = ParseDesignator(Parser);	
+	Designator = ParseDesignator(Parser, True);	
 	If Designator.Call Then
 		Error(Parser.Scanner, "expected variable",, True);
 	EndIf; 
