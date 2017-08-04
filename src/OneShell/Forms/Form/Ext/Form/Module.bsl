@@ -67,6 +67,7 @@ Procedure Translate(Command)
 	Init();
 	
 	Result.Clear();
+	ClearMessages();
 	
 	Start = CurrentUniversalDateInMilliseconds();
 	
@@ -294,12 +295,15 @@ Function Scanner(Source)
 		"Lit,"    // string
 		"Char,"   // string
 		"Line,"   // number
+		"Column," // number
 	);
 	
 	Scanner.Source = Source;
 	Scanner.Len = StrLen(Source);
 	Scanner.Line = 1;
+	Scanner.Column = 0;
 	Scanner.Pos = 0;
+	Scanner.Lit = "";
 	
 	Return Scanner;
 	
@@ -410,7 +414,7 @@ Function Scan(Scanner)
 		Lit = ScanComment(Scanner);
 		Tok = Tokens.Preprocessor;
 	Else
-		Raise "Unknown char";
+		Error(Scanner, "Unknown char");
 	EndIf; 
 	If ValueIsFilled(Lit) Then
 		Scanner.Lit = Lit;
@@ -425,6 +429,7 @@ EndFunction // Scan()
 Function NextChar(Scanner)
 	If Scanner.Char <> "" Then
 		Scanner.Pos = Scanner.Pos + 1;
+		Scanner.Column = Scanner.Column + 1;
 		Scanner.Char = Mid(Scanner.Source, Scanner.Pos, 1); 
 	EndIf; 
 	Return Scanner.Char;
@@ -437,6 +442,7 @@ Function SkipWhitespace(Scanner)
 	While IsBlankString(Char) And Char <> "" Do
 		If Char = Chars.LF Then
 			Scanner.Line = Scanner.Line + 1;
+			Scanner.Column = 0;
 		EndIf; 
 		Char = NextChar(Scanner);
 	EndDo; 
@@ -524,7 +530,7 @@ Function ScanDateTime(Scanner)
 		Len = Len + 1;
 		NextChar(Scanner);
 	Else
-		Raise "expected `'`";
+		Error(Scanner, "expected `'`");
 	EndIf; 
 	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);	
 EndFunction // ScanDateTime() 
@@ -1209,9 +1215,13 @@ Function ParseNewExpr(Parser)
 EndFunction // ParseNewExpr() 
 
 &AtClient 
-Function ParseDesignator(Parser)
-	Var Object, Selector, List, Call;
+Function ParseDesignator(Parser, AllowNewVar = False)
+	Var Object, Selector, List, Call, Name, Column;
 	Object = ParseQualident(Parser);
+	If Object = Undefined Then
+		Column = Parser.Scanner.Column - StrLen(Parser.Lit);;
+	EndIf; 
+	Name = Parser.Lit;
 	List = New Array;
 	Call = False;
 	Selector = ParseSelector(Parser);
@@ -1219,18 +1229,29 @@ Function ParseDesignator(Parser)
 		List.Add(Selector);
 		Call = (Selector.Kind = "Call");
 		Selector = ParseSelector(Parser);
-	EndDo; 
+	EndDo;
+	If Object = Undefined Then
+		If Not Call And AllowNewVar Then
+			Object = Object(ObjectKinds.Variable, Name);
+			Parser.Scope.Objects.Insert(Name, Object);
+		Else
+			If Verbose Then
+				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
+			EndIf; 
+			Object = Object("Unknown", Name);
+		EndIf; 
+	EndIf; 
 	Return Designator(Object, List, Call);
 EndFunction // ParseDesignator() 
 
 &AtClient
-Function ParseDesignatorList(Parser)
+Function ParseDesignatorList(Parser, AllowNewVar = False)
 	Var List;
 	List = New Array;
-	List.Add(ParseDesignator(Parser));
+	List.Add(ParseDesignator(Parser, AllowNewVar));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		List.Add(ParseDesignator(Parser));
+		List.Add(ParseDesignator(Parser, AllowNewVar));
 	EndDo;  
 	Return List;
 EndFunction // ParseDesignatorList() 
@@ -1248,12 +1269,6 @@ Function ParseQualident(Parser)
 	Else
 		Object = FindObject(Parser, Parser.Lit);	
 	EndIf; 
-	If Object = Undefined Then
-		If Verbose Then
-			Message(StrTemplate("Undeclared identifier `%1`", Parser.Lit));
-		EndIf; 
-		Object = Object("Unknown", Parser.Lit);
-	EndIf;
 	Return Object;
 EndFunction // ParseQualident() 
 
@@ -1414,10 +1429,10 @@ Function ParseSignature(Parser)
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
 	If Parser.Tok = Tokens.Export Then
-		Next(Parser);
 		If Verbose Then
-			Message("keyword `Export` ignored");
+			Error(Parser.Scanner, "keyword `Export` ignored");
 		EndIf; 
+		Next(Parser);
 	EndIf; 
 	Return Signature(ParamListDecl);
 EndFunction // ParseSignature()  
@@ -1461,10 +1476,10 @@ Function ParseVarListDecl(Parser)
 		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
 	If Parser.Tok = Tokens.Export Then
-		Next(Parser);
 		If Verbose Then
-			Message("keyword `Export` ignored");
+			Error(Parser.Scanner, "keyword `Export` ignored");
 		EndIf; 
+		Next(Parser);
 	EndIf;
 	Return VarListDecl(VarList);
 EndFunction // ParseVarListDecl() 
@@ -1477,7 +1492,9 @@ Function ParseVarDecl(Parser)
 	Tok = Next(Parser);
 	If Tok = Tokens.Eql Then
 		Tok = Next(Parser);
-		// TODO: check token (basic lit)
+		If BasicLiterals.Find(Tok) = Undefined Then
+			Error(Parser.Scanner, "expected basic literal");
+		EndIf; 
 		Object = Object(ObjectKinds.Variable, Name, Tok);
 		VarDecl = VarDecl(Object, True, Parser.Val);
 		Next(Parser);
@@ -1505,17 +1522,19 @@ EndFunction // ParseParamListDecl()
 Function ParseParamDecl(Parser)
 	Var Tok, Name, Object, ParamDecl;
 	If Parser.Tok = Tokens.Val Then
-		Next(Parser);
 		If Verbose Then
-			Message("keyword `Val` ignored");
-		EndIf; 
+			Error(Parser.Scanner, "keyword `Val` ignored");
+		EndIf;
+		Next(Parser);
 	EndIf; 
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Tok = Next(Parser);
 	If Tok = Tokens.Eql Then
 		Tok = Next(Parser);
-		// TODO: check token (basic lit)
+		If BasicLiterals.Find(Tok) = Undefined Then
+			Error(Parser.Scanner, "expected basic literal");
+		EndIf;
 		Object = Object(ObjectKinds.Parameter, Name, Tok);
 		ParamDecl = ParamDecl(Object, True, Parser.Val);
 		Next(Parser);
@@ -1602,7 +1621,7 @@ EndFunction // ParseExecuteStmt()
 &AtClient
 Function ParseAssignOrCallStmt(Parser)
 	Var Tok, Left, Right;
-	Left = ParseDesignatorList(Parser);
+	Left = ParseDesignatorList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
 		Return CallStmt(Left);
 	EndIf;
@@ -1716,7 +1735,7 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.Ident);
 	Designator = ParseDesignator(Parser);	
 	If Designator.Call Then
-		Raise "expected variable";
+		Error(Parser.Scanner, "expected variable",, True);
 	EndIf; 
 	If Parser.Tok = Tokens.Eql Then
 		Next(Parser);
@@ -1780,6 +1799,10 @@ Function Value(Tok, Lit)
 		Return AsDate(Lit);
 	ElsIf Tok = Tokens.String Then
 		Return Mid(Lit, 2, StrLen(Lit) - 2);
+	ElsIf Tok = Tokens.True Then
+		Return True;
+	ElsIf Tok = Tokens.False Then
+		Return False;
 	EndIf; 
 	Return Undefined;
 EndFunction // Value()
@@ -1800,7 +1823,7 @@ EndFunction // AsDate()
 &AtClient
 Procedure Expect(Parser, Tok)
 	If Parser.Tok <> Tok Then 
-		Raise "Expected " + Tok;
+		Error(Parser.Scanner, "Expected " + Tok,, True);
 	EndIf; 
 EndProcedure // Expect()
 
@@ -1839,5 +1862,20 @@ EndFunction // IsLetter()
 Function IsDigit(Char)
 	Return "0" <= Char And Char <= "9";	
 EndFunction // IsLetter()
+
+&AtClientAtServerNoContext
+Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
+	Var ErrorText;
+	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
+		Scanner.Line,
+		?(Column = Undefined, Scanner.Column - StrLen(Scanner.Lit), Column),
+		Note
+	);
+	If Stop Then
+		Raise ErrorText;
+	Else
+		Message(ErrorText);
+	EndIf; 
+EndProcedure // Error() 
 
 #EndRegion // Auxiliary
