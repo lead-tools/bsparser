@@ -31,6 +31,12 @@ Var InitialTokensOfExpression; // array (one of Tokens)
 &AtClient
 Var Operators; // structure
 
+&AtClient
+Var PS_Operators; // structure
+
+&AtClient
+Var EmptyArray;
+
 #EndRegion // Constants
 
 #Region EventHandlers
@@ -43,7 +49,7 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 		FormOutput = Parameters.Output;
 		FormSource.SetText(Parameters.Source);
 	Else
-		FormOutput = "BSL";
+		FormOutput = "PS";
 	EndIf; 
 	
 EndProcedure
@@ -58,7 +64,7 @@ EndProcedure // Reopen()
 &AtServer
 Procedure ReopenAtServer()
 	
-	This = FormAttributeToValue("Object");
+	This = FormAttributeToValue("FormObject");
 	ExternalDataProcessors.Create(This.UsedFileName, False);
 	
 EndProcedure // ReopenAtServer() 
@@ -98,6 +104,14 @@ Procedure Translate(Command)
 		Parser = Parser(FormSource.GetText());
 		ParseModule(Parser);
 		BSL_VisitModule(Backend, Parser.Module);
+		FormResult.SetText(StrConcat(Backend.Result));
+		
+	ElsIf FormOutput = "PS" Then	
+		
+		Backend = Backend();
+		Parser = Parser(FormSource.GetText());
+		ParseModule(Parser);
+		PS_VisitModule(Backend, Parser.Module);
 		FormResult.SetText(StrConcat(Backend.Result));
 		
 	EndIf; 
@@ -162,6 +176,13 @@ Procedure Init()
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
 		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Or", "And", "Not"
 	);
+	
+	PS_Operators = New Structure(
+		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
+		"-eq", "-ne", "-lt", "-gt", "-le", "-ge", "+", "-", "*", "/", "%", "-or", "-and", "!"
+	);
+	
+	EmptyArray = New Array;
 	
 EndProcedure // Init() 
 
@@ -686,7 +707,7 @@ Function BasicLitExpr(Kind, Value)
 	BasicLitExpr = New Structure(
 		"NodeType," // string (type of this structure)
 		"Kind,"     // string (one of Tokens)
-		"Value,"    // string
+		"Value,"    // one of basic types
 	,
 	"BasicLitExpr", Kind, Value);
 		
@@ -802,6 +823,20 @@ Function TernaryExpr(Condition, ThenPart, ElsePart)
 	Return TernaryExpr;
 	
 EndFunction // TernaryExpr()
+
+&AtClientAtServerNoContext
+Function ParenExpr(Expr)
+	Var ParenExpr;
+	
+	ParenExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"Expr,"     // one of expressions
+	,
+	"ParenExpr", Expr);
+	
+	Return ParenExpr;
+	
+EndFunction // ParenExpr()  
 
 #EndRegion // Expressions
 
@@ -1176,7 +1211,7 @@ Function ParseOperand(Parser)
 		Operand = ParseDesignatorExpr(Parser);
 	ElsIf Tok = Tokens.Lparen Then
 		Next(Parser);
-		Operand = ParseExpression(Parser);
+		Operand = ParenExpr(ParseExpression(Parser));
 		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
 	ElsIf Tok = Tokens.New Then
@@ -1194,8 +1229,12 @@ Function ParseNewExpr(Parser)
 	Var Tok, Constructor;
 	Tok = Next(Parser);
 	If Tok = Tokens.Lparen Then
-		Next(Parser);
-		Constructor = ParseExprList(Parser);
+		Tok = Next(Parser);
+		If Tok = Tokens.Rparen Then
+			Constructor = EmptyArray;
+		Else
+			Constructor = ParseExprList(Parser, True);
+		EndIf; 
 		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
 	Else
@@ -1281,14 +1320,19 @@ Function ParseSelector(Parser)
 		Value = Parser.Lit;
 		Return Selector("Ident", Value);
 	ElsIf Tok = Tokens.Lbrack Then
-		Next(Parser);
-		Value = ParseExprList(Parser);
+		Tok = Next(Parser);
+		If Tok = Tokens.Rbrack Then
+			Error(Parser.Scanner, "Expected expression",, True);
+		EndIf;
+		Value = ParseExprList(Parser); 
 		Expect(Parser, Tokens.Rbrack);
 		Return Selector("Index", Value);
 	ElsIf Tok = Tokens.Lparen Then
-		Next(Parser);
-		If Parser.Tok <> Tokens.Rparen Then
-			Value = ParseExprList(Parser);
+		Tok = Next(Parser);
+		If Tok = Tokens.Rparen Then
+			Value = EmptyArray;
+		Else
+			Value = ParseExprList(Parser, True);
 		EndIf; 
 		Expect(Parser, Tokens.Rparen);
 		Return Selector("Call", Value);
@@ -1357,22 +1401,38 @@ Function ParseMulExpr(Parser)
 EndFunction // ParseMulExpr()
 
 &AtClient 
-Function ParseExprList(Parser)
+Function ParseExprList(Parser, IsArguments = False)
 	Var ExprList, ExpectExpression;
 	ExprList = New Array;
-	ExpectExpression = True;
-	While ExpectExpression Do 
-		If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
-			ExprList.Add(ParseExpression(Parser));
-		Else
-			ExprList.Add(Undefined);
-		EndIf;
+	If IsArguments Then
+		ExpectExpression = True;
+		While ExpectExpression Do 
+			If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
+				ExprList.Add(ParseExpression(Parser));
+			Else
+				ExprList.Add(BasicLitExpr(Tokens.Undefined, Undefined));
+			EndIf;
+			If Parser.Tok = Tokens.Comma Then
+				Next(Parser);
+			Else
+				ExpectExpression = False;
+			EndIf; 
+		EndDo;  
+	Else
 		If Parser.Tok = Tokens.Comma Then
-			Next(Parser);
+			ExprList.Add(Undefined);
 		Else
-			ExpectExpression = False;
-		EndIf; 
-	EndDo; 
+			ExprList.Add(ParseExpression(Parser));
+		EndIf;
+		While Parser.Tok = Tokens.Comma Do
+			Next(Parser);
+			While Parser.Tok = Tokens.Comma Do
+				ExprList.Add(Undefined);
+				Next(Parser);
+			EndDo;
+			ExprList.Add(ParseExpression(Parser));
+		EndDo; 
+	EndIf; 
 	Return ExprList;
 EndFunction // ParseExprList()  
 
@@ -1426,7 +1486,9 @@ Function ParseSignature(Parser)
 	Var ParamList;
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
-	If Parser.Tok <> Tokens.Rparen Then
+	If Parser.Tok = Tokens.Rparen Then
+		ParamList = EmptyArray;
+	Else
 		ParamList = ParseParamList(Parser);
 	EndIf; 
 	Expect(Parser, Tokens.Rparen);
@@ -1470,7 +1532,7 @@ Function ParseReturnStmt(Parser)
 	Var ExprList;
 	Next(Parser);
 	If Parser.IsFunc Then
-		ExprList = ParseExprList(Parser);
+		ExprList = ParseExprList(Parser); 
 	EndIf; 
 	Return ReturnStmt(ExprList);
 EndFunction // ParseReturnStmt() 
@@ -1619,10 +1681,12 @@ Function ParseExecuteStmt(Parser)
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
 	Tok = Next(Parser);
-	If Tok <> Tokens.Rparen Then
+	If Tok = Tokens.Rparen Then
+		Expr = EmptyArray;
+	Else
 		Expr = ParseExpression(Parser);
-		Expect(Parser, Tokens.Rparen);
 	EndIf;
+	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
 	Return ExecuteStmt(Expr);
 EndFunction // ParseExecuteStmt()
@@ -1970,6 +2034,7 @@ Procedure BSL_VisitDecl(Backend, Decl)
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
+		Result.Add(Chars.LF);
 		Backend.Indent = Backend.Indent + 1;
 		If NodeType = "FuncDecl" Then
 			Result.Add("Function ");
@@ -2005,7 +2070,7 @@ Procedure BSL_VisitVarListDecl(Backend, VarListDecl)
 		Result = Backend.Result;
 		Buffer = New Array;
 		For Each VarDecl In VarListDecl Do
-			Buffer.Add(VarDecl.Object.Name);
+			Buffer.Add(VarDecl.Object.Name + ?(VarDecl.Property("Value"), " = " + VarDecl.Value, ""));
 		EndDo;
 		If Buffer.Count() > 0 Then
 			Result.Add(StrConcat(Buffer, ", "));
@@ -2101,19 +2166,36 @@ Procedure BSL_VisitStmt(Backend, Stmt)
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "CaseStmt" Then
-		Result.Add("Case ");
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
-		Result.Add(Chars.LF);
-		Result.Add("When ");
-		BSL_VisitIfStmt(Backend, Stmt);
-		If Stmt.Property("ElsePart") Then
-			Result.Add("Else");
+		If Stmt.WhenPart.Count() > 0 Then
+			Result.Add("If ");
+			Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
+			Result.Add(" = ");
+			IfStmt = Stmt.WhenPart[0];
+			BSL_VisitIfStmt(Backend, IfStmt);
+			For Index = 1 To Stmt.WhenPart.Count() Do
+				IfStmt = Stmt.WhenPart[Index];
+				Result.Add("ElsIf ");
+				Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
+				Result.Add(" = ");
+				BSL_VisitIfStmt(Backend, IfStmt);
+			EndDo;
+			If Stmt.Property("ElsePart") Then
+				Result.Add("Else");
+				Result.Add(Chars.LF);
+				BSL_VisitStatements(Backend, Stmt.ElsePart);
+			EndIf;
+			Result.Add("EndIf");
+			Result.Add(";");
 			Result.Add(Chars.LF);
-			BSL_VisitStatements(Backend, Stmt.ElsePart);
+		Else
+			Result.Add(Chars.LF);
+			Backend.Indent = Backend.Indent - 1;
+			If Stmt.Property("ElsePart") Then
+				BSL_VisitStatements(Backend, Stmt.ElsePart);
+			EndIf;
+			Backend.Indent = Backend.Indent + 1;
+			Result.Add(Chars.LF);
 		EndIf;
-		Result.Add("EndCase");
-		Result.Add(";");
-		Result.Add(Chars.LF);
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("Try");
 		Result.Add(Chars.LF);
@@ -2183,7 +2265,7 @@ Function BSL_VisitExpr(Expr)
 	ElsIf NodeType = "UnaryExpr" Then
 		Return StrTemplate("%1 %2", Operators[Expr.Operator], BSL_VisitExpr(Expr.Operand));
 	ElsIf NodeType = "BinaryExpr" Then
-		Return StrTemplate("(%1 %2 %3)", BSL_VisitExpr(Expr.Left), Operators[Expr.Operator], BSL_VisitExpr(Expr.Right));	
+		Return StrTemplate("%1 %2 %3", BSL_VisitExpr(Expr.Left), Operators[Expr.Operator], BSL_VisitExpr(Expr.Right));	
 	ElsIf NodeType = "RangeExpr" Then
 		Return StrTemplate("%1 To %2", BSL_VisitExpr(Expr.Left), BSL_VisitExpr(Expr.Right));
 	ElsIf NodeType = "NewExpr" Then
@@ -2194,6 +2276,8 @@ Function BSL_VisitExpr(Expr)
 		EndIf; 
 	ElsIf NodeType = "TernaryExpr" Then
 		Return StrTemplate("?(%1, %2, %3)", BSL_VisitExpr(Expr.Condition), BSL_VisitExpr(Expr.ThenPart), BSL_VisitExpr(Expr.ElsePart));
+	ElsIf NodeType = "ParenExpr" Then
+		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
 	EndIf;	
 EndFunction // BSL_VisitExpr()
 
@@ -2224,5 +2308,337 @@ Function BSL_VisitDesignatorExpr(DesignatorExpr)
 EndFunction // BSL_VisitDesignatorExpr() 
 	
 #EndRegion // BSL
+
+#Region PS
+
+&AtClient
+Procedure PS_VisitModule(Backend, Module)
+	PS_VisitDecls(Backend, Module.Decls);
+	PS_VisitStatements(Backend, Module.Statements); 
+EndProcedure // PS_VisitModule()
+
+&AtClient
+Procedure PS_VisitDecls(Backend, Decls)
+	Backend.Indent = Backend.Indent + 1;
+	For Each Decl In Decls Do
+		PS_VisitDecl(Backend, Decl);
+	EndDo;
+	Backend.Indent = Backend.Indent - 1;
+EndProcedure // PS_VisitDecls()
+
+&AtClient
+Procedure PS_VisitStatements(Backend, Statements)
+	Backend.Indent = Backend.Indent + 1;
+	For Each Stmt In Statements Do
+		PS_VisitStmt(Backend, Stmt);
+	EndDo;
+	Backend.Indent = Backend.Indent - 1;
+	Indent(Backend);
+EndProcedure // PS_VisitStatements() 
+
+&AtClient
+Procedure PS_VisitDecl(Backend, Decl)
+	Var Result, NodeType;
+	Result = Backend.Result;
+	NodeType = Decl.NodeType;	
+	If NodeType = "VarListDecl" Then
+		PS_VisitVarListDecl(Backend, Decl.VarList);
+	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
+		Result.Add(Chars.LF);
+		Backend.Indent = Backend.Indent + 1;
+		Result.Add("function ");
+		Result.Add(Decl.Object.Name);
+		Result.Add("(");
+		PS_VisitParamList(Backend, Decl.Object.Type.ParamList);
+		Result.Add(") {");
+		Result.Add(Chars.LF);
+		For Each Stmt In Decl.Decls Do
+			PS_VisitDecl(Backend, Stmt);
+		EndDo;
+		For Each Stmt In Decl.Statements Do
+			PS_VisitStmt(Backend, Stmt);
+		EndDo;
+		Result.Add("}");
+		Result.Add(Chars.LF);
+		Result.Add(Chars.LF);
+		Backend.Indent = Backend.Indent - 1;
+	EndIf; 	
+EndProcedure // PS_VisitDecl() 
+
+&AtClient
+Procedure PS_VisitVarListDecl(Backend, VarListDecl)
+	Var Result;	
+	If VarListDecl <> Undefined Then	
+		Result = Backend.Result;
+		For Each VarDecl In VarListDecl Do
+			Indent(Backend);
+			Result.Add(StrTemplate("New-Variable -Name ""%1""", VarDecl.Object.Name));
+			If VarDecl.Property("Value") Then
+				Result.Add(" -Value " + VarDecl.Value);	
+			EndIf; 
+			Result.Add(Chars.LF);
+		EndDo;
+	EndIf; 
+EndProcedure // PS_VisitVarListDecl() 
+
+&AtClient
+Procedure PS_VisitParamList(Backend, ParamList)
+	Var Result, Buffer;	
+	If ParamList <> Undefined Then	
+		Result = Backend.Result;
+		Buffer = New Array;
+		For Each VarDecl In ParamList Do
+			Buffer.Add(StrTemplate("$%1%2", VarDecl.Object.Name, ?(VarDecl.Property("Value"), " = " + VarDecl.Value, "")));
+		EndDo;
+		If Buffer.Count() > 0 Then
+			Result.Add(StrConcat(Buffer, ", "));
+		EndIf;
+	EndIf; 
+EndProcedure // PS_VisitParamList()
+
+&AtClient
+Procedure PS_VisitStmt(Backend, Stmt)
+	Var Result, NodeType;
+	Result = Backend.Result;
+	NodeType = Stmt.NodeType;	
+	Indent(Backend);
+	If NodeType = "AssignStmt" Then
+		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(" = ");
+		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "AddAssignStmt" Then
+		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(" += ");
+		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "ReturnStmt" Then
+		Result.Add("return ");
+		If Stmt.Property("ExprList") Then
+			Result.Add(PS_VisitExprList(Stmt.ExprList, ", "));
+		EndIf; 
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "BreakStmt" Then
+		Result.Add("break");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "ContinueStmt" Then
+		Result.Add("continue");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "RaiseStmt" Then
+		Result.Add("throw ");
+		If Stmt.Property("Expr") Then
+			Result.Add(PS_VisitExpr(Stmt.Expr));
+		EndIf; 
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "ExecuteStmt" Then
+		Result.Add("# Execute(");
+		Result.Add(PS_VisitExpr(Stmt.Expr));
+		Result.Add(")");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "CallStmt" Then
+		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr[0], False));
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "IfStmt" Then
+		Result.Add("if (");
+		PS_VisitIfStmt(Backend, Stmt);
+		If Stmt.Property("ElsePart") Then
+			Indent(Backend);
+			Result.Add("else {");
+			Result.Add(Chars.LF);
+			PS_VisitStatements(Backend, Stmt.ElsePart);
+			Result.Add("}");
+			Result.Add(Chars.LF);
+		EndIf;
+	ElsIf NodeType = "WhileStmt" Then
+		Result.Add("while (");
+		Result.Add(PS_VisitExpr(Stmt.Condition));
+		Result.Add(") {");
+		Result.Add(Chars.LF);
+		PS_VisitStatements(Backend, Stmt.Statements);
+		Result.Add("}");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "ForStmt" Then
+		If Stmt.Collection.NodeType = "RangeExpr" Then
+			Result.Add("for (");
+			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
+			Result.Add(" = ");
+			Result.Add(PS_VisitExpr(Stmt.Collection.Left));
+			Result.Add("; ");
+			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
+			Result.Add(" -le ");
+			Result.Add(PS_VisitExpr(Stmt.Collection.Right));
+			Result.Add(StrTemplate("; %1++ )", PS_VisitDesignatorExpr(Stmt.DesignatorExpr)));
+		Else
+			Result.Add("foreach (");
+			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
+			Result.Add(" In ");
+			Result.Add(PS_VisitExpr(Stmt.Collection));
+			Result.Add(")");
+		EndIf;
+		Result.Add(" {");
+		Result.Add(Chars.LF);
+		PS_VisitStatements(Backend, Stmt.Statements);
+		Result.Add("}");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "CaseStmt" Then
+		Result.Add("switch ");
+		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
+		Result.Add(" {");
+		Result.Add(Chars.LF);
+		Backend.Indent = Backend.Indent + 1;
+		For Each IfStmt In Stmt.WhenPart Do
+			Indent(Backend);
+			PS_VisitWhenPart(Backend, IfStmt);
+		EndDo;
+		If Stmt.Property("ElsePart") Then
+			Indent(Backend);
+			Result.Add("default {");
+			Result.Add(Chars.LF);
+			PS_VisitStatements(Backend, Stmt.ElsePart);
+			Result.Add("}");
+			Result.Add(Chars.LF);
+		EndIf;
+		Backend.Indent = Backend.Indent - 1;
+		Indent(Backend);
+		Result.Add("}");
+		Result.Add(Chars.LF);
+	ElsIf NodeType = "TryStmt" Then
+		Result.Add("try {");
+		Result.Add(Chars.LF);
+		PS_VisitStatements(Backend, Stmt.TryPart);
+		Result.Add("}");
+		Result.Add(Chars.LF);
+		Indent(Backend);
+		Result.Add("catch {");
+		Result.Add(Chars.LF);
+		PS_VisitStatements(Backend, Stmt.ExceptPart);
+		Result.Add("}");
+		Result.Add(Chars.LF);
+	EndIf; 	
+EndProcedure // PS_VisitStmt()
+
+&AtClient
+Procedure PS_VisitIfStmt(Backend, IfStmt)
+	Var Result;
+	Result = Backend.Result;
+	Result.Add(PS_VisitExpr(IfStmt.Condition));
+	Result.Add(") {");
+	Result.Add(Chars.LF);
+	PS_VisitStatements(Backend, IfStmt.ThenPart);
+	Result.Add("}");
+	Result.Add(Chars.LF);
+	If IfStmt.Property("ElsIfPart") Then
+		For Each Item In IfStmt.ElsIfPart Do
+			Indent(Backend);
+			Result.Add("elseif (");
+			PS_VisitIfStmt(Backend, Item);
+		EndDo; 
+	EndIf;
+EndProcedure // PS_VisitIfStmt() 
+
+&AtClient
+Procedure PS_VisitWhenPart(Backend, IfStmt)
+	Var Result;
+	Result = Backend.Result;
+	Result.Add(PS_VisitExpr(IfStmt.Condition));
+	Result.Add(" {");
+	Result.Add(Chars.LF);
+	PS_VisitStatements(Backend, IfStmt.ThenPart);
+	Result.Add("}");
+	Result.Add(Chars.LF);
+EndProcedure // PS_VisitWhenPart()
+
+&AtClient
+Function PS_VisitExprList(ExprList, Separator)
+	Var Buffer;
+	If ExprList <> Undefined Then
+		Buffer = New Array;
+		For Each Expr In ExprList Do
+			If Expr = Undefined Then
+				Buffer.Add("");
+			Else
+				Buffer.Add(PS_VisitExpr(Expr)); 	
+			EndIf; 
+		EndDo;
+		Return StrConcat(Buffer, Separator);
+	EndIf; 
+EndFunction // PS_VisitExprList()
+
+&AtClient
+Function PS_VisitExpr(Expr)
+	Var NodeType, BasicLitKind;
+	NodeType = Expr.NodeType;
+	If NodeType = "BasicLitExpr" Then
+		BasicLitKind = Expr.Kind;
+		If BasicLitKind = Tokens.String Then
+			Return StrTemplate("""%1""", StrReplace(Expr.Value, Chars.LF, """ """));
+		ElsIf BasicLitKind = Tokens.Number Then	
+			Return Format(Expr.Value, "NZ=0; NG=");
+		ElsIf BasicLitKind = Tokens.DateTime Then	
+			Return Format(Expr.Value, "DF='""''yyyyMMdd'''");
+		ElsIf BasicLitKind = Tokens.True Or BasicLitKind = Tokens.False Then	
+			Return Format(Expr.Value, "BF=$False; BT=$True");
+		ElsIf BasicLitKind = Tokens.Undefined Then
+			Return "$null";
+		Else
+			Raise "Unknown basic literal";
+		EndIf; 
+	ElsIf NodeType = "DesignatorExpr" Then
+		Return PS_VisitDesignatorExpr(Expr);
+	ElsIf NodeType = "UnaryExpr" Then
+		Return StrTemplate("%1 %2", PS_Operators[Expr.Operator], PS_VisitExpr(Expr.Operand));
+	ElsIf NodeType = "BinaryExpr" Then
+		Return StrTemplate("%1 %2 %3", PS_VisitExpr(Expr.Left), PS_Operators[Expr.Operator], PS_VisitExpr(Expr.Right));	
+	ElsIf NodeType = "RangeExpr" Then
+		Return StrTemplate("%1..%2", PS_VisitExpr(Expr.Left), PS_VisitExpr(Expr.Right));
+	ElsIf NodeType = "NewExpr" Then
+		If TypeOf(Expr.Constructor) = Type("Structure") Then
+			Return StrTemplate("<# New %1 #>", PS_VisitExpr(Expr.Constructor));	
+		Else
+			Return StrTemplate("<# New(%1) #>", PS_VisitExprList(Expr.Constructor, ", "));
+		EndIf; 
+	ElsIf NodeType = "TernaryExpr" Then
+		Return StrTemplate("if (%1) { %2 } else { %3 }", PS_VisitExpr(Expr.Condition), PS_VisitExpr(Expr.ThenPart), PS_VisitExpr(Expr.ElsePart));
+	ElsIf NodeType = "ParenExpr" Then
+		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));	
+	EndIf;	
+EndFunction // PS_VisitExpr()
+
+&AtClient
+Function PS_VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
+	Var Buffer, Selector;
+	Buffer = New Array;
+	If Not DesignatorExpr.Call Then
+		Buffer.Add("$");	
+	EndIf; 
+	Buffer.Add(DesignatorExpr.Object.Name);
+	If DesignatorExpr.Property("Selectors") Then
+		For Each Selector In DesignatorExpr.Selectors Do
+			If Selector.Kind = "Ident" Then
+				Buffer.Add(".");
+				Buffer.Add(Selector.Value);
+			ElsIf Selector.Kind = "Index" Then
+				Buffer.Add("[");
+				Buffer.Add(PS_VisitExprList(Selector.Value, ", "));
+				Buffer.Add("]");
+			ElsIf Selector.Kind = "Call" Then
+				If Selector.Value.Count() > 0 Then
+					Buffer.Add(" ");
+					Buffer.Add(PS_VisitExprList(Selector.Value, " "));
+				EndIf; 
+			Else
+				Raise "Unknown selector kind";
+			EndIf; 
+		EndDo;
+	EndIf;
+	If IsOperand
+		And DesignatorExpr.Call
+		And Selector.Value.Count() > 0 Then
+		Return StrTemplate("(%1)", StrConcat(Buffer));
+	EndIf;
+	Return StrConcat(Buffer);
+EndFunction // PS_VisitDesignatorExpr() 
+
+#EndRegion // PS
 
 #EndRegion // Backends
