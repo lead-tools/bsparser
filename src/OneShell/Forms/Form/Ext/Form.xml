@@ -26,13 +26,13 @@
 			<ExtendedTooltip name="Group1ExtendedTooltip" id="13"/>
 			<ChildItems>
 				<CheckBoxField name="Verbose" id="9">
-					<DataPath>Verbose</DataPath>
+					<DataPath>FormVerbose</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
 					<ContextMenu name="VerboseContextMenu" id="10"/>
 					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
 				</CheckBoxField>
 				<InputField name="Output" id="14">
-					<DataPath>Output</DataPath>
+					<DataPath>FormOutput</DataPath>
 					<Width>10</Width>
 					<HorizontalStretch>false</HorizontalStretch>
 					<ListChoiceMode>true</ListChoiceMode>
@@ -71,10 +71,23 @@
 								<Presentation>
 									<v8:item>
 										<v8:lang>ru</v8:lang>
-										<v8:content>Parser</v8:content>
+										<v8:content>BSL</v8:content>
 									</v8:item>
 								</Presentation>
-								<Value xsi:type="xs:string">Parser</Value>
+								<Value xsi:type="xs:string">BSL</Value>
+							</xr:Value>
+						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation>
+									<v8:item>
+										<v8:lang>ru</v8:lang>
+										<v8:content>PS</v8:content>
+									</v8:item>
+								</Presentation>
+								<Value xsi:type="xs:string">PS</Value>
 							</xr:Value>
 						</xr:Item>
 						<xr:Item>
@@ -103,12 +116,12 @@
 			<ExtendedTooltip name="Group2ExtendedTooltip" id="18"/>
 			<ChildItems>
 				<TextDocumentField name="Source" id="1">
-					<DataPath>Source</DataPath>
+					<DataPath>FormSource</DataPath>
 					<ContextMenu name="SourceContextMenu" id="2"/>
 					<ExtendedTooltip name="SourceExtendedTooltip" id="3"/>
 				</TextDocumentField>
 				<TextDocumentField name="Result" id="6">
-					<DataPath>Result</DataPath>
+					<DataPath>FormResult</DataPath>
 					<ContextMenu name="ResultContextMenu" id="7"/>
 					<ExtendedTooltip name="ResultExtendedTooltip" id="8"/>
 				</TextDocumentField>
@@ -116,13 +129,19 @@
 		</UsualGroup>
 	</ChildItems>
 	<Attributes>
-		<Attribute name="Object" id="1">
+		<Attribute name="FormObject" id="1">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Object</v8:content>
+				</v8:item>
+			</Title>
 			<Type>
 				<v8:Type>cfg:ExternalDataProcessorObject.OneShell</v8:Type>
 			</Type>
 			<MainAttribute>true</MainAttribute>
 		</Attribute>
-		<Attribute name="Source" id="2">
+		<Attribute name="FormSource" id="2">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -133,7 +152,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="Result" id="3">
+		<Attribute name="FormResult" id="3">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -144,7 +163,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="Verbose" id="4">
+		<Attribute name="FormVerbose" id="4">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -155,7 +174,7 @@
 				<v8:Type>xs:boolean</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="Output" id="5">
+		<Attribute name="FormOutput" id="5">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
