@@ -26,7 +26,7 @@
 			<ExtendedTooltip name="Group1ExtendedTooltip" id="13"/>
 			<ChildItems>
 				<CheckBoxField name="Verbose" id="9">
-					<DataPath>FormVerbose</DataPath>
+					<DataPath>FormObject.Verbose</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
 					<ContextMenu name="VerboseContextMenu" id="10"/>
 					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
@@ -161,17 +161,6 @@
 			</Title>
 			<Type>
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
-			</Type>
-		</Attribute>
-		<Attribute name="FormVerbose" id="4">
-			<Title>
-				<v8:item>
-					<v8:lang>ru</v8:lang>
-					<v8:content>Verbose</v8:content>
-				</v8:item>
-			</Title>
-			<Type>
-				<v8:Type>xs:boolean</v8:Type>
 			</Type>
 		</Attribute>
 		<Attribute name="FormOutput" id="5">
