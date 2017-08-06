@@ -1,132 +1,28 @@
 ﻿
 #Region Constants
 
-&AtClient
-Var Keywords; // enum
-
-&AtClient
-Var Tokens; // enum
-
-&AtClient
-Var ObjectKinds; // enum
-
-&AtClient
-Var SelectorKinds; // enum
-
-&AtClient
-Var UnaryOperations; // array (one of Tokens)
-
-&AtClient
-Var BasicLiterals; // array (one of Tokens)
-
-&AtClient
-Var RelationalOperators; // array (one of Tokens) 
-
-&AtClient
-Var IgnoredTokens; // array (one of Tokens)
-
-&AtClient
+Var Keywords;                  // enum
+Var Tokens;                    // enum
+Var ObjectKinds;               // enum
+Var SelectorKinds;             // enum
+Var UnaryOperations;           // array (one of Tokens)
+Var BasicLiterals;             // array (one of Tokens)
+Var RelationalOperators;       // array (one of Tokens) 
+Var IgnoredTokens;             // array (one of Tokens)
 Var InitialTokensOfExpression; // array (one of Tokens)
+Var Operators;                 // structure
+Var EmptyArray;                // array
 
-&AtClient
-Var Operators; // structure
+#Region PS_Constants
 
-&AtClient
-Var PS_Operators; // structure
+Var PS_Operators; // structure as map[one of Tokens](string)
 
-&AtClient
-Var EmptyArray;
+#EndRegion // PS_Constants
 
 #EndRegion // Constants
 
-#Region EventHandlers
-
-&AtServer
-Procedure OnCreateAtServer(Cancel, StandardProcessing)
-	
-	If Parameters.Property("Source") Then
-		FormVerbose = Parameters.Verbose;
-		FormOutput = Parameters.Output;
-		FormSource.SetText(Parameters.Source);
-	Else
-		FormOutput = "PS";
-	EndIf; 
-	
-EndProcedure
-
-&AtClient
-Procedure Reopen(Command)
-	ReopenAtServer();
-	Close();
-	OpenForm(FormName, New Structure("Source, Verbose, Output", FormSource.GetText(), FormVerbose, FormOutput));
-EndProcedure // Reopen()
-
-&AtServer
-Procedure ReopenAtServer()
-	
-	This = FormAttributeToValue("FormObject");
-	ExternalDataProcessors.Create(This.UsedFileName, False);
-	
-EndProcedure // ReopenAtServer() 
-
-&AtClient
-Procedure Translate(Command)
-	Var Start;
-	
-	Init();
-	
-	FormResult.Clear();
-	ClearMessages();
-	
-	Start = CurrentUniversalDateInMilliseconds();
-	
-	If FormOutput = "Lexems" Then
-		
-		Scanner = Scanner(FormSource.GetText());
-		While Scan(Scanner) <> Tokens.Eof Do
-			FormResult.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
-		EndDo;
-		
-	ElsIf FormOutput = "AST" Then
-		
-		Parser = Parser(FormSource.GetText());
-		ParseModule(Parser);
-		JSONWriter = New JSONWriter;
-		FileName = GetTempFileName(".json");
-		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
-		WriteJSON(JSONWriter, Parser.Module);
-		JSONWriter.Close();
-		FormResult.Read(FileName, TextEncoding.UTF8);	
-		
-	ElsIf FormOutput = "BSL" Then	
-		
-		Backend = Backend();
-		Parser = Parser(FormSource.GetText());
-		ParseModule(Parser);
-		BSL_VisitModule(Backend, Parser.Module);
-		FormResult.SetText(StrConcat(Backend.Result));
-		
-	ElsIf FormOutput = "PS" Then	
-		
-		Backend = Backend();
-		Parser = Parser(FormSource.GetText());
-		ParseModule(Parser);
-		PS_VisitModule(Backend, Parser.Module);
-		FormResult.SetText(StrConcat(Backend.Result));
-		
-	EndIf; 
-	
-	If FormVerbose Then
-		Message((CurrentUniversalDateInMilliseconds() - Start) / 1000);
-	EndIf; 
-	
-EndProcedure // Translate()
-
-#EndRegion // EventHandlers
-
 #Region Init
 
-&AtClient
 Procedure Init()
 	
 	InitEnums();
@@ -186,23 +82,17 @@ Procedure Init()
 	
 EndProcedure // Init() 
 
-&AtClient
 Procedure InitEnums()
-	
 	Keywords = Keywords();
-	
 	Tokens = Tokens(Keywords);
-	
 	ObjectKinds = ObjectKinds();
-	
 EndProcedure // InitEnums()
 
 #EndRegion // Init
 
 #Region Enums
 
-&AtClientAtServerNoContext
-Function Keywords()
+Function Keywords() Export
 	Var Keywords;
 	
 	Keywords = Enum(New Structure,
@@ -221,9 +111,12 @@ Function Keywords()
 	
 EndFunction // Keywords() 
 
-&AtClientAtServerNoContext
-Function Tokens(Keywords)
+Function Tokens(Keywords = Undefined) Export
 	Var Tokens;
+	
+	If Keywords = Undefined Then
+		Keywords = Keywords();
+	EndIf; 
 	
 	Tokens = Enum(New Structure(Keywords),
 		
@@ -258,8 +151,7 @@ Function Tokens(Keywords)
 	
 EndFunction // Tokens() 
 
-&AtClientAtServerNoContext
-Function ObjectKinds()
+Function ObjectKinds() Export
 	Var ObjectKinds;
 	
 	ObjectKinds = Enum(New Structure,
@@ -275,8 +167,7 @@ Function ObjectKinds()
 	
 EndFunction // ObjectKinds() 
 
-&AtClientAtServerNoContext
-Function SelectorKinds()
+Function SelectorKinds() Export
 	Var SelectorKinds;
 	
 	SelectorKinds = Enum(New Structure,
@@ -289,7 +180,6 @@ Function SelectorKinds()
 	
 EndFunction // SelectorKinds()
 
-&AtClientAtServerNoContext
 Function Enum(Structure, Keys)
 	Var ItemList, Value;
 	
@@ -309,8 +199,7 @@ EndFunction // Enum()
 
 #Region Scanner
 
-&AtClientAtServerNoContext
-Function Scanner(Source)
+Function Scanner(Source) Export
 	Var Scanner;
 	
 	Scanner = New Structure(
@@ -331,12 +220,13 @@ Function Scanner(Source)
 	Scanner.Pos = 0;
 	Scanner.Lit = "";
 	
+	Init();
+	
 	Return Scanner;
 	
 EndFunction // Scanner() 
 
-&AtClient
-Function Scan(Scanner)
+Function Scan(Scanner) Export
 	Var Char, Tok, Lit;
 	SkipWhitespace(Scanner);
 	Char = Scanner.Char;
@@ -446,7 +336,6 @@ Function Scan(Scanner)
 	Return Tok;
 EndFunction // Scan() 
 
-&AtClientAtServerNoContext
 Function NextChar(Scanner)
 	If Scanner.Char <> "" Then
 		Scanner.Pos = Scanner.Pos + 1;
@@ -456,7 +345,6 @@ Function NextChar(Scanner)
 	Return Scanner.Char;
 EndFunction // NextChar()  
 
-&AtClientAtServerNoContext
 Function SkipWhitespace(Scanner)
 	Var Char;
 	Char = Scanner.Char;
@@ -469,7 +357,6 @@ Function SkipWhitespace(Scanner)
 	EndDo; 
 EndFunction // SkipWhitespace() 
 
-&AtClientAtServerNoContext
 Function ScanComment(Scanner)
 	Var Len, Char;
 	Len = 0;
@@ -481,7 +368,6 @@ Function ScanComment(Scanner)
 	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
 EndFunction // ScanComment()
 
-&AtClientAtServerNoContext
 Function ScanIdentifier(Scanner)
 	Var Len, Char;
 	Len = 1;
@@ -493,7 +379,6 @@ Function ScanIdentifier(Scanner)
 	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
 EndFunction // ScanIdentifier()
 
-&AtClientAtServerNoContext
 Function ScanNumber(Scanner)
 	Var Len;
 	Len = ScanIntegerLen(Scanner); // Len >= 1
@@ -503,7 +388,6 @@ Function ScanNumber(Scanner)
 	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
 EndFunction // ScanNumber()
 
-&AtClientAtServerNoContext
 Function ScanIntegerLen(Scanner)
 	Var Len;
 	Len = 1;
@@ -513,7 +397,6 @@ Function ScanIntegerLen(Scanner)
 	Return Len;
 EndFunction // ScanIntegerLen()
 
-&AtClientAtServerNoContext
 Function ScanString(Scanner)
 	Var Len;
 	Len = ScanStringLen(Scanner);
@@ -523,7 +406,6 @@ Function ScanString(Scanner)
 	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
 EndFunction // ScanString()
 
-&AtClientAtServerNoContext
 Function ScanStringLen(Scanner)
 	Var Len, Char;
 	Len = 1;
@@ -538,7 +420,6 @@ Function ScanStringLen(Scanner)
 	Return Len + ?(Char <> "", 1, 0);
 EndFunction // ScanStringLen()
 
-&AtClientAtServerNoContext
 Function ScanDateTime(Scanner)
 	Var Len, Char;
 	Len = 1;
@@ -560,7 +441,6 @@ EndFunction // ScanDateTime()
 
 #Region AbstractSyntaxTree
 
-&AtClientAtServerNoContext
 Function Module(Decls, Statements)
 	Var Module;
 	
@@ -576,7 +456,6 @@ EndFunction // Module()
 
 #Region Scope
 
-&AtClientAtServerNoContext
 Function Scope(Outer)
 	Var Scope;
 	
@@ -592,13 +471,12 @@ Function Scope(Outer)
 	
 EndFunction // Scope()
 
-&AtClientAtServerNoContext
 Function Object(Kind, Name, Type = Undefined)
 	Var Object;
 	
 	Object = New Structure(
-		"Kind,"     // string (one of ObjectKinds)
-		"Name,"     // string
+		"Kind," // string (one of ObjectKinds)
+		"Name," // string
 	,
 	Kind, Name, Type);
 	
@@ -614,7 +492,6 @@ EndFunction // Object()
 
 #Region Declarations
 
-&AtClientAtServerNoContext
 Function VarDecl(Object, Init = False, Value = Undefined)
 	Var VarDecl;
 	
@@ -632,7 +509,6 @@ Function VarDecl(Object, Init = False, Value = Undefined)
 	
 EndFunction // VarDecl() 
 
-&AtClientAtServerNoContext
 Function VarListDecl(VarList)
 	Var VarListDecl;
 	
@@ -646,7 +522,6 @@ Function VarListDecl(VarList)
 	
 EndFunction // VarListDecl()
 
-&AtClientAtServerNoContext
 Function ProcDecl(Object, Decls, Statements)
 	Var ProcDecl;
 	
@@ -662,7 +537,6 @@ Function ProcDecl(Object, Decls, Statements)
 	
 EndFunction // ProcDecl()
 
-&AtClientAtServerNoContext
 Function FuncDecl(Object, Decls, Statements)
 	Var FuncDecl;
 	
@@ -678,7 +552,6 @@ Function FuncDecl(Object, Decls, Statements)
 	
 EndFunction // FuncDecl()
 
-&AtClientAtServerNoContext
 Function ParamDecl(Object, Init = False, Value = Undefined)
 	Var ParamDecl;
 	
@@ -700,7 +573,6 @@ EndFunction // ParamDecl()
 
 #Region Expressions
 
-&AtClientAtServerNoContext
 Function BasicLitExpr(Kind, Value)
 	Var BasicLitExpr;
 	
@@ -715,13 +587,12 @@ Function BasicLitExpr(Kind, Value)
 	
 EndFunction // BasicLitExpr() 
 
-&AtClientAtServerNoContext
 Function Selector(Kind, Value)
 	Var Selector;
 	
 	Selector = New Structure(
-		"Kind,"      // string (one of SelectorKinds)
-		"Value,"     // string or array (one of expressions)
+		"Kind,"  // string (one of SelectorKinds)
+		"Value," // string or array (one of expressions)
 	,
 	Kind, Value);
 	
@@ -729,7 +600,6 @@ Function Selector(Kind, Value)
 	
 EndFunction // Selector()
 
-&AtClientAtServerNoContext
 Function DesignatorExpr(Object, Selectors, Call)
 	Var DesignatorExpr;
 	
@@ -748,7 +618,6 @@ Function DesignatorExpr(Object, Selectors, Call)
 	
 EndFunction // DesignatorExpr() 
 
-&AtClientAtServerNoContext
 Function UnaryExpr(Operator, Operand)
 	Var UnaryExpr;
 	
@@ -763,7 +632,6 @@ Function UnaryExpr(Operator, Operand)
 	
 EndFunction // UnaryExpr() 
 
-&AtClientAtServerNoContext
 Function BinaryExpr(Left, Operator, Right)
 	Var BinaryExpr;
 	
@@ -779,7 +647,6 @@ Function BinaryExpr(Left, Operator, Right)
 	
 EndFunction // BinaryExpr()
 
-&AtClientAtServerNoContext
 Function RangeExpr(Left, Right)
 	Var RangeExpr;
 	
@@ -794,7 +661,6 @@ Function RangeExpr(Left, Right)
 	
 EndFunction // RangeExpr()
 
-&AtClientAtServerNoContext
 Function NewExpr(Constructor)
 	Var NewExpr;
 	
@@ -808,12 +674,11 @@ Function NewExpr(Constructor)
 	
 EndFunction // NewExpr()
 
-&AtClientAtServerNoContext
 Function TernaryExpr(Condition, ThenPart, ElsePart)
 	Var TernaryExpr;
 	
 	TernaryExpr = New Structure(
-		"NodeType,"   // string (type of this structure)
+		"NodeType,"  // string (type of this structure)
 		"Condition," // structure (one of expressions)
 		"ThenPart,"  // structure (one of expressions)
 		"ElsePart"   // structure (one of expressions)
@@ -824,7 +689,6 @@ Function TernaryExpr(Condition, ThenPart, ElsePart)
 	
 EndFunction // TernaryExpr()
 
-&AtClientAtServerNoContext
 Function ParenExpr(Expr)
 	Var ParenExpr;
 	
@@ -842,7 +706,6 @@ EndFunction // ParenExpr()
 
 #Region Statements
 
-&AtClientAtServerNoContext
 Function AssignStmt(Left, Right)
 	Var AssignStmt;
 	
@@ -857,7 +720,6 @@ Function AssignStmt(Left, Right)
 	
 EndFunction // AssignStmt()
 
-&AtClientAtServerNoContext
 Function AddAssignStmt(Left, Right)
 	Var AddAssignStmt;
 	
@@ -872,7 +734,6 @@ Function AddAssignStmt(Left, Right)
 	
 EndFunction // AddAssignStmt()
 
-&AtClientAtServerNoContext
 Function ReturnStmt(ExprList)
 	Var ReturnStmt;
 	
@@ -889,7 +750,6 @@ Function ReturnStmt(ExprList)
 	
 EndFunction // ReturnStmt()
 
-&AtClientAtServerNoContext
 Function BreakStmt()
 	Var BreakStmt;
 	
@@ -902,7 +762,6 @@ Function BreakStmt()
 	
 EndFunction // BreakStmt()
 
-&AtClientAtServerNoContext
 Function ContinueStmt()
 	Var ContinueStmt;
 	
@@ -915,7 +774,6 @@ Function ContinueStmt()
 	
 EndFunction // ContinueStmt()
 
-&AtClientAtServerNoContext
 Function RaiseStmt(Expr = Undefined)
 	Var RaiseStmt;
 	
@@ -932,7 +790,6 @@ Function RaiseStmt(Expr = Undefined)
 	
 EndFunction // RaiseStmt()
 
-&AtClientAtServerNoContext
 Function ExecuteStmt(Expr)
 	Var ExecuteStmt;
 	
@@ -946,12 +803,11 @@ Function ExecuteStmt(Expr)
 	
 EndFunction // ExecuteStmt()
 
-&AtClientAtServerNoContext
 Function CallStmt(DesignatorExpr)
 	Var CallStmt;
 	
 	CallStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
+		"NodeType,"       // string (type of this structure)
 		"DesignatorExpr," // structure (DesignatorExpr)
 	,
 	"CallStmt", DesignatorExpr);
@@ -960,7 +816,6 @@ Function CallStmt(DesignatorExpr)
 	
 EndFunction // CallStmt()
 
-&AtClientAtServerNoContext
 Function IfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
 	Var IfStmt;
 	
@@ -983,7 +838,6 @@ Function IfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined
 	
 EndFunction // IfStmt()
 
-&AtClientAtServerNoContext
 Function WhileStmt(Condition, Statements)
 	Var WhileStmt;
 	
@@ -998,15 +852,14 @@ Function WhileStmt(Condition, Statements)
 	
 EndFunction // WhileStmt()
 
-&AtClientAtServerNoContext
 Function ForStmt(DesignatorExpr, Collection, Statements)
 	Var ForStmt;
 	
 	ForStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
+		"NodeType,"       // string (type of this structure)
 		"DesignatorExpr," // structure (DesignatorExpr)
-		"Collection," // structure (one of expressions)
-		"Statements," // array (one of statements)
+		"Collection,"     // structure (one of expressions)
+		"Statements,"     // array (one of statements)
 	,
 	"ForStmt", DesignatorExpr, Collection, Statements);
 	
@@ -1014,14 +867,13 @@ Function ForStmt(DesignatorExpr, Collection, Statements)
 	
 EndFunction // ForStmt()
 
-&AtClientAtServerNoContext
 Function CaseStmt(DesignatorExpr, WhenPart, ElsePart = Undefined)
 	Var CaseStmt;
 	
 	CaseStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
+		"NodeType,"       // string (type of this structure)
 		"DesignatorExpr," // structure (one of expressions)
-		"WhenPart,"   // array (IfStmt)
+		"WhenPart,"       // array (IfStmt)
 	,
 	"CaseStmt", DesignatorExpr, WhenPart);
 		
@@ -1033,7 +885,6 @@ Function CaseStmt(DesignatorExpr, WhenPart, ElsePart = Undefined)
 	
 EndFunction // CaseStmt()
 
-&AtClientAtServerNoContext
 Function TryStmt(TryPart, ExceptPart)
 	Var TryStmt;
 	
@@ -1052,12 +903,11 @@ EndFunction // TryStmt()
 
 #Region Types
 
-&AtClientAtServerNoContext
 Function Signature(ParamList)
 	Var Signature;
 	
 	Signature = New Structure(
-		"NodeType,"      // string (type of this structure)
+		"NodeType,"  // string (type of this structure)
 		"ParamList," // array (boolean)
 	,
 	"Signature", ParamList);
@@ -1071,8 +921,7 @@ EndFunction // Signature()
 
 #Region Parser
 
-&AtClientAtServerNoContext
-Function Parser(Source)
+Function Parser(Source) Export
 	Var Parser;
 	
 	Parser = New Structure(
@@ -1099,7 +948,6 @@ Function Parser(Source)
 	
 EndFunction // Parser() 
 
-&AtClient
 Function Next(Parser)
 	Var Tok, Lit;
 	Tok = Scan(Parser.Scanner);
@@ -1118,7 +966,6 @@ Function Next(Parser)
 	Return Parser.Tok;
 EndFunction // Next() 
 
-&AtClient
 Function SkipIgnoredTokens(Parser)
 	Var Tok;
 	Tok = Parser.Tok;
@@ -1128,7 +975,6 @@ Function SkipIgnoredTokens(Parser)
 	Return Tok;
 EndFunction // SkipIgnoredTokens()
 
-&AtClient
 Function FindObject(Parser, Name)
 	Var Scope, Object;
 	Scope = Parser.Scope;
@@ -1140,7 +986,6 @@ Function FindObject(Parser, Name)
 	Return Object;
 EndFunction // FindObject() 
 
-&AtClient
 Function OpenScope(Parser)
 	Var Scope;
 	Scope = Scope(Parser.Scope);
@@ -1148,7 +993,6 @@ Function OpenScope(Parser)
 	Return Scope;
 EndFunction // OpenScope() 
 
-&AtClient
 Function CloseScope(Parser)
 	Var Scope;
 	Scope = Parser.Scope.Outer;
@@ -1156,7 +1000,6 @@ Function CloseScope(Parser)
 	Return Scope;
 EndFunction // CloseScope()
 
-&AtClient
 Function ParseString(Parser)
 	Var Scanner, Tok, List;
 	Scanner = Parser.Scanner;
@@ -1178,7 +1021,6 @@ Function ParseString(Parser)
 	Return StrConcat(List);
 EndFunction // ParseString() 
 
-&AtClient
 Function ParseUnaryExpr(Parser)
 	Var Operator;
 	Operator = Parser.Tok;
@@ -1191,7 +1033,6 @@ Function ParseUnaryExpr(Parser)
 	Return ParseOperand(Parser);
 EndFunction // ParseUnaryExpr() 
 
-&AtClient
 Function ParseOperand(Parser)
 	Var Tok, StrList, Operand;
 	Tok = Parser.Tok;
@@ -1224,7 +1065,6 @@ Function ParseOperand(Parser)
 	Return Operand;
 EndFunction // ParseOperand() 
 
-&AtClient
 Function ParseNewExpr(Parser)
 	Var Tok, Constructor;
 	Tok = Next(Parser);
@@ -1243,7 +1083,6 @@ Function ParseNewExpr(Parser)
 	Return NewExpr(Constructor);	
 EndFunction // ParseNewExpr() 
 
-&AtClient 
 Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 	Var Object, Selector, List, Call, Name, Column;
 	Object = ParseQualident(Parser);
@@ -1271,7 +1110,7 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 				Parser.Scope.Objects.Insert(Name, Object);
 			Else
 				Object = Object("Unknown", Name);
-				If FormVerbose Then
+				If Verbose Then
 					Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
 				EndIf;  
 			EndIf;
@@ -1280,7 +1119,6 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 	Return DesignatorExpr(Object, List, Call);
 EndFunction // ParseDesignatorExpr() 
 
-&AtClient
 Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 	Var List;
 	List = New Array;
@@ -1292,7 +1130,6 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 	Return List;
 EndFunction // ParseDesignatorExprList() 
 
-&AtClient
 Function ParseQualident(Parser)
 	Var Module, Object;
 	Parser.Imports.Property(Parser.Lit, Module);
@@ -1308,7 +1145,6 @@ Function ParseQualident(Parser)
 	Return Object;
 EndFunction // ParseQualident() 
 
-&AtClient 
 Function ParseSelector(Parser)
 	Var Tok, Value;
 	Tok = Next(Parser);
@@ -1340,7 +1176,6 @@ Function ParseSelector(Parser)
 	Return Undefined;	
 EndFunction // ParseSelector()
 
-&AtClient 
 Function ParseExpression(Parser)
 	Var Expr, Operator;
 	Expr = ParseAndExpr(Parser);
@@ -1352,7 +1187,6 @@ Function ParseExpression(Parser)
 	Return Expr;
 EndFunction // ParseExpression()
 
-&AtClient 
 Function ParseAndExpr(Parser)
 	Var Expr, Operator;
 	Expr = ParseRelExpr(Parser);
@@ -1364,7 +1198,6 @@ Function ParseAndExpr(Parser)
 	Return Expr;	
 EndFunction // ParseAndExpr()
 
-&AtClient 
 Function ParseRelExpr(Parser)
 	Var Expr, Operator;
 	Expr = ParseAddExpr(Parser);
@@ -1376,7 +1209,6 @@ Function ParseRelExpr(Parser)
 	Return Expr;	
 EndFunction // ParseRelExpr()
 
-&AtClient 
 Function ParseAddExpr(Parser)
 	Var Expr, Operator;
 	Expr = ParseMulExpr(Parser);
@@ -1388,7 +1220,6 @@ Function ParseAddExpr(Parser)
 	Return Expr;	
 EndFunction // ParseAddExpr()
 
-&AtClient 
 Function ParseMulExpr(Parser)
 	Var Expr, Operator;
 	Expr = ParseUnaryExpr(Parser);
@@ -1400,7 +1231,6 @@ Function ParseMulExpr(Parser)
 	Return Expr;	
 EndFunction // ParseMulExpr()
 
-&AtClient 
 Function ParseExprList(Parser, IsArguments = False)
 	Var ExprList, ExpectExpression;
 	ExprList = New Array;
@@ -1436,7 +1266,6 @@ Function ParseExprList(Parser, IsArguments = False)
 	Return ExprList;
 EndFunction // ParseExprList()  
 
-&AtClient
 Function ParseTernaryExpr(Parser)
 	Var Condition, ThenPart, ElsePart;
 	Next(Parser);
@@ -1454,7 +1283,6 @@ Function ParseTernaryExpr(Parser)
 	Return TernaryExpr(Condition, ThenPart, ElsePart);
 EndFunction // ParseTernaryExpr() 
 
-&AtClient
 Function ParseFuncDecl(Parser)
 	Var Scope, Object, Name, Decls;
 	Next(Parser);
@@ -1481,7 +1309,6 @@ Function ParseFuncDecl(Parser)
 	Return FuncDecl(Object, Decls, Statements);
 EndFunction // ParseFuncDecl() 
 
-&AtClient
 Function ParseSignature(Parser)
 	Var ParamList;
 	Expect(Parser, Tokens.Lparen);
@@ -1494,7 +1321,7 @@ Function ParseSignature(Parser)
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
 	If Parser.Tok = Tokens.Export Then
-		If FormVerbose Then
+		If Verbose Then
 			Error(Parser.Scanner, "keyword `Export` ignored");
 		EndIf; 
 		Next(Parser);
@@ -1502,7 +1329,6 @@ Function ParseSignature(Parser)
 	Return Signature(ParamList);
 EndFunction // ParseSignature()  
 
-&AtClient
 Function ParseProcDecl(Parser)
 	Var Scope, Object, Name, Decls;
 	Next(Parser);
@@ -1527,7 +1353,6 @@ Function ParseProcDecl(Parser)
 	Return ProcDecl(Object, Decls, Statements);
 EndFunction // ParseProcDecl()
 
-&AtClient
 Function ParseReturnStmt(Parser)
 	Var ExprList;
 	Next(Parser);
@@ -1537,7 +1362,6 @@ Function ParseReturnStmt(Parser)
 	Return ReturnStmt(ExprList);
 EndFunction // ParseReturnStmt() 
 
-&AtClient
 Function ParseVarListDecl(Parser)
 	Var VarList;
 	VarList = New Array;	
@@ -1547,7 +1371,7 @@ Function ParseVarListDecl(Parser)
 		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
 	If Parser.Tok = Tokens.Export Then
-		If FormVerbose Then
+		If Verbose Then
 			Error(Parser.Scanner, "keyword `Export` ignored");
 		EndIf; 
 		Next(Parser);
@@ -1555,7 +1379,6 @@ Function ParseVarListDecl(Parser)
 	Return VarListDecl(VarList);
 EndFunction // ParseVarListDecl() 
 
-&AtClient
 Function ParseVarDecl(Parser)
 	Var Tok, Name, Object, VarDecl; 
 	Expect(Parser, Tokens.Ident);
@@ -1577,7 +1400,6 @@ Function ParseVarDecl(Parser)
 	Return VarDecl;
 EndFunction // ParseVarDecl() 
 
-&AtClient
 Function ParseParamList(Parser)
 	Var ParamList;
 	ParamList = New Array;	
@@ -1589,11 +1411,10 @@ Function ParseParamList(Parser)
 	Return ParamList;
 EndFunction // ParseParamList()
 
-&AtClient
 Function ParseParamDecl(Parser)
 	Var Tok, Name, Object, ParamDecl;
 	If Parser.Tok = Tokens.Val Then
-		If FormVerbose Then
+		If Verbose Then
 			Error(Parser.Scanner, "keyword `Val` ignored");
 		EndIf;
 		Next(Parser);
@@ -1617,7 +1438,6 @@ Function ParseParamDecl(Parser)
 	Return ParamDecl;
 EndFunction // ParseParamDecl()
 
-&AtClient
 Function ParseStatements(Parser)
 	Var Statements, Stmt;
 	Statements = New Array;
@@ -1629,7 +1449,6 @@ Function ParseStatements(Parser)
 	Return Statements;
 EndFunction // ParseStatements() 
 
-&AtClient
 Function ParseStmt(Parser)
 	Var Tok;
 	Tok = SkipIgnoredTokens(Parser);
@@ -1665,7 +1484,6 @@ Function ParseStmt(Parser)
 	Return Undefined;
 EndFunction // ParseStmt()
 
-&AtClient
 Function ParseRaiseStmt(Parser)
 	Var Tok, Expr;
 	Next(Parser);
@@ -1675,7 +1493,6 @@ Function ParseRaiseStmt(Parser)
 	Return RaiseStmt(Expr);
 EndFunction // ParseRaiseStmt() 
 
-&AtClient
 Function ParseExecuteStmt(Parser)
 	Var Tok, Expr;
 	Next(Parser);
@@ -1691,7 +1508,6 @@ Function ParseExecuteStmt(Parser)
 	Return ExecuteStmt(Expr);
 EndFunction // ParseExecuteStmt()
 
-&AtClient
 Function ParseAssignOrCallStmt(Parser)
 	Var Tok, Left, Right;
 	Left = ParseDesignatorExprList(Parser, True);
@@ -1711,7 +1527,6 @@ Function ParseAssignOrCallStmt(Parser)
 	Expect(Parser, Tokens.Eql);
 EndFunction // ParseAssignOrCallStmt() 
 
-&AtClient
 Function ParseIfStmt(Parser)
 	Var Tok, Condition, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen;
@@ -1742,7 +1557,6 @@ Function ParseIfStmt(Parser)
 	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
 
-&AtClient
 Function ParseTryStmt(Parser)
 	Var TryPart, ExceptPart;
 	Next(Parser);
@@ -1755,7 +1569,6 @@ Function ParseTryStmt(Parser)
 	Return TryStmt(TryPart, ExceptPart);
 EndFunction // ParseTryStmt()
 
-&AtClient
 Function ParseCaseStmt(Parser)
 	Var Tok, DesignatorExpr, ElsePart;
 	Var WhenPart, WhenCond, WhenThen;
@@ -1781,7 +1594,6 @@ Function ParseCaseStmt(Parser)
 	Return CaseStmt(DesignatorExpr, WhenPart, ElsePart);
 EndFunction // ParseCaseStmt()
 
-&AtClient
 Function ParseWhileStmt(Parser)
 	Var Condition, Statements;
 	Next(Parser);
@@ -1794,7 +1606,6 @@ Function ParseWhileStmt(Parser)
 	Return WhileStmt(Condition, Statements)
 EndFunction // ParseWhileStmt()
 
-&AtClient
 Function ParseForStmt(Parser)
 	Var DesignatorExpr, Left, Right, Collection, Statements;
 	Next(Parser);
@@ -1825,7 +1636,6 @@ Function ParseForStmt(Parser)
 	Return ForStmt(DesignatorExpr, Collection, Statements);
 EndFunction // ParseForStmt()
 
-&AtClient
 Function ParseVarDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
@@ -1841,7 +1651,6 @@ Function ParseVarDecls(Parser)
 	Return Decls;
 EndFunction // ParseVarDecls()
 
-&AtClient
 Function ParseDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
@@ -1865,11 +1674,10 @@ Function ParseDecls(Parser)
 	Return Decls;
 EndFunction // ParseDecls() 
 
-&AtClient
-Function ParseModule(Parser)
+Function ParseModule(Parser) Export
 	Next(Parser);
 	Parser.Module = Module(ParseDecls(Parser), ParseStatements(Parser));
-	If FormVerbose Then
+	If Verbose Then
 		For Each Item In Parser.Unknown Do
 			Message(StrTemplate("Undeclared identifier `%1`", Item.Key)); 
 		EndDo;
@@ -1881,7 +1689,6 @@ EndFunction // ParseModule()
 
 #Region Auxiliary
 
-&AtClient
 Function Value(Tok, Lit)
 	If Tok = Tokens.Number Then
 		Return Number(Lit);
@@ -1897,7 +1704,6 @@ Function Value(Tok, Lit)
 	Return Undefined;
 EndFunction // Value()
 
-&AtClientAtServerNoContext
 Function AsDate(DateLit)
 	Var List, Char;
 	List = New Array;
@@ -1910,14 +1716,12 @@ Function AsDate(DateLit)
 	Return Date(StrConcat(List));
 EndFunction // AsDate()
 
-&AtClient
 Procedure Expect(Parser, Tok)
 	If Parser.Tok <> Tok Then 
 		Error(Parser.Scanner, "Expected " + Tok,, True);
 	EndIf; 
 EndProcedure // Expect()
 
-&AtClient
 Function StringToken(Lit)
 	If Left(Lit, 1) = """" Then
 		If Right(Lit, 1) = """" Then
@@ -1934,7 +1738,6 @@ Function StringToken(Lit)
 	EndIf; 	
 EndFunction // StringToken()
 
-&AtClient
 Function Lookup(Lit)
 	Var Tok;
 	If Not Keywords.Property(Lit, Tok) Then
@@ -1943,17 +1746,14 @@ Function Lookup(Lit)
 	Return Tok;
 EndFunction // Lookup() 
 
-&AtClientAtServerNoContext
 Function IsLetter(Char)
 	Return Char <> "" And StrFind("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", Char) > 0;
 EndFunction // IsLetter()
 
-&AtClientAtServerNoContext
 Function IsDigit(Char)
 	Return "0" <= Char And Char <= "9";	
 EndFunction // IsLetter()
 
-&AtClientAtServerNoContext
 Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
 	Var ErrorText;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
@@ -1972,8 +1772,7 @@ EndProcedure // Error()
 
 #Region Backends 	
 
-&AtClient
-Function Backend()
+Function Backend() Export
 	Var Backend;
 	
 	Backend = New Structure(
@@ -1986,7 +1785,6 @@ Function Backend()
 		
 EndFunction // Backend() 
 
-&AtClientAtServerNoContext
 Procedure Indent(Backend)
 	Var Result;
 	Result = Backend.Result;
@@ -1997,13 +1795,11 @@ EndProcedure // Indent()
 
 #Region BSL
 
-&AtClient
-Procedure BSL_VisitModule(Backend, Module)
+Procedure BSL_VisitModule(Backend, Module) Export
 	BSL_VisitDecls(Backend, Module.Decls);
 	BSL_VisitStatements(Backend, Module.Statements); 
 EndProcedure // BSL_VisitModule()
 
-&AtClient
 Procedure BSL_VisitDecls(Backend, Decls)
 	Backend.Indent = Backend.Indent + 1;
 	For Each Decl In Decls Do
@@ -2012,7 +1808,6 @@ Procedure BSL_VisitDecls(Backend, Decls)
 	Backend.Indent = Backend.Indent - 1;
 EndProcedure // BSL_VisitDecls()
 
-&AtClient
 Procedure BSL_VisitStatements(Backend, Statements)
 	Backend.Indent = Backend.Indent + 1;
 	For Each Stmt In Statements Do
@@ -2022,7 +1817,6 @@ Procedure BSL_VisitStatements(Backend, Statements)
 	Indent(Backend);
 EndProcedure // BSL_VisitStatements() 
 
-&AtClient
 Procedure BSL_VisitDecl(Backend, Decl)
 	Var Result, NodeType;
 	Result = Backend.Result;
@@ -2058,12 +1852,10 @@ Procedure BSL_VisitDecl(Backend, Decl)
 			Result.Add(StrTemplate("EndProcedure // %1()", Decl.Object.Name));
 		EndIf;
 		Result.Add(Chars.LF);
-		Result.Add(Chars.LF);
 		Backend.Indent = Backend.Indent - 1;
 	EndIf; 	
 EndProcedure // BSL_VisitDecl() 
 
-&AtClient
 Procedure BSL_VisitVarListDecl(Backend, VarListDecl)
 	Var Result, Buffer;	
 	If VarListDecl <> Undefined Then	
@@ -2078,7 +1870,6 @@ Procedure BSL_VisitVarListDecl(Backend, VarListDecl)
 	EndIf; 
 EndProcedure // BSL_VisitVarListDecl() 
 
-&AtClient
 Procedure BSL_VisitStmt(Backend, Stmt)
 	Var Result, NodeType;
 	Result = Backend.Result;
@@ -2209,7 +2000,6 @@ Procedure BSL_VisitStmt(Backend, Stmt)
 	EndIf; 	
 EndProcedure // BSL_VisitStmt()
 
-&AtClient
 Procedure BSL_VisitIfStmt(Backend, IfStmt)
 	Var Result;
 	Result = Backend.Result;
@@ -2225,7 +2015,6 @@ Procedure BSL_VisitIfStmt(Backend, IfStmt)
 	EndIf; 
 EndProcedure // BSL_VisitIfStmt() 
 
-&AtClient
 Function BSL_VisitExprList(ExprList)
 	Var Buffer;
 	If ExprList <> Undefined Then
@@ -2241,7 +2030,6 @@ Function BSL_VisitExprList(ExprList)
 	EndIf; 
 EndFunction // BSL_VisitExprList()
 
-&AtClient
 Function BSL_VisitExpr(Expr)
 	Var NodeType, BasicLitKind;
 	NodeType = Expr.NodeType;
@@ -2281,7 +2069,6 @@ Function BSL_VisitExpr(Expr)
 	EndIf;	
 EndFunction // BSL_VisitExpr()
 
-&AtClient
 Function BSL_VisitDesignatorExpr(DesignatorExpr)
 	Var Buffer;
 	Buffer = New Array;
@@ -2311,13 +2098,11 @@ EndFunction // BSL_VisitDesignatorExpr()
 
 #Region PS
 
-&AtClient
-Procedure PS_VisitModule(Backend, Module)
+Procedure PS_VisitModule(Backend, Module) Export
 	PS_VisitDecls(Backend, Module.Decls);
 	PS_VisitStatements(Backend, Module.Statements); 
 EndProcedure // PS_VisitModule()
 
-&AtClient
 Procedure PS_VisitDecls(Backend, Decls)
 	Backend.Indent = Backend.Indent + 1;
 	For Each Decl In Decls Do
@@ -2326,7 +2111,6 @@ Procedure PS_VisitDecls(Backend, Decls)
 	Backend.Indent = Backend.Indent - 1;
 EndProcedure // PS_VisitDecls()
 
-&AtClient
 Procedure PS_VisitStatements(Backend, Statements)
 	Backend.Indent = Backend.Indent + 1;
 	For Each Stmt In Statements Do
@@ -2336,7 +2120,6 @@ Procedure PS_VisitStatements(Backend, Statements)
 	Indent(Backend);
 EndProcedure // PS_VisitStatements() 
 
-&AtClient
 Procedure PS_VisitDecl(Backend, Decl)
 	Var Result, NodeType;
 	Result = Backend.Result;
@@ -2365,7 +2148,6 @@ Procedure PS_VisitDecl(Backend, Decl)
 	EndIf; 	
 EndProcedure // PS_VisitDecl() 
 
-&AtClient
 Procedure PS_VisitVarListDecl(Backend, VarListDecl)
 	Var Result;	
 	If VarListDecl <> Undefined Then	
@@ -2381,7 +2163,6 @@ Procedure PS_VisitVarListDecl(Backend, VarListDecl)
 	EndIf; 
 EndProcedure // PS_VisitVarListDecl() 
 
-&AtClient
 Procedure PS_VisitParamList(Backend, ParamList)
 	Var Result, Buffer;	
 	If ParamList <> Undefined Then	
@@ -2396,7 +2177,6 @@ Procedure PS_VisitParamList(Backend, ParamList)
 	EndIf; 
 EndProcedure // PS_VisitParamList()
 
-&AtClient
 Procedure PS_VisitStmt(Backend, Stmt)
 	Var Result, NodeType;
 	Result = Backend.Result;
@@ -2517,7 +2297,6 @@ Procedure PS_VisitStmt(Backend, Stmt)
 	EndIf; 	
 EndProcedure // PS_VisitStmt()
 
-&AtClient
 Procedure PS_VisitIfStmt(Backend, IfStmt)
 	Var Result;
 	Result = Backend.Result;
@@ -2536,7 +2315,6 @@ Procedure PS_VisitIfStmt(Backend, IfStmt)
 	EndIf;
 EndProcedure // PS_VisitIfStmt() 
 
-&AtClient
 Procedure PS_VisitWhenPart(Backend, IfStmt)
 	Var Result;
 	Result = Backend.Result;
@@ -2548,7 +2326,6 @@ Procedure PS_VisitWhenPart(Backend, IfStmt)
 	Result.Add(Chars.LF);
 EndProcedure // PS_VisitWhenPart()
 
-&AtClient
 Function PS_VisitExprList(ExprList, Separator)
 	Var Buffer;
 	If ExprList <> Undefined Then
@@ -2564,7 +2341,6 @@ Function PS_VisitExprList(ExprList, Separator)
 	EndIf; 
 EndFunction // PS_VisitExprList()
 
-&AtClient
 Function PS_VisitExpr(Expr)
 	Var NodeType, BasicLitKind;
 	NodeType = Expr.NodeType;
@@ -2604,7 +2380,6 @@ Function PS_VisitExpr(Expr)
 	EndIf;	
 EndFunction // PS_VisitExpr()
 
-&AtClient
 Function PS_VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
 	Var Buffer, Selector;
 	Buffer = New Array;
