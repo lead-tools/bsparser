@@ -1961,7 +1961,7 @@ Procedure BSL_VisitStmt(Backend, Stmt)
 			Result.Add(" = ");
 			IfStmt = Stmt.WhenPart[0];
 			BSL_VisitIfStmt(Backend, IfStmt);
-			For Index = 1 To Stmt.WhenPart.Count() Do
+			For Index = 1 To Stmt.WhenPart.Count() - 1 Do
 				IfStmt = Stmt.WhenPart[Index];
 				Result.Add("ElsIf ");
 				Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
