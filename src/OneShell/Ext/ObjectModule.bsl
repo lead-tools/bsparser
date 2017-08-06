@@ -502,7 +502,7 @@ Function VarDecl(Object, Init = False, Value = Undefined)
 	"VarDecl", Object);
 	
 	If Init Then
-		VarDecl.Insert("Value", Value); // one of main types
+		VarDecl.Insert("Value", Value); // structure (one of expressions)
 	EndIf; 
 	
 	Return VarDecl;
@@ -562,7 +562,7 @@ Function ParamDecl(Object, Init = False, Value = Undefined)
 	"ParamDecl", Object);
 	
 	If Init Then
-		ParamDecl.Insert("Value", Value); // one of main types
+		ParamDecl.Insert("Value", Value); // structure (one of expressions)
 	EndIf; 
 	
 	Return ParamDecl;
@@ -1390,8 +1390,7 @@ Function ParseVarDecl(Parser)
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf; 
 		Object = Object(ObjectKinds.Variable, Name, Tok);
-		VarDecl = VarDecl(Object, True, Parser.Val);
-		Next(Parser);
+		VarDecl = VarDecl(Object, True, ParseOperand(Parser));
 	Else
 		Object = Object(ObjectKinds.Variable, Name, Undefined);
 		VarDecl = VarDecl(Object);
@@ -1428,8 +1427,7 @@ Function ParseParamDecl(Parser)
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
 		Object = Object(ObjectKinds.Parameter, Name, Tok);
-		ParamDecl = ParamDecl(Object, True, Parser.Val);
-		Next(Parser);
+		ParamDecl = ParamDecl(Object, True, ParseOperand(Parser));
 	Else
 		Object = Object(ObjectKinds.Parameter, Name, Undefined);
 		ParamDecl = ParamDecl(Object);
@@ -1862,7 +1860,7 @@ Procedure BSL_VisitVarListDecl(Backend, VarListDecl)
 		Result = Backend.Result;
 		Buffer = New Array;
 		For Each VarDecl In VarListDecl Do
-			Buffer.Add(VarDecl.Object.Name + ?(VarDecl.Property("Value"), " = " + VarDecl.Value, ""));
+			Buffer.Add(VarDecl.Object.Name + ?(VarDecl.Property("Value"), " = " + BSL_VisitExpr(VarDecl.Value), ""));
 		EndDo;
 		If Buffer.Count() > 0 Then
 			Result.Add(StrConcat(Buffer, ", "));
@@ -2093,7 +2091,7 @@ Function BSL_VisitDesignatorExpr(DesignatorExpr)
 	EndIf;
 	Return StrConcat(Buffer);
 EndFunction // BSL_VisitDesignatorExpr() 
-	
+
 #EndRegion // BSL
 
 #Region PS
@@ -2156,7 +2154,7 @@ Procedure PS_VisitVarListDecl(Backend, VarListDecl)
 			Indent(Backend);
 			Result.Add(StrTemplate("New-Variable -Name ""%1""", VarDecl.Object.Name));
 			If VarDecl.Property("Value") Then
-				Result.Add(" -Value " + VarDecl.Value);	
+				Result.Add(" -Value " + PS_VisitExpr(VarDecl.Value));	
 			EndIf; 
 			Result.Add(Chars.LF);
 		EndDo;
@@ -2169,7 +2167,7 @@ Procedure PS_VisitParamList(Backend, ParamList)
 		Result = Backend.Result;
 		Buffer = New Array;
 		For Each VarDecl In ParamList Do
-			Buffer.Add(StrTemplate("$%1%2", VarDecl.Object.Name, ?(VarDecl.Property("Value"), " = " + VarDecl.Value, "")));
+			Buffer.Add(StrTemplate("$%1%2", VarDecl.Object.Name, ?(VarDecl.Property("Value"), " = " + PS_VisitExpr(VarDecl.Value), "")));
 		EndDo;
 		If Buffer.Count() > 0 Then
 			Result.Add(StrConcat(Buffer, ", "));
