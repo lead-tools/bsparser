@@ -30,7 +30,6 @@ Procedure Init()
 	UnaryOperations = New Array;
 	UnaryOperations.Add(Tokens.Add);
 	UnaryOperations.Add(Tokens.Sub);
-	UnaryOperations.Add(Tokens.Not);
 
 	BasicLiterals = New Array;
 	BasicLiterals.Add(Tokens.Number);
@@ -702,6 +701,19 @@ Function ParenExpr(Expr)
 
 EndFunction // ParenExpr()
 
+Function NotExpr(Expr)
+	Var NotExpr;
+
+	NotExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"Expr,"     // one of expressions
+	,
+	"NotExpr", Expr);
+
+	Return NotExpr;
+
+EndFunction // NotExpr()
+
 #EndRegion // Expressions
 
 #Region Statements
@@ -1189,14 +1201,23 @@ EndFunction // ParseExpression()
 
 Function ParseAndExpr(Parser)
 	Var Expr, Operator;
-	Expr = ParseRelExpr(Parser);
+	Expr = ParseNotExpr(Parser);
 	While Parser.Tok = Tokens.And Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseRelExpr(Parser));
+		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
+
+Function ParseNotExpr(Parser)
+	If Parser.Tok = Tokens.Not Then
+		Next(Parser);
+		Return NotExpr(ParseRelExpr(Parser));
+	Else
+		Return ParseRelExpr(Parser);
+	EndIf; 
+EndFunction // ParseNotExpr()
 
 Function ParseRelExpr(Parser)
 	Var Expr, Operator;
@@ -2067,6 +2088,8 @@ Function BSL_VisitExpr(Expr)
 		Return StrTemplate("?(%1, %2, %3)", BSL_VisitExpr(Expr.Condition), BSL_VisitExpr(Expr.ThenPart), BSL_VisitExpr(Expr.ElsePart));
 	ElsIf NodeType = "ParenExpr" Then
 		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
+	ElsIf NodeType = "NotExpr" Then
+		Return StrTemplate("Not %1", BSL_VisitExpr(Expr.Expr));	
 	EndIf;
 EndFunction // BSL_VisitExpr()
 
@@ -2378,6 +2401,8 @@ Function PS_VisitExpr(Expr)
 		Return StrTemplate("if (%1) { %2 } else { %3 }", PS_VisitExpr(Expr.Condition), PS_VisitExpr(Expr.ThenPart), PS_VisitExpr(Expr.ElsePart));
 	ElsIf NodeType = "ParenExpr" Then
 		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
+	ElsIf NodeType = "NotExpr" Then
+		Return StrTemplate("-not (%1)", BSL_VisitExpr(Expr.Expr));
 	EndIf;
 EndFunction // PS_VisitExpr()
 
