@@ -2181,12 +2181,12 @@ Procedure PS_VisitStmt(Backend, Stmt)
 	NodeType = Stmt.NodeType;
 	Indent(Backend);
 	If NodeType = "AssignStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
 		Result.Add(" = ");
 		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
 		Result.Add(" += ");
 		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
 		Result.Add(Chars.LF);
