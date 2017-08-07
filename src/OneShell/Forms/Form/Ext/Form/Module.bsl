@@ -3,7 +3,7 @@
 Procedure OnCreateAtServer(Cancel, StandardProcessing)
 	
 	If Parameters.Property("Source") Then
-		FormVerbose = Parameters.Verbose;
+		FormObject.Verbose = Parameters.Verbose;
 		FormOutput = Parameters.Output;
 		FormSource.SetText(Parameters.Source);
 	Else
@@ -17,7 +17,7 @@ Procedure Reopen(Command)
 	
 	ReopenAtServer();
 	Close();
-	OpenForm(FormName, New Structure("Source, Verbose, Output", FormSource.GetText(), FormVerbose, FormOutput));
+	OpenForm(FormName, New Structure("Source, Verbose, Output", FormSource.GetText(), FormObject.Verbose, FormOutput));
 	
 EndProcedure // Reopen()
 
@@ -84,7 +84,7 @@ Procedure TranslateAtServer()
 		
 	EndIf; 
 	
-	If FormVerbose Then
+	If FormObject.Verbose Then
 		Message((CurrentUniversalDateInMilliseconds() - Start) / 1000);
 	EndIf;
 	

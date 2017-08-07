@@ -1961,7 +1961,7 @@ Procedure BSL_VisitStmt(Backend, Stmt)
 			Result.Add(" = ");
 			IfStmt = Stmt.WhenPart[0];
 			BSL_VisitIfStmt(Backend, IfStmt);
-			For Index = 1 To Stmt.WhenPart.Count() Do
+			For Index = 1 To Stmt.WhenPart.Count() - 1 Do
 				IfStmt = Stmt.WhenPart[Index];
 				Result.Add("ElsIf ");
 				Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
@@ -2181,12 +2181,12 @@ Procedure PS_VisitStmt(Backend, Stmt)
 	NodeType = Stmt.NodeType;
 	Indent(Backend);
 	If NodeType = "AssignStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
 		Result.Add(" = ");
 		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.Left[0], False));
+		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
 		Result.Add(" += ");
 		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
 		Result.Add(Chars.LF);
