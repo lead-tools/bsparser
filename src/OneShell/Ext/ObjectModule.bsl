@@ -1520,6 +1520,9 @@ Function ParseAssignOrCallStmt(Parser)
 	ElsIf Tok = Tokens.AddAssign Then
 		Next(Parser);
 		Right = ParseExprList(Parser);
+		If Left.Count() <> Right.Count() Then
+			Error(Parser.Scanner, "arrays have different number of elements",, True);
+		EndIf; 
 		Return AddAssignStmt(Left, Right);
 	EndIf;
 	Expect(Parser, Tokens.Eql);
