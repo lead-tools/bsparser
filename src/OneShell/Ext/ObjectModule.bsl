@@ -1531,7 +1531,7 @@ Function ParseAssignOrCallStmt(Parser)
 	Var Tok, Left, Right;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
-		Return CallStmt(Left);
+		Return CallStmt(Left[0]);
 	EndIf;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Eql Then
@@ -1937,7 +1937,7 @@ Procedure BSL_VisitStmt(Backend, Stmt)
 		Result.Add(");");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "CallStmt" Then
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr[0]));
+		Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "IfStmt" Then
@@ -2240,7 +2240,7 @@ Procedure PS_VisitStmt(Backend, Stmt)
 		Result.Add(")");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "CallStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr[0], False));
+		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr, False));
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "IfStmt" Then
 		Result.Add("if (");
