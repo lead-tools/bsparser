@@ -1308,10 +1308,13 @@ Function ParseFuncDecl(Parser)
 	Var Scope, Object, Name, Decls;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
-	ScopeObjects = Parser.Scope.Objects;
-	OpenScope(Parser);
+	ScopeObjects = Parser.Scope.Objects;	
 	Name = Parser.Lit;
+	If ScopeObjects.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
+	EndIf; 
 	Next(Parser);
+	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Function;
 		Object.Insert("Type", ParseSignature(Parser));
@@ -1355,9 +1358,12 @@ Function ParseProcDecl(Parser)
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	ScopeObjects = Parser.Scope.Objects;
-	OpenScope(Parser);
 	Name = Parser.Lit;
+	If ScopeObjects.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
+	EndIf;
 	Next(Parser);
+	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Procedure;
 		Object.Insert("Type", ParseSignature(Parser));
@@ -1416,6 +1422,9 @@ Function ParseVarDecl(Parser)
 		Object = Object(ObjectKinds.Variable, Name, Undefined);
 		VarDecl = VarDecl(Object);
 	EndIf;
+	If Parser.Scope.Objects.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
+	EndIf; 
 	Parser.Scope.Objects.Insert(Name, Object);
 	Return VarDecl;
 EndFunction // ParseVarDecl()
@@ -1452,6 +1461,9 @@ Function ParseParamDecl(Parser)
 	Else
 		Object = Object(ObjectKinds.Parameter, Name, Undefined);
 		ParamDecl = ParamDecl(Object);
+	EndIf;
+	If Parser.Scope.Objects.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
 	EndIf;
 	Parser.Scope.Objects.Insert(Name, Object);
 	Return ParamDecl;
