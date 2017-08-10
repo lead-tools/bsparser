@@ -1,13 +1,13 @@
 ﻿
 &AtServer
 Procedure OnCreateAtServer(Cancel, StandardProcessing)
-	
+
 	If Parameters.Property("Source") Then
 		FormObject.Verbose = Parameters.Verbose;
 		FormOutput = Parameters.Output;
 		FormSource.SetText(Parameters.Source);
 	Else
-		FormOutput = "PS";
+		FormOutput = "AST";
 	EndIf; 
 	
 EndProcedure // OnCreateAtServer()
