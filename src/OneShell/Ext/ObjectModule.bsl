@@ -85,6 +85,7 @@ Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
 	ObjectKinds = ObjectKinds();
+	SelectorKinds = SelectorKinds();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -170,9 +171,9 @@ Function SelectorKinds() Export
 	Var SelectorKinds;
 
 	SelectorKinds = Enum(New Structure,
-		"Ident,"
-		"Index,"
-		"Call,"
+		"Ident," // Something._
+		"Index," // Something[_]
+		"Call,"  // Something(_)
 	);
 
 	Return SelectorKinds;
@@ -944,7 +945,6 @@ Function Parser(Source) Export
 		"Scope,"   // structure (Scope)
 		"Vars,"    // structure as map[string](Object)
 		"Methods," // structure as map[string](Object)
-		"Imports," // structure
 		"Module,"  // structure (Module)
 		"Unknown," // structure as map[string](Object)
 		"IsFunc,"  // boolean
@@ -952,10 +952,9 @@ Function Parser(Source) Export
 
 	Parser.Scanner = Scanner(Source);
 	Parser.Methods = New Structure;
-	Parser.Imports = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
-	
+
 	OpenScope(Parser);
 
 	Return Parser;
@@ -1100,39 +1099,45 @@ Function ParseNewExpr(Parser)
 EndFunction // ParseNewExpr()
 
 Function ParseDesignatorExpr(Parser, AllowNewVar = False)
-	Var Object, Selector, List, Call, Name, Column;
-	Object = ParseQualident(Parser);
-	If Object = Undefined Then
-		Column = Parser.Scanner.Column - StrLen(Parser.Lit);
-	EndIf;
+	Var Name, Selector, Object, List, Kind;
 	Name = Parser.Lit;
-	List = New Array;
-	Call = False;
 	Selector = ParseSelector(Parser);
-	While Selector <> Undefined Do
-		List.Add(Selector);
-		Call = (Selector.Kind = "Call");
-		Selector = ParseSelector(Parser);
-	EndDo;
-	If Object = Undefined Then
-		If Call Then
-			If Not Parser.Unknown.Property(Name, Object) Then
-				Object = Object("Unknown", Name);
-				Parser.Unknown.Insert(Name, Object);
-			EndIf;
-		Else
-			If AllowNewVar Then
-				Object = Object(ObjectKinds.Variable, Name);
-				Parser.Scope.Objects.Insert(Name, Object);
-			Else
-				Object = Object("Unknown", Name);
-				If Verbose Then
-					Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
+	If Selector = Undefined Then
+		Object = FindObject(Parser, Name);
+		List = EmptyArray;
+	Else
+		Kind = Selector.Kind;
+		If Kind = "Call" Then
+			If Not Parser.Methods.Property(Name, Object) Then
+				If Not Parser.Unknown.Property(Name, Object) Then
+					Object = Object("Unknown", Name);
+					Parser.Unknown.Insert(Name, Object);
 				EndIf;
 			EndIf;
+		Else
+			Object = FindObject(Parser, Name);
 		EndIf;
+		List = New Array;
+		List.Add(Selector);
+		Selector = ParseSelector(Parser);
+		While Selector <> Undefined Do
+			Kind = Selector.Kind;
+			List.Add(Selector);
+			Selector = ParseSelector(Parser);
+		EndDo;
 	EndIf;
-	Return DesignatorExpr(Object, List, Call);
+	If Object = Undefined Then
+		If AllowNewVar Then
+			Object = Object(ObjectKinds.Variable, Name);
+			Parser.Vars.Insert(Name, Object);
+		Else
+			Object = Object("Unknown", Name);
+			If Verbose Then
+				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name));
+			EndIf;
+		EndIf;
+	EndIf; 
+	Return DesignatorExpr(Object, List, Kind = SelectorKinds.Call);
 EndFunction // ParseDesignatorExpr()
 
 Function ParseDesignatorExprList(Parser, AllowNewVar = False)
@@ -1146,21 +1151,6 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 	Return List;
 EndFunction // ParseDesignatorExprList()
 
-Function ParseQualident(Parser)
-	Var Module, Object;
-	Parser.Imports.Property(Parser.Lit, Module);
-	If Module <> Undefined Then
-		Next(Parser);
-		Expect(Parser, Tokens.Period);
-		Next(Parser);
-		Expect(Parser, Tokens.Ident);
-		Module.Objects.Property(Parser.Lit, Object);
-	Else
-		Object = FindObject(Parser, Parser.Lit);
-	EndIf;
-	Return Object;
-EndFunction // ParseQualident()
-
 Function ParseSelector(Parser)
 	Var Tok, Value;
 	Tok = Next(Parser);
@@ -1170,7 +1160,7 @@ Function ParseSelector(Parser)
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Return Selector("Ident", Value);
+		Return Selector(SelectorKinds.Ident, Value);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
@@ -1178,7 +1168,7 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Return Selector("Index", Value);
+		Return Selector(SelectorKinds.Index, Value);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1187,7 +1177,7 @@ Function ParseSelector(Parser)
 			Value = ParseExprList(Parser, True);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Return Selector("Call", Value);
+		Return Selector(SelectorKinds.Call, Value);
 	EndIf;
 	Return Undefined;
 EndFunction // ParseSelector()
@@ -1715,7 +1705,7 @@ Function ParseModule(Parser) Export
 	Parser.Module = Module(ParseDecls(Parser), ParseStatements(Parser));
 	If Verbose Then
 		For Each Item In Parser.Unknown Do
-			Message(StrTemplate("Undeclared identifier `%1`", Item.Key));
+			Message(StrTemplate("Undeclared method `%1`", Item.Key));
 		EndDo;
 	EndIf;
 	Expect(Parser, Tokens.Eof);
@@ -2113,14 +2103,14 @@ Function BSL_VisitDesignatorExpr(DesignatorExpr)
 	Buffer.Add(DesignatorExpr.Object.Name);
 	If DesignatorExpr.Property("Selectors") Then
 		For Each Selector In DesignatorExpr.Selectors Do
-			If Selector.Kind = "Ident" Then
+			If Selector.Kind = SelectorKinds.Ident Then
 				Buffer.Add(".");
 				Buffer.Add(Selector.Value);
-			ElsIf Selector.Kind = "Index" Then
+			ElsIf Selector.Kind = SelectorKinds.Index Then
 				Buffer.Add("[");
 				Buffer.Add(BSL_VisitExprList(Selector.Value));
 				Buffer.Add("]");
-			ElsIf Selector.Kind = "Call" Then
+			ElsIf Selector.Kind = SelectorKinds.Call Then
 				Buffer.Add("(");
 				Buffer.Add(BSL_VisitExprList(Selector.Value));
 				Buffer.Add(")");
@@ -2429,14 +2419,14 @@ Function PS_VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
 	Buffer.Add(DesignatorExpr.Object.Name);
 	If DesignatorExpr.Property("Selectors") Then
 		For Each Selector In DesignatorExpr.Selectors Do
-			If Selector.Kind = "Ident" Then
+			If Selector.Kind = SelectorKinds.Ident Then
 				Buffer.Add(".");
 				Buffer.Add(Selector.Value);
-			ElsIf Selector.Kind = "Index" Then
+			ElsIf Selector.Kind = SelectorKinds.Index Then
 				Buffer.Add("[");
 				Buffer.Add(PS_VisitExprList(Selector.Value, ", "));
 				Buffer.Add("]");
-			ElsIf Selector.Kind = "Call" Then
+			ElsIf Selector.Kind = SelectorKinds.Call Then
 				If Selector.Value.Count() > 0 Then
 					Buffer.Add(" ");
 					Buffer.Add(PS_VisitExprList(Selector.Value, " "));
