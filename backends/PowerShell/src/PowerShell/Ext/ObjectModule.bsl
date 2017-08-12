@@ -65,7 +65,7 @@ Procedure VisitDecl(Backend, Decl)
 	Result = Backend.Result;
 	NodeType = Decl.NodeType;
 	If NodeType = "VarListDecl" Then
-		VisitVarListDecl(Backend, Decl.VarList);
+		VisitVarList(Backend, Decl.VarList);
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
 		Result.Add(Chars.LF);
 		Backend.Indent = Backend.Indent + 1;
@@ -88,7 +88,7 @@ Procedure VisitDecl(Backend, Decl)
 	EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarListDecl(Backend, VarListDecl)
+Procedure VisitVarList(Backend, VarListDecl)
 	Var Result;
 	If VarListDecl <> Undefined Then
 		Result = Backend.Result;
@@ -101,7 +101,7 @@ Procedure VisitVarListDecl(Backend, VarListDecl)
 			Result.Add(Chars.LF);
 		EndDo;
 	EndIf;
-EndProcedure // VisitVarListDecl()
+EndProcedure // VisitVarList()
 
 Procedure VisitParamList(Backend, ParamList)
 	Var Result, Buffer;
@@ -271,11 +271,7 @@ Function VisitExprList(ExprList, Separator)
 	If ExprList <> Undefined Then
 		Buffer = New Array;
 		For Each Expr In ExprList Do
-			If Expr = Undefined Then
-				Buffer.Add("");
-			Else
-				Buffer.Add(VisitExpr(Expr));
-			EndIf;
+			Buffer.Add(VisitExpr(Expr));
 		EndDo;
 		Return StrConcat(Buffer, Separator);
 	EndIf;
@@ -283,6 +279,9 @@ EndFunction // VisitExprList()
 
 Function VisitExpr(Expr)
 	Var NodeType, BasicLitKind;
+	If Expr = Undefined Then
+		Return "$null";
+	EndIf; 
 	NodeType = Expr.NodeType;
 	If NodeType = "BasicLitExpr" Then
 		BasicLitKind = Expr.Kind;

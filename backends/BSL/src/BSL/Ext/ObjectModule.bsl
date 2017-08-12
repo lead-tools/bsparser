@@ -296,6 +296,9 @@ EndFunction // VisitExprList()
 
 Function VisitExpr(Expr)
 	Var NodeType, BasicLitKind;
+	If Expr = Undefined Then
+		Return "";
+	EndIf; 
 	NodeType = Expr.NodeType;
 	If NodeType = "BasicLitExpr" Then
 		BasicLitKind = Expr.Kind;

@@ -1282,7 +1282,7 @@ Function ParseExprList(Parser, IsArguments = False)
 			If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
 				ExprList.Add(ParseExpression(Parser));
 			Else
-				ExprList.Add(BasicLitExpr(Tokens.Undefined, Undefined));
+				ExprList.Add(Undefined);
 			EndIf;
 			If Parser.Tok = Tokens.Comma Then
 				Next(Parser);
