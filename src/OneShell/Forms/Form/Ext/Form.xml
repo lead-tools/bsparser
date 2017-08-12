@@ -31,6 +31,12 @@
 					<ContextMenu name="VerboseContextMenu" id="10"/>
 					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
 				</CheckBoxField>
+				<CheckBoxField name="CompatibleWith1C" id="21">
+					<DataPath>FormObject.CompatibleWith1C</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="CompatibleWith1CContextMenu" id="22"/>
+					<ExtendedTooltip name="CompatibleWith1CExtendedTooltip" id="23"/>
+				</CheckBoxField>
 				<InputField name="Output" id="14">
 					<DataPath>FormOutput</DataPath>
 					<Width>10</Width>

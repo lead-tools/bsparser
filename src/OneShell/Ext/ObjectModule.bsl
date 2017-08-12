@@ -103,8 +103,8 @@ Function Keywords() Export
 		|And.И, Or.Или, Not.Не,
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
 		|New.Новый, Execute.Выполнить, Export.Экспорт,
-		|True.Истина, False.Ложь, Undefined.Неопределено,
-		|Case.Выбор, When.Когда, EndCase.КонецВыбора" // new keywords
+		|True.Истина, False.Ложь, Undefined.Неопределено,"
+		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора") // new keywords
 	);
 
 	Return Keywords;
@@ -1497,7 +1497,7 @@ Function ParseStmt(Parser)
 		Return ParseWhileStmt(Parser);
 	ElsIf Tok = Tokens.For Then
 		Return ParseForStmt(Parser);
-	ElsIf Tok = Tokens.Case Then
+	ElsIf Not CompatibleWith1C And Tok = Tokens.Case Then
 		Return ParseCaseStmt(Parser);
 	ElsIf Tok = Tokens.Return Then
 		Return ParseReturnStmt(Parser);
