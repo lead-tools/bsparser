@@ -104,7 +104,7 @@ Function Keywords() Export
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
 		|New.Новый, Execute.Выполнить, Export.Экспорт,
 		|True.Истина, False.Ложь, Undefined.Неопределено,"
-		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора") // new keywords
+		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора, End.Конец") // new keywords
 	);
 
 	Return Keywords;
@@ -1329,7 +1329,9 @@ Function ParseFuncDecl(Parser)
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
-	Expect(Parser, Tokens.EndFunction);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndFunction);
+	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
 	Return FuncDecl(Object, Exported, Decls, Statements);
@@ -1374,7 +1376,9 @@ Function ParseProcDecl(Parser)
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndProcedure);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndProcedure);
+	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
 	Return ProcDecl(Object, Exported, Decls, Statements);
@@ -1586,7 +1590,9 @@ Function ParseIfStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	Expect(Parser, Tokens.EndIf);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndIf);
+	EndIf; 
 	Next(Parser);
 	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
@@ -1598,7 +1604,9 @@ Function ParseTryStmt(Parser)
 	Expect(Parser, Tokens.Except);
 	Next(Parser);
 	ExceptPart = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndTry);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndTry);
+	EndIf; 
 	Next(Parser);
 	Return TryStmt(TryPart, ExceptPart);
 EndFunction // ParseTryStmt()
@@ -1623,7 +1631,9 @@ Function ParseCaseStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	Expect(Parser, Tokens.EndCase);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndCase);
+	EndIf; 
 	Next(Parser);
 	Return CaseStmt(DesignatorExpr, WhenPart, ElsePart);
 EndFunction // ParseCaseStmt()
@@ -1635,7 +1645,9 @@ Function ParseWhileStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndDo);
+	EndIf; 
 	Next(Parser);
 	Return WhileStmt(Condition, Statements)
 EndFunction // ParseWhileStmt()
@@ -1665,7 +1677,9 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
+	If Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndDo);
+	EndIf; 
 	Next(Parser);
 	Return ForStmt(DesignatorExpr, Collection, Statements);
 EndFunction // ParseForStmt()
