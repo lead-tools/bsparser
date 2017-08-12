@@ -77,10 +77,10 @@
 								<Presentation>
 									<v8:item>
 										<v8:lang>ru</v8:lang>
-										<v8:content>Other</v8:content>
+										<v8:content>Backend</v8:content>
 									</v8:item>
 								</Presentation>
-								<Value xsi:type="xs:string">Other</Value>
+								<Value xsi:type="xs:string">Backend</Value>
 							</xr:Value>
 						</xr:Item>
 						<xr:Item>

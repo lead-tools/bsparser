@@ -75,7 +75,7 @@ Procedure TranslateAtServer()
 		This.ParseModule(Parser);
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 		
-	ElsIf Output = "Other" Then
+	ElsIf Output = "Backend" Then
 		
 		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
 		BackendProcessor.Init(This);
@@ -95,7 +95,7 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 		
 	If Reason = Items.Output Or Reason = Undefined Then
 		
-		Items.BackendPath.Visible = (ThisObject.Output = "Other");
+		Items.BackendPath.Visible = (ThisObject.Output = "Backend");
 		
 	EndIf;
 	
