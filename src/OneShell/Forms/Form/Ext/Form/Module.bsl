@@ -48,6 +48,8 @@ Procedure TranslateAtServer()
 	
 	This = FormAttributeToValue("Object"); 
 	
+	Start = CurrentUniversalDateInMilliseconds();
+	
 	If Output = "Lexems" Then
 		
 		Eof = This.Tokens().Eof;
@@ -66,14 +68,7 @@ Procedure TranslateAtServer()
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
 		WriteJSON(JSONWriter, Parser.Module);
 		JSONWriter.Close();
-		Result.Read(FileName, TextEncoding.UTF8);
-		
-	ElsIf Output = "measure" Then
-		
-		Start = CurrentUniversalDateInMilliseconds();
-		Parser = This.Parser(Source.GetText());
-		This.ParseModule(Parser);
-		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
+		Result.Read(FileName, TextEncoding.UTF8);		
 		
 	ElsIf Output = "Backend" Then
 		
@@ -81,10 +76,14 @@ Procedure TranslateAtServer()
 		BackendProcessor.Init(This);
 		Parser = This.Parser(Source.GetText());
 		This.ParseModule(Parser);
-		BackendResult = BackendProcessor.VisitModule(Parser.Module);
+		BackendResult = BackendProcessor.VisitModule(Parser.Module); 
 		Result.SetText(BackendResult);
 		
-	EndIf; 
+	EndIf;
+	
+	If Measure Then
+		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
+	EndIf;
 		
 EndProcedure // TranslateAtServer()
 
