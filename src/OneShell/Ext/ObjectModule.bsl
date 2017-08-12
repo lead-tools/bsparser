@@ -489,16 +489,17 @@ EndFunction // Object()
 
 #Region Declarations
 
-Function VarDecl(Object, Init = False, Value = Undefined)
+Function VarDecl(Object, Exported, Value = Undefined)
 	Var VarDecl;
 
 	VarDecl = New Structure(
 		"NodeType," // string (type of this structure)
 		"Object,"   // structure (Object)
+		"Export,"   // boolean
 	,
-	"VarDecl", Object);
+	"VarDecl", Object, Exported);
 
-	If Init Then
+	If Value <> Undefined Then
 		VarDecl.Insert("Value", Value); // structure (one of expressions)
 	EndIf;
 
@@ -506,15 +507,14 @@ Function VarDecl(Object, Init = False, Value = Undefined)
 
 EndFunction // VarDecl()
 
-Function VarListDecl(VarList, Exported)
+Function VarListDecl(VarList)
 	Var VarListDecl;
 
 	VarListDecl = New Structure(
 		"NodeType," // string (type of this structure)
 		"VarList,"  // array (VarDecl)
-		"Export,"   // boolean
 	,
-	"VarListDecl", VarList, Exported);
+	"VarListDecl", VarList);
 
 	Return VarListDecl;
 
@@ -1417,24 +1417,18 @@ Function ParseReturnStmt(Parser)
 EndFunction // ParseReturnStmt()
 
 Function ParseVarListDecl(Parser)
-	Var VarList, Exported;
+	Var VarList;
 	VarList = New Array;
 	VarList.Add(ParseVarDecl(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
 		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
-	If Parser.Tok = Tokens.Export Then
-		Exported = True;
-		Next(Parser);
-	Else
-		Exported = False;
-	EndIf;
-	Return VarListDecl(VarList, Exported);
+	Return VarListDecl(VarList);
 EndFunction // ParseVarListDecl()
 
 Function ParseVarDecl(Parser)
-	Var Tok, Name, Object, VarDecl;
+	Var Tok, Name, Object, VarDecl, Value, Exported;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Tok = Next(Parser);
@@ -1444,11 +1438,17 @@ Function ParseVarDecl(Parser)
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
 		Object = Object(ObjectKinds.Variable, Name, Tok);
-		VarDecl = VarDecl(Object, True, ParseOperand(Parser));
+		Value = ParseOperand(Parser);
 	Else
 		Object = Object(ObjectKinds.Variable, Name, Undefined);
-		VarDecl = VarDecl(Object);
 	EndIf;
+	If Parser.Tok = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	Else
+		Exported = False;
+	EndIf;
+	VarDecl = VarDecl(Object, Exported, Value);
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared",, True);
 	EndIf; 
@@ -1720,7 +1720,7 @@ Function ParseGotoStmt(Parser)
 	Expect(Parser, Tokens.Label);
 	Label = Parser.Lit;
 	Next(Parser);
-	Return GotoStmt(Label)
+	Return GotoStmt(Label);
 EndFunction // ParseGotoStmt()
 
 Function ParseVarDecls(Parser)

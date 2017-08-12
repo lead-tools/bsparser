@@ -67,7 +67,7 @@ Procedure VisitDecl(Backend, Decl)
 	If NodeType = "VarListDecl" Then
 		Indent(Backend);
 		Result.Add("Var ");
-		VisitVarListDecl(Backend, Decl.VarList);
+		VisitVarList(Backend, Decl.VarList);
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
@@ -77,11 +77,14 @@ Procedure VisitDecl(Backend, Decl)
 			Result.Add("Function ");
 		Else
 			Result.Add("Procedure ");
-		EndIf;
+		EndIf; 
 		Result.Add(Decl.Object.Name);
 		Result.Add("(");
-		VisitVarListDecl(Backend, Decl.Object.Type.ParamList);
+		VisitParamList(Backend, Decl.Object.Type.ParamList);
 		Result.Add(")");
+		If Decl.Export Then
+			Result.Add(" Export");
+		EndIf;
 		Result.Add(Chars.LF);
 		For Each Stmt In Decl.Decls Do
 			VisitDecl(Backend, Stmt);
@@ -99,19 +102,37 @@ Procedure VisitDecl(Backend, Decl)
 	EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarListDecl(Backend, VarListDecl)
+Procedure VisitVarList(Backend, VarList)
 	Var Result, Buffer;
-	If VarListDecl <> Undefined Then
-		Result = Backend.Result;
-		Buffer = New Array;
-		For Each VarDecl In VarListDecl Do
-			Buffer.Add(VarDecl.Object.Name + ?(VarDecl.Property("Value"), " = " + VisitExpr(VarDecl.Value), ""));
-		EndDo;
-		If Buffer.Count() > 0 Then
-			Result.Add(StrConcat(Buffer, ", "));
-		EndIf;
-	EndIf;
-EndProcedure // VisitVarListDecl()
+	Result = Backend.Result;
+	Buffer = New Array;
+	For Each VarDecl In VarList Do
+		Buffer.Add(
+			VarDecl.Object.Name +
+			?(VarDecl.Property("Value"), " = " + VisitExpr(VarDecl.Value), "") +
+			?(VarDecl.Export, " Export", "")
+		);
+	EndDo;
+	If Buffer.Count() > 0 Then
+		Result.Add(StrConcat(Buffer, ", "));
+	EndIf; 
+EndProcedure // VisitVarList()
+
+Procedure VisitParamList(Backend, ParamList)
+	Var Result, Buffer;
+	Result = Backend.Result;
+	Buffer = New Array;
+	For Each ParamDecl In ParamList Do
+		Buffer.Add(
+			?(ParamDecl.ByVal, "Val ", "") +
+			ParamDecl.Object.Name +
+			?(ParamDecl.Property("Value"), " = " + VisitExpr(ParamDecl.Value), "")
+		);
+	EndDo;
+	If Buffer.Count() > 0 Then
+		Result.Add(StrConcat(Buffer, ", "));
+	EndIf; 
+EndProcedure // VisitParamList()
 
 Procedure VisitStmt(Backend, Stmt)
 	Var Result, NodeType;
