@@ -5,7 +5,7 @@ Var Keywords;                  // enum
 Var Tokens;                    // enum
 Var ObjectKinds;               // enum
 Var SelectorKinds;             // enum
-Var UnaryOperations;           // array (one of Tokens)
+Var UnaryOperators;            // array (one of Tokens)
 Var BasicLiterals;             // array (one of Tokens)
 Var RelationalOperators;       // array (one of Tokens)
 Var IgnoredTokens;             // array (one of Tokens)
@@ -21,9 +21,9 @@ Procedure Init()
 
 	InitEnums();
 
-	UnaryOperations = New Array;
-	UnaryOperations.Add(Tokens.Add);
-	UnaryOperations.Add(Tokens.Sub);
+	UnaryOperators = New Array;
+	UnaryOperators.Add(Tokens.Add);
+	UnaryOperators.Add(Tokens.Sub);
 
 	BasicLiterals = New Array;
 	BasicLiterals.Add(Tokens.Number);
@@ -1064,15 +1064,17 @@ Function ParseString(Parser)
 EndFunction // ParseString()
 
 Function ParseUnaryExpr(Parser)
-	Var Operator;
+	Var Operator, Expr;
 	Operator = Parser.Tok;
-	If UnaryOperations.Find(Parser.Tok) <> Undefined Then
+	If UnaryOperators.Find(Parser.Tok) <> Undefined Then
 		Next(Parser);
-		Return UnaryExpr(Operator, ParseOperand(Parser));
+		Expr = UnaryExpr(Operator, ParseOperand(Parser));
 	ElsIf Parser.Tok = Tokens.Eof Then
-		Return Undefined;
+		Expr = Undefined;
+	Else
+		Expr = ParseOperand(Parser);
 	EndIf;
-	Return ParseOperand(Parser);
+	Return Expr;
 EndFunction // ParseUnaryExpr()
 
 Function ParseOperand(Parser)
@@ -1179,7 +1181,7 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 EndFunction // ParseDesignatorExprList()
 
 Function ParseSelector(Parser)
-	Var Tok, Value;
+	Var Tok, Value, Selector;
 	Tok = Next(Parser);
 	If Tok = Tokens.Period Then
 		Next(Parser);
@@ -1187,7 +1189,7 @@ Function ParseSelector(Parser)
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Return Selector(SelectorKinds.Ident, Value);
+		Selector = Selector(SelectorKinds.Ident, Value);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
@@ -1195,7 +1197,7 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Return Selector(SelectorKinds.Index, Value);
+		Selector = Selector(SelectorKinds.Index, Value);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1204,9 +1206,9 @@ Function ParseSelector(Parser)
 			Value = ParseExprList(Parser, True);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Return Selector(SelectorKinds.Call, Value);
+		Selector = Selector(SelectorKinds.Call, Value);
 	EndIf;
-	Return Undefined;
+	Return Selector;
 EndFunction // ParseSelector()
 
 Function ParseExpression(Parser)
@@ -1232,12 +1234,14 @@ Function ParseAndExpr(Parser)
 EndFunction // ParseAndExpr()
 
 Function ParseNotExpr(Parser)
+	Var Expr;
 	If Parser.Tok = Tokens.Not Then
 		Next(Parser);
-		Return NotExpr(ParseRelExpr(Parser));
+		Expr = NotExpr(ParseRelExpr(Parser));
 	Else
-		Return ParseRelExpr(Parser);
-	EndIf; 
+		Expr = ParseRelExpr(Parser);
+	EndIf;
+	Return Expr;
 EndFunction // ParseNotExpr()
 
 Function ParseRelExpr(Parser)
@@ -1574,25 +1578,28 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Tok, Left, Right;
+	Var Tok, Left, Right, Stmt;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
-		Return CallStmt(Left[0]);
+		Stmt = CallStmt(Left[0]);
+	Else
+		Tok = Parser.Tok;
+		If Tok = Tokens.Eql Then
+			Next(Parser);
+			Right = ParseExprList(Parser);
+			Stmt = AssignStmt(Left, Right);
+		ElsIf Tok = Tokens.AddAssign Then
+			Next(Parser);
+			Right = ParseExprList(Parser);
+			If Left.Count() <> Right.Count() Then
+				Error(Parser.Scanner, "arrays have different number of elements",, True);
+			EndIf; 
+			Stmt = AddAssignStmt(Left, Right);
+		Else
+			Expect(Parser, Tokens.Eql);
+		EndIf;		
 	EndIf;
-	Tok = Parser.Tok;
-	If Tok = Tokens.Eql Then
-		Next(Parser);
-		Right = ParseExprList(Parser);
-		Return AssignStmt(Left, Right);
-	ElsIf Tok = Tokens.AddAssign Then
-		Next(Parser);
-		Right = ParseExprList(Parser);
-		If Left.Count() <> Right.Count() Then
-			Error(Parser.Scanner, "arrays have different number of elements",, True);
-		EndIf; 
-		Return AddAssignStmt(Left, Right);
-	EndIf;
-	Expect(Parser, Tokens.Eql);
+	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt(Parser)
