@@ -1323,7 +1323,7 @@ Function ParseFuncDecl(Parser)
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndFunction);
 	EndIf; 
 	CloseScope(Parser);
@@ -1370,7 +1370,7 @@ Function ParseProcDecl(Parser)
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndProcedure);
 	EndIf; 
 	CloseScope(Parser);
@@ -1584,7 +1584,7 @@ Function ParseIfStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndIf);
 	EndIf; 
 	Next(Parser);
@@ -1598,7 +1598,7 @@ Function ParseTryStmt(Parser)
 	Expect(Parser, Tokens.Except);
 	Next(Parser);
 	ExceptPart = ParseStatements(Parser);
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndTry);
 	EndIf; 
 	Next(Parser);
@@ -1625,7 +1625,7 @@ Function ParseCaseStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndCase);
 	EndIf; 
 	Next(Parser);
@@ -1639,7 +1639,7 @@ Function ParseWhileStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndDo);
 	EndIf; 
 	Next(Parser);
@@ -1671,7 +1671,7 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	If Parser.Tok <> Tokens.End Then
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndDo);
 	EndIf; 
 	Next(Parser);
