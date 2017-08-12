@@ -5,6 +5,8 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 	If Parameters.Property("Source") Then
 		Object.Verbose = Parameters.Verbose;
 		Output = Parameters.Output;
+		Object.CompatibleWith1C = Parameters.CompatibleWith1C;
+		BackendPath = Parameters.BackendPath;
 		Source.SetText(Parameters.Source);
 	Else
 		Output = "AST";
@@ -19,7 +21,7 @@ Procedure Reopen(Command)
 	
 	ReopenAtServer();
 	Close();
-	OpenForm(FormName, New Structure("Source, Verbose, Output", Source.GetText(), Object.Verbose, Output));
+	OpenForm(FormName, New Structure("Source, Verbose, Output, CompatibleWith1C, BackendPath", Source.GetText(), Object.Verbose, Output, Object.CompatibleWith1C, BackendPath));
 	
 EndProcedure // Reopen()
 
@@ -64,23 +66,7 @@ Procedure TranslateAtServer()
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
 		WriteJSON(JSONWriter, Parser.Module);
 		JSONWriter.Close();
-		Result.Read(FileName, TextEncoding.UTF8);	
-		
-	ElsIf Output = "BSL" Then	
-		
-		Backend = This.Backend();
-		Parser = This.Parser(Source.GetText());
-		This.ParseModule(Parser);
-		This.BSL_VisitModule(Backend, Parser.Module);
-		Result.SetText(StrConcat(Backend.Result));
-		
-	ElsIf Output = "PS" Then	
-		
-		Backend = This.Backend();
-		Parser = This.Parser(Source.GetText());
-		This.ParseModule(Parser);
-		This.PS_VisitModule(Backend, Parser.Module);
-		Result.SetText(StrConcat(Backend.Result));
+		Result.Read(FileName, TextEncoding.UTF8);
 		
 	ElsIf Output = "measure" Then
 		
