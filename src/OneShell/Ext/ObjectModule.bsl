@@ -96,7 +96,7 @@ Function Keywords() Export
 		|Var.Перем, Val.Знач, Return.Возврат, Continue.Продолжить, Break.Прервать,
 		|And.И, Or.Или, Not.Не,
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
-		|New.Новый, Execute.Выполнить, Export.Экспорт,
+		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
 		|True.Истина, False.Ложь, Undefined.Неопределено,"
 		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора, End.Конец") // new keywords
 	);
@@ -136,8 +136,8 @@ Function Tokens(Keywords = Undefined) Export
 
 		// Other
 
-		//         //             #          &
-		|Eof, Comment, Preprocessor, Directive"
+		//         //             #          &      ~
+		|Eof, Comment, Preprocessor, Directive, Label"
 
 	);
 
@@ -318,6 +318,9 @@ Function Scan(Scanner) Export
 	ElsIf Char = "#" Then
 		Lit = ScanComment(Scanner);
 		Tok = Tokens.Preprocessor;
+	ElsIf Char = "~" Then
+		Lit = ScanIdentifier(Scanner);
+		Tok = Tokens.Label;
 	Else
 		Error(Scanner, "Unknown char");
 	EndIf;
@@ -910,6 +913,32 @@ Function TryStmt(TryPart, ExceptPart)
 
 EndFunction // TryStmt()
 
+Function GotoStmt(Label)
+	Var GotoStmt;
+
+	GotoStmt = New Structure(
+		"NodeType," // string (type of this structure)
+		"Label,"    // string
+	,
+	"GotoStmt", Label);
+
+	Return GotoStmt;
+
+EndFunction // GotoStmt()
+
+Function LabelStmt(Label)
+	Var LabelStmt;
+
+	LabelStmt = New Structure(
+		"NodeType," // string (type of this structure)
+		"Label,"    // string
+	,
+	"LabelStmt", Label);
+
+	Return LabelStmt;
+
+EndFunction // LabelStmt()
+
 #EndRegion // Statements
 
 #Region Types
@@ -1479,38 +1508,45 @@ Function ParseStatements(Parser)
 EndFunction // ParseStatements()
 
 Function ParseStmt(Parser)
-	Var Tok;
+	Var Tok, Stmt;
 	Tok = SkipIgnoredTokens(Parser);
 	While Tok = Tokens.Semicolon Do
 		Next(Parser);
 		Tok = SkipIgnoredTokens(Parser);
 	EndDo;
 	If Tok = Tokens.Ident Then
-		Return ParseAssignOrCallStmt(Parser);
+		Stmt = ParseAssignOrCallStmt(Parser);
 	ElsIf Tok = Tokens.If Then
-		Return ParseIfStmt(Parser);
+		Stmt = ParseIfStmt(Parser);
 	ElsIf Tok = Tokens.Try Then
-		Return ParseTryStmt(Parser);
+		Stmt = ParseTryStmt(Parser);
 	ElsIf Tok = Tokens.While Then
-		Return ParseWhileStmt(Parser);
+		Stmt = ParseWhileStmt(Parser);
 	ElsIf Tok = Tokens.For Then
-		Return ParseForStmt(Parser);
+		Stmt = ParseForStmt(Parser);
 	ElsIf Not CompatibleWith1C And Tok = Tokens.Case Then
-		Return ParseCaseStmt(Parser);
+		Stmt = ParseCaseStmt(Parser);
 	ElsIf Tok = Tokens.Return Then
-		Return ParseReturnStmt(Parser);
+		Stmt = ParseReturnStmt(Parser);
 	ElsIf Tok = Tokens.Break Then
 		Next(Parser);
-		Return BreakStmt();
+		Stmt = BreakStmt();
 	ElsIf Tok = Tokens.Continue Then
 		Next(Parser);
-		Return ContinueStmt();
+		Stmt = ContinueStmt();
 	ElsIf Tok = Tokens.Raise Then
-		Return ParseRaiseStmt(Parser);
+		Stmt = ParseRaiseStmt(Parser);
 	ElsIf Tok = Tokens.Execute Then
-		Return ParseExecuteStmt(Parser);
+		Stmt = ParseExecuteStmt(Parser);
+	ElsIf Tok = Tokens.Goto Then
+		Stmt = ParseGotoStmt(Parser);
+	ElsIf Tok = Tokens.Label Then
+		Stmt = LabelStmt(Parser.Lit);
+		Next(Parser);
+		Expect(Parser, Tokens.Colon);
+		Next(Parser);
 	EndIf;
-	Return Undefined;
+	Return Stmt;
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
@@ -1677,6 +1713,15 @@ Function ParseForStmt(Parser)
 	Next(Parser);
 	Return ForStmt(DesignatorExpr, Collection, Statements);
 EndFunction // ParseForStmt()
+
+Function ParseGotoStmt(Parser)
+	Var Label;
+	Next(Parser);
+	Expect(Parser, Tokens.Label);
+	Label = Parser.Lit;
+	Next(Parser);
+	Return GotoStmt(Label)
+EndFunction // ParseGotoStmt()
 
 Function ParseVarDecls(Parser)
 	Var Tok, Decls;
