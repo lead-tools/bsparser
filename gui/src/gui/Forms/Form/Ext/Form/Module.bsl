@@ -3,9 +3,9 @@
 Procedure OnCreateAtServer(Cancel, StandardProcessing)
 
 	If Parameters.Property("Source") Then
-		Object.Verbose = Parameters.Verbose;
+		Verbose = Parameters.Verbose;
 		Output = Parameters.Output;
-		Object.CompatibleWith1C = Parameters.CompatibleWith1C;
+		CompatibleWith1C = Parameters.CompatibleWith1C;
 		BackendPath = Parameters.BackendPath;
 		Source.SetText(Parameters.Source);
 	Else
@@ -15,23 +15,6 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 	SetVisibilityOfAttributes(ThisObject);
 	
 EndProcedure // OnCreateAtServer()
-
-&AtClient
-Procedure Reopen(Command)
-	
-	ReopenAtServer();
-	Close();
-	OpenForm(FormName, New Structure("Source, Verbose, Output, CompatibleWith1C, BackendPath", Source.GetText(), Object.Verbose, Output, Object.CompatibleWith1C, BackendPath));
-	
-EndProcedure // Reopen()
-
-&AtServer
-Procedure ReopenAtServer()
-	
-	This = FormAttributeToValue("Object");
-	ExternalDataProcessors.Create(This.UsedFileName, False);
-	
-EndProcedure // ReopenAtServer() 
 
 &AtClient
 Procedure Translate(Command)
@@ -46,23 +29,29 @@ EndProcedure // Translate()
 Procedure TranslateAtServer()
 	Var Start;
 	
-	This = FormAttributeToValue("Object"); 
+	This = FormAttributeToValue("Object");
+	ThisFile = New File(This.UsedFileName);
+	
+	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "OneShell.epf", False);
+	
+	OneShellProcessor.Verbose = Verbose;
+	OneShellProcessor.CompatibleWith1C = CompatibleWith1C;
 	
 	Start = CurrentUniversalDateInMilliseconds();
 	
 	If Output = "Lexems" Then
 		
-		Eof = This.Tokens().Eof;
+		Eof = OneShellProcessor.Tokens().Eof;
 		
-		Scanner = This.Scanner(Source.GetText());
-		While This.Scan(Scanner) <> Eof Do
+		Scanner = OneShellProcessor.Scanner(Source.GetText());
+		While OneShellProcessor.Scan(Scanner) <> Eof Do
 			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
 		EndDo;
 		
 	ElsIf Output = "AST" Then
 		
-		Parser = This.Parser(Source.GetText());
-		This.ParseModule(Parser);
+		Parser = OneShellProcessor.Parser(Source.GetText());
+		OneShellProcessor.ParseModule(Parser);
 		JSONWriter = New JSONWriter;
 		FileName = GetTempFileName(".json");
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
@@ -73,9 +62,9 @@ Procedure TranslateAtServer()
 	ElsIf Output = "Backend" Then
 		
 		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
-		BackendProcessor.Init(This);
-		Parser = This.Parser(Source.GetText());
-		This.ParseModule(Parser);
+		BackendProcessor.Init(OneShellProcessor);
+		Parser = OneShellProcessor.Parser(Source.GetText());
+		OneShellProcessor.ParseModule(Parser);
 		BackendResult = BackendProcessor.VisitModule(Parser.Module); 
 		Result.SetText(BackendResult);
 		
@@ -85,7 +74,7 @@ Procedure TranslateAtServer()
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 	EndIf;
 		
-EndProcedure // TranslateAtServer()
+EndProcedure // TranslateAtServer() 
 
 &AtClientAtServerNoContext
 Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
