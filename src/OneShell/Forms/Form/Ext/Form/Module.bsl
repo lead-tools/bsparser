@@ -44,8 +44,6 @@ Procedure TranslateAtServer()
 	
 	This = FormAttributeToValue("FormObject"); 
 	
-	Start = CurrentUniversalDateInMilliseconds();
-	
 	If FormOutput = "Lexems" Then
 		
 		Eof = This.Tokens().Eof;
@@ -82,10 +80,13 @@ Procedure TranslateAtServer()
 		This.PS_VisitModule(Backend, Parser.Module);
 		FormResult.SetText(StrConcat(Backend.Result));
 		
+	ElsIf FormOutput = "measure" Then
+		
+		Start = CurrentUniversalDateInMilliseconds();
+		Parser = This.Parser(FormSource.GetText());
+		This.ParseModule(Parser);
+		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
+		
 	EndIf; 
-	
-	If FormObject.Verbose Then
-		Message((CurrentUniversalDateInMilliseconds() - Start) / 1000);
-	EndIf;
-	
+		
 EndProcedure // TranslateAtServer()
