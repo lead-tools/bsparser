@@ -2426,9 +2426,9 @@ Function PS_VisitExpr(Expr)
 	ElsIf NodeType = "TernaryExpr" Then
 		Return StrTemplate("if (%1) { %2 } else { %3 }", PS_VisitExpr(Expr.Condition), PS_VisitExpr(Expr.ThenPart), PS_VisitExpr(Expr.ElsePart));
 	ElsIf NodeType = "ParenExpr" Then
-		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
+		Return StrTemplate("(%1)", PS_VisitExpr(Expr.Expr));
 	ElsIf NodeType = "NotExpr" Then
-		Return StrTemplate("-not (%1)", BSL_VisitExpr(Expr.Expr));
+		Return StrTemplate("-not (%1)", PS_VisitExpr(Expr.Expr));
 	EndIf;
 EndFunction // PS_VisitExpr()
 

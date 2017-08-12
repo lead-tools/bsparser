@@ -10,6 +10,8 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 		Output = "AST";
 	EndIf; 
 	
+	SetVisibilityOfAttributes(ThisObject);
+	
 EndProcedure // OnCreateAtServer()
 
 &AtClient
@@ -87,6 +89,67 @@ Procedure TranslateAtServer()
 		This.ParseModule(Parser);
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 		
+	ElsIf Output = "Other" Then
+		
+		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
+		BackendProcessor.Init(This);
+		Parser = This.Parser(Source.GetText());
+		This.ParseModule(Parser);
+		BackendResult = BackendProcessor.VisitModule(Parser.Module);
+		Result.SetText(BackendResult);
+		
 	EndIf; 
 		
 EndProcedure // TranslateAtServer()
+
+&AtClientAtServerNoContext
+Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
+	
+	Items = ThisObject.Items;
+		
+	If Reason = Items.Output Or Reason = Undefined Then
+		
+		Items.BackendPath.Visible = (ThisObject.Output = "Other");
+		
+	EndIf;
+	
+EndProcedure // SetVisibilityOfAttributes()
+
+&AtClient
+Procedure OutputOnChange(Item)
+	
+	SetVisibilityOfAttributes(ThisObject, Item);
+	
+EndProcedure // OutputOnChange()
+
+&AtClient
+Procedure BackendPathStartChoice(Item, ChoiceData, StandardProcessing)
+	
+	StandardProcessing = False;
+	ChoosePath(Item, ThisObject, FileDialogMode.Open, "(*.epf)|*.epf");
+	
+EndProcedure // BackendPathStartChoice()
+
+&AtClient
+Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined)
+	
+	If DialogMode = Undefined Then
+		DialogMode = FileDialogMode.ChooseDirectory;
+	EndIf; 
+	
+	FileOpeningDialog = New FileDialog(DialogMode);
+	FileOpeningDialog.Filter = Filter;
+	
+	FileOpeningDialog.Show(New NotifyDescription("ChoosePathNotifyChoice", ThisObject));
+	
+EndProcedure // ChoosePath()
+
+&AtClient
+Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
+	
+	If Result <> Undefined Then
+		BackendPath = Result[0];
+	EndIf; 
+	
+EndProcedure // ChoosePathHandle()
+
