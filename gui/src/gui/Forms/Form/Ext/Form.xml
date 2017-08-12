@@ -1,38 +1,45 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.4">
+	<Title>
+		<v8:item>
+			<v8:lang>ru</v8:lang>
+			<v8:content>OneShell</v8:content>
+		</v8:item>
+	</Title>
+	<AutoTitle>false</AutoTitle>
 	<AutoCommandBar name="FormCommandBar" id="-1">
-		<ChildItems>
-			<Button name="Translate" id="4">
-				<Type>CommandBarButton</Type>
-				<DefaultButton>true</DefaultButton>
-				<CommandName>Form.Command.Translate</CommandName>
-				<Shape>Oval</Shape>
-				<ExtendedTooltip name="TranslateExtendedTooltip" id="5"/>
-			</Button>
-			<Button name="FormReopen" id="19">
-				<Type>CommandBarButton</Type>
-				<CommandName>Form.Command.Reopen</CommandName>
-				<ExtendedTooltip name="FormReopenExtendedTooltip" id="20"/>
-			</Button>
-		</ChildItems>
+		<Autofill>false</Autofill>
 	</AutoCommandBar>
 	<Events>
 		<Event name="OnCreateAtServer">OnCreateAtServer</Event>
 	</Events>
 	<ChildItems>
-		<UsualGroup name="Group1" id="12">
+		<UsualGroup name="Group0" id="30">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Group0</v8:content>
+				</v8:item>
+			</Title>
+			<ToolTip>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Group0</v8:content>
+				</v8:item>
+			</ToolTip>
 			<Representation>None</Representation>
 			<ShowTitle>false</ShowTitle>
-			<ExtendedTooltip name="Group1ExtendedTooltip" id="13"/>
+			<ExtendedTooltip name="Group0ExtendedTooltip" id="31"/>
 			<ChildItems>
-				<CheckBoxField name="Verbose" id="9">
-					<DataPath>FormObject.Verbose</DataPath>
-					<CheckBoxType>Auto</CheckBoxType>
-					<ContextMenu name="VerboseContextMenu" id="10"/>
-					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
-				</CheckBoxField>
+				<Button name="Translate" id="4">
+					<Type>UsualButton</Type>
+					<DefaultButton>true</DefaultButton>
+					<CommandName>Form.Command.Translate</CommandName>
+					<Shape>Oval</Shape>
+					<ExtendedTooltip name="TranslateExtendedTooltip" id="5"/>
+				</Button>
 				<InputField name="Output" id="14">
-					<DataPath>FormOutput</DataPath>
+					<DataPath>Output</DataPath>
 					<Width>10</Width>
 					<HorizontalStretch>false</HorizontalStretch>
 					<ListChoiceMode>true</ListChoiceMode>
@@ -71,42 +78,53 @@
 								<Presentation>
 									<v8:item>
 										<v8:lang>ru</v8:lang>
-										<v8:content>BSL</v8:content>
+										<v8:content>Backend</v8:content>
 									</v8:item>
 								</Presentation>
-								<Value xsi:type="xs:string">BSL</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
-										<v8:content>PS</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">PS</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
-										<v8:content>Null</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">Null</Value>
+								<Value xsi:type="xs:string">Backend</Value>
 							</xr:Value>
 						</xr:Item>
 					</ChoiceList>
 					<ContextMenu name="OutputContextMenu" id="15"/>
 					<ExtendedTooltip name="OutputExtendedTooltip" id="16"/>
+					<Events>
+						<Event name="OnChange">OutputOnChange</Event>
+					</Events>
 				</InputField>
+				<InputField name="BackendPath" id="24">
+					<DataPath>BackendPath</DataPath>
+					<ChoiceButton>true</ChoiceButton>
+					<ContextMenu name="BackendPathContextMenu" id="25"/>
+					<ExtendedTooltip name="BackendPathExtendedTooltip" id="26"/>
+					<Events>
+						<Event name="StartChoice">BackendPathStartChoice</Event>
+					</Events>
+				</InputField>
+			</ChildItems>
+		</UsualGroup>
+		<UsualGroup name="Group1" id="12">
+			<Representation>None</Representation>
+			<ShowTitle>false</ShowTitle>
+			<ExtendedTooltip name="Group1ExtendedTooltip" id="13"/>
+			<ChildItems>
+				<CheckBoxField name="Verbose" id="9">
+					<DataPath>Verbose</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="VerboseContextMenu" id="10"/>
+					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
+				</CheckBoxField>
+				<CheckBoxField name="Measure" id="27">
+					<DataPath>Measure</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="MeasureContextMenu" id="28"/>
+					<ExtendedTooltip name="MeasureExtendedTooltip" id="29"/>
+				</CheckBoxField>
+				<CheckBoxField name="CompatibleWith1C" id="21">
+					<DataPath>CompatibleWith1C</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="CompatibleWith1CContextMenu" id="22"/>
+					<ExtendedTooltip name="CompatibleWith1CExtendedTooltip" id="23"/>
+				</CheckBoxField>
 			</ChildItems>
 		</UsualGroup>
 		<UsualGroup name="Group2" id="17">
@@ -116,12 +134,12 @@
 			<ExtendedTooltip name="Group2ExtendedTooltip" id="18"/>
 			<ChildItems>
 				<TextDocumentField name="Source" id="1">
-					<DataPath>FormSource</DataPath>
+					<DataPath>Source</DataPath>
 					<ContextMenu name="SourceContextMenu" id="2"/>
 					<ExtendedTooltip name="SourceExtendedTooltip" id="3"/>
 				</TextDocumentField>
 				<TextDocumentField name="Result" id="6">
-					<DataPath>FormResult</DataPath>
+					<DataPath>Result</DataPath>
 					<ContextMenu name="ResultContextMenu" id="7"/>
 					<ExtendedTooltip name="ResultExtendedTooltip" id="8"/>
 				</TextDocumentField>
@@ -129,7 +147,7 @@
 		</UsualGroup>
 	</ChildItems>
 	<Attributes>
-		<Attribute name="FormObject" id="1">
+		<Attribute name="Object" id="1">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -137,11 +155,11 @@
 				</v8:item>
 			</Title>
 			<Type>
-				<v8:Type>cfg:ExternalDataProcessorObject.OneShell</v8:Type>
+				<v8:Type>cfg:ExternalDataProcessorObject.gui</v8:Type>
 			</Type>
 			<MainAttribute>true</MainAttribute>
 		</Attribute>
-		<Attribute name="FormSource" id="2">
+		<Attribute name="Source" id="2">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -152,7 +170,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="FormResult" id="3">
+		<Attribute name="Result" id="3">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -163,7 +181,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="FormOutput" id="5">
+		<Attribute name="Output" id="5">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -176,6 +194,54 @@
 					<v8:Length>0</v8:Length>
 					<v8:AllowedLength>Variable</v8:AllowedLength>
 				</v8:StringQualifiers>
+			</Type>
+		</Attribute>
+		<Attribute name="BackendPath" id="6">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Backend path</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:string</v8:Type>
+				<v8:StringQualifiers>
+					<v8:Length>0</v8:Length>
+					<v8:AllowedLength>Variable</v8:AllowedLength>
+				</v8:StringQualifiers>
+			</Type>
+		</Attribute>
+		<Attribute name="Measure" id="7">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Measure</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+		</Attribute>
+		<Attribute name="Verbose" id="8">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Verbose</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+		</Attribute>
+		<Attribute name="CompatibleWith1C" id="9">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Compatible with 1C</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
 			</Type>
 		</Attribute>
 	</Attributes>
@@ -194,21 +260,6 @@
 				</v8:item>
 			</ToolTip>
 			<Action>Translate</Action>
-		</Command>
-		<Command name="Reopen" id="2">
-			<Title>
-				<v8:item>
-					<v8:lang>ru</v8:lang>
-					<v8:content>Reopen</v8:content>
-				</v8:item>
-			</Title>
-			<ToolTip>
-				<v8:item>
-					<v8:lang>ru</v8:lang>
-					<v8:content>Reopen</v8:content>
-				</v8:item>
-			</ToolTip>
-			<Action>Reopen</Action>
 		</Command>
 	</Commands>
 </Form>

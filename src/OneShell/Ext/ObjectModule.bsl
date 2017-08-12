@@ -13,12 +13,6 @@ Var InitialTokensOfExpression; // array (one of Tokens)
 Var Operators;                 // structure
 Var EmptyArray;                // array
 
-#Region PS_Constants
-
-Var PS_Operators; // structure as map[one of Tokens](string)
-
-#EndRegion // PS_Constants
-
 #EndRegion // Constants
 
 #Region Init
@@ -85,6 +79,7 @@ Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
 	ObjectKinds = ObjectKinds();
+	SelectorKinds = SelectorKinds();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -101,9 +96,9 @@ Function Keywords() Export
 		|Var.Перем, Val.Знач, Return.Возврат, Continue.Продолжить, Break.Прервать,
 		|And.И, Or.Или, Not.Не,
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
-		|New.Новый, Execute.Выполнить, Export.Экспорт,
-		|True.Истина, False.Ложь, Undefined.Неопределено,
-		|Case.Выбор, When.Когда, EndCase.КонецВыбора" // new keywords
+		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
+		|True.Истина, False.Ложь, Undefined.Неопределено,"
+		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора, End.Конец") // new keywords
 	);
 
 	Return Keywords;
@@ -141,8 +136,8 @@ Function Tokens(Keywords = Undefined) Export
 
 		// Other
 
-		//         //             #          &
-		|Eof, Comment, Preprocessor, Directive"
+		//         //             #          &      ~
+		|Eof, Comment, Preprocessor, Directive, Label"
 
 	);
 
@@ -170,9 +165,9 @@ Function SelectorKinds() Export
 	Var SelectorKinds;
 
 	SelectorKinds = Enum(New Structure,
-		"Ident,"
-		"Index,"
-		"Call,"
+		"Ident," // Something._
+		"Index," // Something[_]
+		"Call,"  // Something(_)
 	);
 
 	Return SelectorKinds;
@@ -323,6 +318,9 @@ Function Scan(Scanner) Export
 	ElsIf Char = "#" Then
 		Lit = ScanComment(Scanner);
 		Tok = Tokens.Preprocessor;
+	ElsIf Char = "~" Then
+		Lit = ScanIdentifier(Scanner);
+		Tok = Tokens.Label;
 	Else
 		Error(Scanner, "Unknown char");
 	EndIf;
@@ -491,16 +489,17 @@ EndFunction // Object()
 
 #Region Declarations
 
-Function VarDecl(Object, Init = False, Value = Undefined)
+Function VarDecl(Object, Exported, Value = Undefined)
 	Var VarDecl;
 
 	VarDecl = New Structure(
 		"NodeType," // string (type of this structure)
 		"Object,"   // structure (Object)
+		"Export,"   // boolean
 	,
-	"VarDecl", Object);
+	"VarDecl", Object, Exported);
 
-	If Init Then
+	If Value <> Undefined Then
 		VarDecl.Insert("Value", Value); // structure (one of expressions)
 	EndIf;
 
@@ -521,44 +520,47 @@ Function VarListDecl(VarList)
 
 EndFunction // VarListDecl()
 
-Function ProcDecl(Object, Decls, Statements)
+Function ProcDecl(Object, Exported, Decls, Statements)
 	Var ProcDecl;
 
 	ProcDecl = New Structure(
 		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
+		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
 		"Statements," // array (one of statements)
 	,
-	"ProcDecl", Object, Decls, Statements);
+	"ProcDecl", Object, Exported, Decls, Statements);
 
 	Return ProcDecl;
 
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Decls, Statements)
+Function FuncDecl(Object, Exported, Decls, Statements)
 	Var FuncDecl;
 
 	FuncDecl = New Structure(
 		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
+		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
 		"Statements," // array (one of statements)
 	,
-	"FuncDecl", Object, Decls, Statements);
+	"FuncDecl", Object, Exported, Decls, Statements);
 
 	Return FuncDecl;
 
 EndFunction // FuncDecl()
 
-Function ParamDecl(Object, Init = False, Value = Undefined)
+Function ParamDecl(Object, ByVal, Init = False, Value = Undefined)
 	Var ParamDecl;
 
 	ParamDecl = New Structure(
 		"NodeType," // string (type of this structure)
 		"Object,"   // structure (Object)
+		"ByVal,"    // boolean
 	,
-	"ParamDecl", Object);
+	"ParamDecl", Object, ByVal);
 
 	If Init Then
 		ParamDecl.Insert("Value", Value); // structure (one of expressions)
@@ -911,6 +913,32 @@ Function TryStmt(TryPart, ExceptPart)
 
 EndFunction // TryStmt()
 
+Function GotoStmt(Label)
+	Var GotoStmt;
+
+	GotoStmt = New Structure(
+		"NodeType," // string (type of this structure)
+		"Label,"    // string
+	,
+	"GotoStmt", Label);
+
+	Return GotoStmt;
+
+EndFunction // GotoStmt()
+
+Function LabelStmt(Label)
+	Var LabelStmt;
+
+	LabelStmt = New Structure(
+		"NodeType," // string (type of this structure)
+		"Label,"    // string
+	,
+	"LabelStmt", Label);
+
+	Return LabelStmt;
+
+EndFunction // LabelStmt()
+
 #EndRegion // Statements
 
 #Region Types
@@ -942,19 +970,19 @@ Function Parser(Source) Export
 		"Lit,"     // string
 		"Val,"     // number, string, date, true, false, undefined
 		"Scope,"   // structure (Scope)
-		"Imports," // structure
+		"Vars,"    // structure as map[string](Object)
+		"Methods," // structure as map[string](Object)
 		"Module,"  // structure (Module)
 		"Unknown," // structure as map[string](Object)
 		"IsFunc,"  // boolean
 	);
 
 	Parser.Scanner = Scanner(Source);
-	Parser.Scope = Scope(Undefined);
-	Parser.Imports = New Structure;
+	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
 
-	Parser.Scope.Objects.Insert("Structure", Object("Constructor", "Structure"));
+	OpenScope(Parser);
 
 	Return Parser;
 
@@ -1002,6 +1030,7 @@ Function OpenScope(Parser)
 	Var Scope;
 	Scope = Scope(Parser.Scope);
 	Parser.Scope = Scope;
+	Parser.Vars = Scope.Objects;
 	Return Scope;
 EndFunction // OpenScope()
 
@@ -1009,6 +1038,7 @@ Function CloseScope(Parser)
 	Var Scope;
 	Scope = Parser.Scope.Outer;
 	Parser.Scope = Scope;
+	Parser.Vars = Scope.Objects;
 	Return Scope;
 EndFunction // CloseScope()
 
@@ -1096,39 +1126,45 @@ Function ParseNewExpr(Parser)
 EndFunction // ParseNewExpr()
 
 Function ParseDesignatorExpr(Parser, AllowNewVar = False)
-	Var Object, Selector, List, Call, Name, Column;
-	Object = ParseQualident(Parser);
-	If Object = Undefined Then
-		Column = Parser.Scanner.Column - StrLen(Parser.Lit);
-	EndIf;
+	Var Name, Selector, Object, List, Kind;
 	Name = Parser.Lit;
-	List = New Array;
-	Call = False;
 	Selector = ParseSelector(Parser);
-	While Selector <> Undefined Do
-		List.Add(Selector);
-		Call = (Selector.Kind = "Call");
-		Selector = ParseSelector(Parser);
-	EndDo;
-	If Object = Undefined Then
-		If Call Then
-			If Not Parser.Unknown.Property(Name, Object) Then
-				Object = Object("Unknown", Name);
-				Parser.Unknown.Insert(Name, Object);
-			EndIf;
-		Else
-			If AllowNewVar Then
-				Object = Object(ObjectKinds.Variable, Name);
-				Parser.Scope.Objects.Insert(Name, Object);
-			Else
-				Object = Object("Unknown", Name);
-				If Verbose Then
-					Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Column);
+	If Selector = Undefined Then
+		Object = FindObject(Parser, Name);
+		List = EmptyArray;
+	Else
+		Kind = Selector.Kind;
+		If Kind = "Call" Then
+			If Not Parser.Methods.Property(Name, Object) Then
+				If Not Parser.Unknown.Property(Name, Object) Then
+					Object = Object("Unknown", Name);
+					Parser.Unknown.Insert(Name, Object);
 				EndIf;
 			EndIf;
+		Else
+			Object = FindObject(Parser, Name);
 		EndIf;
+		List = New Array;
+		List.Add(Selector);
+		Selector = ParseSelector(Parser);
+		While Selector <> Undefined Do
+			Kind = Selector.Kind;
+			List.Add(Selector);
+			Selector = ParseSelector(Parser);
+		EndDo;
 	EndIf;
-	Return DesignatorExpr(Object, List, Call);
+	If Object = Undefined Then
+		If AllowNewVar Then
+			Object = Object(ObjectKinds.Variable, Name);
+			Parser.Vars.Insert(Name, Object);
+		Else
+			Object = Object("Unknown", Name);
+			If Verbose Then
+				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name));
+			EndIf;
+		EndIf;
+	EndIf; 
+	Return DesignatorExpr(Object, List, Kind = SelectorKinds.Call);
 EndFunction // ParseDesignatorExpr()
 
 Function ParseDesignatorExprList(Parser, AllowNewVar = False)
@@ -1142,21 +1178,6 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 	Return List;
 EndFunction // ParseDesignatorExprList()
 
-Function ParseQualident(Parser)
-	Var Module, Object;
-	Parser.Imports.Property(Parser.Lit, Module);
-	If Module <> Undefined Then
-		Next(Parser);
-		Expect(Parser, Tokens.Period);
-		Next(Parser);
-		Expect(Parser, Tokens.Ident);
-		Module.Objects.Property(Parser.Lit, Object);
-	Else
-		Object = FindObject(Parser, Parser.Lit);
-	EndIf;
-	Return Object;
-EndFunction // ParseQualident()
-
 Function ParseSelector(Parser)
 	Var Tok, Value;
 	Tok = Next(Parser);
@@ -1166,7 +1187,7 @@ Function ParseSelector(Parser)
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Return Selector("Ident", Value);
+		Return Selector(SelectorKinds.Ident, Value);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
@@ -1174,7 +1195,7 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Return Selector("Index", Value);
+		Return Selector(SelectorKinds.Index, Value);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1183,7 +1204,7 @@ Function ParseSelector(Parser)
 			Value = ParseExprList(Parser, True);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Return Selector("Call", Value);
+		Return Selector(SelectorKinds.Call, Value);
 	EndIf;
 	Return Undefined;
 EndFunction // ParseSelector()
@@ -1261,7 +1282,7 @@ Function ParseExprList(Parser, IsArguments = False)
 			If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
 				ExprList.Add(ParseExpression(Parser));
 			Else
-				ExprList.Add(BasicLitExpr(Tokens.Undefined, Undefined));
+				ExprList.Add(Undefined);
 			EndIf;
 			If Parser.Tok = Tokens.Comma Then
 				Next(Parser);
@@ -1305,13 +1326,13 @@ Function ParseTernaryExpr(Parser)
 EndFunction // ParseTernaryExpr()
 
 Function ParseFuncDecl(Parser)
-	Var Scope, Object, Name, Decls;
+	Var Object, Name, Decls, Exported;
+	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
-	ScopeObjects = Parser.Scope.Objects;
-	OpenScope(Parser);
-	Name = Parser.Lit;
+	Name = Parser.Lit; 
 	Next(Parser);
+	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Function;
 		Object.Insert("Type", ParseSignature(Parser));
@@ -1319,15 +1340,24 @@ Function ParseFuncDecl(Parser)
 	Else
 		Object = Object(ObjectKinds.Function, Name, ParseSignature(Parser));
 	EndIf;
-	ScopeObjects.Insert(Name, Object);
+	If Parser.Tok = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	EndIf;
+	If Parser.Methods.Property(Name) Then
+		Error(Parser.Scanner, "Method already declared",, True);
+	EndIf;
+	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
-	Expect(Parser, Tokens.EndFunction);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndFunction);
+	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
-	Return FuncDecl(Object, Decls, Statements);
+	Return FuncDecl(Object, Exported, Decls, Statements);
 EndFunction // ParseFuncDecl()
 
 Function ParseSignature(Parser)
@@ -1341,37 +1371,40 @@ Function ParseSignature(Parser)
 	EndIf;
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	If Parser.Tok = Tokens.Export Then
-		If Verbose Then
-			Error(Parser.Scanner, "keyword `Export` ignored");
-		EndIf;
-		Next(Parser);
-	EndIf;
 	Return Signature(ParamList);
 EndFunction // ParseSignature()
 
 Function ParseProcDecl(Parser)
-	Var Scope, Object, Name, Decls;
+	Var Object, Name, Decls, Exported;
+	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
-	ScopeObjects = Parser.Scope.Objects;
-	OpenScope(Parser);
 	Name = Parser.Lit;
 	Next(Parser);
+	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Procedure;
-		Object.Insert("Type", ParseSignature(Parser));
+		Object.Insert("Type", ParseSignature(Parser)); 
 		Parser.Unknown.Delete(Name);
 	Else
 		Object = Object(ObjectKinds.Procedure, Name, ParseSignature(Parser));
 	EndIf;
-	ScopeObjects.Insert(Name, Object);
+	If Parser.Tok = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	EndIf;
+	If Parser.Methods.Property(Name) Then
+		Error(Parser.Scanner, "Method already declared",, True);
+	EndIf;
+	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndProcedure);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndProcedure);
+	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
-	Return ProcDecl(Object, Decls, Statements);
+	Return ProcDecl(Object, Exported, Decls, Statements);
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
@@ -1391,17 +1424,11 @@ Function ParseVarListDecl(Parser)
 		Next(Parser);
 		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
-	If Parser.Tok = Tokens.Export Then
-		If Verbose Then
-			Error(Parser.Scanner, "keyword `Export` ignored");
-		EndIf;
-		Next(Parser);
-	EndIf;
 	Return VarListDecl(VarList);
 EndFunction // ParseVarListDecl()
 
 Function ParseVarDecl(Parser)
-	Var Tok, Name, Object, VarDecl;
+	Var Tok, Name, Object, VarDecl, Value, Exported;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Tok = Next(Parser);
@@ -1411,12 +1438,21 @@ Function ParseVarDecl(Parser)
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
 		Object = Object(ObjectKinds.Variable, Name, Tok);
-		VarDecl = VarDecl(Object, True, ParseOperand(Parser));
+		Value = ParseOperand(Parser);
 	Else
 		Object = Object(ObjectKinds.Variable, Name, Undefined);
-		VarDecl = VarDecl(Object);
 	EndIf;
-	Parser.Scope.Objects.Insert(Name, Object);
+	If Parser.Tok = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	Else
+		Exported = False;
+	EndIf;
+	VarDecl = VarDecl(Object, Exported, Value);
+	If Parser.Vars.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
+	EndIf; 
+	Parser.Vars.Insert(Name, Object);
 	Return VarDecl;
 EndFunction // ParseVarDecl()
 
@@ -1432,12 +1468,12 @@ Function ParseParamList(Parser)
 EndFunction // ParseParamList()
 
 Function ParseParamDecl(Parser)
-	Var Tok, Name, Object, ParamDecl;
+	Var Tok, Name, Object, ParamDecl, ByVal;
 	If Parser.Tok = Tokens.Val Then
-		If Verbose Then
-			Error(Parser.Scanner, "keyword `Val` ignored");
-		EndIf;
+		ByVal = True;
 		Next(Parser);
+	Else
+		ByVal = False;
 	EndIf;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
@@ -1448,12 +1484,15 @@ Function ParseParamDecl(Parser)
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
 		Object = Object(ObjectKinds.Parameter, Name, Tok);
-		ParamDecl = ParamDecl(Object, True, ParseOperand(Parser));
+		ParamDecl = ParamDecl(Object, ByVal, True, ParseOperand(Parser));
 	Else
 		Object = Object(ObjectKinds.Parameter, Name, Undefined);
-		ParamDecl = ParamDecl(Object);
+		ParamDecl = ParamDecl(Object, ByVal);
 	EndIf;
-	Parser.Scope.Objects.Insert(Name, Object);
+	If Parser.Vars.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared",, True);
+	EndIf;
+	Parser.Vars.Insert(Name, Object);
 	Return ParamDecl;
 EndFunction // ParseParamDecl()
 
@@ -1469,38 +1508,45 @@ Function ParseStatements(Parser)
 EndFunction // ParseStatements()
 
 Function ParseStmt(Parser)
-	Var Tok;
+	Var Tok, Stmt;
 	Tok = SkipIgnoredTokens(Parser);
 	While Tok = Tokens.Semicolon Do
 		Next(Parser);
 		Tok = SkipIgnoredTokens(Parser);
 	EndDo;
 	If Tok = Tokens.Ident Then
-		Return ParseAssignOrCallStmt(Parser);
+		Stmt = ParseAssignOrCallStmt(Parser);
 	ElsIf Tok = Tokens.If Then
-		Return ParseIfStmt(Parser);
+		Stmt = ParseIfStmt(Parser);
 	ElsIf Tok = Tokens.Try Then
-		Return ParseTryStmt(Parser);
+		Stmt = ParseTryStmt(Parser);
 	ElsIf Tok = Tokens.While Then
-		Return ParseWhileStmt(Parser);
+		Stmt = ParseWhileStmt(Parser);
 	ElsIf Tok = Tokens.For Then
-		Return ParseForStmt(Parser);
-	ElsIf Tok = Tokens.Case Then
-		Return ParseCaseStmt(Parser);
+		Stmt = ParseForStmt(Parser);
+	ElsIf Not CompatibleWith1C And Tok = Tokens.Case Then
+		Stmt = ParseCaseStmt(Parser);
 	ElsIf Tok = Tokens.Return Then
-		Return ParseReturnStmt(Parser);
+		Stmt = ParseReturnStmt(Parser);
 	ElsIf Tok = Tokens.Break Then
 		Next(Parser);
-		Return BreakStmt();
+		Stmt = BreakStmt();
 	ElsIf Tok = Tokens.Continue Then
 		Next(Parser);
-		Return ContinueStmt();
+		Stmt = ContinueStmt();
 	ElsIf Tok = Tokens.Raise Then
-		Return ParseRaiseStmt(Parser);
+		Stmt = ParseRaiseStmt(Parser);
 	ElsIf Tok = Tokens.Execute Then
-		Return ParseExecuteStmt(Parser);
+		Stmt = ParseExecuteStmt(Parser);
+	ElsIf Tok = Tokens.Goto Then
+		Stmt = ParseGotoStmt(Parser);
+	ElsIf Tok = Tokens.Label Then
+		Stmt = LabelStmt(Parser.Lit);
+		Next(Parser);
+		Expect(Parser, Tokens.Colon);
+		Next(Parser);
 	EndIf;
-	Return Undefined;
+	Return Stmt;
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
@@ -1531,7 +1577,7 @@ Function ParseAssignOrCallStmt(Parser)
 	Var Tok, Left, Right;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
-		Return CallStmt(Left);
+		Return CallStmt(Left[0]);
 	EndIf;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Eql Then
@@ -1574,7 +1620,9 @@ Function ParseIfStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	Expect(Parser, Tokens.EndIf);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndIf);
+	EndIf; 
 	Next(Parser);
 	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
@@ -1586,7 +1634,9 @@ Function ParseTryStmt(Parser)
 	Expect(Parser, Tokens.Except);
 	Next(Parser);
 	ExceptPart = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndTry);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndTry);
+	EndIf; 
 	Next(Parser);
 	Return TryStmt(TryPart, ExceptPart);
 EndFunction // ParseTryStmt()
@@ -1611,7 +1661,9 @@ Function ParseCaseStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	Expect(Parser, Tokens.EndCase);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndCase);
+	EndIf; 
 	Next(Parser);
 	Return CaseStmt(DesignatorExpr, WhenPart, ElsePart);
 EndFunction // ParseCaseStmt()
@@ -1623,7 +1675,9 @@ Function ParseWhileStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndDo);
+	EndIf; 
 	Next(Parser);
 	Return WhileStmt(Condition, Statements)
 EndFunction // ParseWhileStmt()
@@ -1653,10 +1707,21 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndDo);
+	EndIf; 
 	Next(Parser);
 	Return ForStmt(DesignatorExpr, Collection, Statements);
 EndFunction // ParseForStmt()
+
+Function ParseGotoStmt(Parser)
+	Var Label;
+	Next(Parser);
+	Expect(Parser, Tokens.Label);
+	Label = Parser.Lit;
+	Next(Parser);
+	Return GotoStmt(Label);
+EndFunction // ParseGotoStmt()
 
 Function ParseVarDecls(Parser)
 	Var Tok, Decls;
@@ -1701,7 +1766,7 @@ Function ParseModule(Parser) Export
 	Parser.Module = Module(ParseDecls(Parser), ParseStatements(Parser));
 	If Verbose Then
 		For Each Item In Parser.Unknown Do
-			Message(StrTemplate("Undeclared identifier `%1`", Item.Key));
+			Message(StrTemplate("Undeclared method `%1`", Item.Key));
 		EndDo;
 	EndIf;
 	Expect(Parser, Tokens.Eof);
@@ -1791,655 +1856,3 @@ Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
 EndProcedure // Error()
 
 #EndRegion // Auxiliary
-
-#Region Backends
-
-Function Backend() Export
-	Var Backend;
-
-	Backend = New Structure(
-		"Result," // array (string)
-		"Indent," // number
-	,
-	New Array, -1);
-
-	Return Backend;
-
-EndFunction // Backend()
-
-Procedure Indent(Backend)
-	Var Result;
-	Result = Backend.Result;
-	For Index = 1 To Backend.Indent Do
-		Result.Add(Chars.Tab);
-	EndDo;
-EndProcedure // Indent()
-
-#Region BSL
-
-Procedure BSL_VisitModule(Backend, Module) Export
-	BSL_VisitDecls(Backend, Module.Decls);
-	BSL_VisitStatements(Backend, Module.Statements);
-EndProcedure // BSL_VisitModule()
-
-Procedure BSL_VisitDecls(Backend, Decls)
-	Backend.Indent = Backend.Indent + 1;
-	For Each Decl In Decls Do
-		BSL_VisitDecl(Backend, Decl);
-	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-EndProcedure // BSL_VisitDecls()
-
-Procedure BSL_VisitStatements(Backend, Statements)
-	Backend.Indent = Backend.Indent + 1;
-	For Each Stmt In Statements Do
-		BSL_VisitStmt(Backend, Stmt);
-	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-	Indent(Backend);
-EndProcedure // BSL_VisitStatements()
-
-Procedure BSL_VisitDecl(Backend, Decl)
-	Var Result, NodeType;
-	Result = Backend.Result;
-	NodeType = Decl.NodeType;
-	If NodeType = "VarListDecl" Then
-		Indent(Backend);
-		Result.Add("Var ");
-		BSL_VisitVarListDecl(Backend, Decl.VarList);
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
-		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent + 1;
-		If NodeType = "FuncDecl" Then
-			Result.Add("Function ");
-		Else
-			Result.Add("Procedure ");
-		EndIf;
-		Result.Add(Decl.Object.Name);
-		Result.Add("(");
-		BSL_VisitVarListDecl(Backend, Decl.Object.Type.ParamList);
-		Result.Add(")");
-		Result.Add(Chars.LF);
-		For Each Stmt In Decl.Decls Do
-			BSL_VisitDecl(Backend, Stmt);
-		EndDo;
-		For Each Stmt In Decl.Statements Do
-			BSL_VisitStmt(Backend, Stmt);
-		EndDo;
-		If NodeType = "FuncDecl" Then
-			Result.Add(StrTemplate("EndFunction // %1()", Decl.Object.Name));
-		Else
-			Result.Add(StrTemplate("EndProcedure // %1()", Decl.Object.Name));
-		EndIf;
-		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent - 1;
-	EndIf;
-EndProcedure // BSL_VisitDecl()
-
-Procedure BSL_VisitVarListDecl(Backend, VarListDecl)
-	Var Result, Buffer;
-	If VarListDecl <> Undefined Then
-		Result = Backend.Result;
-		Buffer = New Array;
-		For Each VarDecl In VarListDecl Do
-			Buffer.Add(VarDecl.Object.Name + ?(VarDecl.Property("Value"), " = " + BSL_VisitExpr(VarDecl.Value), ""));
-		EndDo;
-		If Buffer.Count() > 0 Then
-			Result.Add(StrConcat(Buffer, ", "));
-		EndIf;
-	EndIf;
-EndProcedure // BSL_VisitVarListDecl()
-
-Procedure BSL_VisitStmt(Backend, Stmt)
-	Var Result, NodeType;
-	Result = Backend.Result;
-	NodeType = Stmt.NodeType;
-	Indent(Backend);
-	If NodeType = "AssignStmt" Then
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" = ");
-		Result.Add(BSL_VisitExprList(Stmt.Right));
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" = ");
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" + ");
-		Result.Add(BSL_VisitExprList(Stmt.Right));
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ReturnStmt" Then
-		Result.Add("Return ");
-		If Stmt.Property("ExprList") Then
-			Result.Add(BSL_VisitExprList(Stmt.ExprList));
-		EndIf;
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "BreakStmt" Then
-		Result.Add("Break;");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ContinueStmt" Then
-		Result.Add("Continue;");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "RaiseStmt" Then
-		Result.Add("Raise ");
-		If Stmt.Property("Expr") Then
-			Result.Add(BSL_VisitExpr(Stmt.Expr));
-		EndIf;
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ExecuteStmt" Then
-		Result.Add("Execute(");
-		Result.Add(BSL_VisitExpr(Stmt.Expr));
-		Result.Add(");");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "CallStmt" Then
-		Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr[0]));
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "IfStmt" Then
-		Result.Add("If ");
-		BSL_VisitIfStmt(Backend, Stmt);
-		If Stmt.Property("ElsePart") Then
-			Result.Add("Else");
-			Result.Add(Chars.LF);
-			BSL_VisitStatements(Backend, Stmt.ElsePart);
-		EndIf;
-		Result.Add("EndIf");
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "WhileStmt" Then
-		Result.Add("While ");
-		Result.Add(BSL_VisitExpr(Stmt.Condition));
-		Result.Add(" Do");
-		Result.Add(Chars.LF);
-		BSL_VisitStatements(Backend, Stmt.Statements);
-		Result.Add("EndDo");
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ForStmt" Then
-		Result.Add("For ");
-		If Stmt.Collection.NodeType = "RangeExpr" Then
-			Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" = ");
-			Result.Add(BSL_VisitExpr(Stmt.Collection));
-		Else
-			Result.Add("Each ");
-			Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" In ");
-			Result.Add(BSL_VisitExpr(Stmt.Collection));
-		EndIf;
-		Result.Add(" Do");
-		Result.Add(Chars.LF);
-		BSL_VisitStatements(Backend, Stmt.Statements);
-		Result.Add("EndDo");
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "CaseStmt" Then
-		If Stmt.WhenPart.Count() > 0 Then
-			Result.Add("If ");
-			Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" = ");
-			IfStmt = Stmt.WhenPart[0];
-			BSL_VisitIfStmt(Backend, IfStmt);
-			For Index = 1 To Stmt.WhenPart.Count() - 1 Do
-				IfStmt = Stmt.WhenPart[Index];
-				Result.Add("ElsIf ");
-				Result.Add(BSL_VisitDesignatorExpr(Stmt.DesignatorExpr));
-				Result.Add(" = ");
-				BSL_VisitIfStmt(Backend, IfStmt);
-			EndDo;
-			If Stmt.Property("ElsePart") Then
-				Result.Add("Else");
-				Result.Add(Chars.LF);
-				BSL_VisitStatements(Backend, Stmt.ElsePart);
-			EndIf;
-			Result.Add("EndIf");
-			Result.Add(";");
-			Result.Add(Chars.LF);
-		Else
-			Result.Add(Chars.LF);
-			Backend.Indent = Backend.Indent - 1;
-			If Stmt.Property("ElsePart") Then
-				BSL_VisitStatements(Backend, Stmt.ElsePart);
-			EndIf;
-			Backend.Indent = Backend.Indent + 1;
-			Result.Add(Chars.LF);
-		EndIf;
-	ElsIf NodeType = "TryStmt" Then
-		Result.Add("Try");
-		Result.Add(Chars.LF);
-		BSL_VisitStatements(Backend, Stmt.TryPart);
-		Result.Add("Except");
-		Result.Add(Chars.LF);
-		BSL_VisitStatements(Backend, Stmt.ExceptPart);
-		Result.Add("EndTry");
-		Result.Add(";");
-		Result.Add(Chars.LF);
-	EndIf;
-EndProcedure // BSL_VisitStmt()
-
-Procedure BSL_VisitIfStmt(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
-	Result.Add(BSL_VisitExpr(IfStmt.Condition));
-	Result.Add(" Then");
-	Result.Add(Chars.LF);
-	BSL_VisitStatements(Backend, IfStmt.ThenPart);
-	If IfStmt.Property("ElsIfPart") Then
-		For Each Item In IfStmt.ElsIfPart Do
-			Result.Add("ElsIf ");
-			BSL_VisitIfStmt(Backend, Item);
-		EndDo;
-	EndIf;
-EndProcedure // BSL_VisitIfStmt()
-
-Function BSL_VisitExprList(ExprList)
-	Var Buffer;
-	If ExprList <> Undefined Then
-		Buffer = New Array;
-		For Each Expr In ExprList Do
-			If Expr = Undefined Then
-				Buffer.Add("");
-			Else
-				Buffer.Add(BSL_VisitExpr(Expr));
-			EndIf;
-		EndDo;
-		Return StrConcat(Buffer, ", ");
-	EndIf;
-EndFunction // BSL_VisitExprList()
-
-Function BSL_VisitExpr(Expr)
-	Var NodeType, BasicLitKind;
-	NodeType = Expr.NodeType;
-	If NodeType = "BasicLitExpr" Then
-		BasicLitKind = Expr.Kind;
-		If BasicLitKind = Tokens.String Then
-			Return StrTemplate("""%1""", StrReplace(Expr.Value, Chars.LF, """ """));
-		ElsIf BasicLitKind = Tokens.Number Then
-			Return Format(Expr.Value, "NZ=0; NG=");
-		ElsIf BasicLitKind = Tokens.DateTime Then
-			Return Format(Expr.Value, "DF='""''yyyyMMdd'''");
-		ElsIf BasicLitKind = Tokens.True Or BasicLitKind = Tokens.False Then
-			Return Format(Expr.Value, "BF=False; BT=True");
-		ElsIf BasicLitKind = Tokens.Undefined Then
-			Return "Undefined";
-		Else
-			Raise "Unknown basic literal";
-		EndIf;
-	ElsIf NodeType = "DesignatorExpr" Then
-		Return BSL_VisitDesignatorExpr(Expr);
-	ElsIf NodeType = "UnaryExpr" Then
-		Return StrTemplate("%1 %2", Operators[Expr.Operator], BSL_VisitExpr(Expr.Operand));
-	ElsIf NodeType = "BinaryExpr" Then
-		Return StrTemplate("%1 %2 %3", BSL_VisitExpr(Expr.Left), Operators[Expr.Operator], BSL_VisitExpr(Expr.Right));
-	ElsIf NodeType = "RangeExpr" Then
-		Return StrTemplate("%1 To %2", BSL_VisitExpr(Expr.Left), BSL_VisitExpr(Expr.Right));
-	ElsIf NodeType = "NewExpr" Then
-		If TypeOf(Expr.Constructor) = Type("Structure") Then
-			Return StrTemplate("New %1", BSL_VisitExpr(Expr.Constructor));
-		Else
-			Return StrTemplate("New(%1)", BSL_VisitExprList(Expr.Constructor));
-		EndIf;
-	ElsIf NodeType = "TernaryExpr" Then
-		Return StrTemplate("?(%1, %2, %3)", BSL_VisitExpr(Expr.Condition), BSL_VisitExpr(Expr.ThenPart), BSL_VisitExpr(Expr.ElsePart));
-	ElsIf NodeType = "ParenExpr" Then
-		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
-	ElsIf NodeType = "NotExpr" Then
-		Return StrTemplate("Not %1", BSL_VisitExpr(Expr.Expr));	
-	EndIf;
-EndFunction // BSL_VisitExpr()
-
-Function BSL_VisitDesignatorExpr(DesignatorExpr)
-	Var Buffer;
-	Buffer = New Array;
-	Buffer.Add(DesignatorExpr.Object.Name);
-	If DesignatorExpr.Property("Selectors") Then
-		For Each Selector In DesignatorExpr.Selectors Do
-			If Selector.Kind = "Ident" Then
-				Buffer.Add(".");
-				Buffer.Add(Selector.Value);
-			ElsIf Selector.Kind = "Index" Then
-				Buffer.Add("[");
-				Buffer.Add(BSL_VisitExprList(Selector.Value));
-				Buffer.Add("]");
-			ElsIf Selector.Kind = "Call" Then
-				Buffer.Add("(");
-				Buffer.Add(BSL_VisitExprList(Selector.Value));
-				Buffer.Add(")");
-			Else
-				Raise "Unknown selector kind";
-			EndIf;
-		EndDo;
-	EndIf;
-	Return StrConcat(Buffer);
-EndFunction // BSL_VisitDesignatorExpr()
-
-#EndRegion // BSL
-
-#Region PS
-
-Procedure PS_VisitModule(Backend, Module) Export
-	PS_VisitDecls(Backend, Module.Decls);
-	PS_VisitStatements(Backend, Module.Statements);
-EndProcedure // PS_VisitModule()
-
-Procedure PS_VisitDecls(Backend, Decls)
-	Backend.Indent = Backend.Indent + 1;
-	For Each Decl In Decls Do
-		PS_VisitDecl(Backend, Decl);
-	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-EndProcedure // PS_VisitDecls()
-
-Procedure PS_VisitStatements(Backend, Statements)
-	Backend.Indent = Backend.Indent + 1;
-	For Each Stmt In Statements Do
-		PS_VisitStmt(Backend, Stmt);
-	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-	Indent(Backend);
-EndProcedure // PS_VisitStatements()
-
-Procedure PS_VisitDecl(Backend, Decl)
-	Var Result, NodeType;
-	Result = Backend.Result;
-	NodeType = Decl.NodeType;
-	If NodeType = "VarListDecl" Then
-		PS_VisitVarListDecl(Backend, Decl.VarList);
-	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
-		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent + 1;
-		Result.Add("function ");
-		Result.Add(Decl.Object.Name);
-		Result.Add("(");
-		PS_VisitParamList(Backend, Decl.Object.Type.ParamList);
-		Result.Add(") {");
-		Result.Add(Chars.LF);
-		For Each Stmt In Decl.Decls Do
-			PS_VisitDecl(Backend, Stmt);
-		EndDo;
-		For Each Stmt In Decl.Statements Do
-			PS_VisitStmt(Backend, Stmt);
-		EndDo;
-		Result.Add("}");
-		Result.Add(Chars.LF);
-		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent - 1;
-	EndIf;
-EndProcedure // PS_VisitDecl()
-
-Procedure PS_VisitVarListDecl(Backend, VarListDecl)
-	Var Result;
-	If VarListDecl <> Undefined Then
-		Result = Backend.Result;
-		For Each VarDecl In VarListDecl Do
-			Indent(Backend);
-			Result.Add(StrTemplate("New-Variable -Name ""%1""", VarDecl.Object.Name));
-			If VarDecl.Property("Value") Then
-				Result.Add(" -Value " + PS_VisitExpr(VarDecl.Value));
-			EndIf;
-			Result.Add(Chars.LF);
-		EndDo;
-	EndIf;
-EndProcedure // PS_VisitVarListDecl()
-
-Procedure PS_VisitParamList(Backend, ParamList)
-	Var Result, Buffer;
-	If ParamList <> Undefined Then
-		Result = Backend.Result;
-		Buffer = New Array;
-		For Each VarDecl In ParamList Do
-			Buffer.Add(StrTemplate("$%1%2", VarDecl.Object.Name, ?(VarDecl.Property("Value"), " = " + PS_VisitExpr(VarDecl.Value), "")));
-		EndDo;
-		If Buffer.Count() > 0 Then
-			Result.Add(StrConcat(Buffer, ", "));
-		EndIf;
-	EndIf;
-EndProcedure // PS_VisitParamList()
-
-Procedure PS_VisitStmt(Backend, Stmt)
-	Var Result, NodeType;
-	Result = Backend.Result;
-	NodeType = Stmt.NodeType;
-	Indent(Backend);
-	If NodeType = "AssignStmt" Then
-		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
-		Result.Add(" = ");
-		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(PS_VisitExprList(Stmt.Left, ", "));
-		Result.Add(" += ");
-		Result.Add(PS_VisitExprList(Stmt.Right, ", "));
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ReturnStmt" Then
-		Result.Add("return ");
-		If Stmt.Property("ExprList") Then
-			Result.Add(PS_VisitExprList(Stmt.ExprList, ", "));
-		EndIf;
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "BreakStmt" Then
-		Result.Add("break");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ContinueStmt" Then
-		Result.Add("continue");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "RaiseStmt" Then
-		Result.Add("throw ");
-		If Stmt.Property("Expr") Then
-			Result.Add(PS_VisitExpr(Stmt.Expr));
-		EndIf;
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ExecuteStmt" Then
-		Result.Add("# Execute(");
-		Result.Add(PS_VisitExpr(Stmt.Expr));
-		Result.Add(")");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "CallStmt" Then
-		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr[0], False));
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "IfStmt" Then
-		Result.Add("if (");
-		PS_VisitIfStmt(Backend, Stmt);
-		If Stmt.Property("ElsePart") Then
-			Indent(Backend);
-			Result.Add("else {");
-			Result.Add(Chars.LF);
-			PS_VisitStatements(Backend, Stmt.ElsePart);
-			Result.Add("}");
-			Result.Add(Chars.LF);
-		EndIf;
-	ElsIf NodeType = "WhileStmt" Then
-		Result.Add("while (");
-		Result.Add(PS_VisitExpr(Stmt.Condition));
-		Result.Add(") {");
-		Result.Add(Chars.LF);
-		PS_VisitStatements(Backend, Stmt.Statements);
-		Result.Add("}");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "ForStmt" Then
-		If Stmt.Collection.NodeType = "RangeExpr" Then
-			Result.Add("for (");
-			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" = ");
-			Result.Add(PS_VisitExpr(Stmt.Collection.Left));
-			Result.Add("; ");
-			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" -le ");
-			Result.Add(PS_VisitExpr(Stmt.Collection.Right));
-			Result.Add(StrTemplate("; %1++ )", PS_VisitDesignatorExpr(Stmt.DesignatorExpr)));
-		Else
-			Result.Add("foreach (");
-			Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" In ");
-			Result.Add(PS_VisitExpr(Stmt.Collection));
-			Result.Add(")");
-		EndIf;
-		Result.Add(" {");
-		Result.Add(Chars.LF);
-		PS_VisitStatements(Backend, Stmt.Statements);
-		Result.Add("}");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "CaseStmt" Then
-		Result.Add("switch ");
-		Result.Add(PS_VisitDesignatorExpr(Stmt.DesignatorExpr));
-		Result.Add(" {");
-		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent + 1;
-		For Each IfStmt In Stmt.WhenPart Do
-			Indent(Backend);
-			PS_VisitWhenPart(Backend, IfStmt);
-		EndDo;
-		If Stmt.Property("ElsePart") Then
-			Indent(Backend);
-			Result.Add("default {");
-			Result.Add(Chars.LF);
-			PS_VisitStatements(Backend, Stmt.ElsePart);
-			Result.Add("}");
-			Result.Add(Chars.LF);
-		EndIf;
-		Backend.Indent = Backend.Indent - 1;
-		Indent(Backend);
-		Result.Add("}");
-		Result.Add(Chars.LF);
-	ElsIf NodeType = "TryStmt" Then
-		Result.Add("try {");
-		Result.Add(Chars.LF);
-		PS_VisitStatements(Backend, Stmt.TryPart);
-		Result.Add("}");
-		Result.Add(Chars.LF);
-		Indent(Backend);
-		Result.Add("catch {");
-		Result.Add(Chars.LF);
-		PS_VisitStatements(Backend, Stmt.ExceptPart);
-		Result.Add("}");
-		Result.Add(Chars.LF);
-	EndIf;
-EndProcedure // PS_VisitStmt()
-
-Procedure PS_VisitIfStmt(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
-	Result.Add(PS_VisitExpr(IfStmt.Condition));
-	Result.Add(") {");
-	Result.Add(Chars.LF);
-	PS_VisitStatements(Backend, IfStmt.ThenPart);
-	Result.Add("}");
-	Result.Add(Chars.LF);
-	If IfStmt.Property("ElsIfPart") Then
-		For Each Item In IfStmt.ElsIfPart Do
-			Indent(Backend);
-			Result.Add("elseif (");
-			PS_VisitIfStmt(Backend, Item);
-		EndDo;
-	EndIf;
-EndProcedure // PS_VisitIfStmt()
-
-Procedure PS_VisitWhenPart(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
-	Result.Add(PS_VisitExpr(IfStmt.Condition));
-	Result.Add(" {");
-	Result.Add(Chars.LF);
-	PS_VisitStatements(Backend, IfStmt.ThenPart);
-	Result.Add("}");
-	Result.Add(Chars.LF);
-EndProcedure // PS_VisitWhenPart()
-
-Function PS_VisitExprList(ExprList, Separator)
-	Var Buffer;
-	If ExprList <> Undefined Then
-		Buffer = New Array;
-		For Each Expr In ExprList Do
-			If Expr = Undefined Then
-				Buffer.Add("");
-			Else
-				Buffer.Add(PS_VisitExpr(Expr));
-			EndIf;
-		EndDo;
-		Return StrConcat(Buffer, Separator);
-	EndIf;
-EndFunction // PS_VisitExprList()
-
-Function PS_VisitExpr(Expr)
-	Var NodeType, BasicLitKind;
-	NodeType = Expr.NodeType;
-	If NodeType = "BasicLitExpr" Then
-		BasicLitKind = Expr.Kind;
-		If BasicLitKind = Tokens.String Then
-			Return StrTemplate("""%1""", StrReplace(Expr.Value, Chars.LF, """ """));
-		ElsIf BasicLitKind = Tokens.Number Then
-			Return Format(Expr.Value, "NZ=0; NG=");
-		ElsIf BasicLitKind = Tokens.DateTime Then
-			Return Format(Expr.Value, "DF='""''yyyyMMdd'''");
-		ElsIf BasicLitKind = Tokens.True Or BasicLitKind = Tokens.False Then
-			Return Format(Expr.Value, "BF=$False; BT=$True");
-		ElsIf BasicLitKind = Tokens.Undefined Then
-			Return "$null";
-		Else
-			Raise "Unknown basic literal";
-		EndIf;
-	ElsIf NodeType = "DesignatorExpr" Then
-		Return PS_VisitDesignatorExpr(Expr);
-	ElsIf NodeType = "UnaryExpr" Then
-		Return StrTemplate("%1 %2", PS_Operators[Expr.Operator], PS_VisitExpr(Expr.Operand));
-	ElsIf NodeType = "BinaryExpr" Then
-		Return StrTemplate("%1 %2 %3", PS_VisitExpr(Expr.Left), PS_Operators[Expr.Operator], PS_VisitExpr(Expr.Right));
-	ElsIf NodeType = "RangeExpr" Then
-		Return StrTemplate("%1..%2", PS_VisitExpr(Expr.Left), PS_VisitExpr(Expr.Right));
-	ElsIf NodeType = "NewExpr" Then
-		If TypeOf(Expr.Constructor) = Type("Structure") Then
-			Return StrTemplate("<# New %1 #>", PS_VisitExpr(Expr.Constructor));
-		Else
-			Return StrTemplate("<# New(%1) #>", PS_VisitExprList(Expr.Constructor, ", "));
-		EndIf;
-	ElsIf NodeType = "TernaryExpr" Then
-		Return StrTemplate("if (%1) { %2 } else { %3 }", PS_VisitExpr(Expr.Condition), PS_VisitExpr(Expr.ThenPart), PS_VisitExpr(Expr.ElsePart));
-	ElsIf NodeType = "ParenExpr" Then
-		Return StrTemplate("(%1)", BSL_VisitExpr(Expr.Expr));
-	ElsIf NodeType = "NotExpr" Then
-		Return StrTemplate("-not (%1)", BSL_VisitExpr(Expr.Expr));
-	EndIf;
-EndFunction // PS_VisitExpr()
-
-Function PS_VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
-	Var Buffer, Selector;
-	Buffer = New Array;
-	If Not DesignatorExpr.Call Then
-		Buffer.Add("$");
-	EndIf;
-	Buffer.Add(DesignatorExpr.Object.Name);
-	If DesignatorExpr.Property("Selectors") Then
-		For Each Selector In DesignatorExpr.Selectors Do
-			If Selector.Kind = "Ident" Then
-				Buffer.Add(".");
-				Buffer.Add(Selector.Value);
-			ElsIf Selector.Kind = "Index" Then
-				Buffer.Add("[");
-				Buffer.Add(PS_VisitExprList(Selector.Value, ", "));
-				Buffer.Add("]");
-			ElsIf Selector.Kind = "Call" Then
-				If Selector.Value.Count() > 0 Then
-					Buffer.Add(" ");
-					Buffer.Add(PS_VisitExprList(Selector.Value, " "));
-				EndIf;
-			Else
-				Raise "Unknown selector kind";
-			EndIf;
-		EndDo;
-	EndIf;
-	If IsOperand
-		And DesignatorExpr.Call
-		And Selector.Value.Count() > 0 Then
-		Return StrTemplate("(%1)", StrConcat(Buffer));
-	EndIf;
-	Return StrConcat(Buffer);
-EndFunction // PS_VisitDesignatorExpr()
-
-#EndRegion // PS
-
-#EndRegion // Backends
