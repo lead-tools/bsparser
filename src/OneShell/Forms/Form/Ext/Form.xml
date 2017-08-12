@@ -9,10 +9,10 @@
 				<Shape>Oval</Shape>
 				<ExtendedTooltip name="TranslateExtendedTooltip" id="5"/>
 			</Button>
-			<Button name="FormReopen" id="19">
+			<Button name="Reopen" id="19">
 				<Type>CommandBarButton</Type>
 				<CommandName>Form.Command.Reopen</CommandName>
-				<ExtendedTooltip name="FormReopenExtendedTooltip" id="20"/>
+				<ExtendedTooltip name="ReopenExtendedTooltip" id="20"/>
 			</Button>
 		</ChildItems>
 	</AutoCommandBar>
@@ -26,19 +26,19 @@
 			<ExtendedTooltip name="Group1ExtendedTooltip" id="13"/>
 			<ChildItems>
 				<CheckBoxField name="Verbose" id="9">
-					<DataPath>FormObject.Verbose</DataPath>
+					<DataPath>Object.Verbose</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
 					<ContextMenu name="VerboseContextMenu" id="10"/>
 					<ExtendedTooltip name="VerboseExtendedTooltip" id="11"/>
 				</CheckBoxField>
 				<CheckBoxField name="CompatibleWith1C" id="21">
-					<DataPath>FormObject.CompatibleWith1C</DataPath>
+					<DataPath>Object.CompatibleWith1C</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
 					<ContextMenu name="CompatibleWith1CContextMenu" id="22"/>
 					<ExtendedTooltip name="CompatibleWith1CExtendedTooltip" id="23"/>
 				</CheckBoxField>
 				<InputField name="Output" id="14">
-					<DataPath>FormOutput</DataPath>
+					<DataPath>Output</DataPath>
 					<Width>10</Width>
 					<HorizontalStretch>false</HorizontalStretch>
 					<ListChoiceMode>true</ListChoiceMode>
@@ -122,12 +122,12 @@
 			<ExtendedTooltip name="Group2ExtendedTooltip" id="18"/>
 			<ChildItems>
 				<TextDocumentField name="Source" id="1">
-					<DataPath>FormSource</DataPath>
+					<DataPath>Source</DataPath>
 					<ContextMenu name="SourceContextMenu" id="2"/>
 					<ExtendedTooltip name="SourceExtendedTooltip" id="3"/>
 				</TextDocumentField>
 				<TextDocumentField name="Result" id="6">
-					<DataPath>FormResult</DataPath>
+					<DataPath>Result</DataPath>
 					<ContextMenu name="ResultContextMenu" id="7"/>
 					<ExtendedTooltip name="ResultExtendedTooltip" id="8"/>
 				</TextDocumentField>
@@ -135,7 +135,7 @@
 		</UsualGroup>
 	</ChildItems>
 	<Attributes>
-		<Attribute name="FormObject" id="1">
+		<Attribute name="Object" id="1">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -147,7 +147,7 @@
 			</Type>
 			<MainAttribute>true</MainAttribute>
 		</Attribute>
-		<Attribute name="FormSource" id="2">
+		<Attribute name="Source" id="2">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -158,7 +158,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="FormResult" id="3">
+		<Attribute name="Result" id="3">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
@@ -169,7 +169,7 @@
 				<v8:Type xmlns:d5p1="http://v8.1c.ru/8.1/data/txtedt">d5p1:TextDocument</v8:Type>
 			</Type>
 		</Attribute>
-		<Attribute name="FormOutput" id="5">
+		<Attribute name="Output" id="5">
 			<Title>
 				<v8:item>
 					<v8:lang>ru</v8:lang>

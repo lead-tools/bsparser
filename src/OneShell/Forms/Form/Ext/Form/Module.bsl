@@ -3,11 +3,11 @@
 Procedure OnCreateAtServer(Cancel, StandardProcessing)
 
 	If Parameters.Property("Source") Then
-		FormObject.Verbose = Parameters.Verbose;
-		FormOutput = Parameters.Output;
-		FormSource.SetText(Parameters.Source);
+		Object.Verbose = Parameters.Verbose;
+		Output = Parameters.Output;
+		Source.SetText(Parameters.Source);
 	Else
-		FormOutput = "AST";
+		Output = "AST";
 	EndIf; 
 	
 EndProcedure // OnCreateAtServer()
@@ -17,14 +17,14 @@ Procedure Reopen(Command)
 	
 	ReopenAtServer();
 	Close();
-	OpenForm(FormName, New Structure("Source, Verbose, Output", FormSource.GetText(), FormObject.Verbose, FormOutput));
+	OpenForm(FormName, New Structure("Source, Verbose, Output", Source.GetText(), Object.Verbose, Output));
 	
 EndProcedure // Reopen()
 
 &AtServer
 Procedure ReopenAtServer()
 	
-	This = FormAttributeToValue("FormObject");
+	This = FormAttributeToValue("Object");
 	ExternalDataProcessors.Create(This.UsedFileName, False);
 	
 EndProcedure // ReopenAtServer() 
@@ -32,7 +32,7 @@ EndProcedure // ReopenAtServer()
 &AtClient
 Procedure Translate(Command)
 	
-	FormResult.Clear();
+	Result.Clear();
 	ClearMessages();
 	TranslateAtServer();
 	
@@ -42,48 +42,48 @@ EndProcedure // Translate()
 Procedure TranslateAtServer()
 	Var Start;
 	
-	This = FormAttributeToValue("FormObject"); 
+	This = FormAttributeToValue("Object"); 
 	
-	If FormOutput = "Lexems" Then
+	If Output = "Lexems" Then
 		
 		Eof = This.Tokens().Eof;
 		
-		Scanner = This.Scanner(FormSource.GetText());
+		Scanner = This.Scanner(Source.GetText());
 		While This.Scan(Scanner) <> Eof Do
-			FormResult.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
+			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
 		EndDo;
 		
-	ElsIf FormOutput = "AST" Then
+	ElsIf Output = "AST" Then
 		
-		Parser = This.Parser(FormSource.GetText());
+		Parser = This.Parser(Source.GetText());
 		This.ParseModule(Parser);
 		JSONWriter = New JSONWriter;
 		FileName = GetTempFileName(".json");
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
 		WriteJSON(JSONWriter, Parser.Module);
 		JSONWriter.Close();
-		FormResult.Read(FileName, TextEncoding.UTF8);	
+		Result.Read(FileName, TextEncoding.UTF8);	
 		
-	ElsIf FormOutput = "BSL" Then	
+	ElsIf Output = "BSL" Then	
 		
 		Backend = This.Backend();
-		Parser = This.Parser(FormSource.GetText());
+		Parser = This.Parser(Source.GetText());
 		This.ParseModule(Parser);
 		This.BSL_VisitModule(Backend, Parser.Module);
-		FormResult.SetText(StrConcat(Backend.Result));
+		Result.SetText(StrConcat(Backend.Result));
 		
-	ElsIf FormOutput = "PS" Then	
+	ElsIf Output = "PS" Then	
 		
 		Backend = This.Backend();
-		Parser = This.Parser(FormSource.GetText());
+		Parser = This.Parser(Source.GetText());
 		This.ParseModule(Parser);
 		This.PS_VisitModule(Backend, Parser.Module);
-		FormResult.SetText(StrConcat(Backend.Result));
+		Result.SetText(StrConcat(Backend.Result));
 		
-	ElsIf FormOutput = "measure" Then
+	ElsIf Output = "measure" Then
 		
 		Start = CurrentUniversalDateInMilliseconds();
-		Parser = This.Parser(FormSource.GetText());
+		Parser = This.Parser(Source.GetText());
 		This.ParseModule(Parser);
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 		
