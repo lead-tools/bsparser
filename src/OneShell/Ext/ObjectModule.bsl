@@ -716,6 +716,19 @@ Function NotExpr(Expr)
 
 EndFunction // NotExpr()
 
+Function ArrayExpr(ExprList)
+	Var ArrayExpr;
+
+	ArrayExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"ExprList," // array (one of expressions)
+	,
+	"ArrayExpr", ExprList);
+
+	Return ArrayExpr;
+
+EndFunction // ArrayExpr()
+
 #EndRegion // Expressions
 
 #Region Statements
@@ -1111,11 +1124,30 @@ Function ParseOperand(Parser)
 		Operand = ParseNewExpr(Parser);
 	ElsIf Tok = Tokens.Ternary Then
 		Operand = ParseTernaryExpr(Parser);
+	ElsIf Tok = Tokens.Lbrack Then
+		Operand = ParseArrayExpr(Parser);
 	Else
 		Raise "Expected operand";
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
+
+Function ParseArrayExpr(Parser)
+	Var ExprList, Pos;
+	Pos = Parser.Pos;
+	If Next(Parser) <> Tokens.Rbrack Then
+		ExprList = New Array;	
+		ExprList.Add(ParseExpression(Parser));
+		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrack Do
+			ExprList.Add(ParseExpression(Parser));
+		EndDo;
+	Else
+		ExprList = EmptyArray;
+	EndIf; 
+	Expect(Parser, Tokens.Rbrack);
+	Next(Parser);
+	Return Locate(ArrayExpr(ExprList), Parser, Pos);	
+EndFunction // ParseArrayExpr() 
 
 Function ParseNewExpr(Parser)
 	Var Tok, Constructor, Pos;
