@@ -36,6 +36,7 @@ Procedure TranslateAtServer()
 	
 	OneShellProcessor.Verbose = Verbose;
 	OneShellProcessor.CompatibleWith1C = CompatibleWith1C;
+	OneShellProcessor.Debug = Debug;
 	
 	Start = CurrentUniversalDateInMilliseconds();
 	

@@ -1140,6 +1140,7 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 	Var Name, Selector, Object, List, Kind, Pos;
 	Pos = Parser.Pos;
 	Name = Parser.Lit;
+	Next(Parser);
 	Selector = ParseSelector(Parser);
 	If Selector = Undefined Then
 		Object = FindObject(Parser, Name);
@@ -1172,7 +1173,7 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 		Else
 			Object = Object("Unknown", Name);
 			If Verbose Then
-				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name));
+				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf; 
@@ -1191,8 +1192,9 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 EndFunction // ParseDesignatorExprList()
 
 Function ParseSelector(Parser)
-	Var Tok, Value, Selector;
-	Tok = Next(Parser);
+	Var Tok, Value, Selector, Pos;
+	Tok = Parser.Tok;
+	Pos = Parser.Pos;
 	If Tok = Tokens.Period Then
 		Next(Parser);
 		If Not Keywords.Property(Parser.Lit) Then
@@ -1200,14 +1202,16 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = Parser.Lit;
 		Selector = Selector(SelectorKinds.Ident, Value);
+		Next(Parser);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
-			Error(Parser.Scanner, "Expected expression",, True);
+			Error(Parser.Scanner, "Expected expression", Pos, True);
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
 		Selector = Selector(SelectorKinds.Index, Value);
+		Next(Parser);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1217,8 +1221,9 @@ Function ParseSelector(Parser)
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
 		Selector = Selector(SelectorKinds.Call, Value);
+		Next(Parser);
 	EndIf;
-	Return Selector;
+	Return Locate(Selector, Parser, Pos);
 EndFunction // ParseSelector()
 
 Function ParseExpression(Parser)
@@ -1367,7 +1372,7 @@ Function ParseFuncDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared",, True);
+		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
@@ -1418,7 +1423,7 @@ Function ParseProcDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared",, True);
+		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
@@ -1477,7 +1482,7 @@ Function ParseVarDecl(Parser)
 	EndIf;
 	VarDecl = VarDecl(Object, Exported, Value);
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared",, True);
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf; 
 	Parser.Vars.Insert(Name, Object);
 	Return Locate(VarDecl, Parser, Pos);
@@ -1518,7 +1523,7 @@ Function ParseParamDecl(Parser)
 		ParamDecl = ParamDecl(Object, ByVal);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared",, True);
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Locate(ParamDecl, Parser, Pos);
@@ -1603,7 +1608,8 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Tok, Left, Right, Stmt;
+	Var Tok, Left, Right, Stmt, Pos;
+	Pos = Parser.Pos;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
 		Stmt = CallStmt(Left[0]);
@@ -1617,7 +1623,7 @@ Function ParseAssignOrCallStmt(Parser)
 			Next(Parser);
 			Right = ParseExprList(Parser);
 			If Left.Count() <> Right.Count() Then
-				Error(Parser.Scanner, "arrays have different number of elements",, True);
+				Error(Parser.Scanner, "arrays have different number of elements", Pos, True);
 			EndIf; 
 			Stmt = AddAssignStmt(Left, Right);
 		Else
@@ -1715,15 +1721,16 @@ Function ParseWhileStmt(Parser)
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)
-	Var DesignatorExpr, Left, Right, Collection, Statements;
+	Var DesignatorExpr, Left, Right, Collection, Statements, VarPos;
 	Next(Parser);
 	If Parser.Tok = Tokens.Each Then
 		Next(Parser);
 	EndIf;
 	Expect(Parser, Tokens.Ident);
+	VarPos = Parser.Pos;
 	DesignatorExpr = ParseDesignatorExpr(Parser, True);
 	If DesignatorExpr.Call Then
-		Error(Parser.Scanner, "expected variable",, True);
+		Error(Parser.Scanner, "expected variable", VarPos, True);
 	EndIf;
 	If Parser.Tok = Tokens.Eql Then
 		Next(Parser);
@@ -1885,11 +1892,14 @@ Function IsDigit(Char)
 	Return "0" <= Char And Char <= "9";
 EndFunction // IsDigit()
 
-Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
+Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
+	If Pos = Undefined Then
+		Pos = Scanner.Pos - StrLen(Scanner.Lit);	
+	EndIf; 
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		Scanner.Line,
-		?(Column = Undefined, Scanner.Column - StrLen(Scanner.Lit), Column),
+		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
+		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
 		Note
 	);
 	If Stop Then

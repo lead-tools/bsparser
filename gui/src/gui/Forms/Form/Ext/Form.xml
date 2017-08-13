@@ -125,6 +125,12 @@
 					<ContextMenu name="CompatibleWith1CContextMenu" id="22"/>
 					<ExtendedTooltip name="CompatibleWith1CExtendedTooltip" id="23"/>
 				</CheckBoxField>
+				<CheckBoxField name="Debug" id="32">
+					<DataPath>Debug</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="DebugContextMenu" id="33"/>
+					<ExtendedTooltip name="DebugExtendedTooltip" id="34"/>
+				</CheckBoxField>
 			</ChildItems>
 		</UsualGroup>
 		<UsualGroup name="Group2" id="17">
@@ -238,6 +244,17 @@
 				<v8:item>
 					<v8:lang>ru</v8:lang>
 					<v8:content>Compatible with 1C</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+		</Attribute>
+		<Attribute name="Debug" id="10">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Debug</v8:content>
 				</v8:item>
 			</Title>
 			<Type>
