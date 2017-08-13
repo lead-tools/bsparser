@@ -1204,10 +1204,13 @@ EndFunction // ParseStructExpr()
 Function ParseKeyValue(Parser)
 	Var Key, Value, Pos;
 	Pos = Parser.Pos;
-	If Parser.Tok <> Tokens.Ident And Parser.Tok <> Tokens.String Then
+	If Parser.Tok = Tokens.Ident Then
+		Key = Parser.Lit;
+	ElsIf Parser.Tok = Tokens.String Then
+		Key = Parser.Val;
+	Else
 		Expect(Parser, Tokens.Ident);
 	EndIf;
-	Key = Parser.Lit;
 	If Next(Parser) = Tokens.Colon Then
 		Next(Parser);
 		Value = ParseExpression(Parser);
