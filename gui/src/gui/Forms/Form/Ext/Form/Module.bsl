@@ -2,6 +2,10 @@
 &AtServer
 Procedure OnCreateAtServer(Cancel, StandardProcessing)
 
+	If StrFind(InfoBaseConnectionString(), "File=") = 0 Then
+		Message("Only for file bases")
+	EndIf; 
+	
 	If Parameters.Property("Source") Then
 		Verbose = Parameters.Verbose;
 		Output = Parameters.Output;
@@ -36,6 +40,7 @@ Procedure TranslateAtServer()
 	
 	OneShellProcessor.Verbose = Verbose;
 	OneShellProcessor.CompatibleWith1C = CompatibleWith1C;
+	OneShellProcessor.Debug = Debug;
 	
 	Start = CurrentUniversalDateInMilliseconds();
 	

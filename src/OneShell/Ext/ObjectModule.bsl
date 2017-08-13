@@ -5,7 +5,7 @@ Var Keywords;                  // enum
 Var Tokens;                    // enum
 Var ObjectKinds;               // enum
 Var SelectorKinds;             // enum
-Var UnaryOperations;           // array (one of Tokens)
+Var UnaryOperators;            // array (one of Tokens)
 Var BasicLiterals;             // array (one of Tokens)
 Var RelationalOperators;       // array (one of Tokens)
 Var IgnoredTokens;             // array (one of Tokens)
@@ -21,9 +21,9 @@ Procedure Init()
 
 	InitEnums();
 
-	UnaryOperations = New Array;
-	UnaryOperations.Add(Tokens.Add);
-	UnaryOperations.Add(Tokens.Sub);
+	UnaryOperators = New Array;
+	UnaryOperators.Add(Tokens.Add);
+	UnaryOperators.Add(Tokens.Sub);
 
 	BasicLiterals = New Array;
 	BasicLiterals.Add(Tokens.Number);
@@ -294,6 +294,12 @@ Function Scan(Scanner) Export
 		NextChar(Scanner);
 	ElsIf Char = "]" Then
 		Tok = Tokens.Rbrack;
+		NextChar(Scanner);
+	ElsIf Char = "{" Then
+		Tok = Tokens.Lbrace;
+		NextChar(Scanner);
+	ElsIf Char = "}" Then
+		Tok = Tokens.Rbrace;
 		NextChar(Scanner);
 	ElsIf Char = "?" Then
 		Tok = Tokens.Ternary;
@@ -716,6 +722,46 @@ Function NotExpr(Expr)
 
 EndFunction // NotExpr()
 
+Function ArrayExpr(ExprList)
+	Var ArrayExpr;
+
+	ArrayExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"ExprList," // array (one of expressions)
+	,
+	"ArrayExpr", ExprList);
+
+	Return ArrayExpr;
+
+EndFunction // ArrayExpr()
+
+Function StructExpr(Items)
+	Var StructExpr;
+
+	StructExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"Items,"    // array (KeyValue)
+	,
+	"StructExpr", Items);
+
+	Return StructExpr;
+
+EndFunction // StructExpr()
+
+Function KeyValue(Key, Value)
+	Var KeyValue;
+
+	KeyValue = New Structure(
+		"NodeType," // string (type of this structure)
+		"Key,"      // string
+		"Value,"    // structure (one of expressions) 
+	,
+	"KeyValue", Key, Value);
+
+	Return KeyValue;
+
+EndFunction // KeyValue()
+
 #EndRegion // Expressions
 
 #Region Statements
@@ -966,6 +1012,8 @@ Function Parser(Source) Export
 
 	Parser = New Structure(
 		"Scanner," // structure (Scanner)
+		"Pos,"     // number
+		"PrevPos," // number
 		"Tok,"     // string (one of Tokens)
 		"Lit,"     // string
 		"Val,"     // number, string, date, true, false, undefined
@@ -978,6 +1026,8 @@ Function Parser(Source) Export
 	);
 
 	Parser.Scanner = Scanner(Source);
+	Parser.Pos = 0;
+	Parser.PrevPos = 0;
 	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
@@ -989,16 +1039,19 @@ Function Parser(Source) Export
 EndFunction // Parser()
 
 Function Next(Parser)
-	Var Tok, Lit;
-	Tok = Scan(Parser.Scanner);
+	Var Scanner, Tok, Lit;
+	Scanner = Parser.Scanner;	
+	Parser.PrevPos = Scanner.Pos;
+	Tok = Scan(Scanner);
 	While IgnoredTokens.Find(Tok) <> Undefined Do
-		Tok = Scan(Parser.Scanner);
+		Tok = Scan(Scanner);
 	EndDo;
+	Parser.Pos = Scanner.Pos - StrLen(Scanner.Lit);
 	If Tok = Tokens.StringBeg Then
 		Lit = ParseString(Parser);
 		Tok = Tokens.String;
 	Else
-		Lit = Parser.Scanner.Lit;
+		Lit = Scanner.Lit;
 	EndIf;
 	Parser.Tok = Tok;
 	Parser.Lit = Lit;
@@ -1064,15 +1117,18 @@ Function ParseString(Parser)
 EndFunction // ParseString()
 
 Function ParseUnaryExpr(Parser)
-	Var Operator;
+	Var Operator, Expr, Pos;
+	Pos = Parser.Pos;
 	Operator = Parser.Tok;
-	If UnaryOperations.Find(Parser.Tok) <> Undefined Then
+	If UnaryOperators.Find(Parser.Tok) <> Undefined Then
 		Next(Parser);
-		Return UnaryExpr(Operator, ParseOperand(Parser));
+		Expr = UnaryExpr(Operator, ParseOperand(Parser));
 	ElsIf Parser.Tok = Tokens.Eof Then
-		Return Undefined;
+		Expr = Undefined;
+	Else
+		Expr = ParseOperand(Parser);
 	EndIf;
-	Return ParseOperand(Parser);
+	Return Locate(Expr, Parser, Pos);
 EndFunction // ParseUnaryExpr()
 
 Function ParseOperand(Parser)
@@ -1101,14 +1157,72 @@ Function ParseOperand(Parser)
 		Operand = ParseNewExpr(Parser);
 	ElsIf Tok = Tokens.Ternary Then
 		Operand = ParseTernaryExpr(Parser);
+	ElsIf Tok = Tokens.Lbrack Then
+		Operand = ParseArrayExpr(Parser);
+	ElsIf Tok = Tokens.Lbrace Then
+		Operand = ParseStructExpr(Parser);
 	Else
 		Raise "Expected operand";
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
 
+Function ParseArrayExpr(Parser)
+	Var ExprList, Pos;
+	Pos = Parser.Pos;
+	If Next(Parser) <> Tokens.Rbrack Then
+		ExprList = New Array;	
+		ExprList.Add(ParseExpression(Parser));
+		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrack Do
+			ExprList.Add(ParseExpression(Parser));
+		EndDo;
+	Else
+		ExprList = EmptyArray;
+	EndIf; 
+	Expect(Parser, Tokens.Rbrack);
+	Next(Parser);
+	Return Locate(ArrayExpr(ExprList), Parser, Pos);	
+EndFunction // ParseArrayExpr() 
+
+Function ParseStructExpr(Parser)
+	Var Items, Pos;
+	Pos = Parser.Pos;
+	If Next(Parser) <> Tokens.Rbrace Then
+		Items = New Array;
+		Items.Add(ParseKeyValue(Parser));
+		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrace Do
+			Items.Add(ParseKeyValue(Parser));
+		EndDo;
+	Else
+		Items = EmptyArray;
+	EndIf; 
+	Expect(Parser, Tokens.Rbrace);
+	Next(Parser);
+	Return Locate(StructExpr(Items), Parser, Pos);	
+EndFunction // ParseStructExpr() 
+
+Function ParseKeyValue(Parser)
+	Var Key, Value, Pos;
+	Pos = Parser.Pos;
+	If Parser.Tok = Tokens.Ident Then
+		Key = Parser.Lit;
+	ElsIf Parser.Tok = Tokens.String Then
+		Key = Parser.Val;
+	Else
+		Expect(Parser, Tokens.Ident);
+	EndIf;
+	If Next(Parser) = Tokens.Colon Then
+		Next(Parser);
+		Value = ParseExpression(Parser);
+	Else
+		Value = BasicLitExpr(Tokens.Undefined, Undefined);
+	EndIf;	
+	Return Locate(KeyValue(Key, Value), Parser, Pos);
+EndFunction // ParseKeyValue() 
+
 Function ParseNewExpr(Parser)
-	Var Tok, Constructor;
+	Var Tok, Constructor, Pos;
+	Pos = Parser.Pos;
 	Tok = Next(Parser);
 	If Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
@@ -1122,12 +1236,14 @@ Function ParseNewExpr(Parser)
 	Else
 		Constructor = ParseDesignatorExpr(Parser);
 	EndIf;
-	Return NewExpr(Constructor);
+	Return Locate(NewExpr(Constructor), Parser, Pos);
 EndFunction // ParseNewExpr()
 
 Function ParseDesignatorExpr(Parser, AllowNewVar = False)
-	Var Name, Selector, Object, List, Kind;
+	Var Name, Selector, Object, List, Kind, Pos;
+	Pos = Parser.Pos;
 	Name = Parser.Lit;
+	Next(Parser);
 	Selector = ParseSelector(Parser);
 	If Selector = Undefined Then
 		Object = FindObject(Parser, Name);
@@ -1160,11 +1276,11 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 		Else
 			Object = Object("Unknown", Name);
 			If Verbose Then
-				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name));
+				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf; 
-	Return DesignatorExpr(Object, List, Kind = SelectorKinds.Call);
+	Return Locate(DesignatorExpr(Object, List, Kind = SelectorKinds.Call), Parser, Pos);
 EndFunction // ParseDesignatorExpr()
 
 Function ParseDesignatorExprList(Parser, AllowNewVar = False)
@@ -1179,23 +1295,26 @@ Function ParseDesignatorExprList(Parser, AllowNewVar = False)
 EndFunction // ParseDesignatorExprList()
 
 Function ParseSelector(Parser)
-	Var Tok, Value;
-	Tok = Next(Parser);
+	Var Tok, Value, Selector, Pos;
+	Tok = Parser.Tok;
+	Pos = Parser.Pos;
 	If Tok = Tokens.Period Then
 		Next(Parser);
 		If Not Keywords.Property(Parser.Lit) Then
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Return Selector(SelectorKinds.Ident, Value);
+		Selector = Selector(SelectorKinds.Ident, Value);
+		Next(Parser);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
-			Error(Parser.Scanner, "Expected expression",, True);
+			Error(Parser.Scanner, "Expected expression", Pos, True);
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Return Selector(SelectorKinds.Index, Value);
+		Selector = Selector(SelectorKinds.Index, Value);
+		Next(Parser);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1204,71 +1323,80 @@ Function ParseSelector(Parser)
 			Value = ParseExprList(Parser, True);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Return Selector(SelectorKinds.Call, Value);
+		Selector = Selector(SelectorKinds.Call, Value);
+		Next(Parser);
 	EndIf;
-	Return Undefined;
+	Return Locate(Selector, Parser, Pos);
 EndFunction // ParseSelector()
 
 Function ParseExpression(Parser)
-	Var Expr, Operator;
+	Var Expr, Operator, Pos;
+	Pos = Parser.Pos;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(Parser));
+		Expr = Locate(BinaryExpr(Expr, Operator, ParseAndExpr(Parser)), Parser, Pos);
 	EndDo;
 	Return Expr;
 EndFunction // ParseExpression()
 
 Function ParseAndExpr(Parser)
-	Var Expr, Operator;
+	Var Expr, Operator, Pos;
+	Pos = Parser.Pos;
 	Expr = ParseNotExpr(Parser);
 	While Parser.Tok = Tokens.And Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser));
+		Expr = Locate(BinaryExpr(Expr, Operator, ParseNotExpr(Parser)), Parser, Pos);
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
 
 Function ParseNotExpr(Parser)
+	Var Expr, Pos;
+	Pos = Parser.Pos;
 	If Parser.Tok = Tokens.Not Then
 		Next(Parser);
-		Return NotExpr(ParseRelExpr(Parser));
+		Expr = Locate(NotExpr(ParseRelExpr(Parser)), Parser, Pos);
 	Else
-		Return ParseRelExpr(Parser);
-	EndIf; 
+		Expr = ParseRelExpr(Parser);
+	EndIf;
+	Return Expr;
 EndFunction // ParseNotExpr()
 
 Function ParseRelExpr(Parser)
-	Var Expr, Operator;
+	Var Expr, Operator, Pos;
+	Pos = Parser.Pos;
 	Expr = ParseAddExpr(Parser);
 	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser));
+		Expr = Locate(BinaryExpr(Expr, Operator, ParseAddExpr(Parser)), Parser, Pos);
 	EndDo;
 	Return Expr;
 EndFunction // ParseRelExpr()
 
 Function ParseAddExpr(Parser)
-	Var Expr, Operator;
+	Var Expr, Operator, Pos;
+	Pos = Parser.Pos;
 	Expr = ParseMulExpr(Parser);
 	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser));
+		Expr = Locate(BinaryExpr(Expr, Operator, ParseMulExpr(Parser)), Parser, Pos);
 	EndDo;
 	Return Expr;
 EndFunction // ParseAddExpr()
 
 Function ParseMulExpr(Parser)
-	Var Expr, Operator;
+	Var Expr, Operator, Pos;
+	Pos = Parser.Pos;
 	Expr = ParseUnaryExpr(Parser);
 	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser));
+		Expr = Locate(BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser)), Parser, Pos);
 	EndDo;
 	Return Expr;
 EndFunction // ParseMulExpr()
@@ -1309,7 +1437,8 @@ Function ParseExprList(Parser, IsArguments = False)
 EndFunction // ParseExprList()
 
 Function ParseTernaryExpr(Parser)
-	Var Condition, ThenPart, ElsePart;
+	Var Condition, ThenPart, ElsePart, Pos;
+	Pos = Parser.Pos;
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
@@ -1322,11 +1451,12 @@ Function ParseTernaryExpr(Parser)
 	ElsePart = ParseExpression(Parser);
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return TernaryExpr(Condition, ThenPart, ElsePart);
+	Return Locate(TernaryExpr(Condition, ThenPart, ElsePart), Parser, Pos);
 EndFunction // ParseTernaryExpr()
 
 Function ParseFuncDecl(Parser)
-	Var Object, Name, Decls, Exported;
+	Var Object, Name, Decls, Exported, Pos;
+	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1345,7 +1475,7 @@ Function ParseFuncDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared",, True);
+		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
@@ -1357,11 +1487,12 @@ Function ParseFuncDecl(Parser)
 	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
-	Return FuncDecl(Object, Exported, Decls, Statements);
+	Return Locate(FuncDecl(Object, Exported, Decls, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
 
 Function ParseSignature(Parser)
-	Var ParamList;
+	Var ParamList, Pos;
+	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
 	If Parser.Tok = Tokens.Rparen Then
@@ -1371,11 +1502,12 @@ Function ParseSignature(Parser)
 	EndIf;
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return Signature(ParamList);
+	Return Locate(Signature(ParamList), Parser, Pos);
 EndFunction // ParseSignature()
 
 Function ParseProcDecl(Parser)
-	Var Object, Name, Decls, Exported;
+	Var Object, Name, Decls, Exported, Pos;
+	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1394,7 +1526,7 @@ Function ParseProcDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared",, True);
+		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
@@ -1404,31 +1536,34 @@ Function ParseProcDecl(Parser)
 	EndIf; 
 	CloseScope(Parser);
 	Next(Parser);
-	Return ProcDecl(Object, Exported, Decls, Statements);
+	Return Locate(ProcDecl(Object, Exported, Decls, Statements), Parser, Pos);
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
-	Var ExprList;
+	Var ExprList, Pos;
+	Pos = Parser.Pos;
 	Next(Parser);
 	If Parser.IsFunc Then
 		ExprList = ParseExprList(Parser);
 	EndIf;
-	Return ReturnStmt(ExprList);
+	Return Locate(ReturnStmt(ExprList), Parser, Pos);
 EndFunction // ParseReturnStmt()
 
 Function ParseVarListDecl(Parser)
-	Var VarList;
+	Var VarList, Pos;
+	Pos = Parser.Pos;
 	VarList = New Array;
 	VarList.Add(ParseVarDecl(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
 		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
-	Return VarListDecl(VarList);
+	Return Locate(VarListDecl(VarList), Parser, Pos);
 EndFunction // ParseVarListDecl()
 
 Function ParseVarDecl(Parser)
-	Var Tok, Name, Object, VarDecl, Value, Exported;
+	Var Tok, Name, Object, VarDecl, Value, Exported, Pos;
+	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Tok = Next(Parser);
@@ -1450,10 +1585,10 @@ Function ParseVarDecl(Parser)
 	EndIf;
 	VarDecl = VarDecl(Object, Exported, Value);
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared",, True);
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf; 
 	Parser.Vars.Insert(Name, Object);
-	Return VarDecl;
+	Return Locate(VarDecl, Parser, Pos);
 EndFunction // ParseVarDecl()
 
 Function ParseParamList(Parser)
@@ -1468,7 +1603,8 @@ Function ParseParamList(Parser)
 EndFunction // ParseParamList()
 
 Function ParseParamDecl(Parser)
-	Var Tok, Name, Object, ParamDecl, ByVal;
+	Var Tok, Name, Object, ParamDecl, ByVal, Pos;
+	Pos = Parser.Pos;
 	If Parser.Tok = Tokens.Val Then
 		ByVal = True;
 		Next(Parser);
@@ -1490,10 +1626,10 @@ Function ParseParamDecl(Parser)
 		ParamDecl = ParamDecl(Object, ByVal);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared",, True);
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
-	Return ParamDecl;
+	Return Locate(ParamDecl, Parser, Pos);
 EndFunction // ParseParamDecl()
 
 Function ParseStatements(Parser)
@@ -1508,12 +1644,13 @@ Function ParseStatements(Parser)
 EndFunction // ParseStatements()
 
 Function ParseStmt(Parser)
-	Var Tok, Stmt;
+	Var Tok, Stmt, Pos;
 	Tok = SkipIgnoredTokens(Parser);
 	While Tok = Tokens.Semicolon Do
 		Next(Parser);
 		Tok = SkipIgnoredTokens(Parser);
 	EndDo;
+	Pos = Parser.Pos;
 	If Tok = Tokens.Ident Then
 		Stmt = ParseAssignOrCallStmt(Parser);
 	ElsIf Tok = Tokens.If Then
@@ -1546,7 +1683,7 @@ Function ParseStmt(Parser)
 		Expect(Parser, Tokens.Colon);
 		Next(Parser);
 	EndIf;
-	Return Stmt;
+	Return Locate(Stmt, Parser, Pos);
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
@@ -1574,25 +1711,29 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Tok, Left, Right;
+	Var Tok, Left, Right, Stmt, Pos;
+	Pos = Parser.Pos;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
-		Return CallStmt(Left[0]);
+		Stmt = CallStmt(Left[0]);
+	Else
+		Tok = Parser.Tok;
+		If Tok = Tokens.Eql Then
+			Next(Parser);
+			Right = ParseExprList(Parser);
+			Stmt = AssignStmt(Left, Right);
+		ElsIf Tok = Tokens.AddAssign Then
+			Next(Parser);
+			Right = ParseExprList(Parser);
+			If Left.Count() <> Right.Count() Then
+				Error(Parser.Scanner, "arrays have different number of elements", Pos, True);
+			EndIf; 
+			Stmt = AddAssignStmt(Left, Right);
+		Else
+			Expect(Parser, Tokens.Eql);
+		EndIf;		
 	EndIf;
-	Tok = Parser.Tok;
-	If Tok = Tokens.Eql Then
-		Next(Parser);
-		Right = ParseExprList(Parser);
-		Return AssignStmt(Left, Right);
-	ElsIf Tok = Tokens.AddAssign Then
-		Next(Parser);
-		Right = ParseExprList(Parser);
-		If Left.Count() <> Right.Count() Then
-			Error(Parser.Scanner, "arrays have different number of elements",, True);
-		EndIf; 
-		Return AddAssignStmt(Left, Right);
-	EndIf;
-	Expect(Parser, Tokens.Eql);
+	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt(Parser)
@@ -1683,15 +1824,16 @@ Function ParseWhileStmt(Parser)
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)
-	Var DesignatorExpr, Left, Right, Collection, Statements;
+	Var DesignatorExpr, Left, Right, Collection, Statements, VarPos;
 	Next(Parser);
 	If Parser.Tok = Tokens.Each Then
 		Next(Parser);
 	EndIf;
 	Expect(Parser, Tokens.Ident);
+	VarPos = Parser.Pos;
 	DesignatorExpr = ParseDesignatorExpr(Parser, True);
 	If DesignatorExpr.Call Then
-		Error(Parser.Scanner, "expected variable",, True);
+		Error(Parser.Scanner, "expected variable", VarPos, True);
 	EndIf;
 	If Parser.Tok = Tokens.Eql Then
 		Next(Parser);
@@ -1776,6 +1918,18 @@ EndFunction // ParseModule()
 
 #Region Auxiliary
 
+Function Locate(Node, Parser, Pos)
+	If Node = Undefined Then
+		Return Undefined;
+	EndIf; 
+	Node.Insert("Pos", Pos);
+	Node.Insert("Len", Parser.PrevPos - Pos);
+	If Debug Then
+		Node.Insert("Str", Mid(Parser.Scanner.Source, Pos, Parser.PrevPos - Pos));
+	EndIf; 
+	Return Node;
+EndFunction // Locate()  
+
 Function Value(Tok, Lit)
 	If Tok = Tokens.Number Then
 		Return Number(Lit);
@@ -1841,11 +1995,14 @@ Function IsDigit(Char)
 	Return "0" <= Char And Char <= "9";
 EndFunction // IsDigit()
 
-Procedure Error(Scanner, Note, Column = Undefined, Stop = False)
+Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
+	If Pos = Undefined Then
+		Pos = Scanner.Pos - StrLen(Scanner.Lit);	
+	EndIf; 
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		Scanner.Line,
-		?(Column = Undefined, Scanner.Column - StrLen(Scanner.Lit), Column),
+		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
+		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
 		Note
 	);
 	If Stop Then
