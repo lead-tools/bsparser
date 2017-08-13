@@ -295,6 +295,12 @@ Function Scan(Scanner) Export
 	ElsIf Char = "]" Then
 		Tok = Tokens.Rbrack;
 		NextChar(Scanner);
+	ElsIf Char = "{" Then
+		Tok = Tokens.Lbrace;
+		NextChar(Scanner);
+	ElsIf Char = "}" Then
+		Tok = Tokens.Rbrace;
+		NextChar(Scanner);
 	ElsIf Char = "?" Then
 		Tok = Tokens.Ternary;
 		NextChar(Scanner);
@@ -729,6 +735,33 @@ Function ArrayExpr(ExprList)
 
 EndFunction // ArrayExpr()
 
+Function StructExpr(Items)
+	Var StructExpr;
+
+	StructExpr = New Structure(
+		"NodeType," // string (type of this structure)
+		"Items,"    // array (KeyValue)
+	,
+	"StructExpr", Items);
+
+	Return StructExpr;
+
+EndFunction // StructExpr()
+
+Function KeyValue(Key, Value)
+	Var KeyValue;
+
+	KeyValue = New Structure(
+		"NodeType," // string (type of this structure)
+		"Key,"      // string
+		"Value,"    // structure (one of expressions) 
+	,
+	"KeyValue", Key, Value);
+
+	Return KeyValue;
+
+EndFunction // KeyValue()
+
 #EndRegion // Expressions
 
 #Region Statements
@@ -1126,6 +1159,8 @@ Function ParseOperand(Parser)
 		Operand = ParseTernaryExpr(Parser);
 	ElsIf Tok = Tokens.Lbrack Then
 		Operand = ParseArrayExpr(Parser);
+	ElsIf Tok = Tokens.Lbrace Then
+		Operand = ParseStructExpr(Parser);
 	Else
 		Raise "Expected operand";
 	EndIf;
@@ -1148,6 +1183,39 @@ Function ParseArrayExpr(Parser)
 	Next(Parser);
 	Return Locate(ArrayExpr(ExprList), Parser, Pos);	
 EndFunction // ParseArrayExpr() 
+
+Function ParseStructExpr(Parser)
+	Var Items, Pos;
+	Pos = Parser.Pos;
+	If Next(Parser) <> Tokens.Rbrace Then
+		Items = New Array;
+		Items.Add(ParseKeyValue(Parser));
+		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrace Do
+			Items.Add(ParseKeyValue(Parser));
+		EndDo;
+	Else
+		Items = EmptyArray;
+	EndIf; 
+	Expect(Parser, Tokens.Rbrace);
+	Next(Parser);
+	Return Locate(StructExpr(Items), Parser, Pos);	
+EndFunction // ParseStructExpr() 
+
+Function ParseKeyValue(Parser)
+	Var Key, Value, Pos;
+	Pos = Parser.Pos;
+	If Parser.Tok <> Tokens.Ident And Parser.Tok <> Tokens.String Then
+		Expect(Parser, Tokens.Ident);
+	EndIf;
+	Key = Parser.Lit;
+	If Next(Parser) = Tokens.Colon Then
+		Next(Parser);
+		Value = ParseExpression(Parser);
+	Else
+		Value = BasicLitExpr(Tokens.Undefined, Undefined);
+	EndIf;	
+	Return Locate(KeyValue(Key, Value), Parser, Pos);
+EndFunction // ParseKeyValue() 
 
 Function ParseNewExpr(Parser)
 	Var Tok, Constructor, Pos;
