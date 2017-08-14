@@ -772,7 +772,7 @@ Function AssignStmt(Left, Right)
 	AssignStmt = New Structure(
 		"NodeType," // string (type of this structure)
 		"Left,"     // array (DesignatorExpr)
-		"Right,"    // array (one of expressions)
+		"Right,"    // structure (one of expressions)
 	,
 	"AssignStmt", Left, Right);
 
@@ -786,7 +786,7 @@ Function AddAssignStmt(Left, Right)
 	AddAssignStmt = New Structure(
 		"NodeType," // string (type of this structure)
 		"Left,"     // array (DesignatorExpr)
-		"Right,"    // array (one of expressions)
+		"Right,"    // structure (one of expressions)
 	,
 	"AddAssignStmt", Left, Right);
 
@@ -794,7 +794,7 @@ Function AddAssignStmt(Left, Right)
 
 EndFunction // AddAssignStmt()
 
-Function ReturnStmt(ExprList)
+Function ReturnStmt(Expr)
 	Var ReturnStmt;
 
 	ReturnStmt = New Structure(
@@ -802,8 +802,8 @@ Function ReturnStmt(ExprList)
 	,
 	"ReturnStmt");
 
-	If ExprList <> Undefined Then
-		ReturnStmt.Insert("ExprList", ExprList); // array (one of expressions)
+	If Expr <> Undefined Then
+		ReturnStmt.Insert("Expr", Expr); // structure (one of expressions)
 	EndIf;
 
 	Return ReturnStmt;
@@ -1171,18 +1171,14 @@ Function ParseArrayExpr(Parser)
 	Var ExprList, Pos;
 	Pos = Parser.Pos;
 	If Next(Parser) <> Tokens.Rbrack Then
-		ExprList = New Array;	
-		ExprList.Add(ParseExpression(Parser));
-		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrack Do
-			ExprList.Add(ParseExpression(Parser));
-		EndDo;
+		ExprList = ParseExprList(Parser);	
 	Else
 		ExprList = EmptyArray;
 	EndIf; 
 	Expect(Parser, Tokens.Rbrack);
 	Next(Parser);
 	Return Locate(ArrayExpr(ExprList), Parser, Pos);	
-EndFunction // ParseArrayExpr() 
+EndFunction // ParseArrayExpr()   
 
 Function ParseStructExpr(Parser)
 	Var Items, Pos;
@@ -1229,7 +1225,7 @@ Function ParseNewExpr(Parser)
 		If Tok = Tokens.Rparen Then
 			Constructor = EmptyArray;
 		Else
-			Constructor = ParseExprList(Parser, True);
+			Constructor = ParseArguments(Parser);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
@@ -1320,7 +1316,7 @@ Function ParseSelector(Parser)
 		If Tok = Tokens.Rparen Then
 			Value = EmptyArray;
 		Else
-			Value = ParseExprList(Parser, True);
+			Value = ParseArguments(Parser);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
 		Selector = Selector(SelectorKinds.Call, Value);
@@ -1401,40 +1397,37 @@ Function ParseMulExpr(Parser)
 	Return Expr;
 EndFunction // ParseMulExpr()
 
-Function ParseExprList(Parser, IsArguments = False)
-	Var ExprList, ExpectExpression;
-	ExprList = New Array;
-	If IsArguments Then
-		ExpectExpression = True;
-		While ExpectExpression Do
-			If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
-				ExprList.Add(ParseExpression(Parser));
-			Else
-				ExprList.Add(Undefined);
-			EndIf;
-			If Parser.Tok = Tokens.Comma Then
-				Next(Parser);
-			Else
-				ExpectExpression = False;
-			EndIf;
-		EndDo;
-	Else
-		If Parser.Tok = Tokens.Comma Then
-			ExprList.Add(Undefined);
-		Else
-			ExprList.Add(ParseExpression(Parser));
-		EndIf;
-		While Parser.Tok = Tokens.Comma Do
-			Next(Parser);
-			While Parser.Tok = Tokens.Comma Do
-				ExprList.Add(Undefined);
-				Next(Parser);
-			EndDo;
-			ExprList.Add(ParseExpression(Parser));
-		EndDo;
+Function ParseExprList(Parser, HeadExpr = Undefined)
+	Var ExprList;
+	If HeadExpr = Undefined Then
+		HeadExpr = ParseExpression(Parser);
 	EndIf;
+	ExprList = New Array;
+	ExprList.Add(HeadExpr);
+	While Parser.Tok = Tokens.Comma And InitialTokensOfExpression.Find(Next(Parser)) <> Undefined Do
+		ExprList.Add(ParseExpression(Parser));
+	EndDo;
 	Return ExprList;
 EndFunction // ParseExprList()
+
+Function ParseArguments(Parser)
+	Var ExprList, ExpectExpression;
+	ExprList = New Array;
+	ExpectExpression = True;
+	While ExpectExpression Do
+		If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
+			ExprList.Add(ParseExpression(Parser));
+		Else
+			ExprList.Add(Undefined);
+		EndIf;
+		If Parser.Tok = Tokens.Comma Then
+			Next(Parser);
+		Else
+			ExpectExpression = False;
+		EndIf;
+	EndDo;
+	Return ExprList;
+EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
 	Var Condition, ThenPart, ElsePart, Pos;
@@ -1540,13 +1533,16 @@ Function ParseProcDecl(Parser)
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
-	Var ExprList, Pos;
+	Var Expr, Pos;
 	Pos = Parser.Pos;
 	Next(Parser);
 	If Parser.IsFunc Then
-		ExprList = ParseExprList(Parser);
+		Expr = ParseExpression(Parser);
+		If Parser.Tok = Tokens.Comma Then
+			Expr = ArrayExpr(ParseExprList(Parser, Expr));
+		EndIf; 
 	EndIf;
-	Return Locate(ReturnStmt(ExprList), Parser, Pos);
+	Return Locate(ReturnStmt(Expr), Parser, Pos);
 EndFunction // ParseReturnStmt()
 
 Function ParseVarListDecl(Parser)
@@ -1720,13 +1716,19 @@ Function ParseAssignOrCallStmt(Parser)
 		Tok = Parser.Tok;
 		If Tok = Tokens.Eql Then
 			Next(Parser);
-			Right = ParseExprList(Parser);
+			Right = ParseExpression(Parser);
+			If Parser.Tok = Tokens.Comma Then
+				Right = ArrayExpr(ParseExprList(Parser, Right));
+			EndIf; 
 			Stmt = AssignStmt(Left, Right);
 		ElsIf Tok = Tokens.AddAssign Then
 			Next(Parser);
-			Right = ParseExprList(Parser);
-			If Left.Count() <> Right.Count() Then
-				Error(Parser.Scanner, "arrays have different number of elements", Pos, True);
+			Right = ParseExpression(Parser);
+			If Parser.Tok = Tokens.Comma Then
+				Right = ArrayExpr(ParseExprList(Parser, Right));
+			EndIf;
+			If Left.Count() > 1 Then
+				Error(Parser.Scanner, "expected one variable", Pos, True);
 			EndIf; 
 			Stmt = AddAssignStmt(Left, Right);
 		Else
