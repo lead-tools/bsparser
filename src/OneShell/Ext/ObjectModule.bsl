@@ -130,7 +130,6 @@ Function Tokens(Keywords = Undefined) Export
 	);
 
 	Return Tokens;
-
 EndFunction // Tokens()
 
 Function ObjectKinds() Export
@@ -1766,7 +1765,7 @@ Function ParseWhileStmt(Parser)
 		Expect(Parser, Tokens.EndDo);
 	EndIf;
 	Next(Parser);
-	Return WhileStmt(Condition, Statements)
+	Return WhileStmt(Condition, Statements);
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)

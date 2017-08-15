@@ -142,7 +142,7 @@ Procedure VisitStmt(Backend, Stmt)
 	If NodeType = "AssignStmt" Then
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" = ");
-		Result.Add(VisitExprList(Stmt.Right));
+		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "AddAssignStmt" Then
@@ -150,13 +150,13 @@ Procedure VisitStmt(Backend, Stmt)
 		Result.Add(" = ");
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" + ");
-		Result.Add(VisitExprList(Stmt.Right));
+		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(";");
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "ReturnStmt" Then
 		Result.Add("Return ");
-		If Stmt.Property("ExprList") Then
-			Result.Add(VisitExprList(Stmt.ExprList));
+		If Stmt.Property("Expr") Then
+			Result.Add(VisitExpr(Stmt.Expr));
 		EndIf;
 		Result.Add(";");
 		Result.Add(Chars.LF);
