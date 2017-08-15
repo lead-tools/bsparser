@@ -451,27 +451,50 @@ Function Scope(Outer)
 	Return Scope;
 EndFunction // Scope()
 
-Function Object(Kind, Name, Type = Undefined)
+Function Object(Kind, Name)
 	Var Object;
 
 	Object = New Structure(
 		"Kind," // string (one of ObjectKinds)
 		"Name," // string
 	,
-	Kind, Name, Type);
-
-	If Type <> Undefined Then
-		Object.Insert("Type", Type); // structure
-	EndIf;
+	Kind, Name);
 
 	Return Object;
 EndFunction // Object()
+
+Function Signature(Kind, Name, ParamList)
+	Var Object;
+	Object = Object(Kind, Name);
+	Object.Insert("ParamList", ParamList); // array (boolean)
+	Return Object;
+EndFunction // Signature()
+
+Function Variable(Name, Local, Value = Undefined)
+	Var Object;
+	Object = Object(ObjectKinds.Variable, Name);
+	Object.Insert("Local", Local); // boolean
+	If Value <> Undefined Then
+		Object.Insert("Value", Value); // structure (one of expressions)
+	EndIf;
+	Return Object;
+EndFunction // Variable()
+
+Function Parameter(Name, ByVal, Value = Undefined)
+	Var Object;
+	Object = Object(ObjectKinds.Parameter, Name);
+	Object.Insert("ByVal", ByVal); // boolean
+	If Value <> Undefined Then
+		Object.Insert("Value", Value); // structure (one of expressions)
+	EndIf; 
+	Return Object;
+EndFunction // Parameter()
 
 #EndRegion // Scope
 
 #Region Declarations
 
-Function VarDecl(Object, Exported, Value = Undefined)
+Function VarDecl(Object, Exported)
 	Var VarDecl;
 
 	VarDecl = New Structure(
@@ -480,10 +503,6 @@ Function VarDecl(Object, Exported, Value = Undefined)
 		"Export,"   // boolean
 	,
 	"VarDecl", Object, Exported);
-
-	If Value <> Undefined Then
-		VarDecl.Insert("Value", Value); // structure (one of expressions)
-	EndIf;
 
 	Return VarDecl;
 EndFunction // VarDecl()
@@ -530,19 +549,14 @@ Function FuncDecl(Object, Exported, Decls, Statements)
 	Return FuncDecl;
 EndFunction // FuncDecl()
 
-Function ParamDecl(Object, ByVal, Init = False, Value = Undefined)
+Function ParamDecl(Object)
 	Var ParamDecl;
 
 	ParamDecl = New Structure(
 		"NodeType," // string (type of this structure)
 		"Object,"   // structure (Object)
-		"ByVal,"    // boolean
 	,
-	"ParamDecl", Object, ByVal);
-
-	If Init Then
-		ParamDecl.Insert("Value", Value); // structure (one of expressions)
-	EndIf;
+	"ParamDecl", Object);
 
 	Return ParamDecl;
 EndFunction // ParamDecl()
@@ -930,22 +944,6 @@ EndFunction // LabelStmt()
 
 #EndRegion // Statements
 
-#Region Types
-
-Function Signature(ParamList)
-	Var Signature;
-
-	Signature = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"ParamList," // array (boolean)
-	,
-	"Signature", ParamList);
-
-	Return Signature;
-EndFunction // Signature()
-
-#EndRegion // Types
-
 #EndRegion // AbstractSyntaxTree
 
 #Region Parser
@@ -1210,7 +1208,7 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Object(ObjectKinds.Variable, Name);
+			Object = Variable(Name, True);
 			Parser.Vars.Insert(Name, Object);
 		Else
 			Object = Object("Unknown", Name);
@@ -1401,10 +1399,10 @@ Function ParseFuncDecl(Parser)
 	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Function;
-		Object.Insert("Type", ParseSignature(Parser));
+		Object.Insert("ParamList", ParseParamList(Parser));
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Object(ObjectKinds.Function, Name, ParseSignature(Parser));
+		Object = Signature(ObjectKinds.Function, Name, ParseParamList(Parser));
 	EndIf;
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
@@ -1414,7 +1412,7 @@ Function ParseFuncDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
-	Decls = ParseVarDecls(Parser);
+	Decls = ParseVarDecls(Parser, True);
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
@@ -1426,20 +1424,24 @@ Function ParseFuncDecl(Parser)
 	Return Locate(FuncDecl(Object, Exported, Decls, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
 
-Function ParseSignature(Parser)
-	Var ParamList, Pos;
-	Pos = Parser.Pos;
+Function ParseParamList(Parser)
+	Var ParamList;
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
 	If Parser.Tok = Tokens.Rparen Then
 		ParamList = EmptyArray;
 	Else
-		ParamList = ParseParamList(Parser);
+		ParamList = New Array;
+		ParamList.Add(ParseParamDecl(Parser));
+		While Parser.Tok = Tokens.Comma Do
+			Next(Parser);
+			ParamList.Add(ParseParamDecl(Parser));
+		EndDo;
 	EndIf;
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return Locate(Signature(ParamList), Parser, Pos);
-EndFunction // ParseSignature()
+	Return ParamList;
+EndFunction // ParseParamList()
 
 Function ParseProcDecl(Parser)
 	Var Object, Name, Decls, Exported, Pos;
@@ -1452,10 +1454,10 @@ Function ParseProcDecl(Parser)
 	OpenScope(Parser);
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Kind = ObjectKinds.Procedure;
-		Object.Insert("Type", ParseSignature(Parser));
+		Object.Insert("ParamList", ParseParamList(Parser));
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Object(ObjectKinds.Procedure, Name, ParseSignature(Parser));
+		Object = Signature(ObjectKinds.Procedure, Name, ParseParamList(Parser));
 	EndIf;
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
@@ -1465,7 +1467,7 @@ Function ParseProcDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
-	Decls = ParseVarDecls(Parser);
+	Decls = ParseVarDecls(Parser, True);
 	Statements = ParseStatements(Parser);
 	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndProcedure);
@@ -1488,20 +1490,20 @@ Function ParseReturnStmt(Parser)
 	Return Locate(ReturnStmt(Expr), Parser, Pos);
 EndFunction // ParseReturnStmt()
 
-Function ParseVarListDecl(Parser)
+Function ParseVarListDecl(Parser, Local)
 	Var VarList, Pos;
 	Pos = Parser.Pos;
 	VarList = New Array;
-	VarList.Add(ParseVarDecl(Parser));
+	VarList.Add(ParseVarDecl(Parser, Local));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarDecl(Parser));
+		VarList.Add(ParseVarDecl(Parser, Local));
 	EndDo;
 	Return Locate(VarListDecl(VarList), Parser, Pos);
 EndFunction // ParseVarListDecl()
 
-Function ParseVarDecl(Parser)
-	Var Tok, Name, Object, VarDecl, Value, Exported, Pos;
+Function ParseVarDecl(Parser, Local)
+	Var Tok, Name, Object, VarDecl, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
@@ -1511,10 +1513,9 @@ Function ParseVarDecl(Parser)
 		If BasicLiterals.Find(Tok) = Undefined Then
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
-		Object = Object(ObjectKinds.Variable, Name, Tok);
-		Value = ParseOperand(Parser);
+		Object = Variable(Name, Local, ParseOperand(Parser));
 	Else
-		Object = Object(ObjectKinds.Variable, Name, Undefined);
+		Object = Variable(Name, Local);
 	EndIf;
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
@@ -1522,24 +1523,13 @@ Function ParseVarDecl(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	VarDecl = VarDecl(Object, Exported, Value);
+	VarDecl = VarDecl(Object, Exported);
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Locate(VarDecl, Parser, Pos);
 EndFunction // ParseVarDecl()
-
-Function ParseParamList(Parser)
-	Var ParamList;
-	ParamList = New Array;
-	ParamList.Add(ParseParamDecl(Parser));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		ParamList.Add(ParseParamDecl(Parser));
-	EndDo;
-	Return ParamList;
-EndFunction // ParseParamList()
 
 Function ParseParamDecl(Parser)
 	Var Tok, Name, Object, ParamDecl, ByVal, Pos;
@@ -1558,11 +1548,11 @@ Function ParseParamDecl(Parser)
 		If BasicLiterals.Find(Tok) = Undefined Then
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
-		Object = Object(ObjectKinds.Parameter, Name, Tok);
-		ParamDecl = ParamDecl(Object, ByVal, True, ParseOperand(Parser));
+		Object = Parameter(Name, ByVal, ParseOperand(Parser));
+		ParamDecl = ParamDecl(Object);
 	Else
-		Object = Object(ObjectKinds.Parameter, Name, Undefined);
-		ParamDecl = ParamDecl(Object, ByVal);
+		Object = Parameter(Name, ByVal);
+		ParamDecl = ParamDecl(Object);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
@@ -1810,13 +1800,13 @@ Function ParseGotoStmt(Parser)
 	Return GotoStmt(Label);
 EndFunction // ParseGotoStmt()
 
-Function ParseVarDecls(Parser)
+Function ParseVarDecls(Parser, Local)
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser.Tok;
 	While Tok = Tokens.Var Do
 		Next(Parser);
-		Decls.Add(ParseVarListDecl(Parser));
+		Decls.Add(ParseVarListDecl(Parser, Local));
 		If Parser.Tok = Tokens.Semicolon Then
 			Next(Parser);
 		EndIf;
@@ -1827,16 +1817,10 @@ EndFunction // ParseVarDecls()
 
 Function ParseDecls(Parser)
 	Var Tok, Decls;
-	Decls = New Array;
+	Decls = ParseVarDecls(Parser, False);
 	Tok = Parser.Tok;
 	While Tok <> Tokens.Eof Do
-		If Tok = Tokens.Var Then
-			Next(Parser);
-			Decls.Add(ParseVarListDecl(Parser));
-			If Parser.Tok = Tokens.Semicolon Then
-				Next(Parser);
-			EndIf;
-		ElsIf Tok = Tokens.Function Then
+		If Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
 		ElsIf Tok = Tokens.Procedure Then
 			Decls.Add(ParseProcDecl(Parser));
