@@ -25,7 +25,6 @@ Function Backend()
 	New Array, -1);
 
 	Return Backend;
-
 EndFunction // Backend()
 
 Procedure Indent(Backend)
@@ -68,8 +67,7 @@ Procedure VisitDecl(Backend, Decl)
 		Indent(Backend);
 		Result.Add("Var ");
 		VisitVarList(Backend, Decl.VarList);
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
 		Result.Add(Chars.LF);
 		Backend.Indent = Backend.Indent + 1;
@@ -80,7 +78,7 @@ Procedure VisitDecl(Backend, Decl)
 		EndIf; 
 		Result.Add(Decl.Object.Name);
 		Result.Add("(");
-		VisitParamList(Backend, Decl.Object.Type.ParamList);
+		VisitParamList(Backend, Decl.Object.ParamList);
 		Result.Add(")");
 		If Decl.Export Then
 			Result.Add(" Export");
@@ -103,13 +101,13 @@ Procedure VisitDecl(Backend, Decl)
 EndProcedure // VisitDecl()
 
 Procedure VisitVarList(Backend, VarList)
-	Var Result, Buffer;
+	Var Result, Buffer, Object, Value;
 	Result = Backend.Result;
 	Buffer = New Array;
 	For Each VarDecl In VarList Do
-		Buffer.Add(
-			VarDecl.Object.Name +
-			?(VarDecl.Property("Value"), " = " + VisitExpr(VarDecl.Value), "") +
+		Object = VarDecl.Object;
+		Buffer.Add(Object.Name +
+			?(Object.Property("Value", Value), " = " + VisitExpr(Value), "") +
 			?(VarDecl.Export, " Export", "")
 		);
 	EndDo;
@@ -119,14 +117,15 @@ Procedure VisitVarList(Backend, VarList)
 EndProcedure // VisitVarList()
 
 Procedure VisitParamList(Backend, ParamList)
-	Var Result, Buffer;
+	Var Result, Buffer, Object, Value;
 	Result = Backend.Result;
 	Buffer = New Array;
 	For Each ParamDecl In ParamList Do
+		Object = ParamDecl.Object;
 		Buffer.Add(
-			?(ParamDecl.ByVal, "Val ", "") +
-			ParamDecl.Object.Name +
-			?(ParamDecl.Property("Value"), " = " + VisitExpr(ParamDecl.Value), "")
+			?(Object.ByVal, "Val ", "") +
+			Object.Name +
+			?(Object.Property("Value", Value), " = " + VisitExpr(Value), "")
 		);
 	EndDo;
 	If Buffer.Count() > 0 Then
@@ -143,65 +142,51 @@ Procedure VisitStmt(Backend, Stmt)
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" = ");
 		Result.Add(VisitExpr(Stmt.Right));
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "AddAssignStmt" Then
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" = ");
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" + ");
 		Result.Add(VisitExpr(Stmt.Right));
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "ReturnStmt" Then
 		Result.Add("Return ");
 		If Stmt.Property("Expr") Then
 			Result.Add(VisitExpr(Stmt.Expr));
 		EndIf;
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "BreakStmt" Then
-		Result.Add("Break;");
-		Result.Add(Chars.LF);
+		Result.Add("Break;" "");
 	ElsIf NodeType = "ContinueStmt" Then
-		Result.Add("Continue;");
-		Result.Add(Chars.LF);
+		Result.Add("Continue;" "");
 	ElsIf NodeType = "RaiseStmt" Then
 		Result.Add("Raise ");
 		If Stmt.Property("Expr") Then
 			Result.Add(VisitExpr(Stmt.Expr));
 		EndIf;
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "ExecuteStmt" Then
 		Result.Add("Execute(");
 		Result.Add(VisitExpr(Stmt.Expr));
-		Result.Add(");");
-		Result.Add(Chars.LF);
+		Result.Add(");" "");
 	ElsIf NodeType = "CallStmt" Then
 		Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add(";" "");
 	ElsIf NodeType = "IfStmt" Then
 		Result.Add("If ");
 		VisitIfStmt(Backend, Stmt);
 		If Stmt.Property("ElsePart") Then
-			Result.Add("Else");
-			Result.Add(Chars.LF);
+			Result.Add("Else" "");
 			VisitStatements(Backend, Stmt.ElsePart);
 		EndIf;
-		Result.Add("EndIf");
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add("EndIf;" "");
 	ElsIf NodeType = "WhileStmt" Then
 		Result.Add("While ");
 		Result.Add(VisitExpr(Stmt.Condition));
-		Result.Add(" Do");
-		Result.Add(Chars.LF);
+		Result.Add(" Do" "");
 		VisitStatements(Backend, Stmt.Statements);
-		Result.Add("EndDo");
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add("EndDo;" "");
 	ElsIf NodeType = "ForStmt" Then
 		Result.Add("For ");
 		If Stmt.Collection.NodeType = "RangeExpr" Then
@@ -214,12 +199,9 @@ Procedure VisitStmt(Backend, Stmt)
 			Result.Add(" In ");
 			Result.Add(VisitExpr(Stmt.Collection));
 		EndIf;
-		Result.Add(" Do");
-		Result.Add(Chars.LF);
+		Result.Add(" Do" "");
 		VisitStatements(Backend, Stmt.Statements);
-		Result.Add("EndDo");
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add("EndDo;" "");
 	ElsIf NodeType = "CaseStmt" Then
 		If Stmt.WhenPart.Count() > 0 Then
 			Result.Add("If ");
@@ -235,13 +217,10 @@ Procedure VisitStmt(Backend, Stmt)
 				VisitIfStmt(Backend, IfStmt);
 			EndDo;
 			If Stmt.Property("ElsePart") Then
-				Result.Add("Else");
-				Result.Add(Chars.LF);
+				Result.Add("Else" "");
 				VisitStatements(Backend, Stmt.ElsePart);
 			EndIf;
-			Result.Add("EndIf");
-			Result.Add(";");
-			Result.Add(Chars.LF);
+			Result.Add("EndIf;" "");
 		Else
 			Result.Add(Chars.LF);
 			Backend.Indent = Backend.Indent - 1;
@@ -252,15 +231,11 @@ Procedure VisitStmt(Backend, Stmt)
 			Result.Add(Chars.LF);
 		EndIf;
 	ElsIf NodeType = "TryStmt" Then
-		Result.Add("Try");
-		Result.Add(Chars.LF);
+		Result.Add("Try" "");
 		VisitStatements(Backend, Stmt.TryPart);
-		Result.Add("Except");
-		Result.Add(Chars.LF);
+		Result.Add("Except" "");
 		VisitStatements(Backend, Stmt.ExceptPart);
-		Result.Add("EndTry");
-		Result.Add(";");
-		Result.Add(Chars.LF);
+		Result.Add("EndTry;" "");
 	EndIf;
 EndProcedure // VisitStmt()
 
@@ -268,8 +243,7 @@ Procedure VisitIfStmt(Backend, IfStmt)
 	Var Result;
 	Result = Backend.Result;
 	Result.Add(VisitExpr(IfStmt.Condition));
-	Result.Add(" Then");
-	Result.Add(Chars.LF);
+	Result.Add(" Then" "");
 	VisitStatements(Backend, IfStmt.ThenPart);
 	If IfStmt.Property("ElsIfPart") Then
 		For Each Item In IfStmt.ElsIfPart Do
