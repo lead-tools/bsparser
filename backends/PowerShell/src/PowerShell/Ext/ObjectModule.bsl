@@ -1,4 +1,7 @@
 ﻿
+Var Result; // array (string)
+Var Indent; // number
+
 Var Tokens;        // enum
 Var SelectorKinds; // enum
 Var Operators;     // structure as map[one of Tokens](string)
@@ -13,88 +16,71 @@ Procedure Init(OneShellProcessor) Export
 	Tokens = OneShellProcessor.Tokens();
 	SelectorKinds = OneShellProcessor.SelectorKinds();
 	
+	Result = New Array;
+	Indent = -1;
+	
 EndProcedure // Init() 
 
-Function Backend()
-	Var Backend;
-
-	Backend = New Structure(
-		"Result," // array (string)
-		"Indent," // number
-	,
-	New Array, -1);
-
-	Return Backend;
-
-EndFunction // Backend()
-
-Procedure Indent(Backend)
-	Var Result;
-	Result = Backend.Result;
-	For Index = 1 To Backend.Indent Do
+Procedure Indent(Result)
+	For Index = 1 To Indent Do
 		Result.Add(Chars.Tab);
 	EndDo;
 EndProcedure // Indent()
 
 Function VisitModule(Module) Export
-	Var Result;
-	Backend = Backend();
-	Result = Backend.Result;
 	Result.Add("$1C = New-Module -AsCustomObject {" "");
 	Result.Add("	$Missing = [Type]::Missing" "");
 	Result.Add("}" "" "");
-	VisitDecls(Backend, Module.Decls);
-	VisitStatements(Backend, Module.Statements);
-	Return StrConcat(Backend.Result);
+	VisitDecls(Module.Decls);
+	VisitStatements(Module.Statements);
+	Return StrConcat(Result);
 EndFunction // VisitModule()
 
-Procedure VisitDecls(Backend, Decls)
-	Backend.Indent = Backend.Indent + 1;
+Procedure VisitDecls(Decls)
+	Indent = Indent + 1;
 	For Each Decl In Decls Do
-		VisitDecl(Backend, Decl);
+		VisitDecl(Decl);
 	EndDo;
-	Backend.Indent = Backend.Indent - 1;
+	Indent = Indent - 1;
 EndProcedure // VisitDecls()
 
-Procedure VisitStatements(Backend, Statements)
-	Backend.Indent = Backend.Indent + 1;
+Procedure VisitStatements(Statements)
+	Indent = Indent + 1;
 	For Each Stmt In Statements Do
-		VisitStmt(Backend, Stmt);
+		VisitStmt(Stmt);
 	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-	Indent(Backend);
+	Indent = Indent - 1;
+	Indent(Result);
 EndProcedure // VisitStatements()
 
-Procedure VisitDecl(Backend, Decl)
-	Var Result, NodeType;
-	Result = Backend.Result;
+Procedure VisitDecl(Decl)
+	Var NodeType;
 	NodeType = Decl.NodeType;
 	If NodeType = "VarListDecl" Then
-		VisitVarList(Backend, Decl.VarList);
+		VisitVarList(Decl.VarList);
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
 		Result.Add(Chars.LF);
-		Indent(Backend);
+		Indent(Result);
 		Result.Add("function ");
 		Result.Add(Decl.Object.Name);
-		VisitParamList(Backend, Decl.Object.ParamList);
+		VisitParamList(Decl.Object.ParamList);
 		For Each Stmt In Decl.Decls Do
-			VisitDecl(Backend, Stmt);
+			VisitDecl(Stmt);
 		EndDo;
 		For Each Stmt In Decl.Statements Do
-			VisitStmt(Backend, Stmt);
+			VisitStmt(Stmt);
 		EndDo;
-		Backend.Indent = Backend.Indent - 1;
-		Indent(Backend);
+		Indent = Indent - 1;
+		Indent(Result);
 		Result.Add("}" "");
 	EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarList(Backend, VarListDecl)
-	Var Result, Object, Value;
-	Result = Backend.Result;
+Procedure VisitVarList(VarListDecl)
+	Var Object, Value;
 	For Each VarDecl In VarListDecl Do
 		Object = VarDecl.Object;
-		Indent(Backend);
+		Indent(Result);
 		Result.Add(StrTemplate("New-Variable -Name ""%1""", Object.Name));
 		If Object.Property("Value", Value) Then
 			Result.Add(" -Value " + VisitExpr(Value));
@@ -103,37 +89,35 @@ Procedure VisitVarList(Backend, VarListDecl)
 	EndDo;
 EndProcedure // VisitVarList()
 
-Procedure VisitParamList(Backend, ParamList)
-	Var Result, Buffer, Defaults, Object, Value;
-		Result = Backend.Result;
-		Result.Add("(");
-		Defaults = New Array;
-		Defaults.Add("switch ($1C.Missing) { ");
-		Buffer = New Array;
-		For Each ParamDecl In ParamList Do
-			Object = ParamDecl.Object;
-			Buffer.Add("$" + Object.Name);
-			If Object.Property("Value", Value) Then
-				Defaults.Add(StrTemplate("$%1 {$%1 = %2} ", Object.Name, VisitExpr(Value)));
-			EndIf; 
-		EndDo; 
-		If Buffer.Count() > 0 Then
-			Result.Add(StrConcat(Buffer, ", "));
-		EndIf;
-		Result.Add(") {" "");
-		Backend.Indent = Backend.Indent + 1;
-		If Defaults.Count() > 1 Then
-			Indent(Backend);
-			Defaults.Add("}" "");
-			Result.Add(StrConcat(Defaults));
-		EndIf;
+Procedure VisitParamList(ParamList)
+	Var Buffer, Defaults, Object, Value;
+	Result.Add("(");
+	Defaults = New Array;
+	Defaults.Add("switch ($1C.Missing) { ");
+	Buffer = New Array;
+	For Each ParamDecl In ParamList Do
+		Object = ParamDecl.Object;
+		Buffer.Add("$" + Object.Name);
+		If Object.Property("Value", Value) Then
+			Defaults.Add(StrTemplate("$%1 {$%1 = %2} ", Object.Name, VisitExpr(Value)));
+		EndIf; 
+	EndDo; 
+	If Buffer.Count() > 0 Then
+		Result.Add(StrConcat(Buffer, ", "));
+	EndIf;
+	Result.Add(") {" "");
+	Indent = Indent + 1;
+	If Defaults.Count() > 1 Then
+		Indent(Result);
+		Defaults.Add("}" "");
+		Result.Add(StrConcat(Defaults));
+	EndIf;
 EndProcedure // VisitParamList()
 
-Procedure VisitStmt(Backend, Stmt)
-	Var Result, NodeType;
-	Result = Backend.Result;
+Procedure VisitStmt(Stmt)
+	Var NodeType;
 	NodeType = Stmt.NodeType;
-	Indent(Backend);
+	Indent(Result);
 	If NodeType = "AssignStmt" Then
 		Result.Add(VisitExprList(Stmt.Left, ", "));
 		Result.Add(" = ");
@@ -169,18 +153,17 @@ Procedure VisitStmt(Backend, Stmt)
 		Result.Add(Chars.LF);
 	ElsIf NodeType = "IfStmt" Then
 		Result.Add("if (");
-		VisitIfStmt(Backend, Stmt);
+		VisitIfStmt(Stmt);
 		If Stmt.Property("ElsePart") Then
-			Indent(Backend);
-			Result.Add("else {" "");
-			VisitStatements(Backend, Stmt.ElsePart);
+			Result.Add(" else {" "");
+			VisitStatements(Stmt.ElsePart);
 			Result.Add("}" "");
 		EndIf;
 	ElsIf NodeType = "WhileStmt" Then
 		Result.Add("while (");
 		Result.Add(VisitExpr(Stmt.Condition));
 		Result.Add(") {" "");
-		VisitStatements(Backend, Stmt.Statements);
+		VisitStatements(Stmt.Statements);
 		Result.Add("}" "");
 	ElsIf NodeType = "ForStmt" Then
 		If Stmt.Collection.NodeType = "RangeExpr" Then
@@ -201,59 +184,54 @@ Procedure VisitStmt(Backend, Stmt)
 			Result.Add(")");
 		EndIf;
 		Result.Add(" {" "");
-		VisitStatements(Backend, Stmt.Statements);
+		VisitStatements(Stmt.Statements);
 		Result.Add("}" "");
 	ElsIf NodeType = "CaseStmt" Then
 		Result.Add("switch ");
 		Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
 		Result.Add(" {" "");
-		Backend.Indent = Backend.Indent + 1;
+		Indent = Indent + 1;
 		For Each IfStmt In Stmt.WhenPart Do
-			Indent(Backend);
-			VisitWhenPart(Backend, IfStmt);
+			Indent(Result);
+			VisitWhenPart(IfStmt);
 		EndDo;
 		If Stmt.Property("ElsePart") Then
-			Indent(Backend);
+			Indent(Result);
 			Result.Add("default {" "");
-			VisitStatements(Backend, Stmt.ElsePart);
+			VisitStatements(Stmt.ElsePart);
 			Result.Add("}" "");
 		EndIf;
-		Backend.Indent = Backend.Indent - 1;
-		Indent(Backend);
+		Indent = Indent - 1;
+		Indent(Result);
 		Result.Add("}" "");
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("try {" "");
-		VisitStatements(Backend, Stmt.TryPart);
+		VisitStatements(Stmt.TryPart);
 		Result.Add("}" "");
-		Indent(Backend);
+		Indent(Result);
 		Result.Add("catch {" "");
-		VisitStatements(Backend, Stmt.ExceptPart);
+		VisitStatements(Stmt.ExceptPart);
 		Result.Add("}" "");
 	EndIf;
 EndProcedure // VisitStmt()
 
-Procedure VisitIfStmt(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
+Procedure VisitIfStmt(IfStmt)
 	Result.Add(VisitExpr(IfStmt.Condition));
 	Result.Add(") {" "");
-	VisitStatements(Backend, IfStmt.ThenPart);
-	Result.Add("}" "");
+	VisitStatements(IfStmt.ThenPart);
+	Result.Add("}");
 	If IfStmt.Property("ElsIfPart") Then
 		For Each Item In IfStmt.ElsIfPart Do
-			Indent(Backend);
-			Result.Add("elseif (");
-			VisitIfStmt(Backend, Item);
+			Result.Add(" elseif (");
+			VisitIfStmt(Item);
 		EndDo;
 	EndIf;
 EndProcedure // VisitIfStmt()
 
-Procedure VisitWhenPart(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
+Procedure VisitWhenPart(IfStmt)
 	Result.Add(VisitExpr(IfStmt.Condition));
 	Result.Add(" {" "");
-	VisitStatements(Backend, IfStmt.ThenPart);
+	VisitStatements(IfStmt.ThenPart);
 	Result.Add("}" "");
 EndProcedure // VisitWhenPart()
 
@@ -329,9 +307,26 @@ Function VisitExpr(Expr, IsOperand = False)
 	ElsIf NodeType = "NotExpr" Then
 		Return StrTemplate("-not (%1)", VisitExpr(Expr.Expr));
 	ElsIf NodeType = "ArrayExpr" Then
+		Return StrTemplate("@(%1)", VisitExprList(Expr.ExprList, ", "));
 	ElsIf NodeType = "StructExpr" Then
+		Return VisitStructExpr(Expr);
 	EndIf;
 EndFunction // VisitExpr()
+
+Function VisitStructExpr(StructExpr)
+	Var Buffer;
+	Buffer = New Array;
+	Buffer.Add("@{" "");
+	Indent = Indent + 1;
+	For Each Item In StructExpr.Items Do
+		Indent(Buffer);
+		Buffer.Add(StrTemplate("%1 = %2" "", Item.Key, VisitExpr(Item.Value)))
+	EndDo;
+	Indent = Indent - 1;
+	Indent(Buffer);
+	Buffer.Add("}");
+	Return StrConcat(Buffer);
+EndFunction // VisitStructExpr() 
 
 Function VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
 	Var Buffer, Selector;
@@ -370,11 +365,13 @@ Function VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
 EndFunction // VisitDesignatorExpr()
 
 Function IsComplexExpr(Expr)
-	Return Expr.NodeType = "UnaryExpr"
-		Or Expr.NodeType = "BinaryExpr"
-		Or Expr.NodeType = "RangeExpr"
-		Or Expr.NodeType = "NewExpr"
-		Or Expr.NodeType = "TernaryExpr"
-		Or Expr.NodeType = "NotExpr"
-		Or Expr.NodeType = "DesignatorExpr" And Expr.Call;	
+	Var NodeType;
+	NodeType = Expr.NodeType;
+	Return NodeType = "UnaryExpr"
+		Or NodeType = "BinaryExpr"
+		Or NodeType = "RangeExpr"
+		Or NodeType = "NewExpr"
+		Or NodeType = "TernaryExpr"
+		Or NodeType = "NotExpr"
+		Or NodeType = "DesignatorExpr" And Expr.Call;	
 EndFunction // IsComplexExpr() 

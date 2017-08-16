@@ -51,6 +51,8 @@ Procedure Init()
 	InitialTokensOfExpression.Add(Tokens.Not);
 	InitialTokensOfExpression.Add(Tokens.Ident);
 	InitialTokensOfExpression.Add(Tokens.Lparen);
+	InitialTokensOfExpression.Add(Tokens.Lbrack);
+	InitialTokensOfExpression.Add(Tokens.Lbrace);
 	InitialTokensOfExpression.Add(Tokens.Number);
 	InitialTokensOfExpression.Add(Tokens.String);
 	InitialTokensOfExpression.Add(Tokens.DateTime);
