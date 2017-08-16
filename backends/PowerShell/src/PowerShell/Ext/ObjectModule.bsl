@@ -193,6 +193,8 @@ Procedure VisitStmt(Stmt)
 			Result.Add(" else {" "");
 			VisitStatements(Stmt.ElsePart);
 			Result.Add("}" "");
+		Else
+			Result.Add(Chars.LF);
 		EndIf;
 	ElsIf NodeType = "WhileStmt" Then
 		Result.Add("while (");
