@@ -425,14 +425,15 @@ EndFunction // ScanDateTime()
 
 #Region AbstractSyntaxTree
 
-Function Module(Decls, Statements)
+Function Module(Decls, AutoVars, Statements)
 	Var Module;
 
 	Module = New Structure(
 		"Decls,"      // array (one of declarations)
+		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 	,
-	Decls, Statements);
+	Decls, AutoVars, Statements);
 
 	Return Module;
 EndFunction // Module()
@@ -443,12 +444,11 @@ Function Scope(Outer)
 	Var Scope;
 
 	Scope = New Structure(
-		"Outer,"   // structure (Scope)
-		"Objects," // structure as map[string](Object)
-	);
-
-	Scope.Outer = Outer;
-	Scope.Objects = New Structure;
+		"Outer,"    // structure (Scope)
+		"Objects,"  // structure as map[string](Object)
+		"AutoVars," // array (Object)
+	,
+	Outer, New Structure, New Array);
 
 	Return Scope;
 EndFunction // Scope()
@@ -468,14 +468,14 @@ EndFunction // Object()
 Function Signature(Kind, Name, ParamList)
 	Var Object;
 	Object = Object(Kind, Name);
-	Object.Insert("ParamList", ParamList); // array (boolean)
+	Object.Insert("ParamList", ParamList); // array (ParamDecl)
 	Return Object;
 EndFunction // Signature()
 
-Function Variable(Name, Local, Value = Undefined)
+Function Variable(Name, Value = Undefined, Auto = False)
 	Var Object;
 	Object = Object(ObjectKinds.Variable, Name);
-	Object.Insert("Local", Local); // boolean
+	Object.Insert("Auto", Auto); // boolean
 	If Value <> Undefined Then
 		Object.Insert("Value", Value); // structure (one of expressions)
 	EndIf;
@@ -488,7 +488,7 @@ Function Parameter(Name, ByVal, Value = Undefined)
 	Object.Insert("ByVal", ByVal); // boolean
 	If Value <> Undefined Then
 		Object.Insert("Value", Value); // structure (one of expressions)
-	EndIf; 
+	EndIf;
 	Return Object;
 EndFunction // Parameter()
 
@@ -521,7 +521,7 @@ Function VarListDecl(VarList)
 	Return VarListDecl;
 EndFunction // VarListDecl()
 
-Function ProcDecl(Object, Exported, Decls, Statements)
+Function ProcDecl(Object, Exported, Decls, AutoVars, Statements)
 	Var ProcDecl;
 
 	ProcDecl = New Structure(
@@ -529,14 +529,15 @@ Function ProcDecl(Object, Exported, Decls, Statements)
 		"Object,"     // structure (Object)
 		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
+		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 	,
-	"ProcDecl", Object, Exported, Decls, Statements);
+	"ProcDecl", Object, Exported, Decls, AutoVars, Statements);
 
 	Return ProcDecl;
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Exported, Decls, Statements)
+Function FuncDecl(Object, Exported, Decls, AutoVars, Statements)
 	Var FuncDecl;
 
 	FuncDecl = New Structure(
@@ -544,9 +545,10 @@ Function FuncDecl(Object, Exported, Decls, Statements)
 		"Object,"     // structure (Object)
 		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
+		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 	,
-	"FuncDecl", Object, Exported, Decls, Statements);
+	"FuncDecl", Object, Exported, Decls, AutoVars, Statements);
 
 	Return FuncDecl;
 EndFunction // FuncDecl()
@@ -735,6 +737,21 @@ Function KeyValue(Key, Value)
 
 	Return KeyValue;
 EndFunction // KeyValue()
+
+Function FuncExpr(ParamList, Decls, AutoVars, Statements)
+	Var FuncExpr;
+
+	FuncExpr = New Structure(
+		"NodeType,"   // string (type of this structure)
+		"ParamList,"  // array (ParamDecl)
+		"Decls,"      // array (one of declarations)
+		"AutoVars,"   // array (Object)
+		"Statements," // array (one of statements)
+	,
+	"FuncExpr", ParamList, Decls, AutoVars, Statements);
+
+	Return FuncExpr;
+EndFunction // FuncExpr()
 
 #EndRegion // Expressions
 
@@ -1210,8 +1227,9 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, True);
+			Object = Variable(Name, Undefined, True);
 			Parser.Vars.Insert(Name, Object);
+			Parser.Scope.AutoVars.Add(Object);
 		Else
 			Object = Object("Unknown", Name);
 			If Verbose Then
@@ -1271,6 +1289,9 @@ EndFunction // ParseSelector()
 Function ParseExpression(Parser)
 	Var Expr, Operator, Pos;
 	Pos = Parser.Pos;
+	If Parser.Tok = Tokens.Function Then
+		Return ParseFuncExpr(Parser);
+	EndIf;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
@@ -1391,7 +1412,7 @@ Function ParseTernaryExpr(Parser)
 EndFunction // ParseTernaryExpr()
 
 Function ParseFuncDecl(Parser)
-	Var Object, Name, Decls, Exported, Pos;
+	Var Object, Name, Decls, Exported, AutoVars, VarObj, Pos;
 	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
@@ -1414,17 +1435,43 @@ Function ParseFuncDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
-	Decls = ParseVarDecls(Parser, True);
+	Decls = ParseVarDecls(Parser);
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
 	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndFunction);
 	EndIf;
+	AutoVars = New Array;
+	For Each VarObj In Parser.Scope.AutoVars Do
+		AutoVars.Add(VarObj);
+	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(FuncDecl(Object, Exported, Decls, Statements), Parser, Pos);
+	Return Locate(FuncDecl(Object, Exported, Decls, AutoVars, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
+
+Function ParseFuncExpr(Parser)
+	Var Name, Decls, ParamList, AutoVars, VarObj, Statements, Pos;
+	Pos = Parser.Pos;
+	Next(Parser);
+	OpenScope(Parser);
+	ParamList = ParseParamList(Parser);
+	Decls = ParseVarDecls(Parser);
+	Parser.IsFunc = True;
+	Statements = ParseStatements(Parser);
+	Parser.IsFunc = False;
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndFunction);
+	EndIf;
+	AutoVars = New Array;
+	For Each VarObj In Parser.Scope.AutoVars Do
+		AutoVars.Add(VarObj);
+	EndDo;
+	CloseScope(Parser);
+	Next(Parser);
+	Return Locate(FuncExpr(ParamList, Decls, AutoVars, Statements), Parser, Pos);
+EndFunction // ParseFuncExpr()
 
 Function ParseParamList(Parser)
 	Var ParamList;
@@ -1446,7 +1493,7 @@ Function ParseParamList(Parser)
 EndFunction // ParseParamList()
 
 Function ParseProcDecl(Parser)
-	Var Object, Name, Decls, Exported, Pos;
+	Var Object, Name, Decls, Exported, AutoVars, VarObj, Statements, Pos;
 	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
@@ -1469,14 +1516,18 @@ Function ParseProcDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
-	Decls = ParseVarDecls(Parser, True);
+	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
 	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
 		Expect(Parser, Tokens.EndProcedure);
 	EndIf;
+	AutoVars = New Array;
+	For Each VarObj In Parser.Scope.AutoVars Do
+		AutoVars.Add(VarObj);
+	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(ProcDecl(Object, Exported, Decls, Statements), Parser, Pos);
+	Return Locate(ProcDecl(Object, Exported, Decls, AutoVars, Statements), Parser, Pos);
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
@@ -1492,19 +1543,19 @@ Function ParseReturnStmt(Parser)
 	Return Locate(ReturnStmt(Expr), Parser, Pos);
 EndFunction // ParseReturnStmt()
 
-Function ParseVarListDecl(Parser, Local)
+Function ParseVarListDecl(Parser)
 	Var VarList, Pos;
 	Pos = Parser.Pos;
 	VarList = New Array;
-	VarList.Add(ParseVarDecl(Parser, Local));
+	VarList.Add(ParseVarDecl(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarDecl(Parser, Local));
+		VarList.Add(ParseVarDecl(Parser));
 	EndDo;
 	Return Locate(VarListDecl(VarList), Parser, Pos);
 EndFunction // ParseVarListDecl()
 
-Function ParseVarDecl(Parser, Local)
+Function ParseVarDecl(Parser)
 	Var Tok, Name, Object, VarDecl, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1515,9 +1566,9 @@ Function ParseVarDecl(Parser, Local)
 		If BasicLiterals.Find(Tok) = Undefined Then
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
-		Object = Variable(Name, Local, ParseOperand(Parser));
+		Object = Variable(Name, ParseOperand(Parser));
 	Else
-		Object = Variable(Name, Local);
+		Object = Variable(Name);
 	EndIf;
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
@@ -1802,13 +1853,13 @@ Function ParseGotoStmt(Parser)
 	Return GotoStmt(Label);
 EndFunction // ParseGotoStmt()
 
-Function ParseVarDecls(Parser, Local)
+Function ParseVarDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser.Tok;
 	While Tok = Tokens.Var Do
 		Next(Parser);
-		Decls.Add(ParseVarListDecl(Parser, Local));
+		Decls.Add(ParseVarListDecl(Parser));
 		If Parser.Tok = Tokens.Semicolon Then
 			Next(Parser);
 		EndIf;
@@ -1819,7 +1870,7 @@ EndFunction // ParseVarDecls()
 
 Function ParseDecls(Parser)
 	Var Tok, Decls;
-	Decls = ParseVarDecls(Parser, False);
+	Decls = ParseVarDecls(Parser);
 	Tok = Parser.Tok;
 	While Tok <> Tokens.Eof Do
 		If Tok = Tokens.Function Then
@@ -1835,8 +1886,15 @@ Function ParseDecls(Parser)
 EndFunction // ParseDecls()
 
 Function ParseModule(Parser) Export
+	Var Decls, AutoVars, Statements;
 	Next(Parser);
-	Parser.Module = Module(ParseDecls(Parser), ParseStatements(Parser));
+	Decls = ParseDecls(Parser);
+	Statements = ParseStatements(Parser);
+	AutoVars = New Array;
+	For Each VarObj In Parser.Scope.AutoVars Do
+		AutoVars.Add(VarObj);
+	EndDo;
+	Parser.Module = Module(Decls, AutoVars, Statements);
 	If Verbose Then
 		For Each Item In Parser.Unknown Do
 			Message(StrTemplate("Undeclared method `%1`", Item.Key));
