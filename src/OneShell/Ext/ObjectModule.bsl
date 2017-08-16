@@ -468,7 +468,7 @@ EndFunction // Object()
 Function Signature(Kind, Name, ParamList)
 	Var Object;
 	Object = Object(Kind, Name);
-	Object.Insert("ParamList", ParamList); // array (boolean)
+	Object.Insert("ParamList", ParamList); // array (ParamDecl)
 	Return Object;
 EndFunction // Signature()
 
@@ -488,7 +488,7 @@ Function Parameter(Name, ByVal, Value = Undefined)
 	Object.Insert("ByVal", ByVal); // boolean
 	If Value <> Undefined Then
 		Object.Insert("Value", Value); // structure (one of expressions)
-	EndIf; 
+	EndIf;
 	Return Object;
 EndFunction // Parameter()
 
@@ -735,6 +735,20 @@ Function KeyValue(Key, Value)
 
 	Return KeyValue;
 EndFunction // KeyValue()
+
+Function FuncExpr(ParamList, Decls, Statements)
+	Var FuncExpr;
+
+	FuncExpr = New Structure(
+		"NodeType,"   // string (type of this structure)
+		"ParamList,"  // array (ParamDecl)
+		"Decls,"      // array (one of declarations)
+		"Statements," // array (one of statements)
+	,
+	"FuncExpr", ParamList, Decls, Statements);
+
+	Return FuncExpr;
+EndFunction // FuncExpr()
 
 #EndRegion // Expressions
 
@@ -1271,6 +1285,9 @@ EndFunction // ParseSelector()
 Function ParseExpression(Parser)
 	Var Expr, Operator, Pos;
 	Pos = Parser.Pos;
+	If Parser.Tok = Tokens.Function Then
+		Return ParseFuncExpr(Parser);
+	EndIf;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
@@ -1425,6 +1442,24 @@ Function ParseFuncDecl(Parser)
 	Next(Parser);
 	Return Locate(FuncDecl(Object, Exported, Decls, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
+
+Function ParseFuncExpr(Parser)
+	Var Name, Decls, ParamList, Pos;
+	Pos = Parser.Pos;
+	Next(Parser);
+	OpenScope(Parser);
+	ParamList = ParseParamList(Parser);
+	Decls = ParseVarDecls(Parser, True);
+	Parser.IsFunc = True;
+	Statements = ParseStatements(Parser);
+	Parser.IsFunc = False;
+	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
+		Expect(Parser, Tokens.EndFunction);
+	EndIf;
+	CloseScope(Parser);
+	Next(Parser);
+	Return Locate(FuncExpr(ParamList, Decls, Statements), Parser, Pos);
+EndFunction // ParseFuncExpr()
 
 Function ParseParamList(Parser)
 	Var ParamList;
