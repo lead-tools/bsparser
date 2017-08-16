@@ -6,20 +6,22 @@ Var Tokens;        // enum
 Var SelectorKinds; // enum
 Var Operators;     // structure as map[one of Tokens](string)
 
+Var Scope; // structure (Scope)
+
 Procedure Init(OneShellProcessor) Export
-	
+
 	Operators = New Structure(
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
 		"-eq", "-ne", "-lt", "-gt", "-le", "-ge", "+", "-", "*", "/", "%", "-or", "-and", "!"
 	);
-	
+
 	Tokens = OneShellProcessor.Tokens();
 	SelectorKinds = OneShellProcessor.SelectorKinds();
-	
+
 	Result = New Array;
 	Indent = -1;
-	
-EndProcedure // Init() 
+
+EndProcedure // Init()
 
 Procedure Indent(Result)
 	For Index = 1 To Indent Do
@@ -27,11 +29,30 @@ Procedure Indent(Result)
 	EndDo;
 EndProcedure // Indent()
 
+Function Scope(Outer)
+	Return New Structure(
+		"Outer,"   // structure (Scope)
+		"Objects," // array (Object)
+	, Outer, New Array);
+EndFunction // Scope()
+
+Function OpenScope()
+	Scope = Scope(Scope);
+EndFunction // OpenScope()
+
+Function CloseScope()
+	Scope = Scope.Outer;
+EndFunction // CloseScope()
+
 Function VisitModule(Module) Export
 	Result.Add("$1C = New-Module -AsCustomObject {" "");
 	Result.Add("	$Missing = [Type]::Missing" "");
 	Result.Add("}" "" "");
+	OpenScope();
 	VisitDecls(Module.Decls);
+	For Each VarObj In Module.AutoVars Do
+		Scope.Objects.Add(VarObj);
+	EndDo;
 	VisitStatements(Module.Statements);
 	Return StrConcat(Result);
 EndFunction // VisitModule()
@@ -59,6 +80,7 @@ Procedure VisitDecl(Decl)
 	If NodeType = "VarListDecl" Then
 		VisitVarList(Decl.VarList);
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
+		OpenScope();
 		Result.Add(Chars.LF);
 		Indent(Result);
 		Result.Add("function ");
@@ -67,12 +89,16 @@ Procedure VisitDecl(Decl)
 		For Each Stmt In Decl.Decls Do
 			VisitDecl(Stmt);
 		EndDo;
+		For Each VarObj In Decl.AutoVars Do
+			Scope.Objects.Add(VarObj);
+		EndDo;
 		For Each Stmt In Decl.Statements Do
 			VisitStmt(Stmt);
 		EndDo;
 		Indent = Indent - 1;
 		Indent(Result);
 		Result.Add("}" "");
+		CloseScope();
 	EndIf;
 EndProcedure // VisitDecl()
 
@@ -80,6 +106,7 @@ Procedure VisitVarList(VarListDecl)
 	Var Object, Value;
 	For Each VarDecl In VarListDecl Do
 		Object = VarDecl.Object;
+		Scope.Objects.Add(Object);
 		Indent(Result);
 		Result.Add(StrTemplate("New-Variable -Name ""%1""", Object.Name));
 		If Object.Property("Value", Value) Then
@@ -89,7 +116,7 @@ Procedure VisitVarList(VarListDecl)
 	EndDo;
 EndProcedure // VisitVarList()
 
-Procedure VisitParamList(ParamList)
+Procedure VisitParamList(ParamList, IsScriptBlock = False)
 	Var Buffer, Defaults, Object, Value;
 	Result.Add("(");
 	Defaults = New Array;
@@ -97,15 +124,20 @@ Procedure VisitParamList(ParamList)
 	Buffer = New Array;
 	For Each ParamDecl In ParamList Do
 		Object = ParamDecl.Object;
+		Scope.Objects.Add(Object);
 		Buffer.Add("$" + Object.Name);
 		If Object.Property("Value", Value) Then
 			Defaults.Add(StrTemplate("$%1 {$%1 = %2} ", Object.Name, VisitExpr(Value)));
-		EndIf; 
-	EndDo; 
+		EndIf;
+	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
 	EndIf;
-	Result.Add(") {" "");
+	If IsScriptBlock Then
+		Result.Add(")" "");
+	Else
+		Result.Add(") {" "");
+	EndIf;
 	Indent = Indent + 1;
 	If Defaults.Count() > 1 Then
 		Indent(Result);
@@ -122,7 +154,7 @@ Procedure VisitStmt(Stmt)
 		Result.Add(VisitExprList(Stmt.Left, ", "));
 		If Stmt.Left.Count() > 1 Then
 			Result.Add(", $null");
-		EndIf; 
+		EndIf;
 		Result.Add(" = ");
 		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(Chars.LF);
@@ -251,9 +283,9 @@ Function VisitExprList(ExprList, Separator)
 				Buffer.Add(StrTemplate("(%1)", VisitExpr(Expr)));
 			Else
 				Buffer.Add(VisitExpr(Expr));
-			EndIf; 
+			EndIf;
 		EndDo;
-	EndIf; 
+	EndIf;
 	Return StrConcat(Buffer, Separator);
 EndFunction // VisitExprList()
 
@@ -313,8 +345,35 @@ Function VisitExpr(Expr, IsOperand = False)
 		Return StrTemplate("@(%1)", VisitExprList(Expr.ExprList, ", "));
 	ElsIf NodeType = "StructExpr" Then
 		Return VisitStructExpr(Expr);
+	ElsIf NodeType = "FuncExpr" Then
+		Return VisitFuncExpr(Expr);
 	EndIf;
 EndFunction // VisitExpr()
+
+Function VisitFuncExpr(FuncExpr)
+	Var Temp, Buffer;
+	Buffer = New Array;
+	Temp = Result;   // cheat code
+	Result = Buffer; // ¯\_(ツ)_/¯
+	OpenScope();
+	Buffer.Add("{param");
+	VisitParamList(FuncExpr.ParamList, True);
+	For Each Stmt In FuncExpr.Decls Do
+		VisitDecl(Stmt);
+	EndDo;
+	For Each VarObj In FuncExpr.AutoVars Do
+		Scope.Objects.Add(VarObj);
+	EndDo;
+	For Each Stmt In FuncExpr.Statements Do
+		VisitStmt(Stmt);
+	EndDo;
+	Indent = Indent - 1;
+	Indent(Result);
+	Result.Add("}.GetNewClosure()" "");
+	CloseScope();
+	Result = Temp;
+	Return StrConcat(Buffer);
+EndFunction // VisitFuncExpr()
 
 Function VisitStructExpr(StructExpr)
 	Var Buffer;
@@ -329,19 +388,20 @@ Function VisitStructExpr(StructExpr)
 	Indent(Buffer);
 	Buffer.Add("}");
 	Return StrConcat(Buffer);
-EndFunction // VisitStructExpr() 
+EndFunction // VisitStructExpr()
 
 Function VisitDesignatorExpr(DesignatorExpr, IsOperand = True)
-	Var Buffer, Selector;
+	Var Object, Buffer, Selector;
+	Object = DesignatorExpr.Object;
 	Buffer = New Array;
 	If Not DesignatorExpr.Call Then
-		If DesignatorExpr.Object.Kind = "Variable" And Not DesignatorExpr.Object.Local Then
+		If Scope.Objects.Find(Object) = Undefined Then
 			Buffer.Add("$script:")
 		Else
 			Buffer.Add("$");
-		EndIf; 
+		EndIf;
 	EndIf;
-	Buffer.Add(DesignatorExpr.Object.Name);
+	Buffer.Add(Object.Name);
 	If DesignatorExpr.Property("Selectors") Then
 		For Each Selector In DesignatorExpr.Selectors Do
 			If Selector.Kind = SelectorKinds.Ident Then
@@ -376,5 +436,5 @@ Function IsComplexExpr(Expr)
 		Or NodeType = "NewExpr"
 		Or NodeType = "TernaryExpr"
 		Or NodeType = "NotExpr"
-		Or NodeType = "DesignatorExpr" And Expr.Call;	
-EndFunction // IsComplexExpr() 
+		Or NodeType = "DesignatorExpr" And Expr.Call;
+EndFunction // IsComplexExpr()
