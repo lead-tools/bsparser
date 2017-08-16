@@ -120,6 +120,9 @@ Procedure VisitStmt(Stmt)
 	Indent(Result);
 	If NodeType = "AssignStmt" Then
 		Result.Add(VisitExprList(Stmt.Left, ", "));
+		If Stmt.Left.Count() > 1 Then
+			Result.Add(", $null");
+		EndIf; 
 		Result.Add(" = ");
 		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(Chars.LF);
