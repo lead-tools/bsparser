@@ -36,7 +36,7 @@ Procedure TranslateAtServer()
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
 	
-	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "OneShell.epf", False);
+	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
 	
 	OneShellProcessor.Verbose = Verbose;
 	OneShellProcessor.CompatibleWith1C = CompatibleWith1C;

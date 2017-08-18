@@ -6,17 +6,17 @@
 				<xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId>
 				<xr:ObjectId>9db6a097-d93c-4c9c-a232-5c21c611f832</xr:ObjectId>
 			</xr:ContainedObject>
-			<xr:GeneratedType name="ExternalDataProcessorObject.OneShell" category="Object">
+			<xr:GeneratedType name="ExternalDataProcessorObject.BSLParser" category="Object">
 				<xr:TypeId>bc9303a6-22af-46e0-bfbf-e1cbd72d9464</xr:TypeId>
 				<xr:ValueId>1aeebf32-c680-4a5b-b714-2f363c23a78d</xr:ValueId>
 			</xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
-			<Name>OneShell</Name>
+			<Name>BSLParser</Name>
 			<Synonym>
 				<v8:item>
 					<v8:lang>ru</v8:lang>
-					<v8:content>OneShell</v8:content>
+					<v8:content>BSL-Parser</v8:content>
 				</v8:item>
 			</Synonym>
 			<Comment/>
