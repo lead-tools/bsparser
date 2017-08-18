@@ -22,7 +22,7 @@ Procedure VisitDecl(Decl)
 	If Decl.NodeType = "FuncDecl" Then
 		VisitStatements(Decl.Statements, ReturnExists);
 		If Not ReturnExists Then
-			Result.Add(StrTemplate("Функция %1() должна возвращать значение", Decl.Object.Name));
+			Result.Add(StrTemplate("Функция %1() должна возвращать значение" "", Decl.Object.Name));
 		EndIf; 
 	EndIf;
 EndProcedure // VisitDecl()
