@@ -89,7 +89,6 @@ Function Keywords() Export
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
 		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
 		|True.Истина, False.Ложь, Undefined.Неопределено,"
-		+ ?(CompatibleWith1C, "", "Case.Выбор, When.Когда, EndCase.КонецВыбора, End.Конец") // new keywords
 	);
 
 	Return Keywords;
@@ -118,11 +117,6 @@ Function Tokens(Keywords = Undefined) Export
 		|Lparen, Rparen, Lbrack, Rbrack, Lbrace, Rbrace,
 		//     ?      ,       .      :          ;
 		|Ternary, Comma, Period, Colon, Semicolon,
-
-		// New statements
-
-		//      +=
-		|AddAssign,
 
 		// Other
 
@@ -243,13 +237,8 @@ Function Scan(Scanner) Export
 			Tok = Tokens.Gtr;
 		EndIf;
 	ElsIf Char = "+" Then
-		If NextChar(Scanner) = "=" Then
-			Lit = "+=";
-			Tok = Tokens.AddAssign;
-			NextChar(Scanner);
-		Else
-			Tok = Tokens.Add;
-		EndIf;
+		Tok = Tokens.Add;
+		NextChar(Scanner);
 	ElsIf Char = "-" Then
 		Tok = Tokens.Sub;
 		NextChar(Scanner);
@@ -770,19 +759,6 @@ Function AssignStmt(Left, Right)
 	Return AssignStmt;
 EndFunction // AssignStmt()
 
-Function AddAssignStmt(Left, Right)
-	Var AddAssignStmt;
-
-	AddAssignStmt = New Structure(
-		"NodeType," // string (type of this structure)
-		"Left,"     // array (DesignatorExpr)
-		"Right,"    // structure (one of expressions)
-	,
-	"AddAssignStmt", Left, Right);
-
-	Return AddAssignStmt;
-EndFunction // AddAssignStmt()
-
 Function ReturnStmt(Expr)
 	Var ReturnStmt;
 
@@ -906,23 +882,6 @@ Function ForStmt(DesignatorExpr, Collection, Statements)
 
 	Return ForStmt;
 EndFunction // ForStmt()
-
-Function CaseStmt(DesignatorExpr, WhenPart, ElsePart = Undefined)
-	Var CaseStmt;
-
-	CaseStmt = New Structure(
-		"NodeType,"       // string (type of this structure)
-		"DesignatorExpr," // structure (one of expressions)
-		"WhenPart,"       // array (IfStmt)
-	,
-	"CaseStmt", DesignatorExpr, WhenPart);
-
-	If ElsePart <> Undefined Then
-		CaseStmt.Insert("ElsePart", ElsePart); // array (one of statements)
-	EndIf;
-
-	Return CaseStmt;
-EndFunction // CaseStmt()
 
 Function TryStmt(TryPart, ExceptPart)
 	Var TryStmt;
@@ -1439,9 +1398,7 @@ Function ParseFuncDecl(Parser)
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndFunction);
-	EndIf;
+	Expect(Parser, Tokens.EndFunction);
 	AutoVars = New Array;
 	For Each VarObj In Parser.Scope.AutoVars Do
 		AutoVars.Add(VarObj);
@@ -1461,9 +1418,7 @@ Function ParseFuncExpr(Parser)
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndFunction);
-	EndIf;
+	Expect(Parser, Tokens.EndFunction);
 	AutoVars = New Array;
 	For Each VarObj In Parser.Scope.AutoVars Do
 		AutoVars.Add(VarObj);
@@ -1518,9 +1473,7 @@ Function ParseProcDecl(Parser)
 	Parser.Methods.Insert(Name, Object);
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndProcedure);
-	EndIf;
+	Expect(Parser, Tokens.EndProcedure);
 	AutoVars = New Array;
 	For Each VarObj In Parser.Scope.AutoVars Do
 		AutoVars.Add(VarObj);
@@ -1643,8 +1596,6 @@ Function ParseStmt(Parser)
 		Stmt = ParseWhileStmt(Parser);
 	ElsIf Tok = Tokens.For Then
 		Stmt = ParseForStmt(Parser);
-	ElsIf Not CompatibleWith1C And Tok = Tokens.Case Then
-		Stmt = ParseCaseStmt(Parser);
 	ElsIf Tok = Tokens.Return Then
 		Stmt = ParseReturnStmt(Parser);
 	ElsIf Tok = Tokens.Break Then
@@ -1693,33 +1644,19 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Tok, Left, Right, Stmt, Pos;
+	Var Left, Right, Stmt, Pos;
 	Pos = Parser.Pos;
 	Left = ParseDesignatorExprList(Parser, True);
 	If Left.Count() = 1 And Left[0].Call Then
 		Stmt = CallStmt(Left[0]);
 	Else
-		Tok = Parser.Tok;
-		If Tok = Tokens.Eql Then
-			Next(Parser);
-			Right = ParseExpression(Parser);
-			If Parser.Tok = Tokens.Comma Then
-				Right = ArrayExpr(ParseExprList(Parser, Right));
-			EndIf;
-			Stmt = AssignStmt(Left, Right);
-		ElsIf Tok = Tokens.AddAssign Then
-			Next(Parser);
-			Right = ParseExpression(Parser);
-			If Parser.Tok = Tokens.Comma Then
-				Right = ArrayExpr(ParseExprList(Parser, Right));
-			EndIf;
-			If Left.Count() > 1 Then
-				Error(Parser.Scanner, "expected one variable", Pos, True);
-			EndIf;
-			Stmt = AddAssignStmt(Left, Right);
-		Else
-			Expect(Parser, Tokens.Eql);
+		Expect(Parser, Tokens.Eql);
+		Next(Parser);
+		Right = ParseExpression(Parser);
+		If Parser.Tok = Tokens.Comma Then
+			Right = ArrayExpr(ParseExprList(Parser, Right));
 		EndIf;
+		Stmt = AssignStmt(Left, Right);
 	EndIf;
 	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
@@ -1749,9 +1686,7 @@ Function ParseIfStmt(Parser)
 		Next(Parser);
 		ElsePart = ParseStatements(Parser);
 	EndIf;
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndIf);
-	EndIf;
+	Expect(Parser, Tokens.EndIf);
 	Next(Parser);
 	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
@@ -1763,39 +1698,10 @@ Function ParseTryStmt(Parser)
 	Expect(Parser, Tokens.Except);
 	Next(Parser);
 	ExceptPart = ParseStatements(Parser);
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndTry);
-	EndIf;
+	Expect(Parser, Tokens.EndTry);
 	Next(Parser);
 	Return TryStmt(TryPart, ExceptPart);
 EndFunction // ParseTryStmt()
-
-Function ParseCaseStmt(Parser)
-	Var Tok, DesignatorExpr, ElsePart;
-	Var WhenPart, WhenCond, WhenThen;
-	Next(Parser);
-	DesignatorExpr = ParseDesignatorExpr(Parser);
-	Tok = Parser.Tok;
-	WhenPart = New Array;
-	While Tok = Tokens.When Do
-		Next(Parser);
-		WhenCond = ParseExpression(Parser);
-		Expect(Parser, Tokens.Then);
-		Next(Parser);
-		WhenThen = ParseStatements(Parser);
-		WhenPart.Add(IfStmt(WhenCond, WhenThen));
-		Tok = Parser.Tok;
-	EndDo;
-	If Tok = Tokens.Else Then
-		Next(Parser);
-		ElsePart = ParseStatements(Parser);
-	EndIf;
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndCase);
-	EndIf;
-	Next(Parser);
-	Return CaseStmt(DesignatorExpr, WhenPart, ElsePart);
-EndFunction // ParseCaseStmt()
 
 Function ParseWhileStmt(Parser)
 	Var Condition, Statements;
@@ -1804,9 +1710,7 @@ Function ParseWhileStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndDo);
-	EndIf;
+	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
 	Return WhileStmt(Condition, Statements);
 EndFunction // ParseWhileStmt()
@@ -1837,9 +1741,7 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
-	If CompatibleWith1C Or Parser.Tok <> Tokens.End Then
-		Expect(Parser, Tokens.EndDo);
-	EndIf;
+	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
 	Return ForStmt(DesignatorExpr, Collection, Statements);
 EndFunction // ParseForStmt()

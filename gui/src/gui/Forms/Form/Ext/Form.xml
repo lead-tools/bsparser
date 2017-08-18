@@ -119,12 +119,6 @@
 					<ContextMenu name="MeasureContextMenu" id="28"/>
 					<ExtendedTooltip name="MeasureExtendedTooltip" id="29"/>
 				</CheckBoxField>
-				<CheckBoxField name="CompatibleWith1C" id="21">
-					<DataPath>CompatibleWith1C</DataPath>
-					<CheckBoxType>Auto</CheckBoxType>
-					<ContextMenu name="CompatibleWith1CContextMenu" id="22"/>
-					<ExtendedTooltip name="CompatibleWith1CExtendedTooltip" id="23"/>
-				</CheckBoxField>
 				<CheckBoxField name="Debug" id="32">
 					<DataPath>Debug</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
@@ -233,17 +227,6 @@
 				<v8:item>
 					<v8:lang>ru</v8:lang>
 					<v8:content>Verbose</v8:content>
-				</v8:item>
-			</Title>
-			<Type>
-				<v8:Type>xs:boolean</v8:Type>
-			</Type>
-		</Attribute>
-		<Attribute name="CompatibleWith1C" id="9">
-			<Title>
-				<v8:item>
-					<v8:lang>ru</v8:lang>
-					<v8:content>Compatible with 1C</v8:content>
 				</v8:item>
 			</Title>
 			<Type>

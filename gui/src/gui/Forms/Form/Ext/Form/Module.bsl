@@ -6,15 +6,7 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 		Message("Only for file bases")
 	EndIf; 
 	
-	If Parameters.Property("Source") Then
-		Verbose = Parameters.Verbose;
-		Output = Parameters.Output;
-		CompatibleWith1C = Parameters.CompatibleWith1C;
-		BackendPath = Parameters.BackendPath;
-		Source.SetText(Parameters.Source);
-	Else
-		Output = "AST";
-	EndIf; 
+	Output = "AST";
 	
 	SetVisibilityOfAttributes(ThisObject);
 	
@@ -39,7 +31,6 @@ Procedure TranslateAtServer()
 	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
 	
 	OneShellProcessor.Verbose = Verbose;
-	OneShellProcessor.CompatibleWith1C = CompatibleWith1C;
 	OneShellProcessor.Debug = Debug;
 	
 	Start = CurrentUniversalDateInMilliseconds();
