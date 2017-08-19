@@ -1154,7 +1154,7 @@ Function ParseNewExpr(Parser)
 	Return Locate(NewExpr(Constructor), Parser, Pos);
 EndFunction // ParseNewExpr()
 
-Function ParseDesignatorExpr(Parser, AllowNewVar = False)
+Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	Var Name, Selector, Object, List, Kind, Pos;
 	Pos = Parser.Pos;
 	Name = Parser.Lit;
@@ -1164,6 +1164,7 @@ Function ParseDesignatorExpr(Parser, AllowNewVar = False)
 		Object = FindObject(Parser, Name);
 		List = EmptyArray;
 	Else
+		AllowNewVar = False;
 		Kind = Selector.Kind;
 		If Kind = "Call" Then
 			If Not Parser.Methods.Property(Name, Object) Then
