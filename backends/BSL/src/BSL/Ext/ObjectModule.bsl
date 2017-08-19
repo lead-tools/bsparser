@@ -1,94 +1,84 @@
 ﻿
+Var Result; // array (string)
+Var Indent; // number
+
 Var Tokens;        // enum
 Var SelectorKinds; // enum
 Var Operators;     // structure as map[one of Tokens](string)
 
 Procedure Init(OneShellProcessor) Export
-	
+
 	Operators = New Structure(
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
 		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Or", "And", "Not"
 	);
-	
+
 	Tokens = OneShellProcessor.Tokens();
 	SelectorKinds = OneShellProcessor.SelectorKinds();
-	
-EndProcedure // Init() 
 
-Function Backend()
-	Var Backend;
+	Result = New Array;
+	Indent = -1;
 
-	Backend = New Structure(
-		"Result," // array (string)
-		"Indent," // number
-	,
-	New Array, -1);
+EndProcedure // Init()
 
-	Return Backend;
-EndFunction // Backend()
-
-Procedure Indent(Backend)
-	Var Result;
-	Result = Backend.Result;
-	For Index = 1 To Backend.Indent Do
+Procedure Indent(Result)
+	For Index = 1 To Indent Do
 		Result.Add(Chars.Tab);
 	EndDo;
 EndProcedure // Indent()
 
 Function VisitModule(Module) Export
-	Backend = Backend();
-	VisitDecls(Backend, Module.Decls);
-	VisitStatements(Backend, Module.Statements);
-	Return StrConcat(Backend.Result);
+	VisitDecls(Module.Decls);
+	VisitStatements(Module.Statements);
+	Return StrConcat(Result);
 EndFunction // VisitModule()
 
-Procedure VisitDecls(Backend, Decls)
-	Backend.Indent = Backend.Indent + 1;
+Procedure VisitDecls(Decls)
+	Indent = Indent + 1;
 	For Each Decl In Decls Do
-		VisitDecl(Backend, Decl);
+		VisitDecl(Decl);
 	EndDo;
-	Backend.Indent = Backend.Indent - 1;
+	Indent = Indent - 1;
 EndProcedure // VisitDecls()
 
-Procedure VisitStatements(Backend, Statements)
-	Backend.Indent = Backend.Indent + 1;
+Procedure VisitStatements(Statements)
+	Indent = Indent + 1;
 	For Each Stmt In Statements Do
-		VisitStmt(Backend, Stmt);
+		VisitStmt(Stmt);
 	EndDo;
-	Backend.Indent = Backend.Indent - 1;
-	Indent(Backend);
+	Indent = Indent - 1;
+	Indent(Result);
 EndProcedure // VisitStatements()
 
-Procedure VisitDecl(Backend, Decl)
-	Var Result, NodeType;
-	Result = Backend.Result;
+Procedure VisitDecl(Decl)
+	Var NodeType;
 	NodeType = Decl.NodeType;
 	If NodeType = "VarListDecl" Then
-		Indent(Backend);
+		Indent(Result);
 		Result.Add("Var ");
-		VisitVarList(Backend, Decl.VarList);
+		VisitVarList(Decl.VarList);
 		Result.Add(";" "");
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
 		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent + 1;
+		Indent = Indent + 1;
 		If NodeType = "FuncDecl" Then
 			Result.Add("Function ");
 		Else
 			Result.Add("Procedure ");
-		EndIf; 
+		EndIf;
 		Result.Add(Decl.Object.Name);
 		Result.Add("(");
-		VisitParamList(Backend, Decl.Object.ParamList);
+		VisitParamList(Decl.Object.ParamList);
 		Result.Add(")");
 		If Decl.Export Then
 			Result.Add(" Export");
 		EndIf;
 		Result.Add(Chars.LF);
 		For Each Stmt In Decl.Decls Do
-			VisitDecl(Backend, Stmt);
+			VisitDecl(Stmt);
 		EndDo;
 		For Each Stmt In Decl.Statements Do
-			VisitStmt(Backend, Stmt);
+			VisitStmt(Stmt);
 		EndDo;
 		If NodeType = "FuncDecl" Then
 			Result.Add(StrTemplate("EndFunction // %1()", Decl.Object.Name));
@@ -96,13 +86,13 @@ Procedure VisitDecl(Backend, Decl)
 			Result.Add(StrTemplate("EndProcedure // %1()", Decl.Object.Name));
 		EndIf;
 		Result.Add(Chars.LF);
-		Backend.Indent = Backend.Indent - 1;
+		Indent = Indent - 1;
 	EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarList(Backend, VarList)
-	Var Result, Buffer, Object, Value;
-	Result = Backend.Result;
+Procedure VisitVarList(VarList)
+	Var Buffer, Object, Value;
+
 	Buffer = New Array;
 	For Each VarDecl In VarList Do
 		Object = VarDecl.Object;
@@ -113,12 +103,12 @@ Procedure VisitVarList(Backend, VarList)
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
-	EndIf; 
+	EndIf;
 EndProcedure // VisitVarList()
 
-Procedure VisitParamList(Backend, ParamList)
-	Var Result, Buffer, Object, Value;
-	Result = Backend.Result;
+Procedure VisitParamList(ParamList)
+	Var Buffer, Object, Value;
+
 	Buffer = New Array;
 	For Each ParamDecl In ParamList Do
 		Object = ParamDecl.Object;
@@ -130,14 +120,14 @@ Procedure VisitParamList(Backend, ParamList)
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
-	EndIf; 
+	EndIf;
 EndProcedure // VisitParamList()
 
-Procedure VisitStmt(Backend, Stmt)
-	Var Result, NodeType;
-	Result = Backend.Result;
+Procedure VisitStmt(Stmt)
+	Var NodeType;
+
 	NodeType = Stmt.NodeType;
-	Indent(Backend);
+	Indent(Result);
 	If NodeType = "AssignStmt" Then
 		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
 		Result.Add(" = ");
@@ -175,17 +165,17 @@ Procedure VisitStmt(Backend, Stmt)
 		Result.Add(";" "");
 	ElsIf NodeType = "IfStmt" Then
 		Result.Add("If ");
-		VisitIfStmt(Backend, Stmt);
+		VisitIfStmt(Stmt);
 		If Stmt.Property("ElsePart") Then
 			Result.Add("Else" "");
-			VisitStatements(Backend, Stmt.ElsePart);
+			VisitStatements(Stmt.ElsePart);
 		EndIf;
 		Result.Add("EndIf;" "");
 	ElsIf NodeType = "WhileStmt" Then
 		Result.Add("While ");
 		Result.Add(VisitExpr(Stmt.Condition));
 		Result.Add(" Do" "");
-		VisitStatements(Backend, Stmt.Statements);
+		VisitStatements(Stmt.Statements);
 		Result.Add("EndDo;" "");
 	ElsIf NodeType = "ForStmt" Then
 		Result.Add("For ");
@@ -200,7 +190,7 @@ Procedure VisitStmt(Backend, Stmt)
 			Result.Add(VisitExpr(Stmt.Collection));
 		EndIf;
 		Result.Add(" Do" "");
-		VisitStatements(Backend, Stmt.Statements);
+		VisitStatements(Stmt.Statements);
 		Result.Add("EndDo;" "");
 	ElsIf NodeType = "CaseStmt" Then
 		If Stmt.WhenPart.Count() > 0 Then
@@ -208,47 +198,45 @@ Procedure VisitStmt(Backend, Stmt)
 			Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
 			Result.Add(" = ");
 			IfStmt = Stmt.WhenPart[0];
-			VisitIfStmt(Backend, IfStmt);
+			VisitIfStmt(IfStmt);
 			For Index = 1 To Stmt.WhenPart.Count() - 1 Do
 				IfStmt = Stmt.WhenPart[Index];
 				Result.Add("ElsIf ");
 				Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
 				Result.Add(" = ");
-				VisitIfStmt(Backend, IfStmt);
+				VisitIfStmt(IfStmt);
 			EndDo;
 			If Stmt.Property("ElsePart") Then
 				Result.Add("Else" "");
-				VisitStatements(Backend, Stmt.ElsePart);
+				VisitStatements(Stmt.ElsePart);
 			EndIf;
 			Result.Add("EndIf;" "");
 		Else
 			Result.Add(Chars.LF);
-			Backend.Indent = Backend.Indent - 1;
+			Indent = Indent - 1;
 			If Stmt.Property("ElsePart") Then
-				VisitStatements(Backend, Stmt.ElsePart);
+				VisitStatements(Stmt.ElsePart);
 			EndIf;
-			Backend.Indent = Backend.Indent + 1;
+			Indent = Indent + 1;
 			Result.Add(Chars.LF);
 		EndIf;
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("Try" "");
-		VisitStatements(Backend, Stmt.TryPart);
+		VisitStatements(Stmt.TryPart);
 		Result.Add("Except" "");
-		VisitStatements(Backend, Stmt.ExceptPart);
+		VisitStatements(Stmt.ExceptPart);
 		Result.Add("EndTry;" "");
 	EndIf;
 EndProcedure // VisitStmt()
 
-Procedure VisitIfStmt(Backend, IfStmt)
-	Var Result;
-	Result = Backend.Result;
+Procedure VisitIfStmt(IfStmt)
 	Result.Add(VisitExpr(IfStmt.Condition));
 	Result.Add(" Then" "");
-	VisitStatements(Backend, IfStmt.ThenPart);
+	VisitStatements(IfStmt.ThenPart);
 	If IfStmt.Property("ElsIfPart") Then
 		For Each Item In IfStmt.ElsIfPart Do
 			Result.Add("ElsIf ");
-			VisitIfStmt(Backend, Item);
+			VisitIfStmt(Item);
 		EndDo;
 	EndIf;
 EndProcedure // VisitIfStmt()
@@ -272,7 +260,7 @@ Function VisitExpr(Expr)
 	Var NodeType, BasicLitKind;
 	If Expr = Undefined Then
 		Return "";
-	EndIf; 
+	EndIf;
 	NodeType = Expr.NodeType;
 	If NodeType = "BasicLitExpr" Then
 		BasicLitKind = Expr.Kind;
@@ -308,7 +296,7 @@ Function VisitExpr(Expr)
 	ElsIf NodeType = "ParenExpr" Then
 		Return StrTemplate("(%1)", VisitExpr(Expr.Expr));
 	ElsIf NodeType = "NotExpr" Then
-		Return StrTemplate("Not %1", VisitExpr(Expr.Expr));	
+		Return StrTemplate("Not %1", VisitExpr(Expr.Expr));
 	EndIf;
 EndFunction // VisitExpr()
 
