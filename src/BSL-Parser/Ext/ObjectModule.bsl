@@ -727,21 +727,6 @@ Function KeyValue(Key, Value)
 	Return KeyValue;
 EndFunction // KeyValue()
 
-Function FuncExpr(ParamList, Decls, AutoVars, Statements)
-	Var FuncExpr;
-
-	FuncExpr = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"ParamList,"  // array (ParamDecl)
-		"Decls,"      // array (one of declarations)
-		"AutoVars,"   // array (Object)
-		"Statements," // array (one of statements)
-	,
-	"FuncExpr", ParamList, Decls, AutoVars, Statements);
-
-	Return FuncExpr;
-EndFunction // FuncExpr()
-
 #EndRegion // Expressions
 
 #Region Statements
@@ -1249,9 +1234,6 @@ EndFunction // ParseSelector()
 Function ParseExpression(Parser)
 	Var Expr, Operator, Pos;
 	Pos = Parser.Pos;
-	If Parser.Tok = Tokens.Function Then
-		Return ParseFuncExpr(Parser);
-	EndIf;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
@@ -1408,26 +1390,6 @@ Function ParseFuncDecl(Parser)
 	Next(Parser);
 	Return Locate(FuncDecl(Object, Exported, Decls, AutoVars, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
-
-Function ParseFuncExpr(Parser)
-	Var Name, Decls, ParamList, AutoVars, VarObj, Statements, Pos;
-	Pos = Parser.Pos;
-	Next(Parser);
-	OpenScope(Parser);
-	ParamList = ParseParamList(Parser);
-	Decls = ParseVarDecls(Parser);
-	Parser.IsFunc = True;
-	Statements = ParseStatements(Parser);
-	Parser.IsFunc = False;
-	Expect(Parser, Tokens.EndFunction);
-	AutoVars = New Array;
-	For Each VarObj In Parser.Scope.AutoVars Do
-		AutoVars.Add(VarObj);
-	EndDo;
-	CloseScope(Parser);
-	Next(Parser);
-	Return Locate(FuncExpr(ParamList, Decls, AutoVars, Statements), Parser, Pos);
-EndFunction // ParseFuncExpr()
 
 Function ParseParamList(Parser)
 	Var ParamList;
