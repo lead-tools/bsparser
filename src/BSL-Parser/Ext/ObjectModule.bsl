@@ -453,13 +453,10 @@ Function Signature(Kind, Name, ParamList)
 	Return Object;
 EndFunction // Signature()
 
-Function Variable(Name, Value = Undefined, Auto = False)
+Function Variable(Name, Auto = False)
 	Var Object;
 	Object = Object(ObjectKinds.Variable, Name);
 	Object.Insert("Auto", Auto); // boolean
-	If Value <> Undefined Then
-		Object.Insert("Value", Value); // structure (one of expressions)
-	EndIf;
 	Return Object;
 EndFunction // Variable()
 
@@ -1074,7 +1071,7 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, Undefined, True);
+			Object = Variable(Name, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.AutoVars.Add(Object);
 		Else
@@ -1364,17 +1361,9 @@ Function ParseVarDecl(Parser)
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
+	Object = Variable(Name);
 	Tok = Next(Parser);
-	If Tok = Tokens.Eql Then
-		Tok = Next(Parser);
-		If BasicLiterals.Find(Tok) = Undefined Then
-			Error(Parser.Scanner, "expected basic literal");
-		EndIf;
-		Object = Variable(Name, ParseOperand(Parser));
-	Else
-		Object = Variable(Name);
-	EndIf;
-	If Parser.Tok = Tokens.Export Then
+	If Tok = Tokens.Export Then
 		Exported = True;
 		Next(Parser);
 	Else
