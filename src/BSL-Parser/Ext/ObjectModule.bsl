@@ -51,8 +51,6 @@ Procedure Init()
 	InitialTokensOfExpression.Add(Tokens.Not);
 	InitialTokensOfExpression.Add(Tokens.Ident);
 	InitialTokensOfExpression.Add(Tokens.Lparen);
-	InitialTokensOfExpression.Add(Tokens.Lbrack);
-	InitialTokensOfExpression.Add(Tokens.Lbrace);
 	InitialTokensOfExpression.Add(Tokens.Number);
 	InitialTokensOfExpression.Add(Tokens.String);
 	InitialTokensOfExpression.Add(Tokens.DateTime);
@@ -113,8 +111,8 @@ Function Tokens(Keywords = Undefined) Export
 
 		// =   <>    <    >   <=   >=    +    -    *    /    %
 		|Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod,
-		//    (       )       [       ]       {       }
-		|Lparen, Rparen, Lbrack, Rbrack, Lbrace, Rbrace,
+		//    (       )       [       ]
+		|Lparen, Rparen, Lbrack, Rbrack,
 		//     ?      ,       .      :          ;
 		|Ternary, Comma, Period, Colon, Semicolon,
 
@@ -266,12 +264,6 @@ Function Scan(Scanner) Export
 		NextChar(Scanner);
 	ElsIf Char = "]" Then
 		Tok = Tokens.Rbrack;
-		NextChar(Scanner);
-	ElsIf Char = "{" Then
-		Tok = Tokens.Lbrace;
-		NextChar(Scanner);
-	ElsIf Char = "}" Then
-		Tok = Tokens.Rbrace;
 		NextChar(Scanner);
 	ElsIf Char = "?" Then
 		Tok = Tokens.Ternary;
@@ -690,43 +682,6 @@ Function NotExpr(Expr)
 	Return NotExpr;
 EndFunction // NotExpr()
 
-Function ArrayExpr(ExprList)
-	Var ArrayExpr;
-
-	ArrayExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"ExprList," // array (one of expressions)
-	,
-	"ArrayExpr", ExprList);
-
-	Return ArrayExpr;
-EndFunction // ArrayExpr()
-
-Function StructExpr(Items)
-	Var StructExpr;
-
-	StructExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Items,"    // array (KeyValue)
-	,
-	"StructExpr", Items);
-
-	Return StructExpr;
-EndFunction // StructExpr()
-
-Function KeyValue(Key, Value)
-	Var KeyValue;
-
-	KeyValue = New Structure(
-		"NodeType," // string (type of this structure)
-		"Key,"      // string
-		"Value,"    // structure (one of expressions)
-	,
-	"KeyValue", Key, Value);
-
-	Return KeyValue;
-EndFunction // KeyValue()
-
 #EndRegion // Expressions
 
 #Region Statements
@@ -736,7 +691,7 @@ Function AssignStmt(Left, Right)
 
 	AssignStmt = New Structure(
 		"NodeType," // string (type of this structure)
-		"Left,"     // array (DesignatorExpr)
+		"Left,"     // DesignatorExpr
 		"Right,"    // structure (one of expressions)
 	,
 	"AssignStmt", Left, Right);
@@ -1061,64 +1016,11 @@ Function ParseOperand(Parser)
 		Operand = ParseNewExpr(Parser);
 	ElsIf Tok = Tokens.Ternary Then
 		Operand = ParseTernaryExpr(Parser);
-	ElsIf Tok = Tokens.Lbrack Then
-		Operand = ParseArrayExpr(Parser);
-	ElsIf Tok = Tokens.Lbrace Then
-		Operand = ParseStructExpr(Parser);
 	Else
 		Raise "Expected operand";
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
-
-Function ParseArrayExpr(Parser)
-	Var ExprList, Pos;
-	Pos = Parser.Pos;
-	If Next(Parser) <> Tokens.Rbrack Then
-		ExprList = ParseExprList(Parser);
-	Else
-		ExprList = EmptyArray;
-	EndIf;
-	Expect(Parser, Tokens.Rbrack);
-	Next(Parser);
-	Return Locate(ArrayExpr(ExprList), Parser, Pos);
-EndFunction // ParseArrayExpr()
-
-Function ParseStructExpr(Parser)
-	Var Items, Pos;
-	Pos = Parser.Pos;
-	If Next(Parser) <> Tokens.Rbrace Then
-		Items = New Array;
-		Items.Add(ParseKeyValue(Parser));
-		While Parser.Tok = Tokens.Comma And Next(Parser) <> Tokens.Rbrace Do
-			Items.Add(ParseKeyValue(Parser));
-		EndDo;
-	Else
-		Items = EmptyArray;
-	EndIf;
-	Expect(Parser, Tokens.Rbrace);
-	Next(Parser);
-	Return Locate(StructExpr(Items), Parser, Pos);
-EndFunction // ParseStructExpr()
-
-Function ParseKeyValue(Parser)
-	Var Key, Value, Pos;
-	Pos = Parser.Pos;
-	If Parser.Tok = Tokens.Ident Then
-		Key = Parser.Lit;
-	ElsIf Parser.Tok = Tokens.String Then
-		Key = Parser.Val;
-	Else
-		Expect(Parser, Tokens.Ident);
-	EndIf;
-	If Next(Parser) = Tokens.Colon Then
-		Next(Parser);
-		Value = ParseExpression(Parser);
-	Else
-		Value = BasicLitExpr(Tokens.Undefined, Undefined);
-	EndIf;
-	Return Locate(KeyValue(Key, Value), Parser, Pos);
-EndFunction // ParseKeyValue()
 
 Function ParseNewExpr(Parser)
 	Var Tok, Constructor, Pos;
@@ -1184,17 +1086,6 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	Return Locate(DesignatorExpr(Object, List, Kind = SelectorKinds.Call), Parser, Pos);
 EndFunction // ParseDesignatorExpr()
-
-Function ParseDesignatorExprList(Parser, AllowNewVar = False)
-	Var List;
-	List = New Array;
-	List.Add(ParseDesignatorExpr(Parser, AllowNewVar));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		List.Add(ParseDesignatorExpr(Parser, AllowNewVar));
-	EndDo;
-	Return List;
-EndFunction // ParseDesignatorExprList()
 
 Function ParseSelector(Parser)
 	Var Tok, Value, Selector, Pos;
@@ -1452,9 +1343,6 @@ Function ParseReturnStmt(Parser)
 	Next(Parser);
 	If Parser.IsFunc Then
 		Expr = ParseExpression(Parser);
-		If Parser.Tok = Tokens.Comma Then
-			Expr = ArrayExpr(ParseExprList(Parser, Expr));
-		EndIf;
 	EndIf;
 	Return Locate(ReturnStmt(Expr), Parser, Pos);
 EndFunction // ParseReturnStmt()
@@ -1609,16 +1497,13 @@ EndFunction // ParseExecuteStmt()
 Function ParseAssignOrCallStmt(Parser)
 	Var Left, Right, Stmt, Pos;
 	Pos = Parser.Pos;
-	Left = ParseDesignatorExprList(Parser, True);
-	If Left.Count() = 1 And Left[0].Call Then
-		Stmt = CallStmt(Left[0]);
+	Left = ParseDesignatorExpr(Parser, True);
+	If Left.Call Then
+		Stmt = CallStmt(Left);
 	Else
 		Expect(Parser, Tokens.Eql);
 		Next(Parser);
 		Right = ParseExpression(Parser);
-		If Parser.Tok = Tokens.Comma Then
-			Right = ArrayExpr(ParseExprList(Parser, Right));
-		EndIf;
 		Stmt = AssignStmt(Left, Right);
 	EndIf;
 	Return Stmt;
