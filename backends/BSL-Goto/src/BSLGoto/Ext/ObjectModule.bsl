@@ -107,8 +107,7 @@ EndProcedure // RenameItems()
 Procedure VisitVarList(VarList)
 	Var Buffer, Object, Value;
 	Buffer = New Array;
-	For Each VarDecl In VarList Do
-		Object = VarDecl.Object;
+	For Each Object In VarList Do
 		Buffer.Add(Object.Name + " = Undefined");
 	EndDo;
 	If Buffer.Count() > 0 Then
@@ -119,15 +118,15 @@ EndProcedure // VisitVarList()
 Procedure VisitParamList(ParamList, IsReturn = False)
 	Var Offset;
 	Offset = 1;
-	For Each ParamDecl In ParamList Do
+	For Each Object In ParamList Do
 		If IsReturn Then
-			If Not ParamDecl.Object.ByVal Then
+			If Not Object.ByVal Then
 				Indent(Result);
-				Result.Add(StrTemplate("M[SP-%1] = %2;" "", Format(Offset, "NZ=0; NG=0"), ParamDecl.Object.Name));
+				Result.Add(StrTemplate("M[SP-%1] = %2;" "", Format(Offset, "NZ=0; NG=0"), Object.Name));
 			EndIf;
 		Else
 			Indent(Result);
-			Result.Add(StrTemplate("%1 = M[SP-%2];" "", ParamDecl.Object.Name, Format(Offset, "NZ=0; NG=0")));
+			Result.Add(StrTemplate("%1 = M[SP-%2];" "", Object.Name, Format(Offset, "NZ=0; NG=0")));
 		EndIf;
 		Offset = Offset + 1;
 	EndDo;
@@ -138,19 +137,8 @@ Procedure VisitStmt(Stmt)
 	NodeType = Stmt.NodeType;
 	Indent(Result);
 	If NodeType = "AssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
+		Result.Add(VisitDesignatorExpr(Stmt.Left));
 		Result.Add(" = ");
-		Result.Add(VisitExpr(Stmt.Right));
-		Result.Add(";" "");
-		If VarIndex > 0 Then
-			Indent(Result);
-			Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
-		EndIf;
-	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" = ");
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" + ");
 		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(";" "");
 		If VarIndex > 0 Then
