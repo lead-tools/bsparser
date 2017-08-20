@@ -119,6 +119,12 @@
 					<ContextMenu name="MeasureContextMenu" id="28"/>
 					<ExtendedTooltip name="MeasureExtendedTooltip" id="29"/>
 				</CheckBoxField>
+				<CheckBoxField name="Location" id="35">
+					<DataPath>Location</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="LocationContextMenu" id="36"/>
+					<ExtendedTooltip name="LocationExtendedTooltip" id="37"/>
+				</CheckBoxField>
 				<CheckBoxField name="Debug" id="32">
 					<DataPath>Debug</DataPath>
 					<CheckBoxType>Auto</CheckBoxType>
@@ -238,6 +244,17 @@
 				<v8:item>
 					<v8:lang>ru</v8:lang>
 					<v8:content>Debug</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+		</Attribute>
+		<Attribute name="Location" id="11">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Location</v8:content>
 				</v8:item>
 			</Title>
 			<Type>

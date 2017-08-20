@@ -1626,8 +1626,10 @@ Function Locate(Node, Parser, Pos)
 	If Node = Undefined Then
 		Return Undefined;
 	EndIf;
-	Node.Insert("Pos", Pos);
-	Node.Insert("Len", Parser.PrevPos - Pos);
+	If Location Then
+		Node.Insert("Pos", Pos);
+		Node.Insert("Len", Parser.PrevPos - Pos);
+	EndIf; 
 	If Debug Then
 		Node.Insert("Str", Mid(Parser.Scanner.Source, Pos, Parser.PrevPos - Pos));
 	EndIf;

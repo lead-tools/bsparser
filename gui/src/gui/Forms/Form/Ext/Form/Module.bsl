@@ -31,6 +31,7 @@ Procedure TranslateAtServer()
 	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
 	
 	OneShellProcessor.Verbose = Verbose;
+	OneShellProcessor.Location = Location;
 	OneShellProcessor.Debug = Debug;
 	
 	Start = CurrentUniversalDateInMilliseconds();
