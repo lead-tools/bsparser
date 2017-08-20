@@ -92,13 +92,11 @@ EndProcedure // VisitDecl()
 
 Procedure VisitVarList(VarList)
 	Var Buffer, Object, Value;
-
 	Buffer = New Array;
-	For Each VarDecl In VarList Do
-		Object = VarDecl.Object;
+	For Each Object In VarList Do
 		Buffer.Add(Object.Name +
 			?(Object.Property("Value", Value), " = " + VisitExpr(Value), "") +
-			?(VarDecl.Export, " Export", "")
+			?(Object.Export, " Export", "")
 		);
 	EndDo;
 	If Buffer.Count() > 0 Then
@@ -108,10 +106,8 @@ EndProcedure // VisitVarList()
 
 Procedure VisitParamList(ParamList)
 	Var Buffer, Object, Value;
-
 	Buffer = New Array;
-	For Each ParamDecl In ParamList Do
-		Object = ParamDecl.Object;
+	For Each Object In ParamList Do
 		Buffer.Add(
 			?(Object.ByVal, "Val ", "") +
 			Object.Name +
@@ -125,19 +121,11 @@ EndProcedure // VisitParamList()
 
 Procedure VisitStmt(Stmt)
 	Var NodeType;
-
 	NodeType = Stmt.NodeType;
 	Indent(Result);
 	If NodeType = "AssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
+		Result.Add(VisitDesignatorExpr(Stmt.Left));
 		Result.Add(" = ");
-		Result.Add(VisitExpr(Stmt.Right));
-		Result.Add(";" "");
-	ElsIf NodeType = "AddAssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" = ");
-		Result.Add(VisitDesignatorExpr(Stmt.Left[0]));
-		Result.Add(" + ");
 		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(";" "");
 	ElsIf NodeType = "ReturnStmt" Then
@@ -192,34 +180,6 @@ Procedure VisitStmt(Stmt)
 		Result.Add(" Do" "");
 		VisitStatements(Stmt.Statements);
 		Result.Add("EndDo;" "");
-	ElsIf NodeType = "CaseStmt" Then
-		If Stmt.WhenPart.Count() > 0 Then
-			Result.Add("If ");
-			Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" = ");
-			IfStmt = Stmt.WhenPart[0];
-			VisitIfStmt(IfStmt);
-			For Index = 1 To Stmt.WhenPart.Count() - 1 Do
-				IfStmt = Stmt.WhenPart[Index];
-				Result.Add("ElsIf ");
-				Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
-				Result.Add(" = ");
-				VisitIfStmt(IfStmt);
-			EndDo;
-			If Stmt.Property("ElsePart") Then
-				Result.Add("Else" "");
-				VisitStatements(Stmt.ElsePart);
-			EndIf;
-			Result.Add("EndIf;" "");
-		Else
-			Result.Add(Chars.LF);
-			Indent = Indent - 1;
-			If Stmt.Property("ElsePart") Then
-				VisitStatements(Stmt.ElsePart);
-			EndIf;
-			Indent = Indent + 1;
-			Result.Add(Chars.LF);
-		EndIf;
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("Try" "");
 		VisitStatements(Stmt.TryPart);
