@@ -1384,9 +1384,15 @@ Function ParseStatements(Parser)
 	Var Statements, Stmt;
 	Statements = New Array;
 	Stmt = ParseStmt(Parser);
-	While Stmt <> Undefined Do
+	If Stmt <> Undefined Then
 		Statements.Add(Stmt);
+	EndIf; 
+	While Parser.Tok = Tokens.Semicolon Do
+		Next(Parser);
 		Stmt = ParseStmt(Parser);
+		If Stmt <> Undefined Then
+			Statements.Add(Stmt);
+		EndIf; 
 	EndDo;
 	Return Statements;
 EndFunction // ParseStatements()
@@ -1394,10 +1400,6 @@ EndFunction // ParseStatements()
 Function ParseStmt(Parser)
 	Var Tok, Stmt, Pos;
 	Tok = SkipIgnoredTokens(Parser);
-	While Tok = Tokens.Semicolon Do
-		Next(Parser);
-		Tok = SkipIgnoredTokens(Parser);
-	EndDo;
 	Pos = Parser.Pos;
 	If Tok = Tokens.Ident Then
 		Stmt = ParseAssignOrCallStmt(Parser);
@@ -1428,6 +1430,8 @@ Function ParseStmt(Parser)
 		Next(Parser);
 		Expect(Parser, Tokens.Colon);
 		Next(Parser);
+	ElsIf Tok = Tokens.Semicolon Then
+		// NOP
 	EndIf;
 	Return Locate(Stmt, Parser, Pos);
 EndFunction // ParseStmt()
@@ -1572,9 +1576,8 @@ Function ParseVarDecls(Parser)
 	While Tok = Tokens.Var Do
 		Next(Parser);
 		Decls.Add(ParseVarListDecl(Parser));
-		If Parser.Tok = Tokens.Semicolon Then
-			Next(Parser);
-		EndIf;
+		Expect(Parser, Tokens.Semicolon);
+		Next(Parser);
 		Tok = Parser.Tok;
 	EndDo;
 	Return Decls;
