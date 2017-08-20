@@ -434,7 +434,7 @@ Function Scope(Outer)
 	Return Scope;
 EndFunction // Scope()
 
-Function Object(Kind, Name)
+Function Object(Kind, Name, Exported = Undefined)
 	Var Object;
 
 	Object = New Structure(
@@ -442,7 +442,11 @@ Function Object(Kind, Name)
 		"Name," // string
 	,
 	Kind, Name);
-
+	
+	If Exported <> Undefined Then
+		Object.Insert("Export", Exported); // boolean
+	EndIf; 
+	
 	Return Object;
 EndFunction // Object()
 
@@ -453,9 +457,9 @@ Function Signature(Kind, Name, ParamList)
 	Return Object;
 EndFunction // Signature()
 
-Function Variable(Name, Auto = False)
+Function Variable(Name, Exported, Auto = False)
 	Var Object;
-	Object = Object(ObjectKinds.Variable, Name);
+	Object = Object(ObjectKinds.Variable, Name, Exported);
 	Object.Insert("Auto", Auto); // boolean
 	Return Object;
 EndFunction // Variable()
@@ -473,19 +477,6 @@ EndFunction // Parameter()
 #EndRegion // Scope
 
 #Region Declarations
-
-Function VarDecl(Object, Exported)
-	Var VarDecl;
-
-	VarDecl = New Structure(
-		"NodeType," // string (type of this structure)
-		"Object,"   // structure (Object)
-		"Export,"   // boolean
-	,
-	"VarDecl", Object, Exported);
-
-	Return VarDecl;
-EndFunction // VarDecl()
 
 Function VarListDecl(VarList)
 	Var VarListDecl;
@@ -530,18 +521,6 @@ Function FuncDecl(Object, Exported, Decls, AutoVars, Statements)
 
 	Return FuncDecl;
 EndFunction // FuncDecl()
-
-Function ParamDecl(Object)
-	Var ParamDecl;
-
-	ParamDecl = New Structure(
-		"NodeType," // string (type of this structure)
-		"Object,"   // structure (Object)
-	,
-	"ParamDecl", Object);
-
-	Return ParamDecl;
-EndFunction // ParamDecl()
 
 #EndRegion // Declarations
 
@@ -1071,7 +1050,7 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, True);
+			Object = Variable(Name, False, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.AutoVars.Add(Object);
 		Else
@@ -1287,10 +1266,10 @@ Function ParseParamList(Parser)
 		ParamList = EmptyArray;
 	Else
 		ParamList = New Array;
-		ParamList.Add(ParseParamDecl(Parser));
+		ParamList.Add(ParseParameter(Parser));
 		While Parser.Tok = Tokens.Comma Do
 			Next(Parser);
-			ParamList.Add(ParseParamDecl(Parser));
+			ParamList.Add(ParseParameter(Parser));
 		EndDo;
 	EndIf;
 	Expect(Parser, Tokens.Rparen);
@@ -1348,37 +1327,35 @@ Function ParseVarListDecl(Parser)
 	Var VarList, Pos;
 	Pos = Parser.Pos;
 	VarList = New Array;
-	VarList.Add(ParseVarDecl(Parser));
+	VarList.Add(ParseVariable(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarDecl(Parser));
+		VarList.Add(ParseVariable(Parser));
 	EndDo;
 	Return Locate(VarListDecl(VarList), Parser, Pos);
 EndFunction // ParseVarListDecl()
 
-Function ParseVarDecl(Parser)
-	Var Tok, Name, Object, VarDecl, Exported, Pos;
+Function ParseVariable(Parser)
+	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
-	Object = Variable(Name);
-	Tok = Next(Parser);
-	If Tok = Tokens.Export Then
+	If Next(Parser) = Tokens.Export Then
 		Exported = True;
 		Next(Parser);
 	Else
 		Exported = False;
 	EndIf;
-	VarDecl = VarDecl(Object, Exported);
+	Object = Variable(Name, Exported);
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
-	Return Locate(VarDecl, Parser, Pos);
-EndFunction // ParseVarDecl()
+	Return Object;
+EndFunction // ParseVariable()
 
-Function ParseParamDecl(Parser)
-	Var Tok, Name, Object, ParamDecl, ByVal, Pos;
+Function ParseParameter(Parser)
+	Var Name, Object, ByVal, Pos;
 	Pos = Parser.Pos;
 	If Parser.Tok = Tokens.Val Then
 		ByVal = True;
@@ -1388,23 +1365,19 @@ Function ParseParamDecl(Parser)
 	EndIf;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
-	Tok = Next(Parser);
-	If Tok = Tokens.Eql Then
-		Tok = Next(Parser);
-		If BasicLiterals.Find(Tok) = Undefined Then
+	If Next(Parser) = Tokens.Eql Then
+		If BasicLiterals.Find(Next(Parser)) = Undefined Then
 			Error(Parser.Scanner, "expected basic literal");
 		EndIf;
 		Object = Parameter(Name, ByVal, ParseOperand(Parser));
-		ParamDecl = ParamDecl(Object);
 	Else
 		Object = Parameter(Name, ByVal);
-		ParamDecl = ParamDecl(Object);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
-	Return Locate(ParamDecl, Parser, Pos);
+	Return Object;
 EndFunction // ParseParamDecl()
 
 Function ParseStatements(Parser)
