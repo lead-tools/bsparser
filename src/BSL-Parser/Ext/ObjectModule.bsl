@@ -450,9 +450,9 @@ Function Object(Kind, Name, Exported = Undefined)
 	Return Object;
 EndFunction // Object()
 
-Function Signature(Kind, Name, ParamList)
+Function Signature(Kind, Name, ParamList, Exported)
 	Var Object;
-	Object = Object(Kind, Name);
+	Object = Object(Kind, Name, Exported);
 	Object.Insert("ParamList", ParamList); // array (ParamDecl)
 	Return Object;
 EndFunction // Signature()
@@ -490,34 +490,32 @@ Function VarListDecl(VarList)
 	Return VarListDecl;
 EndFunction // VarListDecl()
 
-Function ProcDecl(Object, Exported, Decls, AutoVars, Statements)
+Function ProcDecl(Object, Decls, AutoVars, Statements)
 	Var ProcDecl;
 
 	ProcDecl = New Structure(
 		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
-		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
 		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 	,
-	"ProcDecl", Object, Exported, Decls, AutoVars, Statements);
+	"ProcDecl", Object, Decls, AutoVars, Statements);
 
 	Return ProcDecl;
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Exported, Decls, AutoVars, Statements)
+Function FuncDecl(Object, Decls, AutoVars, Statements)
 	Var FuncDecl;
 
 	FuncDecl = New Structure(
 		"NodeType,"   // string (type of this structure)
 		"Object,"     // structure (Object)
-		"Export,"     // boolean
 		"Decls,"      // array (one of declarations)
 		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 	,
-	"FuncDecl", Object, Exported, Decls, AutoVars, Statements);
+	"FuncDecl", Object, Decls, AutoVars, Statements);
 
 	Return FuncDecl;
 EndFunction // FuncDecl()
@@ -1221,7 +1219,7 @@ Function ParseTernaryExpr(Parser)
 EndFunction // ParseTernaryExpr()
 
 Function ParseFuncDecl(Parser)
-	Var Object, Name, Decls, Exported, AutoVars, VarObj, Pos;
+	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Pos;
 	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
@@ -1229,16 +1227,18 @@ Function ParseFuncDecl(Parser)
 	Name = Parser.Lit;
 	Next(Parser);
 	OpenScope(Parser);
-	If Parser.Unknown.Property(Name, Object) Then
-		Object.Kind = ObjectKinds.Function;
-		Object.Insert("ParamList", ParseParamList(Parser));
-		Parser.Unknown.Delete(Name);
-	Else
-		Object = Signature(ObjectKinds.Function, Name, ParseParamList(Parser));
-	EndIf;
+	ParamList = ParseParamList(Parser);
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
 		Next(Parser);
+	EndIf;
+	If Parser.Unknown.Property(Name, Object) Then
+		Object.Kind = ObjectKinds.Function;
+		Object.Insert("ParamList", ParamList);
+		Object.Insert("Export", Exported);
+		Parser.Unknown.Delete(Name);
+	Else
+		Object = Signature(ObjectKinds.Function, Name, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1255,7 +1255,7 @@ Function ParseFuncDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(FuncDecl(Object, Exported, Decls, AutoVars, Statements), Parser, Pos);
+	Return Locate(FuncDecl(Object, Decls, AutoVars, Statements), Parser, Pos);
 EndFunction // ParseFuncDecl()
 
 Function ParseParamList(Parser)
@@ -1278,7 +1278,7 @@ Function ParseParamList(Parser)
 EndFunction // ParseParamList()
 
 Function ParseProcDecl(Parser)
-	Var Object, Name, Decls, Exported, AutoVars, VarObj, Statements, Pos;
+	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Statements, Pos;
 	Pos = Parser.Pos;
 	Exported = False;
 	Next(Parser);
@@ -1286,16 +1286,18 @@ Function ParseProcDecl(Parser)
 	Name = Parser.Lit;
 	Next(Parser);
 	OpenScope(Parser);
-	If Parser.Unknown.Property(Name, Object) Then
-		Object.Kind = ObjectKinds.Procedure;
-		Object.Insert("ParamList", ParseParamList(Parser));
-		Parser.Unknown.Delete(Name);
-	Else
-		Object = Signature(ObjectKinds.Procedure, Name, ParseParamList(Parser));
-	EndIf;
+	ParamList = ParseParamList(Parser);
 	If Parser.Tok = Tokens.Export Then
 		Exported = True;
 		Next(Parser);
+	EndIf;
+	If Parser.Unknown.Property(Name, Object) Then
+		Object.Kind = ObjectKinds.Procedure;
+		Object.Insert("ParamList", ParamList);
+		Object.Insert("Export", Exported);
+		Parser.Unknown.Delete(Name);
+	Else
+		Object = Signature(ObjectKinds.Procedure, Name, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1310,7 +1312,7 @@ Function ParseProcDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(ProcDecl(Object, Exported, Decls, AutoVars, Statements), Parser, Pos);
+	Return Locate(ProcDecl(Object, Decls, AutoVars, Statements), Parser, Pos);
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
