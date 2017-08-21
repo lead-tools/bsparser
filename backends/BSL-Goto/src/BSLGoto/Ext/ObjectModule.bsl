@@ -95,12 +95,13 @@ Procedure VisitDecl(Decl)
 		Result.Add("Goto ~Return;");
 		Result.Add(Chars.LF);
 		Indent = Indent - 1;
+		Prefix = "Module";
 	EndIf;
 EndProcedure // VisitDecl()
 
 Procedure RenameItems(List)
-	For Each Item In List Do
-		Item.Object.Name = StrTemplate("%1_%2", Prefix, Item.Object.Name);
+	For Each Object In List Do
+		Object.Name = StrTemplate("%1_%2", Prefix, Object.Name);
 	EndDo;
 EndProcedure // RenameItems()
 
@@ -133,17 +134,19 @@ Procedure VisitParamList(ParamList, IsReturn = False)
 EndProcedure // VisitParamList()
 
 Procedure VisitStmt(Stmt)
-	Var NodeType;
+	Var NodeType, Left, Right;
 	NodeType = Stmt.NodeType;
 	Indent(Result);
 	If NodeType = "AssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left));
+		Left = VisitDesignatorExpr(Stmt.Left);
+		Right = VisitExpr(Stmt.Right);
+		Result.Add(Left);
 		Result.Add(" = ");
-		Result.Add(VisitExpr(Stmt.Right));
+		Result.Add(Right);
 		Result.Add(";" "");
 		If VarIndex > 0 Then
 			Indent(Result);
-			Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+			Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 		EndIf;
 	ElsIf NodeType = "ReturnStmt" Then
 		Result.Add("SP = SP+1;" "");
@@ -152,7 +155,7 @@ Procedure VisitStmt(Stmt)
 			Result.Add(StrTemplate("M[SP] = %1;" "", VisitExpr(Stmt.Expr)));
 			If VarIndex > 0 Then
 				Indent(Result);
-				Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+				Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 			EndIf;
 		Else
 			Result.Add("M[SP] = Undefined;" "");
@@ -176,7 +179,7 @@ Procedure VisitStmt(Stmt)
 		Result.Add(");" "");
 		If VarIndex > 0 Then
 			Indent(Result);
-			Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+			Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 		EndIf;
 	ElsIf NodeType = "CallStmt" Then
 		Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr, False));
@@ -195,7 +198,7 @@ Procedure VisitStmt(Stmt)
 		Result.Add(" Do" "");
 		If VarIndex > 0 Then
 			Indent(Result);
-			Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+			Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 		EndIf;
 		VisitStatements(Stmt.Statements);
 		Result.Add("EndDo;" "");
@@ -216,7 +219,7 @@ Procedure VisitStmt(Stmt)
 		Result.Add("EndDo;" "");
 		If VarIndex > 0 Then
 			Indent(Result);
-			Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+			Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 		EndIf;
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("Try" "");
@@ -232,7 +235,7 @@ Procedure VisitIfStmt(IfStmt)
 	Result.Add(" Then" "");
 	If VarIndex > 0 Then
 		Indent(Result);
-		Result.Add(StrTemplate("SP = SP = %1;" "", VarIndex));
+		Result.Add(StrTemplate("SP = SP-%1;" "", VarIndex));
 	EndIf;
 	VisitStatements(IfStmt.ThenPart);
 	If IfStmt.Property("ElsIfPart") Then
@@ -329,7 +332,7 @@ Function GenerateCall(Object, ArgList)
 	Result.Add(StrTemplate("~%1_%2:" "", Prefix, Object.Name));
 	TempVar = StrTemplate("%1_%2", Prefix, Format(VarIndex, "NZ=0; NG="));
 	Indent(Result);
-	Result.Add(TempVar + " = M[SP]");
+	Result.Add(TempVar + " = M[SP];" "");
 	VarIndex = VarIndex + 1;
 	Return TempVar;
 EndFunction // GenerateCall()
