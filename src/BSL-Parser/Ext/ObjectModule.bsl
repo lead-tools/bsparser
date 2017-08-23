@@ -453,7 +453,7 @@ EndFunction // Object()
 Function Signature(Kind, Name, ParamList, Exported)
 	Var Object;
 	Object = Object(Kind, Name, Exported);
-	Object.Insert("ParamList", ParamList); // array (ParamDecl)
+	Object.Insert("ParamList", ParamList); // array (Object)
 	Return Object;
 EndFunction // Signature()
 
@@ -483,7 +483,7 @@ Function VarListDecl(VarList)
 
 	VarListDecl = New Structure(
 		"NodeType," // string (type of this structure)
-		"VarList,"  // array (VarDecl)
+		"VarList,"  // array (Object)
 	,
 	"VarListDecl", VarList);
 
@@ -1380,7 +1380,7 @@ Function ParseParameter(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseParamDecl()
+EndFunction // ParseParameter()
 
 Function ParseStatements(Parser)
 	Var Statements, Stmt;
