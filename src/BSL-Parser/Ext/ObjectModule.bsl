@@ -944,7 +944,9 @@ Function ParseString(Parser)
 			Tok = Scan(Scanner);
 		EndDo;
 	EndDo;
-	Expect(Scanner, Tokens.StringEnd);
+	If Tok <> Tokens.StringEnd Then
+		Error(Parser.Scanner, "Expected """,, True); 
+	EndIf; 
 	List.Add(Mid(Scanner.Lit, 2));
 	Return StrConcat(List);
 EndFunction // ParseString()
@@ -1706,8 +1708,8 @@ EndFunction // IsDigit()
 Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
 	If Pos = Undefined Then
-		Pos = Scanner.Pos - StrLen(Scanner.Lit);
-	EndIf;
+		Pos = Min(Scanner.Pos - StrLen(Scanner.Lit), Scanner.Len);
+	EndIf; 
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
 		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
 		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
