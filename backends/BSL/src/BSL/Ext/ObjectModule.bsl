@@ -70,7 +70,7 @@ Procedure VisitDecl(Decl)
 		Result.Add("(");
 		VisitParamList(Decl.Object.ParamList);
 		Result.Add(")");
-		If Decl.Export Then
+		If Decl.Object.Export Then
 			Result.Add(" Export");
 		EndIf;
 		Result.Add(Chars.LF);
