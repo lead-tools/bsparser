@@ -16,7 +16,7 @@ Var EmptyArray;                // array
 
 #Region Init
 
-Procedure Init()
+Procedure Init() Export
 
 	InitEnums();
 
