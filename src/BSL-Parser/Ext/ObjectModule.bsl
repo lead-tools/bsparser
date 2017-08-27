@@ -175,6 +175,7 @@ Function Scanner(Source) Export
 	Var Scanner;
 
 	Scanner = New Structure(
+	    "Path,"   // string
 		"Source," // string
 		"Len,"    // number
 		"Pos,"    // number
@@ -184,6 +185,7 @@ Function Scanner(Source) Export
 		"Line,"   // number
 	);
 
+	Scanner.Path = "";
 	Scanner.Source = Source;
 	Scanner.Len = StrLen(Source);
 	Scanner.Line = 1;
@@ -1710,10 +1712,11 @@ Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 	If Pos = Undefined Then
 		Pos = Min(Scanner.Pos - StrLen(Scanner.Lit), Scanner.Len);
 	EndIf; 
-	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
+	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3" "%4",
 		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
 		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
-		Note
+		Note,
+		Scanner.Path
 	);
 	If Stop Then
 		Raise ErrorText;
