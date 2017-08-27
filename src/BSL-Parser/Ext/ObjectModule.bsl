@@ -995,7 +995,7 @@ Function ParseOperand(Parser)
 	ElsIf Tok = Tokens.Ternary Then
 		Operand = ParseTernaryExpr(Parser);
 	Else
-		Raise "Expected operand";
+		Error(Parser.Scanner, "Expected operand",, True);
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
