@@ -1452,18 +1452,9 @@ Function ParseRaiseStmt(Parser)
 EndFunction // ParseRaiseStmt()
 
 Function ParseExecuteStmt(Parser)
-	Var Tok, Expr;
+	Var Expr;
 	Next(Parser);
-	Expect(Parser, Tokens.Lparen);
-	Tok = Next(Parser);
-	If Tok = Tokens.Rparen Then
-		Expr = EmptyArray;
-	Else
-		Expr = ParseExpression(Parser);
-	EndIf;
-	Expect(Parser, Tokens.Rparen);
-	Next(Parser);
-	Return ExecuteStmt(Expr);
+	Return ExecuteStmt(ParseExpression(Parser));
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
