@@ -444,11 +444,11 @@ Function Object(Kind, Name, Exported = Undefined)
 		"Name," // string
 	,
 	Kind, Name);
-	
+
 	If Exported <> Undefined Then
 		Object.Insert("Export", Exported); // boolean
-	EndIf; 
-	
+	EndIf;
+
 	Return Object;
 EndFunction // Object()
 
@@ -620,7 +620,7 @@ Function NewExpr(Constructor)
 	Return NewExpr;
 EndFunction // NewExpr()
 
-Function TernaryExpr(Condition, ThenPart, ElsePart)
+Function TernaryExpr(Condition, ThenPart, ElsePart, Selectors)
 	Var TernaryExpr;
 
 	TernaryExpr = New Structure(
@@ -630,6 +630,10 @@ Function TernaryExpr(Condition, ThenPart, ElsePart)
 		"ElsePart"   // structure (one of expressions)
 	,
 	"TernaryExpr", Condition, ThenPart, ElsePart);
+
+	If Selectors.Count() > 0 Then
+		TernaryExpr.Insert("Selectors", Selectors); // array (Selector)
+	EndIf;
 
 	Return TernaryExpr;
 EndFunction // TernaryExpr()
@@ -947,8 +951,8 @@ Function ParseString(Parser)
 		EndDo;
 	EndDo;
 	If Tok <> Tokens.StringEnd Then
-		Error(Parser.Scanner, "Expected """,, True); 
-	EndIf; 
+		Error(Parser.Scanner, "Expected """,, True);
+	EndIf;
 	List.Add(Mid(Scanner.Lit, 2));
 	Return StrConcat(List);
 EndFunction // ParseString()
@@ -1205,7 +1209,7 @@ Function ParseArguments(Parser)
 EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
-	Var Condition, ThenPart, ElsePart, Pos;
+	Var Condition, ThenPart, ElsePart, Selectors, Pos;
 	Pos = Parser.Pos;
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
@@ -1218,8 +1222,17 @@ Function ParseTernaryExpr(Parser)
 	Next(Parser);
 	ElsePart = ParseExpression(Parser);
 	Expect(Parser, Tokens.Rparen);
-	Next(Parser);
-	Return Locate(TernaryExpr(Condition, ThenPart, ElsePart), Parser, Pos);
+	If Next(Parser) = Tokens.Period Then
+		Selectors = New Array;
+		Selector = ParseSelector(Parser);
+		While Selector <> Undefined Do
+			Selectors.Add(Selector);
+			Selector = ParseSelector(Parser);
+		EndDo;
+	Else
+		Selectors = EmptyArray;
+	EndIf;
+	Return Locate(TernaryExpr(Condition, ThenPart, ElsePart, Selectors), Parser, Pos);
 EndFunction // ParseTernaryExpr()
 
 Function ParseFuncDecl(Parser)
@@ -1390,13 +1403,13 @@ Function ParseStatements(Parser)
 	Stmt = ParseStmt(Parser);
 	If Stmt <> Undefined Then
 		Statements.Add(Stmt);
-	EndIf; 
+	EndIf;
 	While Parser.Tok = Tokens.Semicolon Do
 		Next(Parser);
 		Stmt = ParseStmt(Parser);
 		If Stmt <> Undefined Then
 			Statements.Add(Stmt);
-		EndIf; 
+		EndIf;
 	EndDo;
 	Return Statements;
 EndFunction // ParseStatements()
@@ -1624,7 +1637,7 @@ Function Locate(Node, Parser, Pos)
 	If Location Then
 		Node.Insert("Pos", Pos);
 		Node.Insert("Len", Parser.PrevPos - Pos);
-	EndIf; 
+	EndIf;
 	If Debug Then
 		Node.Insert("Str", Mid(Parser.Scanner.Source, Pos, Parser.PrevPos - Pos));
 	EndIf;
@@ -1700,7 +1713,7 @@ Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
 	If Pos = Undefined Then
 		Pos = Min(Scanner.Pos - StrLen(Scanner.Lit), Scanner.Len);
-	EndIf; 
+	EndIf;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3" "%4",
 		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
 		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
