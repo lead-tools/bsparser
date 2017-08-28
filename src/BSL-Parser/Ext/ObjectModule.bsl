@@ -1372,10 +1372,8 @@ Function ParseParameter(Parser)
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	If Next(Parser) = Tokens.Eql Then
-		If BasicLiterals.Find(Next(Parser)) = Undefined Then
-			Error(Parser.Scanner, "expected basic literal");
-		EndIf;
-		Object = Parameter(Name, ByVal, ParseOperand(Parser));
+		Next(Parser);
+		Object = Parameter(Name, ByVal, ParseUnaryExpr(Parser));
 	Else
 		Object = Parameter(Name, ByVal);
 	EndIf;
