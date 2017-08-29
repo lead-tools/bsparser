@@ -5,6 +5,7 @@ Var Keywords;                  // enum
 Var Tokens;                    // enum
 Var ObjectKinds;               // enum
 Var SelectorKinds;             // enum
+Var Directives;                // enum
 Var UnaryOperators;            // array (one of Tokens)
 Var BasicLiterals;             // array (one of Tokens)
 Var RelationalOperators;       // array (one of Tokens)
@@ -43,7 +44,6 @@ Procedure Init() Export
 	IgnoredTokens = New Array;
 	IgnoredTokens.Add(Tokens.Comment);
 	IgnoredTokens.Add(Tokens.Preprocessor);
-	IgnoredTokens.Add(Tokens.Directive);
 
 	InitialTokensOfExpression = New Array;
 	InitialTokensOfExpression.Add(Tokens.Add);
@@ -69,6 +69,7 @@ Procedure InitEnums()
 	Tokens = Tokens(Keywords);
 	ObjectKinds = ObjectKinds();
 	SelectorKinds = SelectorKinds();
+	Directives = Directives();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -152,6 +153,19 @@ Function SelectorKinds() Export
 
 	Return SelectorKinds;
 EndFunction // SelectorKinds()
+
+Function Directives() Export
+	Var Directives;
+
+	Directives = Enum(New Structure,
+		"AtClient.НаКлиенте,"
+		"AtServer.НаСервере,"
+		"AtServerNoContext.НаСервереБезКонтекста,"
+		"AtClientAtServer.НаКлиентеНаСервере,"
+	);
+
+	Return Directives;
+EndFunction // Directives()
 
 Function Enum(Structure, Keys)
 	Var ItemList, Value;
@@ -285,7 +299,11 @@ Function Scan(Scanner) Export
 	ElsIf Char = "" Then
 		Tok = Tokens.Eof;
 	ElsIf Char = "&" Then
-		Lit = ScanComment(Scanner);
+		NextChar(Scanner);
+		Lit = ScanIdentifier(Scanner);
+		If Not Directives.Property(Lit) Then
+			Error(Scanner, StrTemplate("Unknown directive: '%1'", Lit));
+		EndIf; 
 		Tok = Tokens.Directive;
 	ElsIf Char = "#" Then
 		Lit = ScanComment(Scanner);
@@ -436,7 +454,7 @@ Function Scope(Outer)
 	Return Scope;
 EndFunction // Scope()
 
-Function Object(Kind, Name, Exported = Undefined)
+Function Object(Kind, Name, Directive = Undefined, Exported = Undefined)
 	Var Object;
 
 	Object = New Structure(
@@ -444,7 +462,11 @@ Function Object(Kind, Name, Exported = Undefined)
 		"Name," // string
 	,
 	Kind, Name);
-
+	
+	If Directive <> Undefined Then
+		Object.Insert("Directive", Directive); // boolean
+	EndIf;
+	
 	If Exported <> Undefined Then
 		Object.Insert("Export", Exported); // boolean
 	EndIf;
@@ -452,16 +474,16 @@ Function Object(Kind, Name, Exported = Undefined)
 	Return Object;
 EndFunction // Object()
 
-Function Signature(Kind, Name, ParamList, Exported)
+Function Signature(Kind, Name, Directive, ParamList, Exported)
 	Var Object;
-	Object = Object(Kind, Name, Exported);
+	Object = Object(Kind, Name, Directive, Exported);
 	Object.Insert("ParamList", ParamList); // array (Object)
 	Return Object;
 EndFunction // Signature()
 
-Function Variable(Name, Exported, Auto = False)
+Function Variable(Name, Directive, Exported, Auto = False)
 	Var Object;
-	Object = Object(ObjectKinds.Variable, Name, Exported);
+	Object = Object(ObjectKinds.Variable, Name, Directive, Exported);
 	Object.Insert("Auto", Auto); // boolean
 	Return Object;
 EndFunction // Variable()
@@ -850,18 +872,19 @@ Function Parser(Source) Export
 	Var Parser;
 
 	Parser = New Structure(
-		"Scanner," // structure (Scanner)
-		"Pos,"     // number
-		"PrevPos," // number
-		"Tok,"     // string (one of Tokens)
-		"Lit,"     // string
-		"Val,"     // number, string, date, true, false, undefined
-		"Scope,"   // structure (Scope)
-		"Vars,"    // structure as map[string](Object)
-		"Methods," // structure as map[string](Object)
-		"Module,"  // structure (Module)
-		"Unknown," // structure as map[string](Object)
-		"IsFunc,"  // boolean
+		"Scanner,"   // structure (Scanner)
+		"Pos,"       // number
+		"PrevPos,"   // number
+		"Tok,"       // string (one of Tokens)
+		"Lit,"       // string
+		"Val,"       // number, string, date, true, false, undefined
+		"Scope,"     // structure (Scope)
+		"Vars,"      // structure as map[string](Object)
+		"Methods,"   // structure as map[string](Object)
+		"Module,"    // structure (Module)
+		"Unknown,"   // structure as map[string](Object)
+		"IsFunc,"    // boolean
+		"Directive," // string (one of Directives)
 	);
 
 	Parser.Scanner = Scanner(Source);
@@ -1056,7 +1079,7 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, False, True);
+			Object = Variable(Name, Undefined, False, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.AutoVars.Add(Object);
 		Else
@@ -1255,7 +1278,7 @@ Function ParseFuncDecl(Parser)
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Function, Name, ParamList, Exported);
+		Object = Signature(ObjectKinds.Function, Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1314,7 +1337,7 @@ Function ParseProcDecl(Parser)
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Procedure, Name, ParamList, Exported);
+		Object = Signature(ObjectKinds.Procedure, Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1365,7 +1388,7 @@ Function ParseVariable(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = Variable(Name, Exported);
+	Object = Variable(Name, Parser.Directive, Exported);
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
@@ -1581,12 +1604,21 @@ Function ParseVarDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser.Tok;
+	While Tok = Tokens.Directive Do
+		Parser.Directive = Parser.Lit;
+		Tok = Next(Parser);
+	EndDo;
 	While Tok = Tokens.Var Do
 		Next(Parser);
 		Decls.Add(ParseVarListDecl(Parser));
 		Expect(Parser, Tokens.Semicolon);
 		Next(Parser);
 		Tok = Parser.Tok;
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
 	EndDo;
 	Return Decls;
 EndFunction // ParseVarDecls()
@@ -1595,7 +1627,7 @@ Function ParseDecls(Parser)
 	Var Tok, Decls;
 	Decls = ParseVarDecls(Parser);
 	Tok = Parser.Tok;
-	While Tok <> Tokens.Eof Do
+	While Tok <> Tokens.Eof Do 
 		If Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
 		ElsIf Tok = Tokens.Procedure Then
@@ -1604,6 +1636,11 @@ Function ParseDecls(Parser)
 			Return Decls;
 		EndIf;
 		Tok = Parser.Tok;
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
 	EndDo;
 	Return Decls;
 EndFunction // ParseDecls()
