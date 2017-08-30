@@ -5,6 +5,8 @@ Var Keywords;                  // enum
 Var Tokens;                    // enum
 Var ObjectKinds;               // enum
 Var SelectorKinds;             // enum
+Var Directives;                // enum
+Var PreprocInstructions;       // enum
 Var UnaryOperators;            // array (one of Tokens)
 Var BasicLiterals;             // array (one of Tokens)
 Var RelationalOperators;       // array (one of Tokens)
@@ -42,8 +44,7 @@ Procedure Init() Export
 
 	IgnoredTokens = New Array;
 	IgnoredTokens.Add(Tokens.Comment);
-	IgnoredTokens.Add(Tokens.Preprocessor);
-	IgnoredTokens.Add(Tokens.Directive);
+	IgnoredTokens.Add(Tokens.Preproc);
 
 	InitialTokensOfExpression = New Array;
 	InitialTokensOfExpression.Add(Tokens.Add);
@@ -69,6 +70,8 @@ Procedure InitEnums()
 	Tokens = Tokens(Keywords);
 	ObjectKinds = ObjectKinds();
 	SelectorKinds = SelectorKinds();
+	Directives = Directives();
+	PreprocInstructions = PreprocInstructions();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -116,10 +119,13 @@ Function Tokens(Keywords = Undefined) Export
 		//     ?      ,       .      :          ;
 		|Ternary, Comma, Period, Colon, Semicolon,
 
+		// Preprocessor instructions
+		|_If, _ElsIf, _Else, _EndIf, _Region, _EndRegion,
+
 		// Other
 
-		//         //             #          &      ~
-		|Eof, Comment, Preprocessor, Directive, Label"
+		//         //        #          &      ~
+		|Eof, Comment, Preproc, Directive, Label"
 
 	);
 
@@ -152,6 +158,34 @@ Function SelectorKinds() Export
 
 	Return SelectorKinds;
 EndFunction // SelectorKinds()
+
+Function Directives() Export
+	Var Directives;
+
+	Directives = Enum(New Structure,
+		"AtClient.НаКлиенте,"
+		"AtServer.НаСервере,"
+		"AtServerNoContext.НаСервереБезКонтекста,"
+		"AtClientAtServer.НаКлиентеНаСервере,"
+	);
+
+	Return Directives;
+EndFunction // Directives()
+
+Function PreprocInstructions() Export
+	Var PreprocInstructions;
+
+	PreprocInstructions = Enum(New Structure,
+		"If.Если,"
+		"ElsIf.ИначеЕсли,"
+		"Else.Иначе,"
+		"EndIf.КонецЕсли,"
+		"Region.Область,"
+		"EndRegion.КонецОбласти,"
+	);
+
+	Return PreprocInstructions;
+EndFunction // PreprocInstructions()
 
 Function Enum(Structure, Keys)
 	Var ItemList, Value;
@@ -285,11 +319,21 @@ Function Scan(Scanner) Export
 	ElsIf Char = "" Then
 		Tok = Tokens.Eof;
 	ElsIf Char = "&" Then
-		Lit = ScanComment(Scanner);
+		NextChar(Scanner);
+		Lit = ScanIdentifier(Scanner);
+		If Not Directives.Property(Lit) Then
+			Error(Scanner, StrTemplate("Unknown directive: '%1'", Lit));
+		EndIf;
 		Tok = Tokens.Directive;
 	ElsIf Char = "#" Then
-		Lit = ScanComment(Scanner);
-		Tok = Tokens.Preprocessor;
+		NextChar(Scanner);
+		SkipWhitespace(Scanner);
+		Lit = ScanIdentifier(Scanner);
+		If PreprocInstructions.Property(Lit, Tok) Then
+			Tok = "_" + Tok;
+		Else
+			Tok = Tokens.Preproc; // ignore unknown instruction
+		EndIf;
 	ElsIf Char = "~" Then
 		Lit = ScanIdentifier(Scanner);
 		Tok = Tokens.Label;
@@ -436,7 +480,7 @@ Function Scope(Outer)
 	Return Scope;
 EndFunction // Scope()
 
-Function Object(Kind, Name, Exported = Undefined)
+Function Object(Kind, Name, Directive = Undefined, Exported = Undefined)
 	Var Object;
 
 	Object = New Structure(
@@ -445,6 +489,10 @@ Function Object(Kind, Name, Exported = Undefined)
 	,
 	Kind, Name);
 
+	If Directive <> Undefined Then
+		Object.Insert("Directive", Directive); // boolean
+	EndIf;
+
 	If Exported <> Undefined Then
 		Object.Insert("Export", Exported); // boolean
 	EndIf;
@@ -452,16 +500,16 @@ Function Object(Kind, Name, Exported = Undefined)
 	Return Object;
 EndFunction // Object()
 
-Function Signature(Kind, Name, ParamList, Exported)
+Function Signature(Kind, Name, Directive, ParamList, Exported)
 	Var Object;
-	Object = Object(Kind, Name, Exported);
+	Object = Object(Kind, Name, Directive, Exported);
 	Object.Insert("ParamList", ParamList); // array (Object)
 	Return Object;
 EndFunction // Signature()
 
-Function Variable(Name, Exported, Auto = False)
+Function Variable(Name, Directive, Exported, Auto = False)
 	Var Object;
-	Object = Object(ObjectKinds.Variable, Name, Exported);
+	Object = Object(ObjectKinds.Variable, Name, Directive, Exported);
 	Object.Insert("Auto", Auto); // boolean
 	Return Object;
 EndFunction // Variable()
@@ -521,6 +569,40 @@ Function FuncDecl(Object, Decls, AutoVars, Statements)
 
 	Return FuncDecl;
 EndFunction // FuncDecl()
+
+Function PreprocIfDecl(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+	Var PreprocIfDecl;
+
+	PreprocIfDecl = New Structure(
+		"NodeType,"  // string (type of this structure)
+		"Condition," // structure (one of expressions)
+		"ThenPart,"  // array (one of declarations)
+	,
+	"PreprocIfDecl", Condition, ThenPart);
+
+	If ElsIfPart <> Undefined Then
+		PreprocIfDecl.Insert("ElsIfPart", ElsIfPart); // array (PreprocIfDecl)
+	EndIf;
+
+	If ElsePart <> Undefined Then
+		PreprocIfDecl.Insert("ElsePart", ElsePart); // array (one of declarations)
+	EndIf;
+
+	Return PreprocIfDecl;
+EndFunction // PreprocIfDecl()
+
+Function PreprocRegionDecl(Name, Decls)
+	Var PreprocRegionDecl;
+
+	PreprocRegionDecl = New Structure(
+		"NodeType," // string (type of this structure)
+		"Name,"     // structure (one of expressions)
+		"Decls,"    // array (one of statements)
+	,
+	"PreprocRegionDecl", Name, Decls);
+
+	Return PreprocRegionDecl;
+EndFunction // PreprocRegionDecl()
 
 #EndRegion // Declarations
 
@@ -776,6 +858,27 @@ Function IfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined
 	Return IfStmt;
 EndFunction // IfStmt()
 
+Function PreprocIfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+	Var PreprocIfStmt;
+
+	PreprocIfStmt = New Structure(
+		"NodeType,"  // string (type of this structure)
+		"Condition," // structure (one of expressions)
+		"ThenPart,"  // array (one of statements)
+	,
+	"PreprocIfStmt", Condition, ThenPart);
+
+	If ElsIfPart <> Undefined Then
+		PreprocIfStmt.Insert("ElsIfPart", ElsIfPart); // array (PreprocIfStmt)
+	EndIf;
+
+	If ElsePart <> Undefined Then
+		PreprocIfStmt.Insert("ElsePart", ElsePart); // array (one of statements)
+	EndIf;
+
+	Return PreprocIfStmt;
+EndFunction // PreprocIfStmt()
+
 Function WhileStmt(Condition, Statements)
 	Var WhileStmt;
 
@@ -788,6 +891,19 @@ Function WhileStmt(Condition, Statements)
 
 	Return WhileStmt;
 EndFunction // WhileStmt()
+
+Function PreprocRegionStmt(Name, Statements)
+	Var PreprocRegionStmt;
+
+	PreprocRegionStmt = New Structure(
+		"NodeType,"   // string (type of this structure)
+		"Name,"       // structure (one of expressions)
+		"Statements," // array (one of statements)
+	,
+	"PreprocRegionStmt", Name, Statements);
+
+	Return PreprocRegionStmt;
+EndFunction // PreprocRegionStmt()
 
 Function ForStmt(DesignatorExpr, Collection, Statements)
 	Var ForStmt;
@@ -850,18 +966,19 @@ Function Parser(Source) Export
 	Var Parser;
 
 	Parser = New Structure(
-		"Scanner," // structure (Scanner)
-		"Pos,"     // number
-		"PrevPos," // number
-		"Tok,"     // string (one of Tokens)
-		"Lit,"     // string
-		"Val,"     // number, string, date, true, false, undefined
-		"Scope,"   // structure (Scope)
-		"Vars,"    // structure as map[string](Object)
-		"Methods," // structure as map[string](Object)
-		"Module,"  // structure (Module)
-		"Unknown," // structure as map[string](Object)
-		"IsFunc,"  // boolean
+		"Scanner,"   // structure (Scanner)
+		"Pos,"       // number
+		"PrevPos,"   // number
+		"Tok,"       // string (one of Tokens)
+		"Lit,"       // string
+		"Val,"       // number, string, date, true, false, undefined
+		"Scope,"     // structure (Scope)
+		"Vars,"      // structure as map[string](Object)
+		"Methods,"   // structure as map[string](Object)
+		"Module,"    // structure (Module)
+		"Unknown,"   // structure as map[string](Object)
+		"IsFunc,"    // boolean
+		"Directive," // string (one of Directives)
 	);
 
 	Parser.Scanner = Scanner(Source);
@@ -1056,7 +1173,7 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, False, True);
+			Object = Variable(Name, Undefined, False, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.AutoVars.Add(Object);
 		Else
@@ -1255,7 +1372,7 @@ Function ParseFuncDecl(Parser)
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Function, Name, ParamList, Exported);
+		Object = Signature(ObjectKinds.Function, Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1314,7 +1431,7 @@ Function ParseProcDecl(Parser)
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Procedure, Name, ParamList, Exported);
+		Object = Signature(ObjectKinds.Procedure, Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1365,7 +1482,7 @@ Function ParseVariable(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = Variable(Name, Exported);
+	Object = Variable(Name, Parser.Directive, Exported);
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
@@ -1447,6 +1564,10 @@ Function ParseStmt(Parser)
 		Next(Parser);
 		Expect(Parser, Tokens.Colon);
 		Next(Parser);
+	ElsIf Tok = Tokens._Region Then
+		Stmt = ParsePreprocRegionStmt(Parser);
+	ElsIf Tok = Tokens._If Then
+		Stmt = ParsePreprocIfStmt(Parser);
 	ElsIf Tok = Tokens.Semicolon Then
 		// NOP
 	EndIf;
@@ -1512,6 +1633,97 @@ Function ParseIfStmt(Parser)
 	Next(Parser);
 	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
+
+Function ParsePreprocIfStmt(Parser)
+	Var Tok, Condition, ThenPart, ElsePart;
+	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Next(Parser);
+	Condition = ParseExpression(Parser); // todo: only logic operators
+	Expect(Parser, Tokens.Then);
+	Next(Parser);
+	ThenPart = ParseStatements(Parser);
+	Tok = Parser.Tok;
+	If Tok = Tokens._ElsIf Then
+		ElsIfPart = New Array;
+		While Tok = Tokens._ElsIf Do
+			Next(Parser);
+			ElsIfCond = ParseExpression(Parser);
+			Expect(Parser, Tokens.Then);
+			Next(Parser);
+			ElsIfThen = ParseStatements(Parser);
+			ElsIfPart.Add(PreprocIfStmt(ElsIfCond, ElsIfThen));
+			Tok = Parser.Tok;
+		EndDo;
+	EndIf;
+	If Tok = Tokens._Else Then
+		Next(Parser);
+		ElsePart = ParseStatements(Parser);
+	EndIf;
+	Expect(Parser, Tokens._EndIf);
+	Parser.Tok = Tokens.Semicolon; // cheat code
+	Return PreprocIfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePreprocIfStmt()
+
+Function ParsePreprocIfDecl(Parser)
+	Var Tok, Condition, ThenPart, ElsePart;
+	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Next(Parser);
+	Condition = ParseExpression(Parser); // todo: only logic operators
+	Expect(Parser, Tokens.Then);
+	Next(Parser);
+	ThenPart = ParseDecls(Parser);
+	Tok = Parser.Tok;
+	If Tok = Tokens._ElsIf Then
+		ElsIfPart = New Array;
+		While Tok = Tokens._ElsIf Do
+			Next(Parser);
+			ElsIfCond = ParseExpression(Parser);
+			Expect(Parser, Tokens.Then);
+			Next(Parser);
+			ElsIfThen = ParseDecls(Parser);
+			ElsIfPart.Add(PreprocIfDecl(ElsIfCond, ElsIfThen));
+			Tok = Parser.Tok;
+		EndDo;
+	EndIf;
+	If Tok = Tokens._Else Then
+		Next(Parser);
+		ElsePart = ParseDecls(Parser);
+	EndIf;
+	Expect(Parser, Tokens._EndIf);
+	Next(Parser);
+	Return PreprocIfDecl(Condition, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePreprocIfDecl()
+
+Function ParsePreprocRegionStmt(Parser)
+	Var Name, Statements;
+	Next(Parser);
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	Next(Parser);
+	Statements = ParseStatements(Parser);
+	Expect(Parser, Tokens._EndRegion);
+	Parser.Tok = Tokens.Semicolon; // cheat code
+	Return PreprocRegionStmt(Name, Statements);
+EndFunction // ParsePreprocRegionStmt()
+
+Function ParsePreprocRegion(Parser)
+	Var Name, Decls, Statements, Region;
+	Next(Parser);
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	Next(Parser);
+	Decls = ParseDecls(Parser);
+	Region = PreprocRegionDecl(Name, Decls);
+	If Decls.Count() = 0 Then
+		Statements = ParseStatements(Parser);
+		If Statements.Count() > 0 Then
+			Region = PreprocRegionStmt(Name, Statements);
+		EndIf;
+	EndIf;
+	Expect(Parser, Tokens._EndRegion);
+	Next(Parser);
+	Return Region;
+EndFunction // ParsePreprocRegion()
 
 Function ParseTryStmt(Parser)
 	Var TryPart, ExceptPart;
@@ -1581,12 +1793,21 @@ Function ParseVarDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser.Tok;
+	While Tok = Tokens.Directive Do
+		Parser.Directive = Parser.Lit;
+		Tok = Next(Parser);
+	EndDo;
 	While Tok = Tokens.Var Do
 		Next(Parser);
 		Decls.Add(ParseVarListDecl(Parser));
 		Expect(Parser, Tokens.Semicolon);
 		Next(Parser);
 		Tok = Parser.Tok;
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
 	EndDo;
 	Return Decls;
 EndFunction // ParseVarDecls()
@@ -1600,10 +1821,19 @@ Function ParseDecls(Parser)
 			Decls.Add(ParseFuncDecl(Parser));
 		ElsIf Tok = Tokens.Procedure Then
 			Decls.Add(ParseProcDecl(Parser));
+		ElsIf Tok = Tokens._Region Then
+			Decls.Add(ParsePreprocRegion(Parser));
+		ElsIf Tok = Tokens._If Then
+			Decls.Add(ParsePreprocIfDecl(Parser));
 		Else
 			Return Decls;
 		EndIf;
 		Tok = Parser.Tok;
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
 	EndDo;
 	Return Decls;
 EndFunction // ParseDecls()
