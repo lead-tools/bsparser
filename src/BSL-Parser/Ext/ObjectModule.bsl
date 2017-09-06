@@ -209,7 +209,7 @@ Function Scanner(Source) Export
 	Var Scanner;
 
 	Scanner = New Structure(
-	    "Path,"   // string
+		"Path,"   // string
 		"Source," // string
 		"Len,"    // number
 		"Pos,"    // number
@@ -490,7 +490,7 @@ Function Object(Kind, Name, Directive = Undefined, Exported = Undefined)
 	Kind, Name);
 
 	If Directive <> Undefined Then
-		Object.Insert("Directive", Directive); // boolean
+		Object.Insert("Directive", Directive); // string (one of Directives)
 	EndIf;
 
 	If Exported <> Undefined Then
@@ -753,7 +753,7 @@ Function AssignStmt(Left, Right)
 
 	AssignStmt = New Structure(
 		"NodeType," // string (type of this structure)
-		"Left,"     // DesignatorExpr
+		"Left,"     // structure (DesignatorExpr)
 		"Right,"    // structure (one of expressions)
 	,
 	"AssignStmt", Left, Right);
