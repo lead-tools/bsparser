@@ -166,6 +166,7 @@ Function Directives() Export
 		"AtClient.НаКлиенте,"
 		"AtServer.НаСервере,"
 		"AtServerNoContext.НаСервереБезКонтекста,"
+		"AtClientAtServerNoContext.НаКлиентеНаСервереБезКонтекста,"
 		"AtClientAtServer.НаКлиентеНаСервере,"
 	);
 
@@ -591,16 +592,17 @@ Function PreprocIfDecl(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Un
 	Return PreprocIfDecl;
 EndFunction // PreprocIfDecl()
 
-Function PreprocRegionDecl(Name, Decls)
+Function PreprocRegionDecl(Name, Decls, Statements)
 	Var PreprocRegionDecl;
 
 	PreprocRegionDecl = New Structure(
-		"NodeType," // string (type of this structure)
-		"Name,"     // structure (one of expressions)
-		"Decls,"    // array (one of statements)
+		"NodeType,"  // string (type of this structure)
+		"Name,"      // structure (one of expressions)
+		"Decls,"     // array (one of declarations)
+		"Statements" // array (one of statements)
 	,
-	"PreprocRegionDecl", Name, Decls);
-
+	"PreprocRegionDecl", Name, Decls, Statements);
+	
 	Return PreprocRegionDecl;
 EndFunction // PreprocRegionDecl()
 
@@ -1706,24 +1708,18 @@ Function ParsePreprocRegionStmt(Parser)
 	Return PreprocRegionStmt(Name, Statements);
 EndFunction // ParsePreprocRegionStmt()
 
-Function ParsePreprocRegion(Parser)
+Function ParsePreprocRegionDecl(Parser)
 	Var Name, Decls, Statements, Region;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Next(Parser);
 	Decls = ParseDecls(Parser);
-	Region = PreprocRegionDecl(Name, Decls);
-	If Decls.Count() = 0 Then
-		Statements = ParseStatements(Parser);
-		If Statements.Count() > 0 Then
-			Region = PreprocRegionStmt(Name, Statements);
-		EndIf;
-	EndIf;
+	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens._EndRegion);
 	Next(Parser);
-	Return Region;
-EndFunction // ParsePreprocRegion()
+	Return PreprocRegionDecl(Name, Decls, Statements);
+EndFunction // ParsePreprocRegionDecl()
 
 Function ParseTryStmt(Parser)
 	Var TryPart, ExceptPart;
@@ -1822,7 +1818,7 @@ Function ParseDecls(Parser)
 		ElsIf Tok = Tokens.Procedure Then
 			Decls.Add(ParseProcDecl(Parser));
 		ElsIf Tok = Tokens._Region Then
-			Decls.Add(ParsePreprocRegion(Parser));
+			Decls.Add(ParsePreprocRegionDecl(Parser));
 		ElsIf Tok = Tokens._If Then
 			Decls.Add(ParsePreprocIfDecl(Parser));
 		Else
