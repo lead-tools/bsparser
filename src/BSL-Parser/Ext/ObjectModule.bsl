@@ -1109,10 +1109,7 @@ Function ParseOperand(Parser)
 	ElsIf Tok = Tokens.Ident Then
 		Operand = ParseDesignatorExpr(Parser);
 	ElsIf Tok = Tokens.Lparen Then
-		Next(Parser);
-		Operand = ParenExpr(ParseExpression(Parser));
-		Expect(Parser, Tokens.Rparen);
-		Next(Parser);
+		Operand = ParseParenExpr(Parser);
 	ElsIf Tok = Tokens.New Then
 		Operand = ParseNewExpr(Parser);
 	ElsIf Tok = Tokens.Ternary Then
@@ -1353,6 +1350,16 @@ Function ParseTernaryExpr(Parser)
 	EndIf;
 	Return Locate(TernaryExpr(Condition, ThenPart, ElsePart, Selectors), Parser, Pos);
 EndFunction // ParseTernaryExpr()
+
+Function ParseParenExpr(Parser)
+	Var Expr, Pos;
+	Pos = Parser.Pos;
+	Next(Parser);
+	Expr = ParseExpression(Parser);
+	Expect(Parser, Tokens.Rparen);
+	Next(Parser);
+	Return Locate(ParenExpr(Expr), Parser, Pos);
+EndFunction // ParseParenExpr()
 
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Pos;
