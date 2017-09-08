@@ -1,6 +1,6 @@
 # BSL Parser
 
-Это форк проекта: https://github.com/tsukanov-as/OneShell
+Это форк проекта: https://github.com/Lead-Bullets/OneShell
 
 Цель: полноценный парсер встроенного языка 1С
 
