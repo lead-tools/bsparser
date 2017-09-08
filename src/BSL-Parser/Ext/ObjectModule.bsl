@@ -448,16 +448,17 @@ EndFunction // ScanDateTime()
 
 #Region AbstractSyntaxTree
 
-Function Module(Decls, AutoVars, Statements, Comments)
+Function Module(Decls, AutoVars, Statements, Interface, Comments)
 	Var Module;
 
 	Module = New Structure(
 		"Decls,"      // array (one of declarations)
 		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
+		"Interface,"  // array (Object)
 		"Comments,"   // map[number](string)
 	,
-	Decls, AutoVars, Statements, Comments);
+	Decls, AutoVars, Statements, Interface, Comments);
 
 	Return Module;
 EndFunction // Module()
@@ -989,7 +990,8 @@ Function Parser(Source) Export
 		"Unknown,"   // structure as map[string](Object)
 		"IsFunc,"    // boolean
 		"Directive," // string (one of Directives)
-		"Comments"   // map[number](string)
+		"Interface," // array (Object)
+		"Comments,"  // map[number](string)
 	);
 
 	Parser.Scanner = Scanner(Source);
@@ -998,6 +1000,7 @@ Function Parser(Source) Export
 	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
+	Parser.Interface = New Array;
 	Parser.Comments = New Map;
 
 	OpenScope(Parser);
@@ -1392,6 +1395,9 @@ Function ParseFuncDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
 	Decls = ParseVarDecls(Parser);
 	Parser.IsFunc = True;
 	Statements = ParseStatements(Parser);
@@ -1451,6 +1457,9 @@ Function ParseProcDecl(Parser)
 		Error(Parser.Scanner, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndProcedure);
@@ -1497,6 +1506,9 @@ Function ParseVariable(Parser)
 		Exported = False;
 	EndIf;
 	Object = Variable(Name, Parser.Directive, Exported);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
 	EndIf;
@@ -1854,7 +1866,7 @@ Function ParseModule(Parser) Export
 	For Each VarObj In Parser.Scope.AutoVars Do
 		AutoVars.Add(VarObj);
 	EndDo;
-	Parser.Module = Module(Decls, AutoVars, Statements, Parser.Comments);
+	Parser.Module = Module(Decls, AutoVars, Statements, Parser.Interface, Parser.Comments);
 	If Verbose Then
 		For Each Item In Parser.Unknown Do
 			Message(StrTemplate("Undeclared method `%1`", Item.Key));
