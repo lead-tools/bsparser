@@ -52,6 +52,15 @@ Procedure TranslateAtServer()
 		JSONWriter = New JSONWriter;
 		FileName = GetTempFileName(".json");
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
+		If ShowComments Then
+			Comments = New Map;
+			For Each Item In Parser.Module.Comments Do
+				Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
+			EndDo; 
+			Parser.Module.Comments = Comments;
+		Else
+			Parser.Module.Delete("Comments");
+		EndIf; 
 		WriteJSON(JSONWriter, Parser.Module);
 		JSONWriter.Close();
 		Result.Read(FileName, TextEncoding.UTF8);		
@@ -71,7 +80,7 @@ Procedure TranslateAtServer()
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 	EndIf;
 		
-EndProcedure // TranslateAtServer() 
+EndProcedure // TranslateAtServer()
 
 &AtClientAtServerNoContext
 Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
@@ -81,6 +90,7 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 	If Reason = Items.Output Or Reason = Undefined Then
 		
 		Items.BackendPath.Visible = (ThisObject.Output = "Backend");
+		Items.ShowComments.Visible = (ThisObject.Output = "AST");
 		
 	EndIf;
 	

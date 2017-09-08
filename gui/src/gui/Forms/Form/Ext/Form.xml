@@ -131,6 +131,12 @@
 					<ContextMenu name="DebugContextMenu" id="33"/>
 					<ExtendedTooltip name="DebugExtendedTooltip" id="34"/>
 				</CheckBoxField>
+				<CheckBoxField name="ShowComments" id="38">
+					<DataPath>ShowComments</DataPath>
+					<CheckBoxType>Auto</CheckBoxType>
+					<ContextMenu name="ShowCommentsContextMenu" id="39"/>
+					<ExtendedTooltip name="ShowCommentsExtendedTooltip" id="40"/>
+				</CheckBoxField>
 			</ChildItems>
 		</UsualGroup>
 		<UsualGroup name="Group2" id="17">
@@ -255,6 +261,17 @@
 				<v8:item>
 					<v8:lang>ru</v8:lang>
 					<v8:content>Location</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+		</Attribute>
+		<Attribute name="ShowComments" id="12">
+			<Title>
+				<v8:item>
+					<v8:lang>en</v8:lang>
+					<v8:content>Show comments</v8:content>
 				</v8:item>
 			</Title>
 			<Type>
