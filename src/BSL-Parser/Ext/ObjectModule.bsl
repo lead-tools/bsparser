@@ -17,7 +17,7 @@ Var EmptyArray;       // array
 
 #Region Cache
 
-Var StructureKeysCache; // structure as map[string](string)
+Var StructKeysCache; // structure as map[string] (string)
 
 #EndRegion // Cache
 
@@ -25,7 +25,7 @@ Var StructureKeysCache; // structure as map[string](string)
 
 Procedure Init() Export
 
-	StructureKeysCache = New Structure;
+	StructKeysCache = New Structure;
 
 	InitEnums();
 
@@ -35,6 +35,7 @@ Procedure Init() Export
 	BasicLitNoString.Add(Tokens.True);
 	BasicLitNoString.Add(Tokens.False);
 	BasicLitNoString.Add(Tokens.Undefined);
+	BasicLitNoString.Add(Tokens.Null);
 
 	RelOperators = New Array;
 	RelOperators.Add(Tokens.Eql);
@@ -68,6 +69,7 @@ Procedure Init() Export
 	InitOfExpression.Add(Tokens.True);
 	InitOfExpression.Add(Tokens.False);
 	InitOfExpression.Add(Tokens.Undefined);
+	InitOfExpression.Add(Tokens.Null);
 
 	EmptyArray = New Array;
 
@@ -96,7 +98,7 @@ Function Keywords() Export
 		|And.И, Or.Или, Not.Не,
 		|Try.Попытка, Except.Исключение, Raise.ВызватьИсключение, EndTry.КонецПопытки,
 		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
-		|True.Истина, False.Ложь, Undefined.Неопределено,"
+		|True.Истина, False.Ложь, Undefined.Неопределено, Null"
 	);
 
 	Return Keywords;
@@ -445,34 +447,34 @@ EndFunction // ScanDateTime()
 
 #Region AbstractSyntaxTree
 
-Function Module(Decls, AutoVars, Statements, Interface, Comments)
-	Return Structure("Module",
-		"Decls,"      // array (one of declarations)
-		"AutoVars,"   // array (Object)
-		"Statements," // array (one of statements)
-		"Interface,"  // array (Object)
-		"Comments,"   // map[number](string)
-	, Decls, AutoVars, Statements, Interface, Comments);
+Function Module(Decls, Auto, Statements, Interface, Comments)
+	Return Struct("Module",
+		"Decls"     // array (one of #Declarations)
+		"Auto"      // array (Object)
+		"Body"      // array (one of #Statements)
+		"Interface" // array (Object)
+		"Comments"  // map[number] (string)
+	, Decls, Auto, Statements, Interface, Comments);
 EndFunction // Module()
 
 #Region Scope
 
 Function Scope(Outer)
 	Return New Structure(
-		"Outer,"    // structure (Scope)
-		"Objects,"  // structure as map[string](Object)
-		"AutoVars," // array (Object)
+		"Outer,"   // undefined, structure (Scope)
+		"Objects," // structure as map[string] (Object)
+		"Auto,"    // array (Object)
 	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
 Function Unknown(Name)
-	Return Structure("Unknown",
+	Return Struct("Unknown",
 		"Name" // string
 	, Name);
 EndFunction // Unknown()
 
 Function Func(Name, Directive, Params, Exported)
-	Return Structure("Func",
+	Return Struct("Func",
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Params" // array (Parameter)
@@ -481,7 +483,7 @@ Function Func(Name, Directive, Params, Exported)
 EndFunction // Func()
 
 Function Proc(Name, Directive, Params, Exported)
-	Return Structure("Proc",
+	Return Struct("Proc",
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Params" // array (Parameter)
@@ -490,7 +492,7 @@ Function Proc(Name, Directive, Params, Exported)
 EndFunction // Proc()
 
 Function VarM(Name, Directive, Exported)
-	Return Structure("VarM",
+	Return Struct("VarM",
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Export" // boolean
@@ -498,14 +500,14 @@ Function VarM(Name, Directive, Exported)
 EndFunction // VarM()
 
 Function VarL(Name, Auto = False)
-	Return Structure("VarL",
+	Return Struct("VarL",
 		"Name" // string
 		"Auto" // boolean
 	, Name, Auto);
 EndFunction // VarL()
 
 Function Param(Name, ByVal, Value = Undefined)
-	Return Structure("Param",
+	Return Struct("Param",
 		"Name"  // string
 		"ByVal" // boolean
 		"Value" // structure (UnaryExpr, BasicLitExpr)
@@ -517,55 +519,55 @@ EndFunction // Param()
 #Region Declarations
 
 Function ModVarsDecl(VarList, Place = Undefined)
-	Return Structure("ModVarsDecl",
+	Return Struct("ModVarsDecl",
 		"List"  // array (VarM)
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, VarList, Place);
 EndFunction // ModVarsDecl()
 
 Function VarsDecl(VarList, Place = Undefined)
-	Return Structure("VarsDecl",
+	Return Struct("VarsDecl",
 		"List"  // array (VarL)
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, VarList, Place);
 EndFunction // VarsDecl()
 
-Function ProcDecl(Object, Decls, AutoVars, Body, Place = Undefined)
-	Return Structure("ProcDecl",
-		"Object"   // structure (Object)
-		"Decls"    // array (one of declarations)
-		"AutoVars" // array (Object)
-		"Body"     // array (one of statements)
-		"Place"    // undefined or structure (Place)
-	, Object, Decls, AutoVars, Body, Place);
+Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
+	Return Struct("ProcDecl",
+		"Object" // structure (Proc)
+		"Decls"  // array (one of #Declarations)
+		"Auto"   // array (Object)
+		"Body"   // array (one of #Statements)
+		"Place"  // undefined, structure (Place)
+	, Object, Decls, Auto, Body, Place);
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Decls, AutoVars, Body, Place = Undefined)
-	Return Structure("FuncDecl",
-		"Object"   // structure (Object)
-		"Decls"    // array (one of declarations)
-		"AutoVars" // array (Object)
-		"Body"     // array (one of statements)
-		"Place"    // undefined or structure (Place)
-	, Object, Decls, AutoVars, Body, Place);
+Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
+	Return Struct("FuncDecl",
+		"Object" // structure (Func)
+		"Decls"  // array (one of #Declarations)
+		"Auto"   // array (VarL)
+		"Body"   // array (one of #Statements)
+		"Place"  // undefined, structure (Place)
+	, Object, Decls, Auto, Body, Place);
 EndFunction // FuncDecl()
 
 Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Structure("PrepIfDecl",
-		"Cond"  // structure (one of expressions)
-		"Then"  // array (one of declarations)
-		"ElsIf" // undefined or array (PrepIfDecl)
-		"Else"  // undefined or array (one of declarations)
-		"Place" // undefined or structure (Place)
+	Return Struct("PrepIfDecl",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Declarations)
+		"ElsIf" // undefined, array (PrepIfDecl)
+		"Else"  // undefined, array (one of #Declarations)
+		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfDecl()
 
 Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
-	Return Structure("PrepRegionDecl",
-		"Name"  // structure (one of expressions)
-		"Decls" // array (one of declarations)
-		"Body"  // array (one of statements)
-		"Place" // undefined or structure (Place)
+	Return Struct("PrepRegionDecl",
+		"Name"  // structure (one of #Expressions)
+		"Decls" // array (one of #Declarations)
+		"Body"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, Name, Decls, Body, Place);
 EndFunction // PrepRegionDecl()
 
@@ -574,82 +576,82 @@ EndFunction // PrepRegionDecl()
 #Region Expressions
 
 Function BasicLitExpr(Kind, Value, Place = Undefined)
-	Return Structure("BasicLitExpr",
+	Return Struct("BasicLitExpr",
 		"Kind"  // string (one of Tokens)
-		"Value" // one of basic types
-		"Place" // undefined or structure (Place)
+		"Value" // undefined, string, number, boolean, date, null
+		"Place" // undefined, structure (Place)
 	, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
 Function Selector(Kind, Value, Place = Undefined)
-	Return Structure("Selector",
+	Return Struct("Selector",
 		"Kind"  // string (one of SelectorKinds)
-		"Value" // string or array (one of expressions)
-		"Place" // undefined or structure (Place)
+		"Value" // string, array (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Kind, Value, Place);
 EndFunction // Selector()
 
 Function DesigExpr(Object, Selectors, Call, Place = Undefined)
-	Return Structure("DesigExpr",
+	Return Struct("DesigExpr",
 		"Object" // structure (Object)
 		"Select" // array (Selector)
 		"Call"   // boolean
-		"Place"  // undefined or structure (Place)
+		"Place"  // undefined, structure (Place)
 	, Object, Selectors, Call, Place);
 EndFunction // DesigExpr()
 
 Function UnaryExpr(Operator, Operand, Place = Undefined)
-	Return Structure("UnaryExpr",
+	Return Struct("UnaryExpr",
 		"Operator" // string (one of Tokens)
-		"Operand"  // structure (one of expressions)
-		"Place"    // undefined or structure (Place)
+		"Operand"  // structure (one of #Expressions)
+		"Place"    // undefined, structure (Place)
 	, Operator, Operand, Place);
 EndFunction // UnaryExpr()
 
 Function BinaryExpr(Left, Operator, Right, Place = Undefined)
-	Return Structure("BinaryExpr",
-		"Left"     // structure (one of expressions)
+	Return Struct("BinaryExpr",
+		"Left"     // structure (one of #Expressions)
 		"Operator" // string (one of Tokens)
-		"Right"    // structure (one of expressions)
-		"Place"    // undefined or structure (Place)
+		"Right"    // structure (one of #Expressions)
+		"Place"    // undefined, structure (Place)
 	, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
 Function NewExpr(Constr, Place = Undefined)
-	Return Structure("NewExpr",
-		"Constr" // structure (DesigExpr) or array (one of expressions)
-		"Place"  // undefined or structure (Place)
+	Return Struct("NewExpr",
+		"Constr" // structure (DesigExpr) or array (one of #Expressions)
+		"Place"  // undefined, structure (Place)
 	, Constr, Place);
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place = Undefined)
-	Return Structure("TernaryExpr",
-		"Cond"   // structure (one of expressions)
-		"Then"   // structure (one of expressions)
-		"Else"   // structure (one of expressions)
+	Return Struct("TernaryExpr",
+		"Cond"   // structure (one of #Expressions)
+		"Then"   // structure (one of #Expressions)
+		"Else"   // structure (one of #Expressions)
 		"Select" // array (Selector)
-		"Place"  // undefined or structure (Place)
+		"Place"  // undefined, structure (Place)
 	, Cond, ThenPart, ElsePart, Selectors, Place);
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
-	Return Structure("ParenExpr",
-		"Expr"  // structure (one of expressions)
-		"Place" // undefined or structure (Place)
+	Return Struct("ParenExpr",
+		"Expr"  // structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ParenExpr()
 
 Function NotExpr(Expr, Place = Undefined)
-	Return Structure("NotExpr",
-		"Expr"  // structure (one of expressions)
-		"Place" // undefined or structure (Place)
+	Return Struct("NotExpr",
+		"Expr"  // structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // NotExpr()
 
 Function StringExpr(ExprList, Place = Undefined)
-	Return Structure("StringExpr",
+	Return Struct("StringExpr",
 		"List"  // array (BasicLitExpr)
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, ExprList, Place);
 EndFunction // StringExpr()
 
@@ -658,127 +660,127 @@ EndFunction // StringExpr()
 #Region Statements
 
 Function AssignStmt(Left, Right, Place = Undefined)
-	Return Structure("AssignStmt",
+	Return Struct("AssignStmt",
 		"Left"  // structure (DesigExpr)
-		"Right" // structure (one of expressions)
-		"Place" // undefined or structure (Place)
+		"Right" // structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Left, Right, Place);
 EndFunction // AssignStmt()
 
 Function ReturnStmt(Expr = Undefined, Place = Undefined)
-	Return Structure("ReturnStmt",
-		"Expr"  // undefined or structure (one of expressions)
-		"Place" // undefined or structure (Place)
+	Return Struct("ReturnStmt",
+		"Expr"  // undefined, structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ReturnStmt()
 
 Function BreakStmt(Place = Undefined)
-	Return Structure("BreakStmt",
-		"Place" // undefined or structure (Place)
+	Return Struct("BreakStmt",
+		"Place" // undefined, structure (Place)
 	, Place);
 EndFunction // BreakStmt()
 
 Function ContinueStmt(Place = Undefined)
-	Return Structure("ContinueStmt"
-		"Place" // undefined or structure (Place)
+	Return Struct("ContinueStmt"
+		"Place" // undefined, structure (Place)
 	, Place);
 EndFunction // ContinueStmt()
 
 Function RaiseStmt(Expr = Undefined, Place = Undefined)
-	Return Structure("RaiseStmt",
-		"Expr"  // undefined or structure (one of expressions)
-		"Place" // undefined or structure (Place)
+	Return Struct("RaiseStmt",
+		"Expr"  // undefined, structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // RaiseStmt()
 
 Function ExecuteStmt(Expr, Place = Undefined)
-	Return Structure("ExecuteStmt",
-		"Expr"  // structure (one of expressions)
-		"Place" // undefined or structure (Place)
+	Return Struct("ExecuteStmt",
+		"Expr"  // structure (one of #Expressions)
+		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ExecuteStmt()
 
 Function CallStmt(DesigExpr, Place = Undefined)
-	Return Structure("CallStmt",
+	Return Struct("CallStmt",
 		"Desig" // structure (DesigExpr)
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, DesigExpr, Place);
 EndFunction // CallStmt()
 
 Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Structure("IfStmt",
-		"Cond"  // structure (one of expressions)
-		"Then"  // array (one of statements)
-		"ElsIf" // undefined or array (IfStmt)
-		"Else"  // undefined or array (one of statements)
-		"Place" // undefined or structure (Place)
+	Return Struct("IfStmt",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Statements)
+		"ElsIf" // undefined, array (IfStmt)
+		"Else"  // undefined, array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Structure("PrepIfStmt",
-		"Cond"  // structure (one of expressions)
-		"Then"  // array (one of statements)
-		"ElsIf" // undefined or array (PrepIfStmt)
-		"Else"  // undefined or array (one of statements)
-		"Place" // undefined or structure (Place)
+	Return Struct("PrepIfStmt",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Statements)
+		"ElsIf" // undefined, array (PrepIfStmt)
+		"Else"  // undefined, array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfStmt()
 
 Function WhileStmt(Cond, Statements, Place = Undefined)
-	Return Structure("WhileStmt",
-		"Cond"  // structure (one of expressions)
-		"Body"  // array (one of statements)
-		"Place" // undefined or structure (Place)
+	Return Struct("WhileStmt",
+		"Cond"  // structure (one of #Expressions)
+		"Body"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, Cond, Statements, Place);
 EndFunction // WhileStmt()
 
 Function PrepRegionStmt(Name, Statements, Place = Undefined)
-	Return Structure("PrepRegionStmt",
-		"Name"  // structure (one of expressions)
-		"Body"  // array (one of statements)
-		"Place" // undefined or structure (Place)
+	Return Struct("PrepRegionStmt",
+		"Name"  // structure (one of #Expressions)
+		"Body"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, Name, Statements, Place);
 EndFunction // PrepRegionStmt()
 
 Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
-	Return Structure("ForStmt",
+	Return Struct("ForStmt",
 		"Desig" // structure (DesigExpr)
-		"From"  // structure (one of expressions)
-		"To"    // structure (one of expressions)
-		"Body"  // array (one of statements)
-		"Place" // undefined or structure (Place)
+		"From"  // structure (one of #Expressions)
+		"To"    // structure (one of #Expressions)
+		"Body"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, DesigExpr, From, Until, Statements, Place);
 EndFunction // ForStmt()
 
 Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
-	Return Structure("ForEachStmt",
+	Return Struct("ForEachStmt",
 		"Desig" // structure (DesigExpr)
-		"In"    // structure (one of expressions)
-		"Body"  // array (one of statements)
-		"Place" // undefined or structure (Place)
+		"In"    // structure (one of #Expressions)
+		"Body"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
 	, DesigExpr, Collection, Statements, Place);
 EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart, Place = Undefined)
-	Return Structure("TryStmt",
-		"Try"    // array (one of statements)
-		"Except" // array (one of statements)
-		"Place"  // undefined or structure (Place)
+	Return Struct("TryStmt",
+		"Try"    // array (one of #Statements)
+		"Except" // array (one of #Statements)
+		"Place"  // undefined, structure (Place)
 	, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
 
 Function GotoStmt(Label, Place = Undefined)
-	Return Structure("GotoStmt",
+	Return Struct("GotoStmt",
 		"Label" // string
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, Label, Place);
 EndFunction // GotoStmt()
 
 Function LabelStmt(Label, Place = Undefined)
-	Return Structure("LabelStmt",
+	Return Struct("LabelStmt",
 		"Label" // string
-		"Place" // undefined or structure (Place)
+		"Place" // undefined, structure (Place)
 	, Label, Place);
 EndFunction // LabelStmt()
 
@@ -798,16 +800,16 @@ Function Parser(Source) Export
 		"PrevPos,"   // number
 		"Tok,"       // string (one of Tokens)
 		"Lit,"       // string
-		"Val,"       // number, string, date, true, false, undefined
+		"Val,"       // number, string, date, boolean, undefined, null
 		"Scope,"     // structure (Scope)
-		"Vars,"      // structure as map[string](Object)
-		"Methods,"   // structure as map[string](Object)
+		"Vars,"      // structure as map[string] (VarM, VarL)
+		"Methods,"   // structure as map[string] (Func, Proc)
 		"Module,"    // structure (Module)
-		"Unknown,"   // structure as map[string](Object)
+		"Unknown,"   // structure as map[string] (Unknown)
 		"IsFunc,"    // boolean
 		"Directive," // string (one of Directives)
 		"Interface," // array (Object)
-		"Comments,"  // map[number](string)
+		"Comments,"  // map[number] (string)
 	);
 
 	Parser.Scanner = Scanner(Source);
@@ -878,15 +880,15 @@ Function CloseScope(Parser)
 EndFunction // CloseScope()
 
 Function ParseModule(Parser) Export
-	Var Decls, AutoVars, VarObj, Statements;
+	Var Decls, Auto, VarObj, Statements;
 	Next(Parser);
 	Decls = ParseModDecls(Parser);
 	Statements = ParseStatements(Parser);
-	AutoVars = New Array;
-	For Each VarObj In Parser.Scope.AutoVars Do
-		AutoVars.Add(VarObj);
+	Auto = New Array;
+	For Each VarObj In Parser.Scope.Auto Do
+		Auto.Add(VarObj);
 	EndDo;
-	Parser.Module = Module(Decls, AutoVars, Statements, Parser.Interface, Parser.Comments);
+	Parser.Module = Module(Decls, Auto, Statements, Parser.Interface, Parser.Comments);
 	If Verbose Then
 		For Each Item In Parser.Unknown Do
 			Message(StrTemplate("Undeclared method `%1`", Item.Key));
@@ -1102,7 +1104,7 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 		If AllowNewVar Then
 			Object = VarL(Name, True);
 			Parser.Vars.Insert(Name, Object);
-			Parser.Scope.AutoVars.Add(Object);
+			Parser.Scope.Auto.Add(Object);
 		Else
 			Object = Unknown(Name);
 			If Verbose Then
@@ -1356,7 +1358,7 @@ Function ParseVarL(Parser)
 EndFunction // ParseVarL()
 
 Function ParseFuncDecl(Parser)
-	Var Object, Name, Decls, ParamList, Exported, Statements, AutoVars, VarObj, Pos, Line;
+	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Exported = False;
@@ -1390,17 +1392,17 @@ Function ParseFuncDecl(Parser)
 	Statements = ParseStatements(Parser);
 	Parser.IsFunc = False;
 	Expect(Parser, Tokens.EndFunction);
-	AutoVars = New Array;
-	For Each VarObj In Parser.Scope.AutoVars Do
-		AutoVars.Add(VarObj);
+	Auto = New Array;
+	For Each VarObj In Parser.Scope.Auto Do
+		Auto.Add(VarObj);
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return FuncDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
+	Return FuncDecl(Object, Decls, Auto, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseFuncDecl()
 
 Function ParseProcDecl(Parser)
-	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Statements, Pos, Line;
+	Var Object, Name, Decls, ParamList, Exported, Auto, VarObj, Statements, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Exported = False;
@@ -1432,13 +1434,13 @@ Function ParseProcDecl(Parser)
 	Decls = ParseVarDecls(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndProcedure);
-	AutoVars = New Array;
-	For Each VarObj In Parser.Scope.AutoVars Do
-		AutoVars.Add(VarObj);
+	Auto = New Array;
+	For Each VarObj In Parser.Scope.Auto Do
+		Auto.Add(VarObj);
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return ProcDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
+	Return ProcDecl(Object, Decls, Auto, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseProcDecl()
 
 Function ParseParamList(Parser)
@@ -1793,13 +1795,17 @@ EndFunction // ParsePrepRegionStmt()
 
 #Region Auxiliary
 
-Function Structure(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, Value3 = Undefined, Value4 = Undefined, Value5 = Undefined, Value6 = Undefined)
+Function Struct(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, Value3 = Undefined, Value4 = Undefined, Value5 = Undefined, Value6 = Undefined)
 	Var Keys;
-	If Not StructureKeysCache.Property(Type, Keys) Then
+	If Not StructKeysCache.Property(Type, Keys) Then
 		Keys = "Type," + StrReplace(Properties, Chars.LF, ",");
+		If StrOccurrenceCount(Keys, ",") > 5 Then
+			Raise "call in violation of protocol"; 
+		EndIf;
+		StructKeysCache.Insert(Type, Keys);
 	EndIf;
 	Return New Structure(Keys, Type, Value1, Value2, Value3, Value4, Value5, Value6);
-EndFunction // Structure()
+EndFunction // Struct()
 
 Function Place(Parser, Pos = Undefined, Line = Undefined)
 	Var Place, Len;
@@ -1836,6 +1842,8 @@ Function Value(Tok, Lit)
 		Return True;
 	ElsIf Tok = Tokens.False Then
 		Return False;
+	ElsIf Tok = Tokens.Null Then
+		Return Null;
 	EndIf;
 	Return Undefined;
 EndFunction // Value()
