@@ -1,16 +1,17 @@
 ﻿
 #Region Constants
 
-Var Keywords;                  // enum
-Var Tokens;                    // enum
-Var SelectorKinds;             // enum
-Var Directives;                // enum
-Var PrepInstructions;          // enum
-Var UnaryOperators;            // array (one of Tokens)
-Var BasicLiteralsExceptString; // array (one of Tokens)
-Var RelationalOperators;       // array (one of Tokens)
-Var InitialTokensOfExpression; // array (one of Tokens)
-Var EmptyArray;                // array
+Var Keywords;         // enum
+Var Tokens;           // enum
+Var SelectorKinds;    // enum
+Var Directives;       // enum
+Var PrepInstructions; // enum
+Var BasicLitNoString; // array (one of Tokens)
+Var RelOperators;     // array (one of Tokens)
+Var AddOperators;     // array (one of Tokens)
+Var MulOperators;     // array (one of Tokens)
+Var InitOfExpression; // array (one of Tokens)
+Var EmptyArray;       // array
 
 #EndRegion // Constants
 
@@ -28,40 +29,45 @@ Procedure Init() Export
 
 	InitEnums();
 
-	UnaryOperators = New Array;
-	UnaryOperators.Add(Tokens.Add);
-	UnaryOperators.Add(Tokens.Sub);
+	BasicLitNoString = New Array;
+	BasicLitNoString.Add(Tokens.Number);
+	BasicLitNoString.Add(Tokens.DateTime);
+	BasicLitNoString.Add(Tokens.True);
+	BasicLitNoString.Add(Tokens.False);
+	BasicLitNoString.Add(Tokens.Undefined);
 
-	BasicLiteralsExceptString = New Array;
-	BasicLiteralsExceptString.Add(Tokens.Number);
-	BasicLiteralsExceptString.Add(Tokens.DateTime);
-	BasicLiteralsExceptString.Add(Tokens.True);
-	BasicLiteralsExceptString.Add(Tokens.False);
-	BasicLiteralsExceptString.Add(Tokens.Undefined);
-
-	RelationalOperators = New Array;
-	RelationalOperators.Add(Tokens.Eql);
-	RelationalOperators.Add(Tokens.Neq);
-	RelationalOperators.Add(Tokens.Lss);
-	RelationalOperators.Add(Tokens.Gtr);
-	RelationalOperators.Add(Tokens.Leq);
-	RelationalOperators.Add(Tokens.Geq);
-
-	InitialTokensOfExpression = New Array;
-	InitialTokensOfExpression.Add(Tokens.Add);
-	InitialTokensOfExpression.Add(Tokens.Sub);
-	InitialTokensOfExpression.Add(Tokens.Not);
-	InitialTokensOfExpression.Add(Tokens.Ident);
-	InitialTokensOfExpression.Add(Tokens.Lparen);
-	InitialTokensOfExpression.Add(Tokens.Number);
-	InitialTokensOfExpression.Add(Tokens.String);
-	InitialTokensOfExpression.Add(Tokens.StringBeg);
-	InitialTokensOfExpression.Add(Tokens.DateTime);
-	InitialTokensOfExpression.Add(Tokens.Ternary);
-	InitialTokensOfExpression.Add(Tokens.New);
-	InitialTokensOfExpression.Add(Tokens.True);
-	InitialTokensOfExpression.Add(Tokens.False);
-	InitialTokensOfExpression.Add(Tokens.Undefined);
+	RelOperators = New Array;
+	RelOperators.Add(Tokens.Eql);
+	RelOperators.Add(Tokens.Neq);
+	RelOperators.Add(Tokens.Lss);
+	RelOperators.Add(Tokens.Gtr);
+	RelOperators.Add(Tokens.Leq);
+	RelOperators.Add(Tokens.Geq);
+	
+	AddOperators = New Array;
+	AddOperators.Add(Tokens.Add);
+	AddOperators.Add(Tokens.Sub);
+	
+	MulOperators = New Array;
+	MulOperators.Add(Tokens.Mul);
+	MulOperators.Add(Tokens.Div);
+	MulOperators.Add(Tokens.Mod);
+	
+	InitOfExpression = New Array;
+	InitOfExpression.Add(Tokens.Add);
+	InitOfExpression.Add(Tokens.Sub);
+	InitOfExpression.Add(Tokens.Not);
+	InitOfExpression.Add(Tokens.Ident);
+	InitOfExpression.Add(Tokens.Lparen);
+	InitOfExpression.Add(Tokens.Number);
+	InitOfExpression.Add(Tokens.String);
+	InitOfExpression.Add(Tokens.StringBeg);
+	InitOfExpression.Add(Tokens.DateTime);
+	InitOfExpression.Add(Tokens.Ternary);
+	InitOfExpression.Add(Tokens.New);
+	InitOfExpression.Add(Tokens.True);
+	InitOfExpression.Add(Tokens.False);
+	InitOfExpression.Add(Tokens.Undefined);
 
 	EmptyArray = New Array;
 
@@ -872,7 +878,7 @@ Function CloseScope(Parser)
 EndFunction // CloseScope()
 
 Function ParseModule(Parser) Export
-	Var Decls, AutoVars, Statements;
+	Var Decls, AutoVars, VarObj, Statements;
 	Next(Parser);
 	Decls = ParseModDecls(Parser);
 	Statements = ParseStatements(Parser);
@@ -935,7 +941,7 @@ Function ParseRelExpr(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Expr = ParseAddExpr(Parser);
-	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
+	While RelOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
 		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser), Place(Parser, Pos, Line));
@@ -948,7 +954,7 @@ Function ParseAddExpr(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Expr = ParseMulExpr(Parser);
-	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
+	While AddOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
 		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser), Place(Parser, Pos, Line));
@@ -961,7 +967,7 @@ Function ParseMulExpr(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Expr = ParseUnaryExpr(Parser);
-	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
+	While MulOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
 		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser), Place(Parser, Pos, Line));
@@ -974,7 +980,7 @@ Function ParseUnaryExpr(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Operator = Parser.Tok;
-	If UnaryOperators.Find(Parser.Tok) <> Undefined Then
+	If AddOperators.Find(Parser.Tok) <> Undefined Then
 		Next(Parser);
 		Expr = UnaryExpr(Operator, ParseOperand(Parser), Place(Parser, Pos, Line));
 	ElsIf Parser.Tok = Tokens.Eof Then
@@ -990,7 +996,7 @@ Function ParseOperand(Parser)
 	Tok = Parser.Tok;
 	If Tok = Tokens.String Or Tok = Tokens.StringBeg Then
 		Operand = ParseStringExpr(Parser);
-	ElsIf BasicLiteralsExceptString.Find(Tok) <> Undefined Then
+	ElsIf BasicLitNoString.Find(Tok) <> Undefined Then
 		Operand = BasicLitExpr(Tok, Parser.Val, Place(Parser));
 		Next(Parser);
 	ElsIf Tok = Tokens.Ident Then
@@ -1150,7 +1156,7 @@ Function ParseExprList(Parser, HeadExpr = Undefined)
 	EndIf;
 	ExprList = New Array;
 	ExprList.Add(HeadExpr);
-	While Parser.Tok = Tokens.Comma And InitialTokensOfExpression.Find(Next(Parser)) <> Undefined Do
+	While Parser.Tok = Tokens.Comma And InitOfExpression.Find(Next(Parser)) <> Undefined Do
 		ExprList.Add(ParseExpression(Parser));
 	EndDo;
 	Return ExprList;
@@ -1161,7 +1167,7 @@ Function ParseArguments(Parser)
 	ExprList = New Array;
 	ExpectExpression = True;
 	While ExpectExpression Do
-		If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
+		If InitOfExpression.Find(Parser.Tok) <> Undefined Then
 			ExprList.Add(ParseExpression(Parser));
 		Else
 			ExprList.Add(Undefined);
@@ -1176,7 +1182,7 @@ Function ParseArguments(Parser)
 EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
-	Var Cond, ThenPart, ElsePart, Selectors, Pos, Line;
+	Var Cond, ThenPart, ElsePart, Selectors, Selector, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Next(Parser);
@@ -1350,7 +1356,7 @@ Function ParseVarL(Parser)
 EndFunction // ParseVarL()
 
 Function ParseFuncDecl(Parser)
-	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Pos, Line;
+	Var Object, Name, Decls, ParamList, Exported, Statements, AutoVars, VarObj, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	Exported = False;
@@ -1596,7 +1602,7 @@ EndFunction // ParseStmt()
 Function ParseRaiseStmt(Parser)
 	Var Tok, Expr;
 	Next(Parser);
-	If InitialTokensOfExpression.Find(Parser.Tok) <> Undefined Then
+	If InitOfExpression.Find(Parser.Tok) <> Undefined Then
 		Expr = ParseExpression(Parser);
 	EndIf;
 	Return RaiseStmt(Expr);
