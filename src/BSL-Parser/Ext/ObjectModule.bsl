@@ -3,10 +3,9 @@
 
 Var Keywords;                  // enum
 Var Tokens;                    // enum
-Var ObjectKinds;               // enum
 Var SelectorKinds;             // enum
 Var Directives;                // enum
-Var PreprocInstructions;       // enum
+Var PrepInstructions;          // enum
 Var UnaryOperators;            // array (one of Tokens)
 Var BasicLiteralsExceptString; // array (one of Tokens)
 Var RelationalOperators;       // array (one of Tokens)
@@ -15,9 +14,17 @@ Var EmptyArray;                // array
 
 #EndRegion // Constants
 
+#Region Cache
+
+Var StructureKeysCache; // structure as map[string](string)
+
+#EndRegion // Cache
+
 #Region Init
 
 Procedure Init() Export
+
+	StructureKeysCache = New Structure;
 
 	InitEnums();
 
@@ -63,10 +70,9 @@ EndProcedure // Init()
 Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
-	ObjectKinds = ObjectKinds();
 	SelectorKinds = SelectorKinds();
 	Directives = Directives();
-	PreprocInstructions = PreprocInstructions();
+	PrepInstructions = PrepInstructions();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -127,21 +133,6 @@ Function Tokens(Keywords = Undefined) Export
 	Return Tokens;
 EndFunction // Tokens()
 
-Function ObjectKinds() Export
-	Var ObjectKinds;
-
-	ObjectKinds = Enum(New Structure,
-		"Variable,"
-		"Parameter,"
-		"Procedure,"
-		"Function,"
-		"Constructor,"
-		"Unknown,"
-	);
-
-	Return ObjectKinds;
-EndFunction // ObjectKinds()
-
 Function SelectorKinds() Export
 	Var SelectorKinds;
 
@@ -168,10 +159,10 @@ Function Directives() Export
 	Return Directives;
 EndFunction // Directives()
 
-Function PreprocInstructions() Export
-	Var PreprocInstructions;
+Function PrepInstructions() Export
+	Var PrepInstructions;
 
-	PreprocInstructions = Enum(New Structure,
+	PrepInstructions = Enum(New Structure,
 		"If.Если,"
 		"ElsIf.ИначеЕсли,"
 		"Else.Иначе,"
@@ -180,8 +171,8 @@ Function PreprocInstructions() Export
 		"EndRegion.КонецОбласти,"
 	);
 
-	Return PreprocInstructions;
-EndFunction // PreprocInstructions()
+	Return PrepInstructions;
+EndFunction // PrepInstructions()
 
 Function Enum(Structure, Keys)
 	Var ItemList, Value;
@@ -325,7 +316,7 @@ Function Scan(Scanner) Export
 		NextChar(Scanner);
 		SkipWhitespace(Scanner);
 		Lit = ScanIdentifier(Scanner);
-		If PreprocInstructions.Property(Lit, Tok) Then
+		If PrepInstructions.Property(Lit, Tok) Then
 			Tok = "_" + Tok;
 		Else
 			Error(Scanner, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
@@ -449,297 +440,195 @@ EndFunction // ScanDateTime()
 #Region AbstractSyntaxTree
 
 Function Module(Decls, AutoVars, Statements, Interface, Comments)
-	Var Module;
-
-	Module = New Structure(
+	Return Structure("Module",
 		"Decls,"      // array (one of declarations)
 		"AutoVars,"   // array (Object)
 		"Statements," // array (one of statements)
 		"Interface,"  // array (Object)
 		"Comments,"   // map[number](string)
-	,
-	Decls, AutoVars, Statements, Interface, Comments);
-
-	Return Module;
+	, Decls, AutoVars, Statements, Interface, Comments);
 EndFunction // Module()
 
 #Region Scope
 
 Function Scope(Outer)
-	Var Scope;
-
-	Scope = New Structure(
+	Return New Structure(
 		"Outer,"    // structure (Scope)
 		"Objects,"  // structure as map[string](Object)
 		"AutoVars," // array (Object)
-	,
-	Outer, New Structure, New Array);
-
-	Return Scope;
+	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
-Function Object(Kind, Name, Directive = Undefined, Exported = Undefined)
-	Var Object;
+Function Unknown(Name)
+	Return Structure("Unknown",
+		"Name" // string
+	, Name);
+EndFunction // Unknown()
 
-	Object = New Structure(
-		"Kind," // string (one of ObjectKinds)
-		"Name," // string
-	,
-	Kind, Name);
+Function Func(Name, Directive, Params, Exported)
+	Return Structure("Func",
+		"Name"   // string
+		"Dir"    // string (one of Directives)
+		"Params" // array (Parameter)
+		"Export" // boolean
+	, Name, Directive, Params, Exported);
+EndFunction // Func()
 
-	If Directive <> Undefined Then
-		Object.Insert("Directive", Directive); // string (one of Directives)
-	EndIf;
+Function Proc(Name, Directive, Params, Exported)
+	Return Structure("Proc",
+		"Name"   // string
+		"Dir"    // string (one of Directives)
+		"Params" // array (Parameter)
+		"Export" // boolean
+	, Name, Directive, Params, Exported);
+EndFunction // Proc()
 
-	If Exported <> Undefined Then
-		Object.Insert("Export", Exported); // boolean
-	EndIf;
+Function VarM(Name, Directive, Exported)
+	Return Structure("VarM",
+		"Name"   // string
+		"Dir"    // string (one of Directives)
+		"Export" // boolean
+	, Name, Directive, Exported);
+EndFunction // VarM()
 
-	Return Object;
-EndFunction // Object()
+Function VarL(Name, Auto = False)
+	Return Structure("VarL",
+		"Name" // string
+		"Auto" // boolean
+	, Name, Auto);
+EndFunction // VarL()
 
-Function Signature(Kind, Name, Directive, ParamList, Exported)
-	Var Object;
-	Object = Object(Kind, Name, Directive, Exported);
-	Object.Insert("ParamList", ParamList); // array (Object)
-	Return Object;
-EndFunction // Signature()
-
-Function Variable(Name, Directive, Exported, Auto = False)
-	Var Object;
-	Object = Object(ObjectKinds.Variable, Name, Directive, Exported);
-	Object.Insert("Auto", Auto); // boolean
-	Return Object;
-EndFunction // Variable()
-
-Function Parameter(Name, ByVal, Value = Undefined)
-	Var Object;
-	Object = Object(ObjectKinds.Parameter, Name);
-	Object.Insert("ByVal", ByVal); // boolean
-	If Value <> Undefined Then
-		Object.Insert("Value", Value); // structure (one of expressions)
-	EndIf;
-	Return Object;
-EndFunction // Parameter()
+Function Param(Name, ByVal, Value = Undefined)
+	Return Structure("Param",
+		"Name"  // string
+		"ByVal" // boolean
+		"Value" // structure (UnaryExpr, BasicLitExpr)
+	, Name, ByVal, Value);
+EndFunction // Param()
 
 #EndRegion // Scope
 
 #Region Declarations
 
-Function VarListDecl(VarList)
-	Var VarListDecl;
+Function ModVarsDecl(VarList)
+	Return Structure("ModVarsDecl",
+		"List" // array (VarM)
+	, VarList);
+EndFunction // ModVarsDecl()
 
-	VarListDecl = New Structure(
-		"NodeType," // string (type of this structure)
-		"VarList,"  // array (Object)
-	,
-	"VarListDecl", VarList);
+Function VarsDecl(VarList)
+	Return Structure("VarsDecl",
+		"List" // array (VarL)
+	, VarList);
+EndFunction // VarsDecl()
 
-	Return VarListDecl;
-EndFunction // VarListDecl()
-
-Function ProcDecl(Object, Decls, AutoVars, Statements)
-	Var ProcDecl;
-
-	ProcDecl = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"Object,"     // structure (Object)
-		"Decls,"      // array (one of declarations)
-		"AutoVars,"   // array (Object)
-		"Statements," // array (one of statements)
-	,
-	"ProcDecl", Object, Decls, AutoVars, Statements);
-
-	Return ProcDecl;
+Function ProcDecl(Object, Decls, AutoVars, Body)
+	Return Structure("ProcDecl",
+		"Object"   // structure (Object)
+		"Decls"    // array (one of declarations)
+		"AutoVars" // array (Object)
+		"Body"     // array (one of statements)
+	, Object, Decls, AutoVars, Body);
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Decls, AutoVars, Statements)
-	Var FuncDecl;
-
-	FuncDecl = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"Object,"     // structure (Object)
-		"Decls,"      // array (one of declarations)
-		"AutoVars,"   // array (Object)
-		"Statements," // array (one of statements)
-	,
-	"FuncDecl", Object, Decls, AutoVars, Statements);
-
-	Return FuncDecl;
+Function FuncDecl(Object, Decls, AutoVars, Body)
+	Return Structure("FuncDecl",
+		"Object"   // structure (Object)
+		"Decls"    // array (one of declarations)
+		"AutoVars" // array (Object)
+		"Body"     // array (one of statements)
+	, Object, Decls, AutoVars, Body);
 EndFunction // FuncDecl()
 
-Function PreprocIfDecl(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
-	Var PreprocIfDecl;
+Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+	Return Structure("PrepIfDecl",
+		"Cond"  // structure (one of expressions)
+		"Then"  // array (one of declarations)
+		"ElsIf" // undefined or array (PrepIfDecl)
+		"Else"  // undefined or array (one of declarations)
+	, Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // PrepIfDecl()
 
-	PreprocIfDecl = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"Condition," // structure (one of expressions)
-		"ThenPart,"  // array (one of declarations)
-	,
-	"PreprocIfDecl", Condition, ThenPart);
-
-	If ElsIfPart <> Undefined Then
-		PreprocIfDecl.Insert("ElsIfPart", ElsIfPart); // array (PreprocIfDecl)
-	EndIf;
-
-	If ElsePart <> Undefined Then
-		PreprocIfDecl.Insert("ElsePart", ElsePart); // array (one of declarations)
-	EndIf;
-
-	Return PreprocIfDecl;
-EndFunction // PreprocIfDecl()
-
-Function PreprocRegionDecl(Name, Decls, Statements)
-	Var PreprocRegionDecl;
-
-	PreprocRegionDecl = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"Name,"      // structure (one of expressions)
-		"Decls,"     // array (one of declarations)
-		"Statements" // array (one of statements)
-	,
-	"PreprocRegionDecl", Name, Decls, Statements);
-
-	Return PreprocRegionDecl;
-EndFunction // PreprocRegionDecl()
+Function PrepRegionDecl(Name, Decls, Body)
+	Return Structure("PrepRegionDecl",
+		"Name"  // structure (one of expressions)
+		"Decls" // array (one of declarations)
+		"Body"  // array (one of statements)
+	, Name, Decls, Body);
+EndFunction // PrepRegionDecl()
 
 #EndRegion // Declarations
 
 #Region Expressions
 
 Function BasicLitExpr(Kind, Value)
-	Var BasicLitExpr;
-
-	BasicLitExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Kind,"     // string (one of Tokens)
-		"Value,"    // one of basic types
-	,
-	"BasicLitExpr", Kind, Value);
-
-	Return BasicLitExpr;
+	Return Structure("BasicLitExpr",
+		"Kind"     // string (one of Tokens)
+		"Value"    // one of basic types
+	, Kind, Value);
 EndFunction // BasicLitExpr()
 
 Function Selector(Kind, Value)
-	Var Selector;
-
-	Selector = New Structure(
-		"Kind,"  // string (one of SelectorKinds)
-		"Value," // string or array (one of expressions)
-	,
-	Kind, Value);
-
-	Return Selector;
+	Return Structure("Selector",
+		"Kind"  // string (one of SelectorKinds)
+		"Value" // string or array (one of expressions)
+	, Kind, Value);
 EndFunction // Selector()
 
-Function DesignatorExpr(Object, Selectors, Call)
-	Var DesignatorExpr;
-
-	DesignatorExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Object,"   // structure (Object)
-		"Call,"     // boolean
-	,
-	"DesignatorExpr", Object, Call);
-
-	If Selectors.Count() > 0 Then
-		DesignatorExpr.Insert("Selectors", Selectors); // array (Selector)
-	EndIf;
-
-	Return DesignatorExpr;
-EndFunction // DesignatorExpr()
+Function DesigExpr(Object, Selectors, Call)
+	Return Structure("DesigExpr",
+		"Object"    // structure (Object)
+		"Select"    // array (Selector)
+		"Call"      // boolean
+	, Object, Selectors, Call);
+EndFunction // DesigExpr()
 
 Function UnaryExpr(Operator, Operand)
-	Var UnaryExpr;
-
-	UnaryExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Operator," // string (one of Tokens)
-		"Operand,"  // structure (one of expressions)
-	,
-	"UnaryExpr", Operator, Operand);
-
-	Return UnaryExpr;
+	Return Structure("UnaryExpr",
+		"Operator" // string (one of Tokens)
+		"Operand"  // structure (one of expressions)
+	, Operator, Operand);
 EndFunction // UnaryExpr()
 
 Function BinaryExpr(Left, Operator, Right)
-	Var BinaryExpr;
-
-	BinaryExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Left,"     // structure (one of expressions)
-		"Operator," // string (one of Tokens)
-		"Right,"    // structure (one of expressions)
-	,
-	"BinaryExpr", Left, Operator, Right);
-
-	Return BinaryExpr;
+	Return Structure("BinaryExpr",
+		"Left"     // structure (one of expressions)
+		"Operator" // string (one of Tokens)
+		"Right"    // structure (one of expressions)
+	, Left, Operator, Right);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Constructor)
-	Var NewExpr;
-
-	NewExpr = New Structure(
-		"NodeType,"    // string (type of this structure)
-		"Constructor," // structure (DesignatorExpr) or array (one of expressions)
-	,
-	"NewExpr", Constructor);
-
-	Return NewExpr;
+Function NewExpr(Constr)
+	Return Structure("NewExpr",
+		"Constr" // structure (DesigExpr) or array (one of expressions)
+	, Constr);
 EndFunction // NewExpr()
 
-Function TernaryExpr(Condition, ThenPart, ElsePart, Selectors)
-	Var TernaryExpr;
-
-	TernaryExpr = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"Condition," // structure (one of expressions)
-		"ThenPart,"  // structure (one of expressions)
-		"ElsePart"   // structure (one of expressions)
-	,
-	"TernaryExpr", Condition, ThenPart, ElsePart);
-
-	If Selectors.Count() > 0 Then
-		TernaryExpr.Insert("Selectors", Selectors); // array (Selector)
-	EndIf;
-
-	Return TernaryExpr;
+Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors)
+	Return Structure("TernaryExpr",
+		"Cond"   // structure (one of expressions)
+		"Then"   // structure (one of expressions)
+		"Else"   // structure (one of expressions)
+		"Select" // array (Selector)
+	, Cond, ThenPart, ElsePart, Selectors);
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr)
-	Var ParenExpr;
-
-	ParenExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Expr,"     // structure (one of expressions)
-	,
-	"ParenExpr", Expr);
-
-	Return ParenExpr;
+	Return Structure("ParenExpr",
+		"Expr" // structure (one of expressions)
+	, Expr);
 EndFunction // ParenExpr()
 
 Function NotExpr(Expr)
-	Var NotExpr;
-
-	NotExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Expr,"     // structure (one of expressions)
-	,
-	"NotExpr", Expr);
-
-	Return NotExpr;
+	Return Structure("NotExpr",
+		"Expr" // structure (one of expressions)
+	, Expr);
 EndFunction // NotExpr()
 
 Function StringExpr(ExprList)
-	Var StringExpr;
-
-	StringExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"ExprList," // array (BasicLitExpr)
-	,
-	"StringExpr", ExprList);
-
-	Return StringExpr;
+	Return Structure("StringExpr",
+		"List" // array (BasicLitExpr)
+	, ExprList);
 EndFunction // StringExpr()
 
 #EndRegion // Expressions
@@ -747,226 +636,110 @@ EndFunction // StringExpr()
 #Region Statements
 
 Function AssignStmt(Left, Right)
-	Var AssignStmt;
-
-	AssignStmt = New Structure(
-		"NodeType," // string (type of this structure)
-		"Left,"     // structure (DesignatorExpr)
-		"Right,"    // structure (one of expressions)
-	,
-	"AssignStmt", Left, Right);
-
-	Return AssignStmt;
+	Return Structure("AssignStmt",
+		"Left"  // structure (DesigExpr)
+		"Right" // structure (one of expressions)
+	, Left, Right);
 EndFunction // AssignStmt()
 
-Function ReturnStmt(Expr)
-	Var ReturnStmt;
-
-	ReturnStmt = New Structure(
-		"NodeType," // string (type of this structure)
-	,
-	"ReturnStmt");
-
-	If Expr <> Undefined Then
-		ReturnStmt.Insert("Expr", Expr); // structure (one of expressions)
-	EndIf;
-
-	Return ReturnStmt;
+Function ReturnStmt(Expr = Undefined)
+	Return Structure("ReturnStmt",
+		"Expr" // undefined or structure (one of expressions)
+	, Expr);
 EndFunction // ReturnStmt()
 
 Function BreakStmt()
-	Var BreakStmt;
-
-	BreakStmt = New Structure(
-		"NodeType," // string (type of this structure)
-	,
-	"BreakStmt");
-
-	Return BreakStmt;
+	Return Structure("BreakStmt");
 EndFunction // BreakStmt()
 
 Function ContinueStmt()
-	Var ContinueStmt;
-
-	ContinueStmt = New Structure(
-		"NodeType," // string (type of this structure)
-	,
-	"ContinueStmt");
-
-	Return ContinueStmt;
+	Return Structure("ContinueStmt");
 EndFunction // ContinueStmt()
 
 Function RaiseStmt(Expr = Undefined)
-	Var RaiseStmt;
-
-	RaiseStmt = New Structure(
-		"NodeType," // string (type of this structure)
-	,
-	"RaiseStmt");
-
-	If Expr <> Undefined Then
-		RaiseStmt.Insert("Expr", Expr); // structure (one of expressions)
-	EndIf;
-
-	Return RaiseStmt;
+	Return Structure("RaiseStmt",
+		"Expr" // undefined or structure (one of expressions)
+	, Expr);
 EndFunction // RaiseStmt()
 
 Function ExecuteStmt(Expr)
-	Var ExecuteStmt;
-
-	ExecuteStmt = New Structure(
-		"NodeType," // string (type of this structure)
-		"Expr,"     // structure (one of expressions)
-	,
-	"ExecuteStmt", Expr);
-
-	Return ExecuteStmt;
+	Return Structure("ExecuteStmt",
+		"Expr" // structure (one of expressions)
+	, Expr);
 EndFunction // ExecuteStmt()
 
-Function CallStmt(DesignatorExpr)
-	Var CallStmt;
-
-	CallStmt = New Structure(
-		"NodeType,"       // string (type of this structure)
-		"DesignatorExpr," // structure (DesignatorExpr)
-	,
-	"CallStmt", DesignatorExpr);
-
-	Return CallStmt;
+Function CallStmt(DesigExpr)
+	Return Structure("CallStmt",
+		"Desig" // structure (DesigExpr)
+	, DesigExpr);
 EndFunction // CallStmt()
 
-Function IfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
-	Var IfStmt;
-
-	IfStmt = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"Condition," // structure (one of expressions)
-		"ThenPart,"  // array (one of statements)
-	,
-	"IfStmt", Condition, ThenPart);
-
-	If ElsIfPart <> Undefined Then
-		IfStmt.Insert("ElsIfPart", ElsIfPart); // array (IfStmt)
-	EndIf;
-
-	If ElsePart <> Undefined Then
-		IfStmt.Insert("ElsePart", ElsePart); // array (one of statements)
-	EndIf;
-
-	Return IfStmt;
+Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+	Return Structure("IfStmt",
+		"Cond"  // structure (one of expressions)
+		"Then"  // array (one of statements)
+		"ElsIf" // undefined or array (IfStmt)
+		"Else"  // undefined or array (one of statements)
+	, Cond, ThenPart, ElsIfPart, ElsePart);
 EndFunction // IfStmt()
 
-Function PreprocIfStmt(Condition, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
-	Var PreprocIfStmt;
+Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+	Return Structure("PrepIfStmt",
+		"Cond"  // structure (one of expressions)
+		"Then"  // array (one of statements)
+		"ElsIf" // undefined or array (PrepIfStmt)
+		"Else"  // undefined or array (one of statements)
+	, Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // PrepIfStmt()
 
-	PreprocIfStmt = New Structure(
-		"NodeType,"  // string (type of this structure)
-		"Condition," // structure (one of expressions)
-		"ThenPart,"  // array (one of statements)
-	,
-	"PreprocIfStmt", Condition, ThenPart);
-
-	If ElsIfPart <> Undefined Then
-		PreprocIfStmt.Insert("ElsIfPart", ElsIfPart); // array (PreprocIfStmt)
-	EndIf;
-
-	If ElsePart <> Undefined Then
-		PreprocIfStmt.Insert("ElsePart", ElsePart); // array (one of statements)
-	EndIf;
-
-	Return PreprocIfStmt;
-EndFunction // PreprocIfStmt()
-
-Function WhileStmt(Condition, Statements)
-	Var WhileStmt;
-
-	WhileStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"Condition,"  // structure (one of expressions)
-		"Statements," // array (one of statements)
-	,
-	"WhileStmt", Condition, Statements);
-
-	Return WhileStmt;
+Function WhileStmt(Cond, Statements)
+	Return Structure("WhileStmt",
+		"Cond" // structure (one of expressions)
+		"Body" // array (one of statements)
+	, Cond, Statements);
 EndFunction // WhileStmt()
 
-Function PreprocRegionStmt(Name, Statements)
-	Var PreprocRegionStmt;
+Function PrepRegionStmt(Name, Statements)
+	Return Structure("PrepRegionStmt",
+		"Name" // structure (one of expressions)
+		"Body" // array (one of statements)
+	, Name, Statements);
+EndFunction // PrepRegionStmt()
 
-	PreprocRegionStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"Name,"       // structure (one of expressions)
-		"Statements," // array (one of statements)
-	,
-	"PreprocRegionStmt", Name, Statements);
-
-	Return PreprocRegionStmt;
-EndFunction // PreprocRegionStmt()
-
-Function ForStmt(DesignatorExpr, From, Until, Statements)
-	Var ForStmt;
-
-	ForStmt = New Structure(
-		"NodeType,"       // string (type of this structure)
-		"DesignatorExpr," // structure (DesignatorExpr)
-		"From,"           // structure (one of expressions)
-		"Until,"          // structure (one of expressions)
-		"Statements,"     // array (one of statements)
-	,
-	"ForStmt", DesignatorExpr, From, Until, Statements);
-
-	Return ForStmt;
+Function ForStmt(DesigExpr, From, Until, Statements)
+	Return Structure("ForStmt",
+		"Desig" // structure (DesigExpr)
+		"From"  // structure (one of expressions)
+		"To"    // structure (one of expressions)
+		"Body"  // array (one of statements)
+	, DesigExpr, From, Until, Statements);
 EndFunction // ForStmt()
 
-Function ForEachStmt(DesignatorExpr, Collection, Statements)
-	Var ForEachStmt;
-
-	ForEachStmt = New Structure(
-		"NodeType,"       // string (type of this structure)
-		"DesignatorExpr," // structure (DesignatorExpr)
-		"Collection,"     // structure (one of expressions)
-		"Statements,"     // array (one of statements)
-	,
-	"ForEachStmt", DesignatorExpr, Collection, Statements);
-
-	Return ForEachStmt;
+Function ForEachStmt(DesigExpr, Collection, Statements)
+	Return Structure("ForEachStmt",
+		"Desig" // structure (DesigExpr)
+		"In"    // structure (one of expressions)
+		"Body"  // array (one of statements)
+	, DesigExpr, Collection, Statements);
 EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart)
-	Var TryStmt;
-
-	TryStmt = New Structure(
-		"NodeType,"   // string (type of this structure)
-		"TryPart,"    // array (one of statements)
-		"ExceptPart," // array (one of statements)
-	,
-	"TryStmt", TryPart, ExceptPart);
-
-	Return TryStmt;
+	Return Structure("TryStmt",
+		"Try"    // array (one of statements)
+		"Except" // array (one of statements)
+	, TryPart, ExceptPart);
 EndFunction // TryStmt()
 
 Function GotoStmt(Label)
-	Var GotoStmt;
-
-	GotoStmt = New Structure(
-		"NodeType," // string (type of this structure)
-		"Label,"    // string
-	,
-	"GotoStmt", Label);
-
-	Return GotoStmt;
+	Return Structure("GotoStmt",
+		"Label" // string
+	, Label);
 EndFunction // GotoStmt()
 
 Function LabelStmt(Label)
-	Var LabelStmt;
-
-	LabelStmt = New Structure(
-		"NodeType," // string (type of this structure)
-		"Label,"    // string
-	,
-	"LabelStmt", Label);
-
-	Return LabelStmt;
+	Return Structure("LabelStmt",
+		"Label" // string
+	, Label);
 EndFunction // LabelStmt()
 
 #EndRegion // Statements
@@ -1074,7 +847,7 @@ Function ParseUnaryExpr(Parser)
 	Else
 		Expr = ParseOperand(Parser);
 	EndIf;
-	Return Locate(Expr, Parser, Pos, Line);
+	Return Place(Expr, Parser, Pos, Line);
 EndFunction // ParseUnaryExpr()
 
 Function ParseOperand(Parser)
@@ -1086,7 +859,7 @@ Function ParseOperand(Parser)
 		Operand = BasicLitExpr(Tok, Parser.Val);
 		Next(Parser);
 	ElsIf Tok = Tokens.Ident Then
-		Operand = ParseDesignatorExpr(Parser);
+		Operand = ParseDesigExpr(Parser);
 	ElsIf Tok = Tokens.Lparen Then
 		Operand = ParseParenExpr(Parser);
 	ElsIf Tok = Tokens.New Then
@@ -1129,30 +902,30 @@ Function ParseStringExpr(Parser)
 			Break;
 		EndIf;
 	EndDo;
-	Return Locate(StringExpr(ExprList), Parser, Pos, Line);
+	Return Place(StringExpr(ExprList), Parser, Pos, Line);
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr(Parser)
-	Var Tok, Constructor, Pos, Line;
+	Var Tok, Constr, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Scanner.Line;
 	Tok = Next(Parser);
 	If Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
-			Constructor = EmptyArray;
+			Constr = EmptyArray;
 		Else
-			Constructor = ParseArguments(Parser);
+			Constr = ParseArguments(Parser);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
 	Else
-		Constructor = ParseDesignatorExpr(Parser);
+		Constr = ParseDesigExpr(Parser);
 	EndIf;
-	Return Locate(NewExpr(Constructor), Parser, Pos, Line);
+	Return Place(NewExpr(Constr), Parser, Pos, Line);
 EndFunction // ParseNewExpr()
 
-Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
+Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	Var Name, Selector, Object, List, Kind, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Scanner.Line;
@@ -1168,7 +941,7 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 		If Kind = "Call" Then
 			If Not Parser.Methods.Property(Name, Object) Then
 				If Not Parser.Unknown.Property(Name, Object) Then
-					Object = Object("Unknown", Name);
+					Object = Unknown(Name);
 					Parser.Unknown.Insert(Name, Object);
 				EndIf;
 			EndIf;
@@ -1186,18 +959,18 @@ Function ParseDesignatorExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = Variable(Name, Undefined, False, True);
+			Object = VarL(Name, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.AutoVars.Add(Object);
 		Else
-			Object = Object("Unknown", Name);
+			Object = Unknown(Name);
 			If Verbose Then
 				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf;
-	Return Locate(DesignatorExpr(Object, List, Kind = SelectorKinds.Call), Parser, Pos, Line);
-EndFunction // ParseDesignatorExpr()
+	Return Place(DesigExpr(Object, List, Kind = SelectorKinds.Call), Parser, Pos, Line);
+EndFunction // ParseDesigExpr()
 
 Function ParseSelector(Parser)
 	Var Tok, Value, Selector, Pos, Line;
@@ -1232,7 +1005,7 @@ Function ParseSelector(Parser)
 		Selector = Selector(SelectorKinds.Call, Value);
 		Next(Parser);
 	EndIf;
-	Return Locate(Selector, Parser, Pos, Line);
+	Return Place(Selector, Parser, Pos, Line);
 EndFunction // ParseSelector()
 
 Function ParseExpression(Parser)
@@ -1243,7 +1016,7 @@ Function ParseExpression(Parser)
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Locate(BinaryExpr(Expr, Operator, ParseAndExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(BinaryExpr(Expr, Operator, ParseAndExpr(Parser)), Parser, Pos, Line);
 	EndDo;
 	Return Expr;
 EndFunction // ParseExpression()
@@ -1256,7 +1029,7 @@ Function ParseAndExpr(Parser)
 	While Parser.Tok = Tokens.And Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Locate(BinaryExpr(Expr, Operator, ParseNotExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(BinaryExpr(Expr, Operator, ParseNotExpr(Parser)), Parser, Pos, Line);
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
@@ -1267,7 +1040,7 @@ Function ParseNotExpr(Parser)
 	Line = Parser.Scanner.Line;
 	If Parser.Tok = Tokens.Not Then
 		Next(Parser);
-		Expr = Locate(NotExpr(ParseRelExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(NotExpr(ParseRelExpr(Parser)), Parser, Pos, Line);
 	Else
 		Expr = ParseRelExpr(Parser);
 	EndIf;
@@ -1282,7 +1055,7 @@ Function ParseRelExpr(Parser)
 	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Locate(BinaryExpr(Expr, Operator, ParseAddExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(BinaryExpr(Expr, Operator, ParseAddExpr(Parser)), Parser, Pos, Line);
 	EndDo;
 	Return Expr;
 EndFunction // ParseRelExpr()
@@ -1295,7 +1068,7 @@ Function ParseAddExpr(Parser)
 	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Locate(BinaryExpr(Expr, Operator, ParseMulExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(BinaryExpr(Expr, Operator, ParseMulExpr(Parser)), Parser, Pos, Line);
 	EndDo;
 	Return Expr;
 EndFunction // ParseAddExpr()
@@ -1308,7 +1081,7 @@ Function ParseMulExpr(Parser)
 	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Locate(BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser)), Parser, Pos, Line);
+		Expr = Place(BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser)), Parser, Pos, Line);
 	EndDo;
 	Return Expr;
 EndFunction // ParseMulExpr()
@@ -1346,13 +1119,13 @@ Function ParseArguments(Parser)
 EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
-	Var Condition, ThenPart, ElsePart, Selectors, Pos, Line;
+	Var Cond, ThenPart, ElsePart, Selectors, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Scanner.Line;
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
-	Condition = ParseExpression(Parser);
+	Cond = ParseExpression(Parser);
 	Expect(Parser, Tokens.Comma);
 	Next(Parser);
 	ThenPart = ParseExpression(Parser);
@@ -1370,7 +1143,7 @@ Function ParseTernaryExpr(Parser)
 	Else
 		Selectors = EmptyArray;
 	EndIf;
-	Return Locate(TernaryExpr(Condition, ThenPart, ElsePart, Selectors), Parser, Pos, Line);
+	Return Place(TernaryExpr(Cond, ThenPart, ElsePart, Selectors), Parser, Pos, Line);
 EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr(Parser)
@@ -1381,7 +1154,7 @@ Function ParseParenExpr(Parser)
 	Expr = ParseExpression(Parser);
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return Locate(ParenExpr(Expr), Parser, Pos, Line);
+	Return Place(ParenExpr(Expr), Parser, Pos, Line);
 EndFunction // ParseParenExpr()
 
 Function ParseFuncDecl(Parser)
@@ -1400,12 +1173,12 @@ Function ParseFuncDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
-		Object.Kind = ObjectKinds.Function;
-		Object.Insert("ParamList", ParamList);
+		Object.Type = "Func";
+		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Function, Name, Parser.Directive, ParamList, Exported);
+		Object = Func(Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1425,7 +1198,7 @@ Function ParseFuncDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(FuncDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
+	Return Place(FuncDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
 EndFunction // ParseFuncDecl()
 
 Function ParseParamList(Parser)
@@ -1463,12 +1236,12 @@ Function ParseProcDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
-		Object.Kind = ObjectKinds.Procedure;
-		Object.Insert("ParamList", ParamList);
+		Object.Type = "Proc";
+		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
 	Else
-		Object = Signature(ObjectKinds.Procedure, Name, Parser.Directive, ParamList, Exported);
+		Object = Proc(Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
 		Error(Parser.Scanner, "Method already declared", Pos, True);
@@ -1486,7 +1259,7 @@ Function ParseProcDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Locate(ProcDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
+	Return Place(ProcDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
@@ -1497,23 +1270,36 @@ Function ParseReturnStmt(Parser)
 	If Parser.IsFunc Then
 		Expr = ParseExpression(Parser);
 	EndIf;
-	Return Locate(ReturnStmt(Expr), Parser, Pos, Line);
+	Return Place(ReturnStmt(Expr), Parser, Pos, Line);
 EndFunction // ParseReturnStmt()
+
+Function ParseModVarListDecl(Parser)
+	Var VarList, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Scanner.Line;
+	VarList = New Array;
+	VarList.Add(ParseVarM(Parser));
+	While Parser.Tok = Tokens.Comma Do
+		Next(Parser);
+		VarList.Add(ParseVarM(Parser));
+	EndDo;
+	Return Place(ModVarsDecl(VarList), Parser, Pos, Line);
+EndFunction // ParseModVarListDecl()
 
 Function ParseVarListDecl(Parser)
 	Var VarList, Pos, Line;
 	Pos = Parser.Pos;
 	Line = Parser.Scanner.Line;
 	VarList = New Array;
-	VarList.Add(ParseVariable(Parser));
+	VarList.Add(ParseVarL(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVariable(Parser));
+		VarList.Add(ParseVarL(Parser));
 	EndDo;
-	Return Locate(VarListDecl(VarList), Parser, Pos, Line);
+	Return Place(VarsDecl(VarList), Parser, Pos, Line);
 EndFunction // ParseVarListDecl()
 
-Function ParseVariable(Parser)
+Function ParseVarM(Parser)
 	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1524,7 +1310,7 @@ Function ParseVariable(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = Variable(Name, Parser.Directive, Exported);
+	Object = VarM(Name, Parser.Directive, Exported);
 	If Exported Then
 		Parser.Interface.Add(Object);
 	EndIf;
@@ -1533,7 +1319,29 @@ Function ParseVariable(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseVariable()
+EndFunction // ParseVarM()
+
+Function ParseVarL(Parser)
+	Var Name, Object, Exported, Pos;
+	Pos = Parser.Pos;
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	If Next(Parser) = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	Else
+		Exported = False;
+	EndIf;
+	Object = VarL(Name);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
+	If Parser.Vars.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+	EndIf;
+	Parser.Vars.Insert(Name, Object);
+	Return Object;
+EndFunction // ParseVarL()
 
 Function ParseParameter(Parser)
 	Var Name, Object, ByVal, Pos;
@@ -1548,9 +1356,9 @@ Function ParseParameter(Parser)
 	Name = Parser.Lit;
 	If Next(Parser) = Tokens.Eql Then
 		Next(Parser);
-		Object = Parameter(Name, ByVal, ParseUnaryExpr(Parser));
+		Object = Param(Name, ByVal, ParseUnaryExpr(Parser));
 	Else
-		Object = Parameter(Name, ByVal);
+		Object = Param(Name, ByVal);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
 		Error(Parser.Scanner, "Identifier already declared", Pos, True);
@@ -1615,13 +1423,13 @@ Function ParseStmt(Parser)
 		Expect(Parser, Tokens.Colon);
 		Next(Parser);
 	ElsIf Tok = Tokens._Region Then
-		Stmt = ParsePreprocRegionStmt(Parser);
+		Stmt = ParsePrepRegionStmt(Parser);
 	ElsIf Tok = Tokens._If Then
-		Stmt = ParsePreprocIfStmt(Parser);
+		Stmt = ParsePrepIfStmt(Parser);
 	ElsIf Tok = Tokens.Semicolon Then
 		// NOP
 	EndIf;
-	Return Locate(Stmt, Parser, Pos, Line);
+	Return Place(Stmt, Parser, Pos, Line);
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
@@ -1642,7 +1450,7 @@ EndFunction // ParseExecuteStmt()
 Function ParseAssignOrCallStmt(Parser)
 	Var Left, Right, Stmt, Pos;
 	Pos = Parser.Pos;
-	Left = ParseDesignatorExpr(Parser, True);
+	Left = ParseDesigExpr(Parser, True);
 	If Left.Call Then
 		Stmt = CallStmt(Left);
 	Else
@@ -1655,10 +1463,10 @@ Function ParseAssignOrCallStmt(Parser)
 EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt(Parser)
-	Var Tok, Condition, ThenPart, ElsePart;
+	Var Tok, Cond, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen;
 	Next(Parser);
-	Condition = ParseExpression(Parser);
+	Cond = ParseExpression(Parser);
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
 	ThenPart = ParseStatements(Parser);
@@ -1681,14 +1489,14 @@ Function ParseIfStmt(Parser)
 	EndIf;
 	Expect(Parser, Tokens.EndIf);
 	Next(Parser);
-	Return IfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
+	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
 
-Function ParsePreprocIfStmt(Parser)
-	Var Tok, Condition, ThenPart, ElsePart;
+Function ParsePrepIfStmt(Parser)
+	Var Tok, Cond, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen;
 	Next(Parser);
-	Condition = ParseExpression(Parser); // todo: only logic operators
+	Cond = ParseExpression(Parser); // todo: only logic operators
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
 	ThenPart = ParseStatements(Parser);
@@ -1701,7 +1509,7 @@ Function ParsePreprocIfStmt(Parser)
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(PreprocIfStmt(ElsIfCond, ElsIfThen));
+			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1711,17 +1519,17 @@ Function ParsePreprocIfStmt(Parser)
 	EndIf;
 	Expect(Parser, Tokens._EndIf);
 	Parser.Tok = Tokens.Semicolon; // cheat code
-	Return PreprocIfStmt(Condition, ThenPart, ElsIfPart, ElsePart);
-EndFunction // ParsePreprocIfStmt()
+	Return PrepIfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePrepIfStmt()
 
-Function ParsePreprocIfDecl(Parser)
-	Var Tok, Condition, ThenPart, ElsePart;
+Function ParsePrepIfDecl(Parser)
+	Var Tok, Cond, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen;
 	Next(Parser);
-	Condition = ParseExpression(Parser); // todo: only logic operators
+	Cond = ParseExpression(Parser); // todo: only logic operators
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
-	ThenPart = ParseDecls(Parser);
+	ThenPart = ParseModuleDecls(Parser);
 	Tok = Parser.Tok;
 	If Tok = Tokens._ElsIf Then
 		ElsIfPart = New Array;
@@ -1730,21 +1538,21 @@ Function ParsePreprocIfDecl(Parser)
 			ElsIfCond = ParseExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
-			ElsIfThen = ParseDecls(Parser);
-			ElsIfPart.Add(PreprocIfDecl(ElsIfCond, ElsIfThen));
+			ElsIfThen = ParseModuleDecls(Parser);
+			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
 	If Tok = Tokens._Else Then
 		Next(Parser);
-		ElsePart = ParseDecls(Parser);
+		ElsePart = ParseModuleDecls(Parser);
 	EndIf;
 	Expect(Parser, Tokens._EndIf);
 	Next(Parser);
-	Return PreprocIfDecl(Condition, ThenPart, ElsIfPart, ElsePart);
-EndFunction // ParsePreprocIfDecl()
+	Return PrepIfDecl(Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePrepIfDecl()
 
-Function ParsePreprocRegionStmt(Parser)
+Function ParsePrepRegionStmt(Parser)
 	Var Name, Statements;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1753,21 +1561,21 @@ Function ParsePreprocRegionStmt(Parser)
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens._EndRegion);
 	Parser.Tok = Tokens.Semicolon; // cheat code
-	Return PreprocRegionStmt(Name, Statements);
-EndFunction // ParsePreprocRegionStmt()
+	Return PrepRegionStmt(Name, Statements);
+EndFunction // ParsePrepRegionStmt()
 
-Function ParsePreprocRegionDecl(Parser)
+Function ParsePrepRegionDecl(Parser)
 	Var Name, Decls, Statements, Region;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	Next(Parser);
-	Decls = ParseDecls(Parser);
+	Decls = ParseModuleDecls(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens._EndRegion);
 	Next(Parser);
-	Return PreprocRegionDecl(Name, Decls, Statements);
-EndFunction // ParsePreprocRegionDecl()
+	Return PrepRegionDecl(Name, Decls, Statements);
+EndFunction // ParsePrepRegionDecl()
 
 Function ParseTryStmt(Parser)
 	Var TryPart, ExceptPart;
@@ -1782,23 +1590,23 @@ Function ParseTryStmt(Parser)
 EndFunction // ParseTryStmt()
 
 Function ParseWhileStmt(Parser)
-	Var Condition, Statements;
+	Var Cond, Statements;
 	Next(Parser);
-	Condition = ParseExpression(Parser);
+	Cond = ParseExpression(Parser);
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
-	Return WhileStmt(Condition, Statements);
+	Return WhileStmt(Cond, Statements);
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)
-	Var DesignatorExpr, From, Until, Statements, VarPos;
+	Var DesigExpr, From, Until, Statements, VarPos;
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.Pos;
-	DesignatorExpr = ParseDesignatorExpr(Parser, True);
-	If DesignatorExpr.Call Then
+	DesigExpr = ParseDesigExpr(Parser, True);
+	If DesigExpr.Call Then
 		Error(Parser.Scanner, "Expected variable", VarPos, True);
 	EndIf;
 	Expect(Parser, Tokens.Eql);
@@ -1812,16 +1620,16 @@ Function ParseForStmt(Parser)
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
-	Return ForStmt(DesignatorExpr, From, Until, Statements);
+	Return ForStmt(DesigExpr, From, Until, Statements);
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt(Parser)
-	Var DesignatorExpr, Left, Right, Collection, Statements, VarPos;
+	Var DesigExpr, Left, Right, Collection, Statements, VarPos;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.Pos;
-	DesignatorExpr = ParseDesignatorExpr(Parser, True);
-	If DesignatorExpr.Call Then
+	DesigExpr = ParseDesigExpr(Parser, True);
+	If DesigExpr.Call Then
 		Error(Parser.Scanner, "Expected variable", VarPos, True);
 	EndIf;
 	Expect(Parser, Tokens.In);
@@ -1832,7 +1640,7 @@ Function ParseForEachStmt(Parser)
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
-	Return ForEachStmt(DesignatorExpr, Collection, Statements);
+	Return ForEachStmt(DesigExpr, Collection, Statements);
 EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt(Parser)
@@ -1848,13 +1656,26 @@ Function ParseVarDecls(Parser)
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser.Tok;
+	While Tok = Tokens.Var Do
+		Next(Parser);
+		Decls.Add(ParseVarListDecl(Parser));
+		Expect(Parser, Tokens.Semicolon);
+		Tok = Next(Parser);
+	EndDo;
+	Return Decls;
+EndFunction // ParseVarDecls()
+
+Function ParseModVarDecls(Parser)
+	Var Tok, Decls;
+	Decls = New Array;
+	Tok = Parser.Tok;
 	While Tok = Tokens.Directive Do
 		Parser.Directive = Parser.Lit;
 		Tok = Next(Parser);
 	EndDo;
 	While Tok = Tokens.Var Do
 		Next(Parser);
-		Decls.Add(ParseVarListDecl(Parser));
+		Decls.Add(ParseModVarListDecl(Parser));
 		Expect(Parser, Tokens.Semicolon);
 		Tok = Next(Parser);
 		Parser.Directive = Undefined;
@@ -1864,11 +1685,11 @@ Function ParseVarDecls(Parser)
 		EndDo;
 	EndDo;
 	Return Decls;
-EndFunction // ParseVarDecls()
+EndFunction // ParseModVarDecls()
 
-Function ParseDecls(Parser)
+Function ParseModuleDecls(Parser)
 	Var Tok, Decls;
-	Decls = ParseVarDecls(Parser);
+	Decls = ParseModVarDecls(Parser);
 	Tok = Parser.Tok;
 	While Tok <> Tokens.Eof Do
 		If Tok = Tokens.Function Then
@@ -1876,9 +1697,9 @@ Function ParseDecls(Parser)
 		ElsIf Tok = Tokens.Procedure Then
 			Decls.Add(ParseProcDecl(Parser));
 		ElsIf Tok = Tokens._Region Then
-			Decls.Add(ParsePreprocRegionDecl(Parser));
+			Decls.Add(ParsePrepRegionDecl(Parser));
 		ElsIf Tok = Tokens._If Then
-			Decls.Add(ParsePreprocIfDecl(Parser));
+			Decls.Add(ParsePrepIfDecl(Parser));
 		Else
 			Return Decls;
 		EndIf;
@@ -1890,12 +1711,12 @@ Function ParseDecls(Parser)
 		EndDo;
 	EndDo;
 	Return Decls;
-EndFunction // ParseDecls()
+EndFunction // ParseModuleDecls()
 
 Function ParseModule(Parser) Export
 	Var Decls, AutoVars, Statements;
 	Next(Parser);
-	Decls = ParseDecls(Parser);
+	Decls = ParseModuleDecls(Parser);
 	Statements = ParseStatements(Parser);
 	AutoVars = New Array;
 	For Each VarObj In Parser.Scope.AutoVars Do
@@ -1914,7 +1735,15 @@ EndFunction // ParseModule()
 
 #Region Auxiliary
 
-Function Locate(Node, Parser, Pos, Line)
+Function Structure(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, Value3 = Undefined, Value4 = Undefined, Value5 = Undefined)
+	Var Keys;
+	If Not StructureKeysCache.Property(Type, Keys) Then
+		Keys = "Type," + StrReplace(Properties, Chars.LF, ",");
+	EndIf;
+	Return New Structure(Keys, Type, Value1, Value2, Value3, Value4, Value5);
+EndFunction // Structure()
+
+Function Place(Node, Parser, Pos, Line)
 	If Node = Undefined Then
 		Return Undefined;
 	EndIf;
@@ -1927,7 +1756,7 @@ Function Locate(Node, Parser, Pos, Line)
 		Node.Insert("Str", Mid(Parser.Scanner.Source, Pos, Parser.PrevPos - Pos));
 	EndIf;
 	Return Node;
-EndFunction // Locate()
+EndFunction // Place()
 
 Function Value(Tok, Lit)
 	If Tok = Tokens.Number Then
