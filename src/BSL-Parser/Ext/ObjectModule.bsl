@@ -1918,8 +1918,8 @@ Function Locate(Node, Parser, Pos, Line)
 	If Node = Undefined Then
 		Return Undefined;
 	EndIf;
-	Node.Insert("Line", Line);
 	If Location Then
+		Node.Insert("Line", Line);
 		Node.Insert("Pos", Pos);
 		Node.Insert("Len", Parser.PrevPos - Pos);
 	EndIf;
