@@ -510,236 +510,270 @@ EndFunction // Param()
 
 #Region Declarations
 
-Function ModVarsDecl(VarList)
+Function ModVarsDecl(VarList, Place = Undefined)
 	Return Structure("ModVarsDecl",
-		"List" // array (VarM)
-	, VarList);
+		"List"  // array (VarM)
+		"Place" // undefined or structure (Place)
+	, VarList, Place);
 EndFunction // ModVarsDecl()
 
-Function VarsDecl(VarList)
+Function VarsDecl(VarList, Place = Undefined)
 	Return Structure("VarsDecl",
-		"List" // array (VarL)
-	, VarList);
+		"List"  // array (VarL)
+		"Place" // undefined or structure (Place)
+	, VarList, Place);
 EndFunction // VarsDecl()
 
-Function ProcDecl(Object, Decls, AutoVars, Body)
+Function ProcDecl(Object, Decls, AutoVars, Body, Place = Undefined)
 	Return Structure("ProcDecl",
 		"Object"   // structure (Object)
 		"Decls"    // array (one of declarations)
 		"AutoVars" // array (Object)
 		"Body"     // array (one of statements)
-	, Object, Decls, AutoVars, Body);
+		"Place"    // undefined or structure (Place)
+	, Object, Decls, AutoVars, Body, Place);
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Decls, AutoVars, Body)
+Function FuncDecl(Object, Decls, AutoVars, Body, Place = Undefined)
 	Return Structure("FuncDecl",
 		"Object"   // structure (Object)
 		"Decls"    // array (one of declarations)
 		"AutoVars" // array (Object)
 		"Body"     // array (one of statements)
-	, Object, Decls, AutoVars, Body);
+		"Place"    // undefined or structure (Place)
+	, Object, Decls, AutoVars, Body, Place);
 EndFunction // FuncDecl()
 
-Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	Return Structure("PrepIfDecl",
 		"Cond"  // structure (one of expressions)
 		"Then"  // array (one of declarations)
 		"ElsIf" // undefined or array (PrepIfDecl)
 		"Else"  // undefined or array (one of declarations)
-	, Cond, ThenPart, ElsIfPart, ElsePart);
+		"Place" // undefined or structure (Place)
+	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfDecl()
 
-Function PrepRegionDecl(Name, Decls, Body)
+Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 	Return Structure("PrepRegionDecl",
 		"Name"  // structure (one of expressions)
 		"Decls" // array (one of declarations)
 		"Body"  // array (one of statements)
-	, Name, Decls, Body);
+		"Place" // undefined or structure (Place)
+	, Name, Decls, Body, Place);
 EndFunction // PrepRegionDecl()
 
 #EndRegion // Declarations
 
 #Region Expressions
 
-Function BasicLitExpr(Kind, Value)
+Function BasicLitExpr(Kind, Value, Place = Undefined)
 	Return Structure("BasicLitExpr",
-		"Kind"     // string (one of Tokens)
-		"Value"    // one of basic types
-	, Kind, Value);
+		"Kind"  // string (one of Tokens)
+		"Value" // one of basic types
+		"Place" // undefined or structure (Place)
+	, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
-Function Selector(Kind, Value)
+Function Selector(Kind, Value, Place = Undefined)
 	Return Structure("Selector",
 		"Kind"  // string (one of SelectorKinds)
 		"Value" // string or array (one of expressions)
-	, Kind, Value);
+		"Place" // undefined or structure (Place)
+	, Kind, Value, Place);
 EndFunction // Selector()
 
-Function DesigExpr(Object, Selectors, Call)
+Function DesigExpr(Object, Selectors, Call, Place = Undefined)
 	Return Structure("DesigExpr",
-		"Object"    // structure (Object)
-		"Select"    // array (Selector)
-		"Call"      // boolean
-	, Object, Selectors, Call);
+		"Object" // structure (Object)
+		"Select" // array (Selector)
+		"Call"   // boolean
+		"Place"  // undefined or structure (Place)
+	, Object, Selectors, Call, Place);
 EndFunction // DesigExpr()
 
-Function UnaryExpr(Operator, Operand)
+Function UnaryExpr(Operator, Operand, Place = Undefined)
 	Return Structure("UnaryExpr",
 		"Operator" // string (one of Tokens)
 		"Operand"  // structure (one of expressions)
-	, Operator, Operand);
+		"Place"    // undefined or structure (Place)
+	, Operator, Operand, Place);
 EndFunction // UnaryExpr()
 
-Function BinaryExpr(Left, Operator, Right)
+Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 	Return Structure("BinaryExpr",
 		"Left"     // structure (one of expressions)
 		"Operator" // string (one of Tokens)
 		"Right"    // structure (one of expressions)
-	, Left, Operator, Right);
+		"Place"    // undefined or structure (Place)
+	, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Constr)
+Function NewExpr(Constr, Place = Undefined)
 	Return Structure("NewExpr",
 		"Constr" // structure (DesigExpr) or array (one of expressions)
-	, Constr);
+		"Place"  // undefined or structure (Place)
+	, Constr, Place);
 EndFunction // NewExpr()
 
-Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors)
+Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place = Undefined)
 	Return Structure("TernaryExpr",
 		"Cond"   // structure (one of expressions)
 		"Then"   // structure (one of expressions)
 		"Else"   // structure (one of expressions)
 		"Select" // array (Selector)
-	, Cond, ThenPart, ElsePart, Selectors);
+		"Place"  // undefined or structure (Place)
+	, Cond, ThenPart, ElsePart, Selectors, Place);
 EndFunction // TernaryExpr()
 
-Function ParenExpr(Expr)
+Function ParenExpr(Expr, Place = Undefined)
 	Return Structure("ParenExpr",
-		"Expr" // structure (one of expressions)
-	, Expr);
+		"Expr"  // structure (one of expressions)
+		"Place" // undefined or structure (Place)
+	, Expr, Place);
 EndFunction // ParenExpr()
 
-Function NotExpr(Expr)
+Function NotExpr(Expr, Place = Undefined)
 	Return Structure("NotExpr",
-		"Expr" // structure (one of expressions)
-	, Expr);
+		"Expr"  // structure (one of expressions)
+		"Place" // undefined or structure (Place)
+	, Expr, Place);
 EndFunction // NotExpr()
 
-Function StringExpr(ExprList)
+Function StringExpr(ExprList, Place = Undefined)
 	Return Structure("StringExpr",
-		"List" // array (BasicLitExpr)
-	, ExprList);
+		"List"  // array (BasicLitExpr)
+		"Place" // undefined or structure (Place)
+	, ExprList, Place);
 EndFunction // StringExpr()
 
 #EndRegion // Expressions
 
 #Region Statements
 
-Function AssignStmt(Left, Right)
+Function AssignStmt(Left, Right, Place = Undefined)
 	Return Structure("AssignStmt",
 		"Left"  // structure (DesigExpr)
 		"Right" // structure (one of expressions)
-	, Left, Right);
+		"Place" // undefined or structure (Place)
+	, Left, Right, Place);
 EndFunction // AssignStmt()
 
-Function ReturnStmt(Expr = Undefined)
+Function ReturnStmt(Expr = Undefined, Place = Undefined)
 	Return Structure("ReturnStmt",
-		"Expr" // undefined or structure (one of expressions)
-	, Expr);
+		"Expr"  // undefined or structure (one of expressions)
+		"Place" // undefined or structure (Place)
+	, Expr, Place);
 EndFunction // ReturnStmt()
 
-Function BreakStmt()
-	Return Structure("BreakStmt");
+Function BreakStmt(Place = Undefined)
+	Return Structure("BreakStmt",
+		"Place" // undefined or structure (Place)
+	, Place);
 EndFunction // BreakStmt()
 
-Function ContinueStmt()
-	Return Structure("ContinueStmt");
+Function ContinueStmt(Place = Undefined)
+	Return Structure("ContinueStmt"
+		"Place" // undefined or structure (Place)
+	, Place);
 EndFunction // ContinueStmt()
 
-Function RaiseStmt(Expr = Undefined)
+Function RaiseStmt(Expr = Undefined, Place = Undefined)
 	Return Structure("RaiseStmt",
-		"Expr" // undefined or structure (one of expressions)
-	, Expr);
+		"Expr"  // undefined or structure (one of expressions)
+		"Place" // undefined or structure (Place)
+	, Expr, Place);
 EndFunction // RaiseStmt()
 
-Function ExecuteStmt(Expr)
+Function ExecuteStmt(Expr, Place = Undefined)
 	Return Structure("ExecuteStmt",
-		"Expr" // structure (one of expressions)
-	, Expr);
+		"Expr"  // structure (one of expressions)
+		"Place" // undefined or structure (Place)
+	, Expr, Place);
 EndFunction // ExecuteStmt()
 
-Function CallStmt(DesigExpr)
+Function CallStmt(DesigExpr, Place = Undefined)
 	Return Structure("CallStmt",
 		"Desig" // structure (DesigExpr)
-	, DesigExpr);
+		"Place" // undefined or structure (Place)
+	, DesigExpr, Place);
 EndFunction // CallStmt()
 
-Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	Return Structure("IfStmt",
 		"Cond"  // structure (one of expressions)
 		"Then"  // array (one of statements)
 		"ElsIf" // undefined or array (IfStmt)
 		"Else"  // undefined or array (one of statements)
-	, Cond, ThenPart, ElsIfPart, ElsePart);
+		"Place" // undefined or structure (Place)
+	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
-Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined)
+Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	Return Structure("PrepIfStmt",
 		"Cond"  // structure (one of expressions)
 		"Then"  // array (one of statements)
 		"ElsIf" // undefined or array (PrepIfStmt)
 		"Else"  // undefined or array (one of statements)
-	, Cond, ThenPart, ElsIfPart, ElsePart);
+		"Place" // undefined or structure (Place)
+	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfStmt()
 
-Function WhileStmt(Cond, Statements)
+Function WhileStmt(Cond, Statements, Place = Undefined)
 	Return Structure("WhileStmt",
-		"Cond" // structure (one of expressions)
-		"Body" // array (one of statements)
-	, Cond, Statements);
+		"Cond"  // structure (one of expressions)
+		"Body"  // array (one of statements)
+		"Place" // undefined or structure (Place)
+	, Cond, Statements, Place);
 EndFunction // WhileStmt()
 
-Function PrepRegionStmt(Name, Statements)
+Function PrepRegionStmt(Name, Statements, Place = Undefined)
 	Return Structure("PrepRegionStmt",
-		"Name" // structure (one of expressions)
-		"Body" // array (one of statements)
-	, Name, Statements);
+		"Name"  // structure (one of expressions)
+		"Body"  // array (one of statements)
+		"Place" // undefined or structure (Place)
+	, Name, Statements, Place);
 EndFunction // PrepRegionStmt()
 
-Function ForStmt(DesigExpr, From, Until, Statements)
+Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
 	Return Structure("ForStmt",
 		"Desig" // structure (DesigExpr)
 		"From"  // structure (one of expressions)
 		"To"    // structure (one of expressions)
 		"Body"  // array (one of statements)
-	, DesigExpr, From, Until, Statements);
+		"Place" // undefined or structure (Place)
+	, DesigExpr, From, Until, Statements, Place);
 EndFunction // ForStmt()
 
-Function ForEachStmt(DesigExpr, Collection, Statements)
+Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
 	Return Structure("ForEachStmt",
 		"Desig" // structure (DesigExpr)
 		"In"    // structure (one of expressions)
 		"Body"  // array (one of statements)
-	, DesigExpr, Collection, Statements);
+		"Place" // undefined or structure (Place)
+	, DesigExpr, Collection, Statements, Place);
 EndFunction // ForEachStmt()
 
-Function TryStmt(TryPart, ExceptPart)
+Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 	Return Structure("TryStmt",
 		"Try"    // array (one of statements)
 		"Except" // array (one of statements)
-	, TryPart, ExceptPart);
+		"Place"  // undefined or structure (Place)
+	, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
 
-Function GotoStmt(Label)
+Function GotoStmt(Label, Place = Undefined)
 	Return Structure("GotoStmt",
 		"Label" // string
-	, Label);
+		"Place" // undefined or structure (Place)
+	, Label, Place);
 EndFunction // GotoStmt()
 
-Function LabelStmt(Label)
+Function LabelStmt(Label, Place = Undefined)
 	Return Structure("LabelStmt",
 		"Label" // string
-	, Label);
+		"Place" // undefined or structure (Place)
+	, Label, Place);
 EndFunction // LabelStmt()
 
 #EndRegion // Statements
@@ -753,6 +787,7 @@ Function Parser(Source) Export
 
 	Parser = New Structure(
 		"Scanner,"   // structure (Scanner)
+		"Line,"      // number
 		"Pos,"       // number
 		"PrevPos,"   // number
 		"Tok,"       // string (one of Tokens)
@@ -771,6 +806,7 @@ Function Parser(Source) Export
 
 	Parser.Scanner = Scanner(Source);
 	Parser.Pos = 0;
+	Parser.Line = 1;
 	Parser.PrevPos = 0;
 	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
@@ -790,6 +826,7 @@ Function Next(Parser)
 	Parser.PrevPos = Scanner.Pos;
 	Tok = SkipComments(Scanner, Parser.Comments);
 	Lit = Scanner.Lit;
+	Parser.Line = Scanner.Line;
 	Parser.Pos = Scanner.Pos - StrLen(Lit);
 	Parser.Tok = Tok;
 	Parser.Lit = Lit;
@@ -837,17 +874,17 @@ EndFunction // CloseScope()
 Function ParseUnaryExpr(Parser)
 	Var Operator, Expr, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Operator = Parser.Tok;
 	If UnaryOperators.Find(Parser.Tok) <> Undefined Then
 		Next(Parser);
-		Expr = UnaryExpr(Operator, ParseOperand(Parser));
+		Expr = UnaryExpr(Operator, ParseOperand(Parser), Place(Parser, Pos, Line));
 	ElsIf Parser.Tok = Tokens.Eof Then
 		Expr = Undefined;
 	Else
 		Expr = ParseOperand(Parser);
 	EndIf;
-	Return Place(Expr, Parser, Pos, Line);
+	Return Expr;
 EndFunction // ParseUnaryExpr()
 
 Function ParseOperand(Parser)
@@ -856,7 +893,7 @@ Function ParseOperand(Parser)
 	If Tok = Tokens.String Or Tok = Tokens.StringBeg Then
 		Operand = ParseStringExpr(Parser);
 	ElsIf BasicLiteralsExceptString.Find(Tok) <> Undefined Then
-		Operand = BasicLitExpr(Tok, Parser.Val);
+		Operand = BasicLitExpr(Tok, Parser.Val, Place(Parser));
 		Next(Parser);
 	ElsIf Tok = Tokens.Ident Then
 		Operand = ParseDesigExpr(Parser);
@@ -875,40 +912,40 @@ EndFunction // ParseOperand()
 Function ParseStringExpr(Parser)
 	Var Tok, ExprList, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Tok = Parser.Tok;
 	ExprList = New Array;
 	While True Do
 		If Tok = Tokens.String Then
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val));
+			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 			Tok = Next(Parser);
 			While Tok = Tokens.String Do
-				ExprList.Add(BasicLitExpr(Tok, Parser.Val));
+				ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 				Tok = Next(Parser);
 			EndDo;
 		ElsIf Tok = Tokens.StringBeg Then
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val));
+			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 			Tok = Next(Parser);
 			While Tok = Tokens.StringMid Do
-				ExprList.Add(BasicLitExpr(Tok, Parser.Val));
+				ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 				Tok = Next(Parser);
 			EndDo;
 			If Tok <> Tokens.StringEnd Then
 				Error(Parser.Scanner, "Expected """,, True);
 			EndIf;
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val));
+			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 			Tok = Next(Parser);
 		Else
 			Break;
 		EndIf;
 	EndDo;
-	Return Place(StringExpr(ExprList), Parser, Pos, Line);
+	Return StringExpr(ExprList, Place(Parser, Pos, Line));
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr(Parser)
 	Var Tok, Constr, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Tok = Next(Parser);
 	If Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
@@ -922,13 +959,13 @@ Function ParseNewExpr(Parser)
 	Else
 		Constr = ParseDesigExpr(Parser);
 	EndIf;
-	Return Place(NewExpr(Constr), Parser, Pos, Line);
+	Return NewExpr(Constr, Place(Parser, Pos, Line));
 EndFunction // ParseNewExpr()
 
 Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	Var Name, Selector, Object, List, Kind, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Name = Parser.Lit;
 	Next(Parser);
 	Selector = ParseSelector(Parser);
@@ -969,13 +1006,13 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 			EndIf;
 		EndIf;
 	EndIf;
-	Return Place(DesigExpr(Object, List, Kind = SelectorKinds.Call), Parser, Pos, Line);
+	Return DesigExpr(Object, List, Kind = SelectorKinds.Call, Place(Parser, Pos, Line));
 EndFunction // ParseDesigExpr()
 
 Function ParseSelector(Parser)
 	Var Tok, Value, Selector, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Period Then
 		Next(Parser);
@@ -983,7 +1020,7 @@ Function ParseSelector(Parser)
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Selector = Selector(SelectorKinds.Ident, Value);
+		Selector = Selector(SelectorKinds.Ident, Value, Place(Parser, Pos, Line));
 		Next(Parser);
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
@@ -992,7 +1029,7 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Selector = Selector(SelectorKinds.Index, Value);
+		Selector = Selector(SelectorKinds.Index, Value, Place(Parser, Pos, Line));
 		Next(Parser);
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
@@ -1002,21 +1039,21 @@ Function ParseSelector(Parser)
 			Value = ParseArguments(Parser);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Selector = Selector(SelectorKinds.Call, Value);
+		Selector = Selector(SelectorKinds.Call, Value, Place(Parser, Pos, Line));
 		Next(Parser);
 	EndIf;
-	Return Place(Selector, Parser, Pos, Line);
+	Return Selector;
 EndFunction // ParseSelector()
 
 Function ParseExpression(Parser)
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Place(BinaryExpr(Expr, Operator, ParseAndExpr(Parser)), Parser, Pos, Line);
+		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(Parser), Place(Parser, Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseExpression()
@@ -1024,12 +1061,12 @@ EndFunction // ParseExpression()
 Function ParseAndExpr(Parser)
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Expr = ParseNotExpr(Parser);
 	While Parser.Tok = Tokens.And Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Place(BinaryExpr(Expr, Operator, ParseNotExpr(Parser)), Parser, Pos, Line);
+		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser), Place(Parser, Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
@@ -1037,10 +1074,10 @@ EndFunction // ParseAndExpr()
 Function ParseNotExpr(Parser)
 	Var Expr, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	If Parser.Tok = Tokens.Not Then
 		Next(Parser);
-		Expr = Place(NotExpr(ParseRelExpr(Parser)), Parser, Pos, Line);
+		Expr = NotExpr(ParseRelExpr(Parser), Place(Parser, Pos, Line));
 	Else
 		Expr = ParseRelExpr(Parser);
 	EndIf;
@@ -1050,12 +1087,12 @@ EndFunction // ParseNotExpr()
 Function ParseRelExpr(Parser)
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Expr = ParseAddExpr(Parser);
 	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Place(BinaryExpr(Expr, Operator, ParseAddExpr(Parser)), Parser, Pos, Line);
+		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser), Place(Parser, Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseRelExpr()
@@ -1063,12 +1100,12 @@ EndFunction // ParseRelExpr()
 Function ParseAddExpr(Parser)
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Expr = ParseMulExpr(Parser);
 	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Place(BinaryExpr(Expr, Operator, ParseMulExpr(Parser)), Parser, Pos, Line);
+		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser), Place(Parser, Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAddExpr()
@@ -1076,12 +1113,12 @@ EndFunction // ParseAddExpr()
 Function ParseMulExpr(Parser)
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Expr = ParseUnaryExpr(Parser);
 	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
 		Operator = Parser.Tok;
 		Next(Parser);
-		Expr = Place(BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser)), Parser, Pos, Line);
+		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser), Place(Parser, Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseMulExpr()
@@ -1121,7 +1158,7 @@ EndFunction // ParseArguments()
 Function ParseTernaryExpr(Parser)
 	Var Cond, ThenPart, ElsePart, Selectors, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
@@ -1143,24 +1180,24 @@ Function ParseTernaryExpr(Parser)
 	Else
 		Selectors = EmptyArray;
 	EndIf;
-	Return Place(TernaryExpr(Cond, ThenPart, ElsePart, Selectors), Parser, Pos, Line);
+	Return TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place(Parser, Pos, Line));
 EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr(Parser)
 	Var Expr, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Next(Parser);
 	Expr = ParseExpression(Parser);
 	Expect(Parser, Tokens.Rparen);
 	Next(Parser);
-	Return Place(ParenExpr(Expr), Parser, Pos, Line);
+	Return ParenExpr(Expr, Place(Parser, Pos, Line));
 EndFunction // ParseParenExpr()
 
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1198,7 +1235,7 @@ Function ParseFuncDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Place(FuncDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
+	Return FuncDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseFuncDecl()
 
 Function ParseParamList(Parser)
@@ -1223,7 +1260,7 @@ EndFunction // ParseParamList()
 Function ParseProcDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Statements, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Exported = False;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1259,44 +1296,44 @@ Function ParseProcDecl(Parser)
 	EndDo;
 	CloseScope(Parser);
 	Next(Parser);
-	Return Place(ProcDecl(Object, Decls, AutoVars, Statements), Parser, Pos, Line);
+	Return ProcDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseProcDecl()
 
 Function ParseReturnStmt(Parser)
 	Var Expr, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Next(Parser);
 	If Parser.IsFunc Then
 		Expr = ParseExpression(Parser);
 	EndIf;
-	Return Place(ReturnStmt(Expr), Parser, Pos, Line);
+	Return ReturnStmt(Expr, Place(Parser, Pos, Line));
 EndFunction // ParseReturnStmt()
 
 Function ParseModVarListDecl(Parser)
 	Var VarList, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	VarList = New Array;
 	VarList.Add(ParseVarM(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
 		VarList.Add(ParseVarM(Parser));
 	EndDo;
-	Return Place(ModVarsDecl(VarList), Parser, Pos, Line);
+	Return ModVarsDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseModVarListDecl()
 
 Function ParseVarListDecl(Parser)
 	Var VarList, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	VarList = New Array;
 	VarList.Add(ParseVarL(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
 		VarList.Add(ParseVarL(Parser));
 	EndDo;
-	Return Place(VarsDecl(VarList), Parser, Pos, Line);
+	Return VarsDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseVarListDecl()
 
 Function ParseVarM(Parser)
@@ -1387,7 +1424,7 @@ EndFunction // ParseStatements()
 Function ParseStmt(Parser)
 	Var Tok, Stmt, Pos, Line;
 	Pos = Parser.Pos;
-	Line = Parser.Scanner.Line;
+	Line = Parser.Line;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Ident Then
 		Stmt = ParseAssignOrCallStmt(Parser);
@@ -1429,7 +1466,10 @@ Function ParseStmt(Parser)
 	ElsIf Tok = Tokens.Semicolon Then
 		// NOP
 	EndIf;
-	Return Place(Stmt, Parser, Pos, Line);
+	If Stmt <> Undefined Then
+		Stmt.Place = Place(Parser, Pos, Line);
+	EndIf;
+	Return Stmt;
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
@@ -1735,27 +1775,36 @@ EndFunction // ParseModule()
 
 #Region Auxiliary
 
-Function Structure(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, Value3 = Undefined, Value4 = Undefined, Value5 = Undefined)
+Function Structure(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, Value3 = Undefined, Value4 = Undefined, Value5 = Undefined, Value6 = Undefined)
 	Var Keys;
 	If Not StructureKeysCache.Property(Type, Keys) Then
 		Keys = "Type," + StrReplace(Properties, Chars.LF, ",");
 	EndIf;
-	Return New Structure(Keys, Type, Value1, Value2, Value3, Value4, Value5);
+	Return New Structure(Keys, Type, Value1, Value2, Value3, Value4, Value5, Value6);
 EndFunction // Structure()
 
-Function Place(Node, Parser, Pos, Line)
-	If Node = Undefined Then
-		Return Undefined;
-	EndIf;
+Function Place(Parser, Pos = Undefined, Line = Undefined)
+	Var Place, Len;
 	If Location Then
-		Node.Insert("Line", Line);
-		Node.Insert("Pos", Pos);
-		Node.Insert("Len", Parser.PrevPos - Pos);
+		If Pos = Undefined Then
+			Len = StrLen(Parser.Lit);
+			Pos = Parser.Pos - Len;
+		Else
+			Len = Parser.PrevPos - Pos;
+		EndIf;
+		If Line = Undefined Then
+			Line = Parser.Line;
+		EndIf;
+		Place = New Structure(
+			"Line," // number
+			"Pos,"  // number
+			"Len,"  // number
+		, Line, Pos, Len);
+		If Debug Then
+			Place.Insert("Str", Mid(Parser.Scanner.Source, Pos, Len));
+		EndIf;
 	EndIf;
-	If Debug Then
-		Node.Insert("Str", Mid(Parser.Scanner.Source, Pos, Parser.PrevPos - Pos));
-	EndIf;
-	Return Node;
+	Return Place;
 EndFunction // Place()
 
 Function Value(Tok, Lit)
