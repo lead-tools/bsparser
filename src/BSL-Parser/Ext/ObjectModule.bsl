@@ -676,19 +676,6 @@ Function BinaryExpr(Left, Operator, Right)
 	Return BinaryExpr;
 EndFunction // BinaryExpr()
 
-Function RangeExpr(Left, Right)
-	Var RangeExpr;
-
-	RangeExpr = New Structure(
-		"NodeType," // string (type of this structure)
-		"Left,"     // structure (one of expressions)
-		"Right,"    // structure (one of expressions)
-	,
-	"RangeExpr", Left, Right);
-
-	Return RangeExpr;
-EndFunction // RangeExpr()
-
 Function NewExpr(Constructor)
 	Var NewExpr;
 
@@ -916,19 +903,34 @@ Function PreprocRegionStmt(Name, Statements)
 	Return PreprocRegionStmt;
 EndFunction // PreprocRegionStmt()
 
-Function ForStmt(DesignatorExpr, Collection, Statements)
+Function ForStmt(DesignatorExpr, From, Until, Statements)
 	Var ForStmt;
 
 	ForStmt = New Structure(
 		"NodeType,"       // string (type of this structure)
 		"DesignatorExpr," // structure (DesignatorExpr)
-		"Collection,"     // structure (one of expressions)
+		"From,"           // structure (one of expressions)
+		"Until,"          // structure (one of expressions)
 		"Statements,"     // array (one of statements)
 	,
-	"ForStmt", DesignatorExpr, Collection, Statements);
+	"ForStmt", DesignatorExpr, From, Until, Statements);
 
 	Return ForStmt;
 EndFunction // ForStmt()
+
+Function ForEachStmt(DesignatorExpr, Collection, Statements)
+	Var ForEachStmt;
+
+	ForEachStmt = New Structure(
+		"NodeType,"       // string (type of this structure)
+		"DesignatorExpr," // structure (DesignatorExpr)
+		"Collection,"     // structure (one of expressions)
+		"Statements,"     // array (one of statements)
+	,
+	"ForEachStmt", DesignatorExpr, Collection, Statements);
+
+	Return ForEachStmt;
+EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart)
 	Var TryStmt;
@@ -1588,7 +1590,11 @@ Function ParseStmt(Parser)
 	ElsIf Tok = Tokens.While Then
 		Stmt = ParseWhileStmt(Parser);
 	ElsIf Tok = Tokens.For Then
-		Stmt = ParseForStmt(Parser);
+		If Next(Parser) = Tokens.Each Then
+			Stmt = ParseForEachStmt(Parser);
+		Else
+			Stmt = ParseForStmt(Parser);
+		EndIf;
 	ElsIf Tok = Tokens.Return Then
 		Stmt = ParseReturnStmt(Parser);
 	ElsIf Tok = Tokens.Break Then
@@ -1788,35 +1794,46 @@ Function ParseWhileStmt(Parser)
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)
-	Var DesignatorExpr, Left, Right, Collection, Statements, VarPos;
-	Next(Parser);
-	If Parser.Tok = Tokens.Each Then
-		Next(Parser);
-	EndIf;
+	Var DesignatorExpr, From, Until, Statements, VarPos;
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.Pos;
 	DesignatorExpr = ParseDesignatorExpr(Parser, True);
 	If DesignatorExpr.Call Then
-		Error(Parser.Scanner, "expected variable", VarPos, True);
+		Error(Parser.Scanner, "Expected variable", VarPos, True);
 	EndIf;
-	If Parser.Tok = Tokens.Eql Then
-		Next(Parser);
-		Left = ParseExpression(Parser);
-		Expect(Parser, Tokens.To);
-		Next(Parser);
-		Right = ParseExpression(Parser);
-		Collection = RangeExpr(Left, Right);
-	ElsIf Parser.Tok = Tokens.In Then
-		Next(Parser);
-		Collection = ParseExpression(Parser);
-	EndIf;
+	Expect(Parser, Tokens.Eql);
+	Next(Parser);
+	From = ParseExpression(Parser);
+	Expect(Parser, Tokens.To);
+	Next(Parser);
+	Until = ParseExpression(Parser);
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens.EndDo);
 	Next(Parser);
-	Return ForStmt(DesignatorExpr, Collection, Statements);
+	Return ForStmt(DesignatorExpr, From, Until, Statements);
 EndFunction // ParseForStmt()
+
+Function ParseForEachStmt(Parser)
+	Var DesignatorExpr, Left, Right, Collection, Statements, VarPos;
+	Next(Parser);
+	Expect(Parser, Tokens.Ident);
+	VarPos = Parser.Pos;
+	DesignatorExpr = ParseDesignatorExpr(Parser, True);
+	If DesignatorExpr.Call Then
+		Error(Parser.Scanner, "Expected variable", VarPos, True);
+	EndIf;
+	Expect(Parser, Tokens.In);
+	Next(Parser);
+	Collection = ParseExpression(Parser);
+	Expect(Parser, Tokens.Do);
+	Next(Parser);
+	Statements = ParseStatements(Parser);
+	Expect(Parser, Tokens.EndDo);
+	Next(Parser);
+	Return ForEachStmt(DesignatorExpr, Collection, Statements);
+EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt(Parser)
 	Var Label;
