@@ -871,6 +871,104 @@ Function CloseScope(Parser)
 	Return Scope;
 EndFunction // CloseScope()
 
+Function ParseModule(Parser) Export
+	Var Decls, AutoVars, Statements;
+	Next(Parser);
+	Decls = ParseModDecls(Parser);
+	Statements = ParseStatements(Parser);
+	AutoVars = New Array;
+	For Each VarObj In Parser.Scope.AutoVars Do
+		AutoVars.Add(VarObj);
+	EndDo;
+	Parser.Module = Module(Decls, AutoVars, Statements, Parser.Interface, Parser.Comments);
+	If Verbose Then
+		For Each Item In Parser.Unknown Do
+			Message(StrTemplate("Undeclared method `%1`", Item.Key));
+		EndDo;
+	EndIf;
+	Expect(Parser, Tokens.Eof);
+EndFunction // ParseModule()
+
+#Region ParseExpr
+
+Function ParseExpression(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	Expr = ParseAndExpr(Parser);
+	While Parser.Tok = Tokens.Or Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParseExpression()
+
+Function ParseAndExpr(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	Expr = ParseNotExpr(Parser);
+	While Parser.Tok = Tokens.And Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParseAndExpr()
+
+Function ParseNotExpr(Parser)
+	Var Expr, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	If Parser.Tok = Tokens.Not Then
+		Next(Parser);
+		Expr = NotExpr(ParseRelExpr(Parser), Place(Parser, Pos, Line));
+	Else
+		Expr = ParseRelExpr(Parser);
+	EndIf;
+	Return Expr;
+EndFunction // ParseNotExpr()
+
+Function ParseRelExpr(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	Expr = ParseAddExpr(Parser);
+	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParseRelExpr()
+
+Function ParseAddExpr(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	Expr = ParseMulExpr(Parser);
+	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParseAddExpr()
+
+Function ParseMulExpr(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	Expr = ParseUnaryExpr(Parser);
+	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParseMulExpr()
+
 Function ParseUnaryExpr(Parser)
 	Var Operator, Expr, Pos, Line;
 	Pos = Parser.Pos;
@@ -1045,84 +1143,6 @@ Function ParseSelector(Parser)
 	Return Selector;
 EndFunction // ParseSelector()
 
-Function ParseExpression(Parser)
-	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	Expr = ParseAndExpr(Parser);
-	While Parser.Tok = Tokens.Or Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(Parser), Place(Parser, Pos, Line));
-	EndDo;
-	Return Expr;
-EndFunction // ParseExpression()
-
-Function ParseAndExpr(Parser)
-	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	Expr = ParseNotExpr(Parser);
-	While Parser.Tok = Tokens.And Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser), Place(Parser, Pos, Line));
-	EndDo;
-	Return Expr;
-EndFunction // ParseAndExpr()
-
-Function ParseNotExpr(Parser)
-	Var Expr, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	If Parser.Tok = Tokens.Not Then
-		Next(Parser);
-		Expr = NotExpr(ParseRelExpr(Parser), Place(Parser, Pos, Line));
-	Else
-		Expr = ParseRelExpr(Parser);
-	EndIf;
-	Return Expr;
-EndFunction // ParseNotExpr()
-
-Function ParseRelExpr(Parser)
-	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	Expr = ParseAddExpr(Parser);
-	While RelationalOperators.Find(Parser.Tok) <> Undefined Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser), Place(Parser, Pos, Line));
-	EndDo;
-	Return Expr;
-EndFunction // ParseRelExpr()
-
-Function ParseAddExpr(Parser)
-	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	Expr = ParseMulExpr(Parser);
-	While Parser.Tok = Tokens.Add Or Parser.Tok = Tokens.Sub Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser), Place(Parser, Pos, Line));
-	EndDo;
-	Return Expr;
-EndFunction // ParseAddExpr()
-
-Function ParseMulExpr(Parser)
-	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	Expr = ParseUnaryExpr(Parser);
-	While Parser.Tok = Tokens.Mul Or Parser.Tok = Tokens.Div Or Parser.Tok = Tokens.Mod Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser), Place(Parser, Pos, Line));
-	EndDo;
-	Return Expr;
-EndFunction // ParseMulExpr()
-
 Function ParseExprList(Parser, HeadExpr = Undefined)
 	Var ExprList;
 	If HeadExpr = Undefined Then
@@ -1194,6 +1214,141 @@ Function ParseParenExpr(Parser)
 	Return ParenExpr(Expr, Place(Parser, Pos, Line));
 EndFunction // ParseParenExpr()
 
+#EndRegion // ParseExpr
+
+#Region ParseDecl
+
+Function ParseModDecls(Parser)
+	Var Tok, Decls;
+	Decls = ParseModVarDecls(Parser);
+	Tok = Parser.Tok;
+	While Tok <> Tokens.Eof Do
+		If Tok = Tokens.Function Then
+			Decls.Add(ParseFuncDecl(Parser));
+		ElsIf Tok = Tokens.Procedure Then
+			Decls.Add(ParseProcDecl(Parser));
+		ElsIf Tok = Tokens._Region Then
+			Decls.Add(ParsePrepRegionDecl(Parser));
+		ElsIf Tok = Tokens._If Then
+			Decls.Add(ParsePrepIfDecl(Parser));
+		Else
+			Return Decls;
+		EndIf;
+		Tok = Parser.Tok;
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
+	EndDo;
+	Return Decls;
+EndFunction // ParseModDecls()
+
+Function ParseModVarDecls(Parser)
+	Var Tok, Decls;
+	Decls = New Array;
+	Tok = Parser.Tok;
+	While Tok = Tokens.Directive Do
+		Parser.Directive = Parser.Lit;
+		Tok = Next(Parser);
+	EndDo;
+	While Tok = Tokens.Var Do
+		Next(Parser);
+		Decls.Add(ParseModVarListDecl(Parser));
+		Expect(Parser, Tokens.Semicolon);
+		Tok = Next(Parser);
+		Parser.Directive = Undefined;
+		While Tok = Tokens.Directive Do
+			Parser.Directive = Parser.Lit;
+			Tok = Next(Parser);
+		EndDo;
+	EndDo;
+	Return Decls;
+EndFunction // ParseModVarDecls()
+
+Function ParseModVarListDecl(Parser)
+	Var VarList, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	VarList = New Array;
+	VarList.Add(ParseVarM(Parser));
+	While Parser.Tok = Tokens.Comma Do
+		Next(Parser);
+		VarList.Add(ParseVarM(Parser));
+	EndDo;
+	Return ModVarsDecl(VarList, Place(Parser, Pos, Line));
+EndFunction // ParseModVarListDecl()
+
+Function ParseVarM(Parser)
+	Var Name, Object, Exported, Pos;
+	Pos = Parser.Pos;
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	If Next(Parser) = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	Else
+		Exported = False;
+	EndIf;
+	Object = VarM(Name, Parser.Directive, Exported);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
+	If Parser.Vars.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+	EndIf;
+	Parser.Vars.Insert(Name, Object);
+	Return Object;
+EndFunction // ParseVarM()
+
+Function ParseVarDecls(Parser)
+	Var Tok, Decls;
+	Decls = New Array;
+	Tok = Parser.Tok;
+	While Tok = Tokens.Var Do
+		Next(Parser);
+		Decls.Add(ParseVarListDecl(Parser));
+		Expect(Parser, Tokens.Semicolon);
+		Tok = Next(Parser);
+	EndDo;
+	Return Decls;
+EndFunction // ParseVarDecls()
+
+Function ParseVarListDecl(Parser)
+	Var VarList, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
+	VarList = New Array;
+	VarList.Add(ParseVarL(Parser));
+	While Parser.Tok = Tokens.Comma Do
+		Next(Parser);
+		VarList.Add(ParseVarL(Parser));
+	EndDo;
+	Return VarsDecl(VarList, Place(Parser, Pos, Line));
+EndFunction // ParseVarListDecl()
+
+Function ParseVarL(Parser)
+	Var Name, Object, Exported, Pos;
+	Pos = Parser.Pos;
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	If Next(Parser) = Tokens.Export Then
+		Exported = True;
+		Next(Parser);
+	Else
+		Exported = False;
+	EndIf;
+	Object = VarL(Name);
+	If Exported Then
+		Parser.Interface.Add(Object);
+	EndIf;
+	If Parser.Vars.Property(Name) Then
+		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+	EndIf;
+	Parser.Vars.Insert(Name, Object);
+	Return Object;
+EndFunction // ParseVarL()
+
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Pos, Line;
 	Pos = Parser.Pos;
@@ -1238,25 +1393,6 @@ Function ParseFuncDecl(Parser)
 	Return FuncDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseFuncDecl()
 
-Function ParseParamList(Parser)
-	Var ParamList;
-	Expect(Parser, Tokens.Lparen);
-	Next(Parser);
-	If Parser.Tok = Tokens.Rparen Then
-		ParamList = EmptyArray;
-	Else
-		ParamList = New Array;
-		ParamList.Add(ParseParameter(Parser));
-		While Parser.Tok = Tokens.Comma Do
-			Next(Parser);
-			ParamList.Add(ParseParameter(Parser));
-		EndDo;
-	EndIf;
-	Expect(Parser, Tokens.Rparen);
-	Next(Parser);
-	Return ParamList;
-EndFunction // ParseParamList()
-
 Function ParseProcDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, AutoVars, VarObj, Statements, Pos, Line;
 	Pos = Parser.Pos;
@@ -1299,86 +1435,24 @@ Function ParseProcDecl(Parser)
 	Return ProcDecl(Object, Decls, AutoVars, Statements, Place(Parser, Pos, Line));
 EndFunction // ParseProcDecl()
 
-Function ParseReturnStmt(Parser)
-	Var Expr, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
+Function ParseParamList(Parser)
+	Var ParamList;
+	Expect(Parser, Tokens.Lparen);
 	Next(Parser);
-	If Parser.IsFunc Then
-		Expr = ParseExpression(Parser);
-	EndIf;
-	Return ReturnStmt(Expr, Place(Parser, Pos, Line));
-EndFunction // ParseReturnStmt()
-
-Function ParseModVarListDecl(Parser)
-	Var VarList, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	VarList = New Array;
-	VarList.Add(ParseVarM(Parser));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		VarList.Add(ParseVarM(Parser));
-	EndDo;
-	Return ModVarsDecl(VarList, Place(Parser, Pos, Line));
-EndFunction // ParseModVarListDecl()
-
-Function ParseVarListDecl(Parser)
-	Var VarList, Pos, Line;
-	Pos = Parser.Pos;
-	Line = Parser.Line;
-	VarList = New Array;
-	VarList.Add(ParseVarL(Parser));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		VarList.Add(ParseVarL(Parser));
-	EndDo;
-	Return VarsDecl(VarList, Place(Parser, Pos, Line));
-EndFunction // ParseVarListDecl()
-
-Function ParseVarM(Parser)
-	Var Name, Object, Exported, Pos;
-	Pos = Parser.Pos;
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	If Next(Parser) = Tokens.Export Then
-		Exported = True;
-		Next(Parser);
+	If Parser.Tok = Tokens.Rparen Then
+		ParamList = EmptyArray;
 	Else
-		Exported = False;
+		ParamList = New Array;
+		ParamList.Add(ParseParameter(Parser));
+		While Parser.Tok = Tokens.Comma Do
+			Next(Parser);
+			ParamList.Add(ParseParameter(Parser));
+		EndDo;
 	EndIf;
-	Object = VarM(Name, Parser.Directive, Exported);
-	If Exported Then
-		Parser.Interface.Add(Object);
-	EndIf;
-	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared", Pos, True);
-	EndIf;
-	Parser.Vars.Insert(Name, Object);
-	Return Object;
-EndFunction // ParseVarM()
-
-Function ParseVarL(Parser)
-	Var Name, Object, Exported, Pos;
-	Pos = Parser.Pos;
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	If Next(Parser) = Tokens.Export Then
-		Exported = True;
-		Next(Parser);
-	Else
-		Exported = False;
-	EndIf;
-	Object = VarL(Name);
-	If Exported Then
-		Parser.Interface.Add(Object);
-	EndIf;
-	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared", Pos, True);
-	EndIf;
-	Parser.Vars.Insert(Name, Object);
-	Return Object;
-EndFunction // ParseVarL()
+	Expect(Parser, Tokens.Rparen);
+	Next(Parser);
+	Return ParamList;
+EndFunction // ParseParamList()
 
 Function ParseParameter(Parser)
 	Var Name, Object, ByVal, Pos;
@@ -1403,6 +1477,53 @@ Function ParseParameter(Parser)
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
 EndFunction // ParseParameter()
+
+Function ParsePrepIfDecl(Parser)
+	Var Tok, Cond, ThenPart, ElsePart;
+	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Next(Parser);
+	Cond = ParseExpression(Parser); // todo: only logic operators
+	Expect(Parser, Tokens.Then);
+	Next(Parser);
+	ThenPart = ParseModDecls(Parser);
+	Tok = Parser.Tok;
+	If Tok = Tokens._ElsIf Then
+		ElsIfPart = New Array;
+		While Tok = Tokens._ElsIf Do
+			Next(Parser);
+			ElsIfCond = ParseExpression(Parser);
+			Expect(Parser, Tokens.Then);
+			Next(Parser);
+			ElsIfThen = ParseModDecls(Parser);
+			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen));
+			Tok = Parser.Tok;
+		EndDo;
+	EndIf;
+	If Tok = Tokens._Else Then
+		Next(Parser);
+		ElsePart = ParseModDecls(Parser);
+	EndIf;
+	Expect(Parser, Tokens._EndIf);
+	Next(Parser);
+	Return PrepIfDecl(Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePrepIfDecl()
+
+Function ParsePrepRegionDecl(Parser)
+	Var Name, Decls, Statements, Region;
+	Next(Parser);
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	Next(Parser);
+	Decls = ParseModDecls(Parser);
+	Statements = ParseStatements(Parser);
+	Expect(Parser, Tokens._EndRegion);
+	Next(Parser);
+	Return PrepRegionDecl(Name, Decls, Statements);
+EndFunction // ParsePrepRegionDecl()
+
+#EndRegion // ParseDecl
+
+#Region ParseStmt
 
 Function ParseStatements(Parser)
 	Var Statements, Stmt;
@@ -1532,91 +1653,6 @@ Function ParseIfStmt(Parser)
 	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
 
-Function ParsePrepIfStmt(Parser)
-	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen;
-	Next(Parser);
-	Cond = ParseExpression(Parser); // todo: only logic operators
-	Expect(Parser, Tokens.Then);
-	Next(Parser);
-	ThenPart = ParseStatements(Parser);
-	Tok = Parser.Tok;
-	If Tok = Tokens._ElsIf Then
-		ElsIfPart = New Array;
-		While Tok = Tokens._ElsIf Do
-			Next(Parser);
-			ElsIfCond = ParseExpression(Parser);
-			Expect(Parser, Tokens.Then);
-			Next(Parser);
-			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen));
-			Tok = Parser.Tok;
-		EndDo;
-	EndIf;
-	If Tok = Tokens._Else Then
-		Next(Parser);
-		ElsePart = ParseStatements(Parser);
-	EndIf;
-	Expect(Parser, Tokens._EndIf);
-	Parser.Tok = Tokens.Semicolon; // cheat code
-	Return PrepIfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
-EndFunction // ParsePrepIfStmt()
-
-Function ParsePrepIfDecl(Parser)
-	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen;
-	Next(Parser);
-	Cond = ParseExpression(Parser); // todo: only logic operators
-	Expect(Parser, Tokens.Then);
-	Next(Parser);
-	ThenPart = ParseModuleDecls(Parser);
-	Tok = Parser.Tok;
-	If Tok = Tokens._ElsIf Then
-		ElsIfPart = New Array;
-		While Tok = Tokens._ElsIf Do
-			Next(Parser);
-			ElsIfCond = ParseExpression(Parser);
-			Expect(Parser, Tokens.Then);
-			Next(Parser);
-			ElsIfThen = ParseModuleDecls(Parser);
-			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen));
-			Tok = Parser.Tok;
-		EndDo;
-	EndIf;
-	If Tok = Tokens._Else Then
-		Next(Parser);
-		ElsePart = ParseModuleDecls(Parser);
-	EndIf;
-	Expect(Parser, Tokens._EndIf);
-	Next(Parser);
-	Return PrepIfDecl(Cond, ThenPart, ElsIfPart, ElsePart);
-EndFunction // ParsePrepIfDecl()
-
-Function ParsePrepRegionStmt(Parser)
-	Var Name, Statements;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	Next(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens._EndRegion);
-	Parser.Tok = Tokens.Semicolon; // cheat code
-	Return PrepRegionStmt(Name, Statements);
-EndFunction // ParsePrepRegionStmt()
-
-Function ParsePrepRegionDecl(Parser)
-	Var Name, Decls, Statements, Region;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	Next(Parser);
-	Decls = ParseModuleDecls(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens._EndRegion);
-	Next(Parser);
-	Return PrepRegionDecl(Name, Decls, Statements);
-EndFunction // ParsePrepRegionDecl()
-
 Function ParseTryStmt(Parser)
 	Var TryPart, ExceptPart;
 	Next(Parser);
@@ -1692,84 +1728,60 @@ Function ParseGotoStmt(Parser)
 	Return GotoStmt(Label);
 EndFunction // ParseGotoStmt()
 
-Function ParseVarDecls(Parser)
-	Var Tok, Decls;
-	Decls = New Array;
-	Tok = Parser.Tok;
-	While Tok = Tokens.Var Do
-		Next(Parser);
-		Decls.Add(ParseVarListDecl(Parser));
-		Expect(Parser, Tokens.Semicolon);
-		Tok = Next(Parser);
-	EndDo;
-	Return Decls;
-EndFunction // ParseVarDecls()
-
-Function ParseModVarDecls(Parser)
-	Var Tok, Decls;
-	Decls = New Array;
-	Tok = Parser.Tok;
-	While Tok = Tokens.Directive Do
-		Parser.Directive = Parser.Lit;
-		Tok = Next(Parser);
-	EndDo;
-	While Tok = Tokens.Var Do
-		Next(Parser);
-		Decls.Add(ParseModVarListDecl(Parser));
-		Expect(Parser, Tokens.Semicolon);
-		Tok = Next(Parser);
-		Parser.Directive = Undefined;
-		While Tok = Tokens.Directive Do
-			Parser.Directive = Parser.Lit;
-			Tok = Next(Parser);
-		EndDo;
-	EndDo;
-	Return Decls;
-EndFunction // ParseModVarDecls()
-
-Function ParseModuleDecls(Parser)
-	Var Tok, Decls;
-	Decls = ParseModVarDecls(Parser);
-	Tok = Parser.Tok;
-	While Tok <> Tokens.Eof Do
-		If Tok = Tokens.Function Then
-			Decls.Add(ParseFuncDecl(Parser));
-		ElsIf Tok = Tokens.Procedure Then
-			Decls.Add(ParseProcDecl(Parser));
-		ElsIf Tok = Tokens._Region Then
-			Decls.Add(ParsePrepRegionDecl(Parser));
-		ElsIf Tok = Tokens._If Then
-			Decls.Add(ParsePrepIfDecl(Parser));
-		Else
-			Return Decls;
-		EndIf;
-		Tok = Parser.Tok;
-		Parser.Directive = Undefined;
-		While Tok = Tokens.Directive Do
-			Parser.Directive = Parser.Lit;
-			Tok = Next(Parser);
-		EndDo;
-	EndDo;
-	Return Decls;
-EndFunction // ParseModuleDecls()
-
-Function ParseModule(Parser) Export
-	Var Decls, AutoVars, Statements;
+Function ParseReturnStmt(Parser)
+	Var Expr, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
 	Next(Parser);
-	Decls = ParseModuleDecls(Parser);
-	Statements = ParseStatements(Parser);
-	AutoVars = New Array;
-	For Each VarObj In Parser.Scope.AutoVars Do
-		AutoVars.Add(VarObj);
-	EndDo;
-	Parser.Module = Module(Decls, AutoVars, Statements, Parser.Interface, Parser.Comments);
-	If Verbose Then
-		For Each Item In Parser.Unknown Do
-			Message(StrTemplate("Undeclared method `%1`", Item.Key));
+	If Parser.IsFunc Then
+		Expr = ParseExpression(Parser);
+	EndIf;
+	Return ReturnStmt(Expr, Place(Parser, Pos, Line));
+EndFunction // ParseReturnStmt()
+
+Function ParsePrepIfStmt(Parser)
+	Var Tok, Cond, ThenPart, ElsePart;
+	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Next(Parser);
+	Cond = ParseExpression(Parser); // todo: only logic operators
+	Expect(Parser, Tokens.Then);
+	Next(Parser);
+	ThenPart = ParseStatements(Parser);
+	Tok = Parser.Tok;
+	If Tok = Tokens._ElsIf Then
+		ElsIfPart = New Array;
+		While Tok = Tokens._ElsIf Do
+			Next(Parser);
+			ElsIfCond = ParseExpression(Parser);
+			Expect(Parser, Tokens.Then);
+			Next(Parser);
+			ElsIfThen = ParseStatements(Parser);
+			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen));
+			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
-	Expect(Parser, Tokens.Eof);
-EndFunction // ParseModule()
+	If Tok = Tokens._Else Then
+		Next(Parser);
+		ElsePart = ParseStatements(Parser);
+	EndIf;
+	Expect(Parser, Tokens._EndIf);
+	Parser.Tok = Tokens.Semicolon; // cheat code
+	Return PrepIfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
+EndFunction // ParsePrepIfStmt()
+
+Function ParsePrepRegionStmt(Parser)
+	Var Name, Statements;
+	Next(Parser);
+	Expect(Parser, Tokens.Ident);
+	Name = Parser.Lit;
+	Next(Parser);
+	Statements = ParseStatements(Parser);
+	Expect(Parser, Tokens._EndRegion);
+	Parser.Tok = Tokens.Semicolon; // cheat code
+	Return PrepRegionStmt(Name, Statements);
+EndFunction // ParsePrepRegionStmt()
+
+#EndRegion // ParseStmt
 
 #EndRegion // Parser
 
