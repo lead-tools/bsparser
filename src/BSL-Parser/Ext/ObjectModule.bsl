@@ -554,7 +554,7 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 	Return Struct("PrepIfDecl",
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Declarations)
-		"ElsIf" // undefined, array (PrepIfDecl)
+		"ElsIf" // undefined, array (PrepElsIfDecl)
 		"Else"  // undefined, array (one of #Declarations)
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
@@ -717,7 +717,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 	Return Struct("IfStmt",
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
-		"ElsIf" // undefined, array (IfStmt)
+		"ElsIf" // undefined, array (ElsIfStmt)
 		"Else"  // undefined, array (one of #Statements)
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
@@ -735,7 +735,7 @@ Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 	Return Struct("PrepIfStmt",
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
-		"ElsIf" // undefined, array (PrepIfStmt)
+		"ElsIf" // undefined, array (PrepElsIfStmt)
 		"Else"  // undefined, array (one of #Statements)
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
