@@ -29,7 +29,7 @@ EndProcedure // Indent()
 
 Function VisitModule(Module) Export
 	VisitDecls(Module.Decls);
-	VisitStatements(Module.Statements);
+	VisitStatements(Module.Body);
 	Return StrConcat(Result);
 EndFunction // VisitModule()
 
@@ -52,11 +52,11 @@ EndProcedure // VisitStatements()
 
 Procedure VisitDecl(Decl)
 	Var NodeType;
-	NodeType = Decl.NodeType;
-	If NodeType = "VarListDecl" Then
+	NodeType = Decl.Type;
+	If NodeType = "VarsDecl" Or NodeType = "ModVarsDecl" Then
 		Indent(Result);
 		Result.Add("Var ");
-		VisitVarList(Decl.VarList);
+		VisitVarList(Decl.List);
 		Result.Add(";" "");
 	ElsIf NodeType = "FuncDecl" Or NodeType = "ProcDecl" Then
 		Result.Add(Chars.LF);
@@ -68,7 +68,7 @@ Procedure VisitDecl(Decl)
 		EndIf;
 		Result.Add(Decl.Object.Name);
 		Result.Add("(");
-		VisitParamList(Decl.Object.ParamList);
+		VisitParams(Decl.Object.Params);
 		Result.Add(")");
 		If Decl.Object.Export Then
 			Result.Add(" Export");
@@ -77,7 +77,7 @@ Procedure VisitDecl(Decl)
 		For Each Stmt In Decl.Decls Do
 			VisitDecl(Stmt);
 		EndDo;
-		For Each Stmt In Decl.Statements Do
+		For Each Stmt In Decl.Body Do
 			VisitStmt(Stmt);
 		EndDo;
 		If NodeType = "FuncDecl" Then
@@ -87,44 +87,55 @@ Procedure VisitDecl(Decl)
 		EndIf;
 		Result.Add(Chars.LF);
 		Indent = Indent - 1;
+	ElsIf NodeType = "PrepRegionDecl" Then
+		Result.Add("#Region ");
+		Result.Add(Decl.Name);
+		Result.Add(Chars.LF);
+		VisitDecls(Decl.Decls);
+		VisitStatements(Decl.Body);
+		Result.Add("#EndRegion // ");
+		Result.Add(Decl.Name);
+		Result.Add(Chars.LF);
+		Result.Add(Chars.LF);
 	EndIf;
 EndProcedure // VisitDecl()
 
 Procedure VisitVarList(VarList)
-	Var Buffer, Object, Value;
+	Var Buffer, Object;
 	Buffer = New Array;
 	For Each Object In VarList Do
-		Buffer.Add(Object.Name +
-			?(Object.Property("Value", Value), " = " + VisitExpr(Value), "") +
-			?(Object.Export, " Export", "")
-		);
+		Buffer.Add(Object.Name);
+		If Object.Property("Export")
+			And Object.Export Then
+			Buffer.Add(" Export");
+		EndIf; 
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
 	EndIf;
 EndProcedure // VisitVarList()
 
-Procedure VisitParamList(ParamList)
-	Var Buffer, Object, Value;
+Procedure VisitParams(ParamList)
+	Var Buffer, Object;
 	Buffer = New Array;
 	For Each Object In ParamList Do
 		Buffer.Add(
 			?(Object.ByVal, "Val ", "") +
 			Object.Name +
-			?(Object.Property("Value", Value), " = " + VisitExpr(Value), "")
+			?(Object.Value <> Undefined, " = " + VisitExpr(Object.Value), "")
 		);
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
 	EndIf;
-EndProcedure // VisitParamList()
+EndProcedure // VisitParams()
 
 Procedure VisitStmt(Stmt)
 	Var NodeType;
-	NodeType = Stmt.NodeType;
+	NodeType = Stmt.Type;
 	Indent(Result);
 	If NodeType = "AssignStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.Left));
+		Result.Add(VisitDesigExpr(Stmt.Left));
 		Result.Add(" = ");
 		Result.Add(VisitExpr(Stmt.Right));
 		Result.Add(";" "");
@@ -149,36 +160,49 @@ Procedure VisitStmt(Stmt)
 		Result.Add(VisitExpr(Stmt.Expr));
 		Result.Add(");" "");
 	ElsIf NodeType = "CallStmt" Then
-		Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
+		Result.Add(VisitDesigExpr(Stmt.Desig));
 		Result.Add(";" "");
 	ElsIf NodeType = "IfStmt" Then
 		Result.Add("If ");
-		VisitIfStmt(Stmt);
-		If Stmt.Property("ElsePart") Then
+		Result.Add(VisitExpr(Stmt.Cond));
+		Result.Add(" Then" "");
+		VisitStatements(Stmt.Then);
+		If Stmt.ElsIf <> Undefined Then
+			For Each Item In Stmt.ElsIf Do
+				Result.Add("ElsIf ");
+				Result.Add(VisitExpr(Item.Cond));
+				Result.Add(" Then" "");
+				VisitStatements(Item.Then);
+			EndDo;
+		EndIf;
+		If Stmt.Else <> Undefined Then
 			Result.Add("Else" "");
-			VisitStatements(Stmt.ElsePart);
+			VisitStatements(Stmt.Else);
 		EndIf;
 		Result.Add("EndIf;" "");
 	ElsIf NodeType = "WhileStmt" Then
 		Result.Add("While ");
-		Result.Add(VisitExpr(Stmt.Condition));
+		Result.Add(VisitExpr(Stmt.Cond));
 		Result.Add(" Do" "");
-		VisitStatements(Stmt.Statements);
+		VisitStatements(Stmt.Body);
 		Result.Add("EndDo;" "");
 	ElsIf NodeType = "ForStmt" Then
 		Result.Add("For ");
-		If Stmt.Collection.NodeType = "RangeExpr" Then
-			Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" = ");
-			Result.Add(VisitExpr(Stmt.Collection));
-		Else
-			Result.Add("Each ");
-			Result.Add(VisitDesignatorExpr(Stmt.DesignatorExpr));
-			Result.Add(" In ");
-			Result.Add(VisitExpr(Stmt.Collection));
-		EndIf;
+		Result.Add(VisitDesigExpr(Stmt.Desig));
+		Result.Add(" = ");
+		Result.Add(VisitExpr(Stmt.From));
+		Result.Add(" To ");
+		Result.Add(VisitExpr(Stmt.To));
 		Result.Add(" Do" "");
-		VisitStatements(Stmt.Statements);
+		VisitStatements(Stmt.Body);
+		Result.Add("EndDo;" "");
+	ElsIf NodeType = "ForEachStmt" Then
+		Result.Add("For Each ");
+		Result.Add(VisitDesigExpr(Stmt.Desig));
+		Result.Add(" In ");
+		Result.Add(VisitExpr(Stmt.In));
+		Result.Add(" Do" "");
+		VisitStatements(Stmt.Body);
 		Result.Add("EndDo;" "");
 	ElsIf NodeType = "TryStmt" Then
 		Result.Add("Try" "");
@@ -188,18 +212,6 @@ Procedure VisitStmt(Stmt)
 		Result.Add("EndTry;" "");
 	EndIf;
 EndProcedure // VisitStmt()
-
-Procedure VisitIfStmt(IfStmt)
-	Result.Add(VisitExpr(IfStmt.Condition));
-	Result.Add(" Then" "");
-	VisitStatements(IfStmt.ThenPart);
-	If IfStmt.Property("ElsIfPart") Then
-		For Each Item In IfStmt.ElsIfPart Do
-			Result.Add("ElsIf ");
-			VisitIfStmt(Item);
-		EndDo;
-	EndIf;
-EndProcedure // VisitIfStmt()
 
 Function VisitExprList(ExprList)
 	Var Buffer;
@@ -221,11 +233,11 @@ Function VisitExpr(Expr)
 	If Expr = Undefined Then
 		Return "";
 	EndIf;
-	NodeType = Expr.NodeType;
+	NodeType = Expr.Type;
 	If NodeType = "BasicLitExpr" Then
 		BasicLitKind = Expr.Kind;
-		If BasicLitKind = Tokens.String Then
-			Return StrTemplate("""%1""", StrReplace(Expr.Value, Chars.LF, """ """));
+		If StrStartsWith(BasicLitKind, Tokens.String) Then
+			Return StrTemplate("""%1""", Expr.Value);
 		ElsIf BasicLitKind = Tokens.Number Then
 			Return Format(Expr.Value, "NZ=0; NG=");
 		ElsIf BasicLitKind = Tokens.DateTime Then
@@ -234,11 +246,13 @@ Function VisitExpr(Expr)
 			Return Format(Expr.Value, "BF=False; BT=True");
 		ElsIf BasicLitKind = Tokens.Undefined Then
 			Return "Undefined";
+		ElsIf BasicLitKind = Tokens.Null Then
+			Return "Null";
 		Else
 			Raise "Unknown basic literal";
 		EndIf;
-	ElsIf NodeType = "DesignatorExpr" Then
-		Return VisitDesignatorExpr(Expr);
+	ElsIf NodeType = "DesigExpr" Then
+		Return VisitDesigExpr(Expr);
 	ElsIf NodeType = "UnaryExpr" Then
 		Return StrTemplate("%1 %2", Operators[Expr.Operator], VisitExpr(Expr.Operand));
 	ElsIf NodeType = "BinaryExpr" Then
@@ -246,41 +260,50 @@ Function VisitExpr(Expr)
 	ElsIf NodeType = "RangeExpr" Then
 		Return StrTemplate("%1 To %2", VisitExpr(Expr.Left), VisitExpr(Expr.Right));
 	ElsIf NodeType = "NewExpr" Then
-		If TypeOf(Expr.Constructor) = Type("Structure") Then
-			Return StrTemplate("New %1", VisitExpr(Expr.Constructor));
+		If TypeOf(Expr.Constr) = Type("Structure") Then
+			Return StrTemplate("New %1", VisitExpr(Expr.Constr));
 		Else
-			Return StrTemplate("New(%1)", VisitExprList(Expr.Constructor));
+			Return StrTemplate("New(%1)", VisitExprList(Expr.Constr));
 		EndIf;
 	ElsIf NodeType = "TernaryExpr" Then
-		Return StrTemplate("?(%1, %2, %3)", VisitExpr(Expr.Condition), VisitExpr(Expr.ThenPart), VisitExpr(Expr.ElsePart));
+		Return StrTemplate("?(%1, %2, %3)", VisitExpr(Expr.Cond), VisitExpr(Expr.Then), VisitExpr(Expr.Else));
 	ElsIf NodeType = "ParenExpr" Then
 		Return StrTemplate("(%1)", VisitExpr(Expr.Expr));
 	ElsIf NodeType = "NotExpr" Then
 		Return StrTemplate("Not %1", VisitExpr(Expr.Expr));
+	ElsIf NodeType = "StringExpr" Then
+		Return VisitStringExpr(Expr);
 	EndIf;
 EndFunction // VisitExpr()
 
-Function VisitDesignatorExpr(DesignatorExpr)
+Function VisitDesigExpr(DesigExpr)
 	Var Buffer;
 	Buffer = New Array;
-	Buffer.Add(DesignatorExpr.Object.Name);
-	If DesignatorExpr.Property("Selectors") Then
-		For Each Selector In DesignatorExpr.Selectors Do
-			If Selector.Kind = SelectorKinds.Ident Then
-				Buffer.Add(".");
-				Buffer.Add(Selector.Value);
-			ElsIf Selector.Kind = SelectorKinds.Index Then
-				Buffer.Add("[");
-				Buffer.Add(VisitExprList(Selector.Value));
-				Buffer.Add("]");
-			ElsIf Selector.Kind = SelectorKinds.Call Then
-				Buffer.Add("(");
-				Buffer.Add(VisitExprList(Selector.Value));
-				Buffer.Add(")");
-			Else
-				Raise "Unknown selector kind";
-			EndIf;
-		EndDo;
-	EndIf;
+	Buffer.Add(DesigExpr.Object.Name);
+	For Each Selector In DesigExpr.Select Do
+		If Selector.Kind = SelectorKinds.Ident Then
+			Buffer.Add(".");
+			Buffer.Add(Selector.Value);
+		ElsIf Selector.Kind = SelectorKinds.Index Then
+			Buffer.Add("[");
+			Buffer.Add(VisitExprList(Selector.Value));
+			Buffer.Add("]");
+		ElsIf Selector.Kind = SelectorKinds.Call Then
+			Buffer.Add("(");
+			Buffer.Add(VisitExprList(Selector.Value));
+			Buffer.Add(")");
+		Else
+			Raise "Unknown selector kind";
+		EndIf;
+	EndDo;
 	Return StrConcat(Buffer);
-EndFunction // VisitDesignatorExpr()
+EndFunction // VisitDesigExpr()
+
+Function VisitStringExpr(StringExpr)
+	Var Buffer;
+	Buffer = New Array;
+	For Each Item In StringExpr.List Do
+		Buffer.Add(VisitExpr(Item));
+	EndDo;
+	Return StrConcat(Buffer, " ");
+EndFunction // VisitStringExpr()  
