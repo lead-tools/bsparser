@@ -17,43 +17,46 @@ Procedure VisitDecls(Decls)
 EndProcedure // VisitDecls()
 
 Procedure VisitDecl(Decl)
-	Var ReturnExists;
-	ReturnExists = False;
-	If Decl.NodeType = "FuncDecl" Then
-		VisitStatements(Decl.Statements, ReturnExists);
-		If Not ReturnExists Then
-			Result.Add(StrTemplate("Функция %1() должна возвращать значение" "", Decl.Object.Name));
-		EndIf; 
+	Var ReturnCount, Stmt;
+	ReturnCount = 0;
+	If Decl.Type = "FuncDecl" Then
+		Stmt = VisitStatements(Decl.Body, ReturnCount);
+		If Stmt = Undefined
+			Or Stmt.Type <> "ReturnStmt"
+			Or ReturnCount <> 1 Then
+			Result.Add(StrTemplate("Функция %1() должна иметь один Возврат в конце" "", Decl.Object.Name));
+		EndIf;
+	ElsIf Decl.Type = "PrepRegionDecl" Then
+		VisitDecls(Decl.Decls);
 	EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitStatements(Statements, ReturnExists)
+Function VisitStatements(Statements, ReturnCount)
+	Var Stmt;
 	For Each Stmt In Statements Do
-		VisitStmt(Stmt, ReturnExists);
+		VisitStmt(Stmt, ReturnCount);
 	EndDo;
-EndProcedure // VisitStatements()
+	Return Stmt;
+EndFunction // VisitStatements()
 
-Procedure VisitStmt(Stmt, ReturnExists)
-	If ReturnExists Then
-		Return;
-	EndIf; 
-	NodeType = Stmt.NodeType;
+Procedure VisitStmt(Stmt, ReturnCount)
+	NodeType = Stmt.Type;
 	If NodeType = "ReturnStmt" Then
-		ReturnExists = True;
+		ReturnCount = ReturnCount + 1;
 	ElsIf NodeType = "IfStmt" Then
-		VisitStatements(Stmt.ThenPart, ReturnExists);
-		If Stmt.Property("ElsIfPart") Then
-			VisitStatements(Stmt.ElsIfPart, ReturnExists)
+		VisitStatements(Stmt.Then, ReturnCount);
+		If Stmt.ElsIf <> Undefined Then
+			VisitStatements(Stmt.ElsIf, ReturnCount)
 		EndIf;
-		If Stmt.Property("ElsePart") Then
-			VisitStatements(Stmt.ElsePart, ReturnExists);
+		If Stmt.Else <> Undefined Then
+			VisitStatements(Stmt.Else, ReturnCount);
 		EndIf;
 	ElsIf NodeType = "WhileStmt" Then
-		VisitStatements(Stmt.Statements, ReturnExists);
+		VisitStatements(Stmt.Body, ReturnCount);
 	ElsIf NodeType = "ForStmt" Then
-		VisitStatements(Stmt.Statements, ReturnExists);
+		VisitStatements(Stmt.Body, ReturnCount);
 	ElsIf NodeType = "TryStmt" Then
-		VisitStatements(Stmt.TryPart, ReturnExists);
-		VisitStatements(Stmt.ExceptPart, ReturnExists);
+		VisitStatements(Stmt.Try, ReturnCount);
+		VisitStatements(Stmt.Except, ReturnCount);
 	EndIf;
 EndProcedure // VisitStmt()
