@@ -723,13 +723,13 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
-Function ElsIfPart(Cond, ThenPart, Place = Undefined)
-	Return Struct("ElsIf",
+Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
+	Return Struct("ElsIfStmt",
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, Place);
-EndFunction // ElsIfPart()
+EndFunction // ElsIfStmt()
 
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	Return Struct("PrepIfStmt",
@@ -1676,7 +1676,7 @@ Function ParseIfStmt(Parser)
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(ElsIfPart(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
+			ElsIfPart.Add(ElsIfStmt(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
