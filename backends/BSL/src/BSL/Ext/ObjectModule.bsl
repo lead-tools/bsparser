@@ -91,8 +91,10 @@ Procedure VisitDecl(Decl)
 		Result.Add("#Region ");
 		Result.Add(Decl.Name);
 		Result.Add(Chars.LF);
+		Indent = Indent - 1;
 		VisitDecls(Decl.Decls);
 		VisitStatements(Decl.Body);
+		Indent = Indent + 1;
 		Result.Add("#EndRegion // ");
 		Result.Add(Decl.Name);
 		Result.Add(Chars.LF);
