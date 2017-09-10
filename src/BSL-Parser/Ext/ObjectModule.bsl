@@ -204,14 +204,14 @@ Function Scanner(Source) Export
 	Var Scanner;
 
 	Scanner = Class("Scanner",
-		"Path,"   // string
-		"Source," // string
-		"Len,"    // number
-		"Pos,"    // number
-		"Tok,"    // string (one of Tokens)
-		"Lit,"    // string
-		"Char,"   // string
-		"Line,"   // number
+		"Path"   // string
+		"Source" // string
+		"Len"    // number
+		"Pos"    // number
+		"Tok"    // string (one of Tokens)
+		"Lit"    // string
+		"Char"   // string
+		"Line"   // number
 	);
 
 	Scanner.Path = "";
@@ -816,22 +816,22 @@ Function Parser(Source) Export
 	Var Parser;
 
 	Parser = Class("Parser",
-		"Scanner,"   // structure (Scanner)
-		"Line,"      // number
-		"Pos,"       // number
-		"PrevPos,"   // number
-		"Tok,"       // string (one of Tokens)
-		"Lit,"       // string
-		"Val,"       // number, string, date, boolean, undefined, null
-		"Scope,"     // structure (Scope)
-		"Vars,"      // structure as map[string] (VarM, VarL)
-		"Methods,"   // structure as map[string] (Func, Proc)
-		"Module,"    // structure (Module)
-		"Unknown,"   // structure as map[string] (Unknown)
-		"IsFunc,"    // boolean
-		"Directive," // string (one of Directives)
-		"Interface," // array (Func, Proc)
-		"Comments,"  // map[number] (string)
+		"Scanner"   // structure (Scanner)
+		"Line"      // number
+		"Pos"       // number
+		"PrevPos"   // number
+		"Tok"       // string (one of Tokens)
+		"Lit"       // string
+		"Val"       // number, string, date, boolean, undefined, null
+		"Scope"     // structure (Scope)
+		"Vars"      // structure as map[string] (VarM, VarL)
+		"Methods"   // structure as map[string] (Func, Proc)
+		"Module"    // structure (Module)
+		"Unknown"   // structure as map[string] (Unknown)
+		"IsFunc"    // boolean
+		"Directive" // string (one of Directives)
+		"Interface" // array (Func, Proc)
+		"Comments"  // map[number] (string)
 	);
 
 	Parser.Scanner = Scanner(Source);
