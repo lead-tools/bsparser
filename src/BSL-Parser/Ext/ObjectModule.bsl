@@ -350,7 +350,7 @@ Function NextChar(Scanner)
 	Return Scanner.Char;
 EndFunction // NextChar()
 
-Function SkipWhitespace(Scanner)
+Procedure SkipWhitespace(Scanner)
 	Var Char;
 	Char = Scanner.Char;
 	While IsBlankString(Char) And Char <> "" Do
@@ -359,7 +359,7 @@ Function SkipWhitespace(Scanner)
 		EndIf;
 		Char = NextChar(Scanner);
 	EndDo;
-EndFunction // SkipWhitespace()
+EndProcedure // SkipWhitespace()
 
 Function ScanComment(Scanner)
 	Var Len, Char;
@@ -901,7 +901,7 @@ Function CloseScope(Parser)
 	Return Scope;
 EndFunction // CloseScope()
 
-Function ParseModule(Parser) Export
+Procedure ParseModule(Parser) Export
 	Var Decls, Auto, VarObj, Statements;
 	Next(Parser);
 	Decls = ParseModDecls(Parser);
@@ -917,7 +917,7 @@ Function ParseModule(Parser) Export
 		EndDo;
 	EndIf;
 	Expect(Parser, Tokens.Eof);
-EndFunction // ParseModule()
+EndProcedure // ParseModule()
 
 #Region ParseExpr
 
@@ -1252,7 +1252,7 @@ Function ParseModDecls(Parser)
 	Var Tok, Decls;
 	Decls = ParseModVarDecls(Parser);
 	Tok = Parser.Tok;
-	While Tok <> Tokens.Eof Do
+	While True Do
 		If Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
 		ElsIf Tok = Tokens.Procedure Then
@@ -1262,7 +1262,7 @@ Function ParseModDecls(Parser)
 		ElsIf Tok = Tokens._If Then
 			Decls.Add(ParsePrepIfDecl(Parser));
 		Else
-			Return Decls;
+			Break;
 		EndIf;
 		Tok = Parser.Tok;
 		Parser.Directive = Undefined;
@@ -1871,20 +1871,21 @@ Function Place(Parser, Pos = Undefined, Line = Undefined)
 EndFunction // Place()
 
 Function Value(Tok, Lit)
+	Var Value;
 	If Tok = Tokens.Number Then
-		Return Number(Lit);
+		Value = Number(Lit);
 	ElsIf Tok = Tokens.DateTime Then
-		Return AsDate(Lit);
+		Value = AsDate(Lit);
 	ElsIf StrStartsWith(Tok, Tokens.String) Then
-		Return Mid(Lit, 2, StrLen(Lit) - 2);
+		Value = Mid(Lit, 2, StrLen(Lit) - 2);
 	ElsIf Tok = Tokens.True Then
-		Return True;
+		Value = True;
 	ElsIf Tok = Tokens.False Then
-		Return False;
+		Value = False;
 	ElsIf Tok = Tokens.Null Then
-		Return Null;
+		Value = Null;
 	EndIf;
-	Return Undefined;
+	Return Value;
 EndFunction // Value()
 
 Function AsDate(DateLit)
@@ -1906,19 +1907,21 @@ Procedure Expect(Parser, Tok)
 EndProcedure // Expect()
 
 Function StringToken(Lit)
+	Var Tok;
 	If Left(Lit, 1) = """" Then
 		If Right(Lit, 1) = """" Then
-			Return Tokens.String;
+			Tok = Tokens.String;
 		Else
-			Return Tokens.StringBeg;
+			Tok = Tokens.StringBeg;
 		EndIf;
 	Else // |
 		If Right(Lit, 1) = """" Then
-			Return Tokens.StringEnd;
+			Tok = Tokens.StringEnd;
 		Else
-			Return Tokens.StringMid;
+			Tok = Tokens.StringMid;
 		EndIf;
 	EndIf;
+	Return Tok;
 EndFunction // StringToken()
 
 Function Lookup(Lit)
