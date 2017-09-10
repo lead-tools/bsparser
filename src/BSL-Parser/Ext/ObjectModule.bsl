@@ -508,7 +508,7 @@ Function Param(Name, ByVal, Value = Undefined)
 	Return Struct("Param",
 		"Name"  // string
 		"ByVal" // boolean
-		"Value" // structure (UnaryExpr, BasicLitExpr)
+		"Value" // undefined, structure (UnaryExpr, BasicLitExpr)
 	, Name, ByVal, Value);
 EndFunction // Param()
 
@@ -1844,7 +1844,7 @@ Function Class(Type, Properties = "")
 		StructKeysCache.Insert(Type, Keys);
 	EndIf;
 	Return New Structure(Keys);
-EndFunction // Struct()
+EndFunction // Class()
 
 Function Place(Parser, Pos = Undefined, Line = Undefined)
 	Var Place, Len;
