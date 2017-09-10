@@ -681,7 +681,7 @@ Function BreakStmt(Place = Undefined)
 EndFunction // BreakStmt()
 
 Function ContinueStmt(Place = Undefined)
-	Return Struct("ContinueStmt"
+	Return Struct("ContinueStmt",
 		"Place" // undefined, structure (Place)
 	, Place);
 EndFunction // ContinueStmt()
