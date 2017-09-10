@@ -23,7 +23,7 @@ Var StructKeysCache; // structure as map[string] (string)
 
 #Region Init
 
-Procedure Init() Export
+Procedure Init()
 
 	StructKeysCache = New Structure;
 
@@ -203,7 +203,7 @@ EndFunction // Enum()
 Function Scanner(Source) Export
 	Var Scanner;
 
-	Scanner = New Structure(
+	Scanner = Class("Scanner",
 		"Path,"   // string
 		"Source," // string
 		"Len,"    // number
@@ -220,8 +220,6 @@ Function Scanner(Source) Export
 	Scanner.Line = 1;
 	Scanner.Pos = 0;
 	Scanner.Lit = "";
-
-	Init();
 
 	Return Scanner;
 EndFunction // Scanner()
@@ -450,9 +448,9 @@ EndFunction // ScanDateTime()
 Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return Struct("Module",
 		"Decls"     // array (one of #Declarations)
-		"Auto"      // array (Object)
+		"Auto"      // array (VarL)
 		"Body"      // array (one of #Statements)
-		"Interface" // array (Object)
+		"Interface" // array (Func, Proc)
 		"Comments"  // map[number] (string)
 	, Decls, Auto, Statements, Interface, Comments);
 EndFunction // Module()
@@ -462,8 +460,8 @@ EndFunction // Module()
 Function Scope(Outer)
 	Return New Structure(
 		"Outer,"   // undefined, structure (Scope)
-		"Objects," // structure as map[string] (Object)
-		"Auto,"    // array (Object)
+		"Objects," // structure as map[string] (Unknown, Func, Proc, VarM, VarL, Param)
+		"Auto,"    // array (VarL)
 	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -536,7 +534,7 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	Return Struct("ProcDecl",
 		"Object" // structure (Proc)
 		"Decls"  // array (one of #Declarations)
-		"Auto"   // array (Object)
+		"Auto"   // array (VarL)
 		"Body"   // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
 	, Object, Decls, Auto, Body, Place);
@@ -561,6 +559,14 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfDecl()
+
+Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
+	Return Struct("PrepElsIfDecl",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Declarations)
+		"Place" // undefined, structure (Place)
+	, Cond, ThenPart, Place);
+EndFunction // PrepElsIfDecl()
 
 Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 	Return Struct("PrepRegionDecl",
@@ -593,7 +599,7 @@ EndFunction // Selector()
 
 Function DesigExpr(Object, Selectors, Call, Place = Undefined)
 	Return Struct("DesigExpr",
-		"Object" // structure (Object)
+		"Object" // structure (Unknown, Func, Proc, VarM, VarL, Param)
 		"Select" // array (Selector)
 		"Call"   // boolean
 		"Place"  // undefined, structure (Place)
@@ -717,6 +723,14 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
+Function ElsIfPart(Cond, ThenPart, Place = Undefined)
+	Return Struct("ElsIf",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
+	, Cond, ThenPart, Place);
+EndFunction // ElsIfPart()
+
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	Return Struct("PrepIfStmt",
 		"Cond"  // structure (one of #Expressions)
@@ -726,6 +740,14 @@ Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 		"Place" // undefined, structure (Place)
 	, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // PrepIfStmt()
+
+Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
+	Return Struct("PrepElsIfStmt",
+		"Cond"  // structure (one of #Expressions)
+		"Then"  // array (one of #Statements)
+		"Place" // undefined, structure (Place)
+	, Cond, ThenPart, Place);
+EndFunction // PrepElsIfStmt()
 
 Function WhileStmt(Cond, Statements, Place = Undefined)
 	Return Struct("WhileStmt",
@@ -793,7 +815,7 @@ EndFunction // LabelStmt()
 Function Parser(Source) Export
 	Var Parser;
 
-	Parser = New Structure(
+	Parser = Class("Parser",
 		"Scanner,"   // structure (Scanner)
 		"Line,"      // number
 		"Pos,"       // number
@@ -808,7 +830,7 @@ Function Parser(Source) Export
 		"Unknown,"   // structure as map[string] (Unknown)
 		"IsFunc,"    // boolean
 		"Directive," // string (one of Directives)
-		"Interface," // array (Object)
+		"Interface," // array (Func, Proc)
 		"Comments,"  // map[number] (string)
 	);
 
@@ -1505,7 +1527,7 @@ Function ParsePrepIfDecl(Parser)
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseModDecls(Parser);
-			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
+			ElsIfPart.Add(PrepElsIfDecl(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1654,7 +1676,7 @@ Function ParseIfStmt(Parser)
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(IfStmt(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
+			ElsIfPart.Add(ElsIfPart(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1772,7 +1794,7 @@ Function ParsePrepIfStmt(Parser)
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
+			ElsIfPart.Add(PrepElsIfStmt(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1813,6 +1835,15 @@ Function Struct(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, V
 		StructKeysCache.Insert(Type, Keys);
 	EndIf;
 	Return New Structure(Keys, Type, Value1, Value2, Value3, Value4, Value5, Value6);
+EndFunction // Struct()
+
+Function Class(Type, Properties = "")
+	Var Keys;
+	If Not StructKeysCache.Property(Type, Keys) Then
+		Keys = "Type," + StrReplace(Properties, Chars.LF, ",");
+		StructKeysCache.Insert(Type, Keys);
+	EndIf;
+	Return New Structure(Keys);
 EndFunction // Struct()
 
 Function Place(Parser, Pos = Undefined, Line = Undefined)
@@ -1925,3 +1956,5 @@ Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 EndProcedure // Error()
 
 #EndRegion // Auxiliary
+
+Init();
