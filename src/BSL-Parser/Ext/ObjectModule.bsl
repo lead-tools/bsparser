@@ -44,16 +44,16 @@ Procedure Init() Export
 	RelOperators.Add(Tokens.Gtr);
 	RelOperators.Add(Tokens.Leq);
 	RelOperators.Add(Tokens.Geq);
-	
+
 	AddOperators = New Array;
 	AddOperators.Add(Tokens.Add);
 	AddOperators.Add(Tokens.Sub);
-	
+
 	MulOperators = New Array;
 	MulOperators.Add(Tokens.Mul);
 	MulOperators.Add(Tokens.Div);
 	MulOperators.Add(Tokens.Mod);
-	
+
 	InitOfExpression = New Array;
 	InitOfExpression.Add(Tokens.Add);
 	InitOfExpression.Add(Tokens.Sub);
@@ -1488,7 +1488,7 @@ EndFunction // ParseParameter()
 
 Function ParsePrepIfDecl(Parser)
 	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
 	Next(Parser);
 	Cond = ParseExpression(Parser); // todo: only logic operators
 	Expect(Parser, Tokens.Then);
@@ -1498,12 +1498,14 @@ Function ParsePrepIfDecl(Parser)
 	If Tok = Tokens._ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens._ElsIf Do
+			Pos = Parser.Pos;
+			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseModDecls(Parser);
-			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen));
+			ElsIfPart.Add(PrepIfDecl(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1517,7 +1519,9 @@ Function ParsePrepIfDecl(Parser)
 EndFunction // ParsePrepIfDecl()
 
 Function ParsePrepRegionDecl(Parser)
-	Var Name, Decls, Statements, Region;
+	Var Name, Decls, Statements, Region, Pos, Line;
+	Pos = Parser.Pos;
+	Line = Parser.Line;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
@@ -1526,7 +1530,7 @@ Function ParsePrepRegionDecl(Parser)
 	Statements = ParseStatements(Parser);
 	Expect(Parser, Tokens._EndRegion);
 	Next(Parser);
-	Return PrepRegionDecl(Name, Decls, Statements);
+	Return PrepRegionDecl(Name, Decls, Statements, Place(Parser, Pos, Line));
 EndFunction // ParsePrepRegionDecl()
 
 #EndRegion // ParseDecl
@@ -1633,7 +1637,7 @@ EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt(Parser)
 	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
 	Next(Parser);
 	Cond = ParseExpression(Parser);
 	Expect(Parser, Tokens.Then);
@@ -1643,12 +1647,14 @@ Function ParseIfStmt(Parser)
 	If Tok = Tokens.ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens.ElsIf Do
+			Pos = Parser.Pos;
+			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(IfStmt(ElsIfCond, ElsIfThen));
+			ElsIfPart.Add(IfStmt(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1749,7 +1755,7 @@ EndFunction // ParseReturnStmt()
 
 Function ParsePrepIfStmt(Parser)
 	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen;
+	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
 	Next(Parser);
 	Cond = ParseExpression(Parser); // todo: only logic operators
 	Expect(Parser, Tokens.Then);
@@ -1759,12 +1765,14 @@ Function ParsePrepIfStmt(Parser)
 	If Tok = Tokens._ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens._ElsIf Do
+			Pos = Parser.Pos;
+			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen));
+			ElsIfPart.Add(PrepIfStmt(ElsIfCond, ElsIfThen,,, Place(Parser, Pos, Line)));
 			Tok = Parser.Tok;
 		EndDo;
 	EndIf;
@@ -1800,7 +1808,7 @@ Function Struct(Type, Properties = "", Value1 = Undefined, Value2 = Undefined, V
 	If Not StructKeysCache.Property(Type, Keys) Then
 		Keys = "Type," + StrReplace(Properties, Chars.LF, ",");
 		If StrOccurrenceCount(Keys, ",") > 5 Then
-			Raise "call in violation of protocol"; 
+			Raise "call in violation of protocol";
 		EndIf;
 		StructKeysCache.Insert(Type, Keys);
 	EndIf;
