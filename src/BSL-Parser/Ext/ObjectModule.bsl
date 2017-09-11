@@ -1960,4 +1960,467 @@ EndProcedure // Error()
 
 #EndRegion // Auxiliary
 
+#Region Visitor
+
+Function Visitor(Hooks) Export
+	Var Visitor;
+
+	Visitor = Class("Visitor",
+		"Hooks"
+	);
+
+	Visitor.Hooks = Hooks;
+
+	Return Visitor;
+EndFunction // Visitor()
+
+Function VisitModule(Visitor, Module) Export
+	Var Hook;
+	VisitDeclarations(Visitor, Module.Decls);
+	VisitStatements(Visitor, Module.Body);
+	For Each Hook In Visitor.Hooks.VisitModule Do
+		Hook.VisitModule(Module);
+	EndDo;
+EndFunction // VisitModule()
+
+Function VisitDeclarations(Visitor, Declarations)
+	Var Decl, Hook;
+	For Each Decl In Declarations Do
+		VisitDecl(Visitor, Decl);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitDeclarations Do
+		Hook.VisitDeclarations(Declarations);
+	EndDo;
+EndFunction // VisitDeclarations()
+
+Function VisitStatements(Visitor, Statements)
+	Var Stmt, Hook;
+	For Each Stmt In Statements Do
+		VisitStmt(Visitor, Stmt);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitStatements Do
+		Hook.VisitStatements(Statements);
+	EndDo;
+EndFunction // VisitStatements()
+
+#Region VisitDecl
+
+Procedure VisitDecl(Visitor, Decl)
+	Var Type, Hook;
+	Type = Decl.Type;
+	If Type = "ModVarsDecl" Then
+		VisitModVarsDecl(Visitor, Decl);
+	ElsIf Type = "VarsDecl" Then
+		VisitVarsDecl(Visitor, Decl);
+	ElsIf Type = "ProcDecl" Then
+		VisitProcDecl(Visitor, Decl);
+	ElsIf Type = "FuncDecl" Then
+		VisitFuncDecl(Visitor, Decl);
+	ElsIf Type = "PrepIfDecl" Then
+		VisitPrepIfDecl(Visitor, Decl);
+	ElsIf Type = "PrepElsIfDecl" Then
+		VisitPrepElsIfDecl(Visitor, Decl);
+	ElsIf Type = "PrepRegionDecl" Then
+		VisitPrepRegionDecl(Visitor, Decl);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitDecl Do
+		Hook.VisitDecl(Visitor, Decl);
+	EndDo;
+EndProcedure // VisitDecl()
+
+Procedure VisitModVarsDecl(Visitor, ModVarsDecl)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitModVarsDecl Do
+		Hook.VisitModVarsDecl(ModVarsDecl);
+	EndDo;
+EndProcedure // VisitModVarsDecl()
+
+Procedure VisitVarsDecl(Visitor, VarsDecl)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitVarsDecl Do
+		Hook.VisitVarsDecl(VarsDecl);
+	EndDo;
+EndProcedure // VisitVarsDecl()
+
+Procedure VisitProcDecl(Visitor, ProcDecl)
+	Var Hook;
+	VisitDeclarations(Visitor, ProcDecl.Decls);
+	VisitStatements(Visitor, ProcDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitProcDecl Do
+		Hook.VisitProcDecl(ProcDecl);
+	EndDo;
+EndProcedure // VisitProcDecl()
+
+Procedure VisitFuncDecl(Visitor, FuncDecl)
+	Var Hook;
+	VisitDeclarations(Visitor, FuncDecl.Decls);
+	VisitStatements(Visitor, FuncDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitFuncDecl Do
+		Hook.VisitFuncDecl(FuncDecl);
+	EndDo;
+EndProcedure // VisitFuncDecl()
+
+Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
+	Var Hook;
+	VisitExpr(Visitor, PrepIfDecl.Cond);
+	VisitStatements(Visitor, PrepIfDecl.Then);
+	If PrepIfDecl.ElsIf <> Undefined Then
+		VisitPrepElsIfDecl(Visitor, PrepIfDecl.ElsIf);
+	EndIf;
+	If PrepIfDecl.Else <> Undefined Then
+		VisitStatements(Visitor, PrepIfDecl.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitPrepIfDecl Do
+		Hook.VisitPrepIfDecl(PrepIfDecl);
+	EndDo;
+EndProcedure // VisitPrepIfDecl()
+
+Procedure VisitPrepElsIfDecl(Visitor, PrepElsIfDecl)
+	Var Hook;
+	VisitExpr(Visitor, PrepElsIfDecl.Cond);
+	VisitStatements(Visitor, PrepElsIfDecl.Then);
+	For Each Hook In Visitor.Hooks.VisitPrepElsIfDecl Do
+		Hook.VisitPrepElsIfDecl(PrepElsIfDecl);
+	EndDo;
+EndProcedure // VisitPrepIfDecl()
+
+Procedure VisitPrepRegionDecl(Visitor, PrepRegionDecl)
+	Var Hook, Decl, Stmt;
+	VisitDeclarations(Visitor, PrepRegionDecl.Decls);
+	VisitStatements(Visitor, PrepRegionDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitPrepRegionDecl Do
+		Hook.VisitPrepRegionDecl(PrepRegionDecl);
+	EndDo;
+EndProcedure // VisitPrepRegionDecl()
+
+#EndRegion // VisitDecl
+
+#Region VisitExpr
+
+Procedure VisitExpr(Visitor, Expr)
+	Var Type;
+	Type = Expr.Type;
+	If Type = "BasicLitExpr" Then
+		VisitBasicLitExpr(Visitor, Expr);
+	ElsIf Type = "DesigExpr" Then
+		VisitDesigExpr(Visitor, Expr);
+	ElsIf Type = "UnaryExpr" Then
+		VisitUnaryExpr(Visitor, Expr);
+	ElsIf Type = "BinaryExpr" Then
+		VisitBinaryExpr(Visitor, Expr);
+	ElsIf Type = "NewExpr" Then
+		VisitNewExpr(Visitor, Expr);
+	ElsIf Type = "TernaryExpr" Then
+		VisitTernaryExpr(Visitor, Expr);
+	ElsIf Type = "ParenExpr" Then
+		VisitParenExpr(Visitor, Expr);
+	ElsIf Type = "NotExpr" Then
+		VisitNotExpr(Visitor, Expr);
+	ElsIf Type = "StringExpr" Then
+		VisitStringExpr(Visitor, Expr);
+	EndIf;
+EndProcedure // VisitExpr()
+
+Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
+		Hook.VisitBasicLitExpr(BasicLitExpr);
+	EndDo;
+EndProcedure // VisitBasicLitExpr
+
+Procedure VisitDesigExpr(Visitor, DesigExpr)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
+		Hook.VisitDesigExpr(DesigExpr);
+	EndDo;
+EndProcedure // VisitDesigExpr
+
+Procedure VisitUnaryExpr(Visitor, UnaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, UnaryExpr.Operand);
+	For Each Hook In Visitor.Hooks.VisitUnaryExpr Do
+		Hook.VisitUnaryExpr(UnaryExpr);
+	EndDo;
+EndProcedure // VisitUnaryExpr
+
+Procedure VisitBinaryExpr(Visitor, BinaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, BinaryExpr.Left);
+	VisitExpr(Visitor, BinaryExpr.Right);
+	For Each Hook In Visitor.Hooks.VisitBinaryExpr Do
+		Hook.VisitBinaryExpr(BinaryExpr);
+	EndDo;
+EndProcedure // VisitBinaryExpr
+
+Procedure VisitNewExpr(Visitor, NewExpr)
+	Var Expr, Hook;
+	If TypeOf(NewExpr.Constr) = Type("Structure") Then
+		VisitDesigExpr(Visitor, NewExpr.Constr);
+	Else
+		For Each Expr In NewExpr.Constr Do
+			VisitExpr(Visitor, Expr);
+		EndDo;
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitNewExpr Do
+		Hook.VisitNewExpr(NewExpr);
+	EndDo;
+EndProcedure // VisitNewExpr
+
+Procedure VisitTernaryExpr(Visitor, TernaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, TernaryExpr.Cond);
+	VisitExpr(Visitor, TernaryExpr.Then);
+	VisitExpr(Visitor, TernaryExpr.Else);
+	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
+		Hook.VisitTernaryExpr(TernaryExpr);
+	EndDo;
+EndProcedure // VisitTernaryExpr
+
+Procedure VisitParenExpr(Visitor, ParenExpr)
+	Var Hook;
+	VisitExpr(Visitor, ParenExpr.Expr);
+	For Each Hook In Visitor.Hooks.VisitParenExpr Do
+		Hook.VisitParenExpr(ParenExpr);
+	EndDo;
+EndProcedure // VisitParenExpr
+
+Procedure VisitNotExpr(Visitor, NotExpr)
+	Var Hook;
+	VisitExpr(Visitor, NotExpr.Expr);
+	For Each Hook In Visitor.Hooks.VisitNotExpr Do
+		Hook.VisitNotExpr(NotExpr);
+	EndDo;
+EndProcedure // VisitNotExpr
+
+Procedure VisitStringExpr(Visitor, StringExpr)
+	Var Expr, Hook;
+	For Each Expr In StringExpr.List Do
+		VisitBasicLitExpr(Visitor, Expr);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitStringExpr Do
+		Hook.VisitStringExpr(StringExpr);
+	EndDo;
+EndProcedure // VisitStringExpr
+
+#EndRegion // VisitExpr
+
+#Region VisitStmt
+
+Procedure VisitStmt(Visitor, Stmt)
+	Var Type, Hook;
+	Type = Stmt.Type;
+	If Type = "AssignStmt" Then
+		VisitAssignStmt(Visitor, Stmt);
+	ElsIf Type = "ReturnStmt" Then
+		VisitReturnStmt(Visitor, Stmt);
+	ElsIf Type = "BreakStmt" Then
+		VisitBreakStmt(Visitor, Stmt);
+	ElsIf Type = "ContinueStmt" Then
+		VisitContinueStmt(Visitor, Stmt);
+	ElsIf Type = "RaiseStmt" Then
+		VisitRaiseStmt(Visitor, Stmt);
+	ElsIf Type = "ExecuteStmt" Then
+		VisitExecuteStmt(Visitor, Stmt);
+	ElsIf Type = "CallStmt" Then
+		VisitCallStmt(Visitor, Stmt);
+	ElsIf Type = "IfStmt" Then
+		VisitIfStmt(Visitor, Stmt);
+	ElsIf Type = "PrepIfStmt" Then
+		VisitPrepIfStmt(Visitor, Stmt);
+	ElsIf Type = "WhileStmt" Then
+		VisitWhileStmt(Visitor, Stmt);
+	ElsIf Type = "PrepRegionStmt" Then
+		VisitPrepRegionStmt(Visitor, Stmt);
+	ElsIf Type = "ForStmt" Then
+		VisitForStmt(Visitor, Stmt);
+	ElsIf Type = "ForEachStmt" Then
+		VisitForEachStmt(Visitor, Stmt)
+	ElsIf Type = "TryStmt" Then
+		VisitTryStmt(Visitor, Stmt);
+	ElsIf Type = "GotoStmt" Then
+		VisitGotoStmt(Visitor, Stmt);
+	ElsIf Type = "LabelStmt" Then
+		VisitLabelStmt(Visitor, Stmt);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitStmt Do
+		Hook.VisitStmt(Stmt);
+	EndDo;
+EndProcedure // VisitStmt()
+
+Procedure VisitAssignStmt(Visitor, AssignStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, AssignStmt.Left);
+	VisitExpr(Visitor, AssignStmt.Right);
+	For Each Hook In Visitor.Hooks.VisitAssignStmt Do
+		Hook.VisitAssignStmt(AssignStmt)
+	EndDo;
+EndProcedure // VisitAssignStmt()
+
+Procedure VisitReturnStmt(Visitor, ReturnStmt)
+	Var Hook;
+	If ReturnStmt.Expr <> Undefined Then
+		VisitExpr(Visitor, ReturnStmt.Expr);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitReturnStmt Do
+		Hook.VisitReturnStmt(ReturnStmt);
+	EndDo;
+EndProcedure // VisitReturnStmt()
+
+Procedure VisitBreakStmt(Visitor, BreakStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitBreakStmt Do
+		Hook.VisitBreakStmt(BreakStmt)
+	EndDo;
+EndProcedure // VisitBreakStmt()
+
+Procedure VisitContinueStmt(Visitor, ContinueStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitContinueStmt Do
+		Hook.VisitContinueStmt(ContinueStmt)
+	EndDo;
+EndProcedure // VisitContinueStmt()
+
+Procedure VisitRaiseStmt(Visitor, RaiseStmt)
+	Var Hook;
+	If RaiseStmt.Expr <> Undefined Then
+		VisitExpr(Visitor, RaiseStmt.Expr);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitRaiseStmt Do
+		Hook.VisitRaiseStmt(RaiseStmt)
+	EndDo;
+EndProcedure // VisitRaiseStmt()
+
+Procedure VisitExecuteStmt(Visitor, ExecuteStmt)
+	Var Hook;
+	VisitExpr(Visitor, ExecuteStmt.Expr);
+	For Each Hook In Visitor.Hooks.VisitExecuteStmt Do
+		Hook.VisitExecuteStmt(ExecuteStmt)
+	EndDo;
+EndProcedure // VisitExecuteStmt()
+
+Procedure VisitCallStmt(Visitor, CallStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, CallStmt.Desig);
+	For Each Hook In Visitor.Hooks.VisitCallStmt Do
+		Hook.VisitCallStmt(CallStmt)
+	EndDo;
+EndProcedure // VisitCallStmt()
+
+Procedure VisitIfStmt(Visitor, IfStmt)
+	Var ElsIfStmt, Hook;
+	VisitExpr(Visitor, IfStmt.Cond);
+	VisitStatements(Visitor, IfStmt.Then);
+	If IfStmt.ElsIf <> Undefined Then
+		For Each ElsIfStmt In IfStmt.ElsIf Do
+			VisitElsIfStmt(Visitor, ElsIfStmt);
+		EndDo;
+	EndIf;
+	If IfStmt.Else <> Undefined Then
+		VisitStatements(Visitor, IfStmt.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitIfStmt Do
+		Hook.VisitIfStmt(IfStmt)
+	EndDo;
+EndProcedure // VisitIfStmt()
+
+Procedure VisitElsIfStmt(Visitor, ElsIfStmt)
+	Var Hook;
+	VisitExpr(Visitor, ElsIfStmt.Cond);
+	VisitStatements(Visitor, ElsIfStmt.Then);
+	For Each Hook In Visitor.Hooks.VisitElsIfStmt Do
+		Hook.VisitElsIfStmt(ElsIfStmt)
+	EndDo;
+EndProcedure // VisitElsIfStmt()
+
+Procedure VisitPrepIfStmt(Visitor, PrepIfStmt)
+	Var PrepElsIfStmt, Hook;
+	VisitExpr(Visitor, PrepIfStmt.Cond);
+	VisitStatements(Visitor, PrepIfStmt.Then);
+	If PrepIfStmt.ElsIf <> Undefined Then
+		For Each PrepElsIfStmt In PrepIfStmt.ElsIf Do
+			VisitPrepElsIfStmt(Visitor, PrepElsIfStmt);
+		EndDo;
+	EndIf;
+	If PrepIfStmt.Else <> Undefined Then
+		VisitStatements(Visitor, PrepIfStmt.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitPrepIfStmt Do
+		Hook.VisitPrepIfStmt(PrepIfStmt)
+	EndDo;
+EndProcedure // VisitPrepIfStmt()
+
+Procedure VisitPrepElsIfStmt(Visitor, PrepElsIfStmt)
+	Var Hook;
+	VisitExpr(Visitor, PrepElsIfStmt.Cond);
+	VisitStatements(Visitor, PrepElsIfStmt.Then);
+	For Each Hook In Visitor.Hooks.VisitPrepElsIfStmt Do
+		Hook.VisitPrepElsIfStmt(PrepElsIfStmt)
+	EndDo;
+EndProcedure // VisitPrepElsIfStmt()
+
+Procedure VisitWhileStmt(Visitor, WhileStmt)
+	Var Hook;
+	VisitExpr(Visitor, WhileStmt.Cond);
+	VisitStatements(Visitor, WhileStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitWhileStmt Do
+		Hook.VisitWhileStmt(WhileStmt)
+	EndDo;
+EndProcedure // VisitWhileStmt()
+
+Procedure VisitPrepRegionStmt(Visitor, PrepRegionStmt)
+	Var Hook;
+	VisitStatements(Visitor, PrepRegionStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitPrepRegionStmt Do
+		Hook.VisitPrepRegionStmt(PrepRegionStmt)
+	EndDo;
+EndProcedure // VisitPrepRegionStmt()
+
+Procedure VisitForStmt(Visitor, ForStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, ForStmt.Desig);
+	VisitExpr(Visitor, ForStmt.From);
+	VisitExpr(Visitor, ForStmt.To);
+	VisitStatements(Visitor, ForStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitForStmt Do
+		Hook.VisitForStmt(ForStmt)
+	EndDo;
+EndProcedure // VisitForStmt()
+
+Procedure VisitForEachStmt(Visitor, ForEachStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, ForEachStmt.Desig);
+	VisitExpr(Visitor, ForEachStmt.In);
+	VisitStatements(Visitor, ForEachStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitForEachStmt Do
+		Hook.VisitForEachStmt(ForEachStmt)
+	EndDo;
+EndProcedure // VisitForEachStmt()
+
+Procedure VisitTryStmt(Visitor, TryStmt)
+	Var Hook;
+	VisitStatements(Visitor, TryStmt.TryPart);
+	VisitStatements(Visitor, TryStmt.ExceptPart);
+	For Each Hook In Visitor.Hooks.VisitTryStmt Do
+		Hook.VisitTryStmt(TryStmt)
+	EndDo;
+EndProcedure // VisitTryStmt()
+
+Procedure VisitGotoStmt(Visitor, GotoStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitGotoStmt Do
+		Hook.VisitGotoStmt(GotoStmt)
+	EndDo;
+EndProcedure // VisitGotoStmt()
+
+Procedure VisitLabelStmt(Visitor, LabelStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitLabelStmt Do
+		Hook.VisitLabelStmt(LabelStmt)
+	EndDo;
+EndProcedure // VisitLabelStmt()
+
+#EndRegion // VisitStmt
+
+#EndRegion // Visitor
+
 Init();
