@@ -88,9 +88,7 @@ EndProcedure // InitEnums()
 #Region Enums
 
 Function Keywords() Export
-	Var Keywords;
-
-	Keywords = Enum(New Structure,
+	Return Enum(New Structure,
 		"If.Если, Then.Тогда, ElsIf.ИначеЕсли, Else.Иначе, EndIf.КонецЕсли,
 		|For.Для, Each.Каждого, In.Из, To.По, While.Пока, Do.Цикл, EndDo.КонецЦикла,
 		|Procedure.Процедура, EndProcedure.КонецПроцедуры, Function.Функция, EndFunction.КонецФункции,
@@ -100,8 +98,6 @@ Function Keywords() Export
 		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
 		|True.Истина, False.Ложь, Undefined.Неопределено, Null"
 	);
-
-	Return Keywords;
 EndFunction // Keywords()
 
 Function Tokens(Keywords = Undefined) Export
@@ -142,35 +138,25 @@ Function Tokens(Keywords = Undefined) Export
 EndFunction // Tokens()
 
 Function SelectorKinds() Export
-	Var SelectorKinds;
-
-	SelectorKinds = Enum(New Structure,
+	Return Enum(New Structure,
 		"Ident," // Something._
 		"Index," // Something[_]
 		"Call,"  // Something(_)
 	);
-
-	Return SelectorKinds;
 EndFunction // SelectorKinds()
 
 Function Directives() Export
-	Var Directives;
-
-	Directives = Enum(New Structure,
+	Return Enum(New Structure,
 		"AtClient.НаКлиенте,"
 		"AtServer.НаСервере,"
 		"AtServerNoContext.НаСервереБезКонтекста,"
 		"AtClientAtServerNoContext.НаКлиентеНаСервереБезКонтекста,"
 		"AtClientAtServer.НаКлиентеНаСервере,"
 	);
-
-	Return Directives;
 EndFunction // Directives()
 
 Function PrepInstructions() Export
-	Var PrepInstructions;
-
-	PrepInstructions = Enum(New Structure,
+	Return Enum(New Structure,
 		"If.Если,"
 		"ElsIf.ИначеЕсли,"
 		"Else.Иначе,"
@@ -178,12 +164,10 @@ Function PrepInstructions() Export
 		"Region.Область,"
 		"EndRegion.КонецОбласти,"
 	);
-
-	Return PrepInstructions;
 EndFunction // PrepInstructions()
 
 Function Enum(Structure, Keys)
-	Var ItemList, Value;
+	Var Items, Item, ItemList, Value;
 
 	For Each Items In StrSplit(Keys, ",", False) Do
 		ItemList = StrSplit(Items, ".", False);
@@ -448,7 +432,7 @@ EndFunction // ScanDateTime()
 Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return Struct("Module",
 		"Decls"     // array (one of #Declarations)
-		"Auto"      // array (VarL)
+		"Auto"      // array (VarLoc)
 		"Body"      // array (one of #Statements)
 		"Interface" // array (Func, Proc)
 		"Comments"  // map[number] (string)
@@ -460,8 +444,8 @@ EndFunction // Module()
 Function Scope(Outer)
 	Return New Structure(
 		"Outer,"   // undefined, structure (Scope)
-		"Objects," // structure as map[string] (Unknown, Func, Proc, VarM, VarL, Param)
-		"Auto,"    // array (VarL)
+		"Objects," // structure as map[string] (Unknown, Func, Proc, VarMod, VarLoc, Param)
+		"Auto,"    // array (VarLoc)
 	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -489,20 +473,20 @@ Function Proc(Name, Directive, Params, Exported)
 	, Name, Directive, Params, Exported);
 EndFunction // Proc()
 
-Function VarM(Name, Directive, Exported)
-	Return Struct("VarM",
+Function VarMod(Name, Directive, Exported)
+	Return Struct("VarMod",
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Export" // boolean
 	, Name, Directive, Exported);
-EndFunction // VarM()
+EndFunction // VarMod()
 
-Function VarL(Name, Auto = False)
-	Return Struct("VarL",
+Function VarLoc(Name, Auto = False)
+	Return Struct("VarLoc",
 		"Name" // string
 		"Auto" // boolean
 	, Name, Auto);
-EndFunction // VarL()
+EndFunction // VarLoc()
 
 Function Param(Name, ByVal, Value = Undefined)
 	Return Struct("Param",
@@ -516,25 +500,25 @@ EndFunction // Param()
 
 #Region Declarations
 
-Function ModVarsDecl(VarList, Place = Undefined)
-	Return Struct("ModVarsDecl",
-		"List"  // array (VarM)
+Function VarModListDecl(VarList, Place = Undefined)
+	Return Struct("VarModListDecl",
+		"List"  // array (VarMod)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
-EndFunction // ModVarsDecl()
+EndFunction // VarModListDecl()
 
-Function VarsDecl(VarList, Place = Undefined)
-	Return Struct("VarsDecl",
-		"List"  // array (VarL)
+Function VarLocListDecl(VarList, Place = Undefined)
+	Return Struct("VarLocListDecl",
+		"List"  // array (VarLoc)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
-EndFunction // VarsDecl()
+EndFunction // VarLocListDecl()
 
 Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	Return Struct("ProcDecl",
 		"Object" // structure (Proc)
 		"Decls"  // array (one of #Declarations)
-		"Auto"   // array (VarL)
+		"Auto"   // array (VarLoc)
 		"Body"   // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
 	, Object, Decls, Auto, Body, Place);
@@ -544,7 +528,7 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 	Return Struct("FuncDecl",
 		"Object" // structure (Func)
 		"Decls"  // array (one of #Declarations)
-		"Auto"   // array (VarL)
+		"Auto"   // array (VarLoc)
 		"Body"   // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
 	, Object, Decls, Auto, Body, Place);
@@ -599,7 +583,7 @@ EndFunction // Selector()
 
 Function DesigExpr(Object, Selectors, Call, Place = Undefined)
 	Return Struct("DesigExpr",
-		"Object" // structure (Unknown, Func, Proc, VarM, VarL, Param)
+		"Object" // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
 		"Select" // array (Selector)
 		"Call"   // boolean
 		"Place"  // undefined, structure (Place)
@@ -824,7 +808,7 @@ Function Parser(Source) Export
 		"Lit"       // string
 		"Val"       // number, string, date, boolean, undefined, null
 		"Scope"     // structure (Scope)
-		"Vars"      // structure as map[string] (VarM, VarL)
+		"Vars"      // structure as map[string] (VarMod, VarLoc)
 		"Methods"   // structure as map[string] (Func, Proc)
 		"Module"    // structure (Module)
 		"Unknown"   // structure as map[string] (Unknown)
@@ -902,7 +886,7 @@ Function CloseScope(Parser)
 EndFunction // CloseScope()
 
 Procedure ParseModule(Parser) Export
-	Var Decls, Auto, VarObj, Statements;
+	Var Decls, Auto, VarObj, Item, Statements;
 	Next(Parser);
 	Decls = ParseModDecls(Parser);
 	Statements = ParseStatements(Parser);
@@ -1124,7 +1108,7 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = VarL(Name, True);
+			Object = VarLoc(Name, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.Auto.Add(Object);
 		Else
@@ -1301,15 +1285,15 @@ Function ParseModVarListDecl(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	VarList = New Array;
-	VarList.Add(ParseVarM(Parser));
+	VarList.Add(ParseVarMod(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarM(Parser));
+		VarList.Add(ParseVarMod(Parser));
 	EndDo;
-	Return ModVarsDecl(VarList, Place(Parser, Pos, Line));
+	Return VarModListDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseModVarListDecl()
 
-Function ParseVarM(Parser)
+Function ParseVarMod(Parser)
 	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1320,7 +1304,7 @@ Function ParseVarM(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarM(Name, Parser.Directive, Exported);
+	Object = VarMod(Name, Parser.Directive, Exported);
 	If Exported Then
 		Parser.Interface.Add(Object);
 	EndIf;
@@ -1329,7 +1313,7 @@ Function ParseVarM(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseVarM()
+EndFunction // ParseVarMod()
 
 Function ParseVarDecls(Parser)
 	Var Tok, Decls;
@@ -1349,15 +1333,15 @@ Function ParseVarListDecl(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	VarList = New Array;
-	VarList.Add(ParseVarL(Parser));
+	VarList.Add(ParseVarLoc(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarL(Parser));
+		VarList.Add(ParseVarLoc(Parser));
 	EndDo;
-	Return VarsDecl(VarList, Place(Parser, Pos, Line));
+	Return VarLocListDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseVarListDecl()
 
-Function ParseVarL(Parser)
+Function ParseVarLoc(Parser)
 	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1368,7 +1352,7 @@ Function ParseVarL(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarL(Name);
+	Object = VarLoc(Name);
 	If Exported Then
 		Parser.Interface.Add(Object);
 	EndIf;
@@ -1377,7 +1361,7 @@ Function ParseVarL(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseVarL()
+EndFunction // ParseVarLoc()
 
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
@@ -1889,7 +1873,7 @@ Function Value(Tok, Lit)
 EndFunction // Value()
 
 Function AsDate(DateLit)
-	Var List, Char;
+	Var List, Char, Num;
 	List = New Array;
 	For Num = 1 To StrLen(DateLit) Do
 		Char = Mid(DateLit, Num, 1);
@@ -1959,5 +1943,468 @@ Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
 EndProcedure // Error()
 
 #EndRegion // Auxiliary
+
+#Region Visitor
+
+Function Visitor(Hooks) Export
+	Var Visitor;
+
+	Visitor = Class("Visitor",
+		"Hooks" // structure as map[string] (array)
+	);
+
+	Visitor.Hooks = Hooks;
+
+	Return Visitor;
+EndFunction // Visitor()
+
+Function VisitModule(Visitor, Module) Export
+	Var Hook;
+	VisitDeclarations(Visitor, Module.Decls);
+	VisitStatements(Visitor, Module.Body);
+	For Each Hook In Visitor.Hooks.VisitModule Do
+		Hook.VisitModule(Module);
+	EndDo;
+EndFunction // VisitModule()
+
+Function VisitDeclarations(Visitor, Declarations)
+	Var Decl, Hook;
+	For Each Decl In Declarations Do
+		VisitDecl(Visitor, Decl);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitDeclarations Do
+		Hook.VisitDeclarations(Declarations);
+	EndDo;
+EndFunction // VisitDeclarations()
+
+Function VisitStatements(Visitor, Statements)
+	Var Stmt, Hook;
+	For Each Stmt In Statements Do
+		VisitStmt(Visitor, Stmt);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitStatements Do
+		Hook.VisitStatements(Statements);
+	EndDo;
+EndFunction // VisitStatements()
+
+#Region VisitDecl
+
+Procedure VisitDecl(Visitor, Decl)
+	Var Type, Hook;
+	Type = Decl.Type;
+	If Type = "VarModListDecl" Then
+		VisitVarModListDecl(Visitor, Decl);
+	ElsIf Type = "VarLocListDecl" Then
+		VisitVarLocListDecl(Visitor, Decl);
+	ElsIf Type = "ProcDecl" Then
+		VisitProcDecl(Visitor, Decl);
+	ElsIf Type = "FuncDecl" Then
+		VisitFuncDecl(Visitor, Decl);
+	ElsIf Type = "PrepIfDecl" Then
+		VisitPrepIfDecl(Visitor, Decl);
+	ElsIf Type = "PrepElsIfDecl" Then
+		VisitPrepElsIfDecl(Visitor, Decl);
+	ElsIf Type = "PrepRegionDecl" Then
+		VisitPrepRegionDecl(Visitor, Decl);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitDecl Do
+		Hook.VisitDecl(Visitor, Decl);
+	EndDo;
+EndProcedure // VisitDecl()
+
+Procedure VisitVarModListDecl(Visitor, VarModListDecl)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitVarModListDecl Do
+		Hook.VisitVarModListDecl(VarModListDecl);
+	EndDo;
+EndProcedure // VisitVarModListDecl()
+
+Procedure VisitVarLocListDecl(Visitor, VarLocListDecl)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitVarLocListDecl Do
+		Hook.VisitVarLocListDecl(VarLocListDecl);
+	EndDo;
+EndProcedure // VisitVarLocListDecl()
+
+Procedure VisitProcDecl(Visitor, ProcDecl)
+	Var Hook;
+	VisitDeclarations(Visitor, ProcDecl.Decls);
+	VisitStatements(Visitor, ProcDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitProcDecl Do
+		Hook.VisitProcDecl(ProcDecl);
+	EndDo;
+EndProcedure // VisitProcDecl()
+
+Procedure VisitFuncDecl(Visitor, FuncDecl)
+	Var Hook;
+	VisitDeclarations(Visitor, FuncDecl.Decls);
+	VisitStatements(Visitor, FuncDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitFuncDecl Do
+		Hook.VisitFuncDecl(FuncDecl);
+	EndDo;
+EndProcedure // VisitFuncDecl()
+
+Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
+	Var Hook;
+	VisitExpr(Visitor, PrepIfDecl.Cond);
+	VisitStatements(Visitor, PrepIfDecl.Then);
+	If PrepIfDecl.ElsIf <> Undefined Then
+		VisitPrepElsIfDecl(Visitor, PrepIfDecl.ElsIf);
+	EndIf;
+	If PrepIfDecl.Else <> Undefined Then
+		VisitStatements(Visitor, PrepIfDecl.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitPrepIfDecl Do
+		Hook.VisitPrepIfDecl(PrepIfDecl);
+	EndDo;
+EndProcedure // VisitPrepIfDecl()
+
+Procedure VisitPrepElsIfDecl(Visitor, PrepElsIfDecl)
+	Var Hook;
+	VisitExpr(Visitor, PrepElsIfDecl.Cond);
+	VisitStatements(Visitor, PrepElsIfDecl.Then);
+	For Each Hook In Visitor.Hooks.VisitPrepElsIfDecl Do
+		Hook.VisitPrepElsIfDecl(PrepElsIfDecl);
+	EndDo;
+EndProcedure // VisitPrepElsIfDecl()
+
+Procedure VisitPrepRegionDecl(Visitor, PrepRegionDecl)
+	Var Hook, Decl, Stmt;
+	VisitDeclarations(Visitor, PrepRegionDecl.Decls);
+	VisitStatements(Visitor, PrepRegionDecl.Body);
+	For Each Hook In Visitor.Hooks.VisitPrepRegionDecl Do
+		Hook.VisitPrepRegionDecl(PrepRegionDecl);
+	EndDo;
+EndProcedure // VisitPrepRegionDecl()
+
+#EndRegion // VisitDecl
+
+#Region VisitExpr
+
+Procedure VisitExpr(Visitor, Expr)
+	Var Type;
+	Type = Expr.Type;
+	If Type = "BasicLitExpr" Then
+		VisitBasicLitExpr(Visitor, Expr);
+	ElsIf Type = "DesigExpr" Then
+		VisitDesigExpr(Visitor, Expr);
+	ElsIf Type = "UnaryExpr" Then
+		VisitUnaryExpr(Visitor, Expr);
+	ElsIf Type = "BinaryExpr" Then
+		VisitBinaryExpr(Visitor, Expr);
+	ElsIf Type = "NewExpr" Then
+		VisitNewExpr(Visitor, Expr);
+	ElsIf Type = "TernaryExpr" Then
+		VisitTernaryExpr(Visitor, Expr);
+	ElsIf Type = "ParenExpr" Then
+		VisitParenExpr(Visitor, Expr);
+	ElsIf Type = "NotExpr" Then
+		VisitNotExpr(Visitor, Expr);
+	ElsIf Type = "StringExpr" Then
+		VisitStringExpr(Visitor, Expr);
+	EndIf;
+EndProcedure // VisitExpr()
+
+Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
+		Hook.VisitBasicLitExpr(BasicLitExpr);
+	EndDo;
+EndProcedure // VisitBasicLitExpr()
+
+Procedure VisitDesigExpr(Visitor, DesigExpr)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
+		Hook.VisitDesigExpr(DesigExpr);
+	EndDo;
+EndProcedure // VisitDesigExpr()
+
+Procedure VisitUnaryExpr(Visitor, UnaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, UnaryExpr.Operand);
+	For Each Hook In Visitor.Hooks.VisitUnaryExpr Do
+		Hook.VisitUnaryExpr(UnaryExpr);
+	EndDo;
+EndProcedure // VisitUnaryExpr()
+
+Procedure VisitBinaryExpr(Visitor, BinaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, BinaryExpr.Left);
+	VisitExpr(Visitor, BinaryExpr.Right);
+	For Each Hook In Visitor.Hooks.VisitBinaryExpr Do
+		Hook.VisitBinaryExpr(BinaryExpr);
+	EndDo;
+EndProcedure // VisitBinaryExpr()
+
+Procedure VisitNewExpr(Visitor, NewExpr)
+	Var Expr, Hook;
+	If TypeOf(NewExpr.Constr) = Type("Structure") Then
+		VisitDesigExpr(Visitor, NewExpr.Constr);
+	Else
+		For Each Expr In NewExpr.Constr Do
+			VisitExpr(Visitor, Expr);
+		EndDo;
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitNewExpr Do
+		Hook.VisitNewExpr(NewExpr);
+	EndDo;
+EndProcedure // VisitNewExpr()
+
+Procedure VisitTernaryExpr(Visitor, TernaryExpr)
+	Var Hook;
+	VisitExpr(Visitor, TernaryExpr.Cond);
+	VisitExpr(Visitor, TernaryExpr.Then);
+	VisitExpr(Visitor, TernaryExpr.Else);
+	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
+		Hook.VisitTernaryExpr(TernaryExpr);
+	EndDo;
+EndProcedure // VisitTernaryExpr()
+
+Procedure VisitParenExpr(Visitor, ParenExpr)
+	Var Hook;
+	VisitExpr(Visitor, ParenExpr.Expr);
+	For Each Hook In Visitor.Hooks.VisitParenExpr Do
+		Hook.VisitParenExpr(ParenExpr);
+	EndDo;
+EndProcedure // VisitParenExpr()
+
+Procedure VisitNotExpr(Visitor, NotExpr)
+	Var Hook;
+	VisitExpr(Visitor, NotExpr.Expr);
+	For Each Hook In Visitor.Hooks.VisitNotExpr Do
+		Hook.VisitNotExpr(NotExpr);
+	EndDo;
+EndProcedure // VisitNotExpr()
+
+Procedure VisitStringExpr(Visitor, StringExpr)
+	Var Expr, Hook;
+	For Each Expr In StringExpr.List Do
+		VisitBasicLitExpr(Visitor, Expr);
+	EndDo;
+	For Each Hook In Visitor.Hooks.VisitStringExpr Do
+		Hook.VisitStringExpr(StringExpr);
+	EndDo;
+EndProcedure // VisitStringExpr()
+
+#EndRegion // VisitExpr
+
+#Region VisitStmt
+
+Procedure VisitStmt(Visitor, Stmt)
+	Var Type, Hook;
+	Type = Stmt.Type;
+	If Type = "AssignStmt" Then
+		VisitAssignStmt(Visitor, Stmt);
+	ElsIf Type = "ReturnStmt" Then
+		VisitReturnStmt(Visitor, Stmt);
+	ElsIf Type = "BreakStmt" Then
+		VisitBreakStmt(Visitor, Stmt);
+	ElsIf Type = "ContinueStmt" Then
+		VisitContinueStmt(Visitor, Stmt);
+	ElsIf Type = "RaiseStmt" Then
+		VisitRaiseStmt(Visitor, Stmt);
+	ElsIf Type = "ExecuteStmt" Then
+		VisitExecuteStmt(Visitor, Stmt);
+	ElsIf Type = "CallStmt" Then
+		VisitCallStmt(Visitor, Stmt);
+	ElsIf Type = "IfStmt" Then
+		VisitIfStmt(Visitor, Stmt);
+	ElsIf Type = "PrepIfStmt" Then
+		VisitPrepIfStmt(Visitor, Stmt);
+	ElsIf Type = "WhileStmt" Then
+		VisitWhileStmt(Visitor, Stmt);
+	ElsIf Type = "PrepRegionStmt" Then
+		VisitPrepRegionStmt(Visitor, Stmt);
+	ElsIf Type = "ForStmt" Then
+		VisitForStmt(Visitor, Stmt);
+	ElsIf Type = "ForEachStmt" Then
+		VisitForEachStmt(Visitor, Stmt);
+	ElsIf Type = "TryStmt" Then
+		VisitTryStmt(Visitor, Stmt);
+	ElsIf Type = "GotoStmt" Then
+		VisitGotoStmt(Visitor, Stmt);
+	ElsIf Type = "LabelStmt" Then
+		VisitLabelStmt(Visitor, Stmt);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitStmt Do
+		Hook.VisitStmt(Stmt);
+	EndDo;
+EndProcedure // VisitStmt()
+
+Procedure VisitAssignStmt(Visitor, AssignStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, AssignStmt.Left);
+	VisitExpr(Visitor, AssignStmt.Right);
+	For Each Hook In Visitor.Hooks.VisitAssignStmt Do
+		Hook.VisitAssignStmt(AssignStmt);
+	EndDo;
+EndProcedure // VisitAssignStmt()
+
+Procedure VisitReturnStmt(Visitor, ReturnStmt)
+	Var Hook;
+	If ReturnStmt.Expr <> Undefined Then
+		VisitExpr(Visitor, ReturnStmt.Expr);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitReturnStmt Do
+		Hook.VisitReturnStmt(ReturnStmt);
+	EndDo;
+EndProcedure // VisitReturnStmt()
+
+Procedure VisitBreakStmt(Visitor, BreakStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitBreakStmt Do
+		Hook.VisitBreakStmt(BreakStmt);
+	EndDo;
+EndProcedure // VisitBreakStmt()
+
+Procedure VisitContinueStmt(Visitor, ContinueStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitContinueStmt Do
+		Hook.VisitContinueStmt(ContinueStmt);
+	EndDo;
+EndProcedure // VisitContinueStmt()
+
+Procedure VisitRaiseStmt(Visitor, RaiseStmt)
+	Var Hook;
+	If RaiseStmt.Expr <> Undefined Then
+		VisitExpr(Visitor, RaiseStmt.Expr);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitRaiseStmt Do
+		Hook.VisitRaiseStmt(RaiseStmt);
+	EndDo;
+EndProcedure // VisitRaiseStmt()
+
+Procedure VisitExecuteStmt(Visitor, ExecuteStmt)
+	Var Hook;
+	VisitExpr(Visitor, ExecuteStmt.Expr);
+	For Each Hook In Visitor.Hooks.VisitExecuteStmt Do
+		Hook.VisitExecuteStmt(ExecuteStmt);
+	EndDo;
+EndProcedure // VisitExecuteStmt()
+
+Procedure VisitCallStmt(Visitor, CallStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, CallStmt.Desig);
+	For Each Hook In Visitor.Hooks.VisitCallStmt Do
+		Hook.VisitCallStmt(CallStmt);
+	EndDo;
+EndProcedure // VisitCallStmt()
+
+Procedure VisitIfStmt(Visitor, IfStmt)
+	Var ElsIfStmt, Hook;
+	VisitExpr(Visitor, IfStmt.Cond);
+	VisitStatements(Visitor, IfStmt.Then);
+	If IfStmt.ElsIf <> Undefined Then
+		For Each ElsIfStmt In IfStmt.ElsIf Do
+			VisitElsIfStmt(Visitor, ElsIfStmt);
+		EndDo;
+	EndIf;
+	If IfStmt.Else <> Undefined Then
+		VisitStatements(Visitor, IfStmt.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitIfStmt Do
+		Hook.VisitIfStmt(IfStmt);
+	EndDo;
+EndProcedure // VisitIfStmt()
+
+Procedure VisitElsIfStmt(Visitor, ElsIfStmt)
+	Var Hook;
+	VisitExpr(Visitor, ElsIfStmt.Cond);
+	VisitStatements(Visitor, ElsIfStmt.Then);
+	For Each Hook In Visitor.Hooks.VisitElsIfStmt Do
+		Hook.VisitElsIfStmt(ElsIfStmt);
+	EndDo;
+EndProcedure // VisitElsIfStmt()
+
+Procedure VisitPrepIfStmt(Visitor, PrepIfStmt)
+	Var PrepElsIfStmt, Hook;
+	VisitExpr(Visitor, PrepIfStmt.Cond);
+	VisitStatements(Visitor, PrepIfStmt.Then);
+	If PrepIfStmt.ElsIf <> Undefined Then
+		For Each PrepElsIfStmt In PrepIfStmt.ElsIf Do
+			VisitPrepElsIfStmt(Visitor, PrepElsIfStmt);
+		EndDo;
+	EndIf;
+	If PrepIfStmt.Else <> Undefined Then
+		VisitStatements(Visitor, PrepIfStmt.Else);
+	EndIf;
+	For Each Hook In Visitor.Hooks.VisitPrepIfStmt Do
+		Hook.VisitPrepIfStmt(PrepIfStmt);
+	EndDo;
+EndProcedure // VisitPrepIfStmt()
+
+Procedure VisitPrepElsIfStmt(Visitor, PrepElsIfStmt)
+	Var Hook;
+	VisitExpr(Visitor, PrepElsIfStmt.Cond);
+	VisitStatements(Visitor, PrepElsIfStmt.Then);
+	For Each Hook In Visitor.Hooks.VisitPrepElsIfStmt Do
+		Hook.VisitPrepElsIfStmt(PrepElsIfStmt);
+	EndDo;
+EndProcedure // VisitPrepElsIfStmt()
+
+Procedure VisitWhileStmt(Visitor, WhileStmt)
+	Var Hook;
+	VisitExpr(Visitor, WhileStmt.Cond);
+	VisitStatements(Visitor, WhileStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitWhileStmt Do
+		Hook.VisitWhileStmt(WhileStmt);
+	EndDo;
+EndProcedure // VisitWhileStmt()
+
+Procedure VisitPrepRegionStmt(Visitor, PrepRegionStmt)
+	Var Hook;
+	VisitStatements(Visitor, PrepRegionStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitPrepRegionStmt Do
+		Hook.VisitPrepRegionStmt(PrepRegionStmt);
+	EndDo;
+EndProcedure // VisitPrepRegionStmt()
+
+Procedure VisitForStmt(Visitor, ForStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, ForStmt.Desig);
+	VisitExpr(Visitor, ForStmt.From);
+	VisitExpr(Visitor, ForStmt.To);
+	VisitStatements(Visitor, ForStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitForStmt Do
+		Hook.VisitForStmt(ForStmt);
+	EndDo;
+EndProcedure // VisitForStmt()
+
+Procedure VisitForEachStmt(Visitor, ForEachStmt)
+	Var Hook;
+	VisitDesigExpr(Visitor, ForEachStmt.Desig);
+	VisitExpr(Visitor, ForEachStmt.In);
+	VisitStatements(Visitor, ForEachStmt.Body);
+	For Each Hook In Visitor.Hooks.VisitForEachStmt Do
+		Hook.VisitForEachStmt(ForEachStmt);
+	EndDo;
+EndProcedure // VisitForEachStmt()
+
+Procedure VisitTryStmt(Visitor, TryStmt)
+	Var Hook;
+	VisitStatements(Visitor, TryStmt.TryPart);
+	VisitStatements(Visitor, TryStmt.ExceptPart);
+	For Each Hook In Visitor.Hooks.VisitTryStmt Do
+		Hook.VisitTryStmt(TryStmt);
+	EndDo;
+EndProcedure // VisitTryStmt()
+
+Procedure VisitGotoStmt(Visitor, GotoStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitGotoStmt Do
+		Hook.VisitGotoStmt(GotoStmt);
+	EndDo;
+EndProcedure // VisitGotoStmt()
+
+Procedure VisitLabelStmt(Visitor, LabelStmt)
+	Var Hook;
+	For Each Hook In Visitor.Hooks.VisitLabelStmt Do
+		Hook.VisitLabelStmt(LabelStmt);
+	EndDo;
+EndProcedure // VisitLabelStmt()
+
+#EndRegion // VisitStmt
+
+#EndRegion // Visitor
 
 Init();
