@@ -432,7 +432,7 @@ EndFunction // ScanDateTime()
 Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return Struct("Module",
 		"Decls"     // array (one of #Declarations)
-		"Auto"      // array (VarL)
+		"Auto"      // array (VarLoc)
 		"Body"      // array (one of #Statements)
 		"Interface" // array (Func, Proc)
 		"Comments"  // map[number] (string)
@@ -444,8 +444,8 @@ EndFunction // Module()
 Function Scope(Outer)
 	Return New Structure(
 		"Outer,"   // undefined, structure (Scope)
-		"Objects," // structure as map[string] (Unknown, Func, Proc, VarM, VarL, Param)
-		"Auto,"    // array (VarL)
+		"Objects," // structure as map[string] (Unknown, Func, Proc, VarMod, VarLoc, Param)
+		"Auto,"    // array (VarLoc)
 	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -473,20 +473,20 @@ Function Proc(Name, Directive, Params, Exported)
 	, Name, Directive, Params, Exported);
 EndFunction // Proc()
 
-Function VarM(Name, Directive, Exported)
-	Return Struct("VarM",
+Function VarMod(Name, Directive, Exported)
+	Return Struct("VarMod",
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Export" // boolean
 	, Name, Directive, Exported);
-EndFunction // VarM()
+EndFunction // VarMod()
 
-Function VarL(Name, Auto = False)
-	Return Struct("VarL",
+Function VarLoc(Name, Auto = False)
+	Return Struct("VarLoc",
 		"Name" // string
 		"Auto" // boolean
 	, Name, Auto);
-EndFunction // VarL()
+EndFunction // VarLoc()
 
 Function Param(Name, ByVal, Value = Undefined)
 	Return Struct("Param",
@@ -500,25 +500,25 @@ EndFunction // Param()
 
 #Region Declarations
 
-Function ModVarsDecl(VarList, Place = Undefined)
-	Return Struct("ModVarsDecl",
-		"List"  // array (VarM)
+Function VarModListDecl(VarList, Place = Undefined)
+	Return Struct("VarModListDecl",
+		"List"  // array (VarMod)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
-EndFunction // ModVarsDecl()
+EndFunction // VarModListDecl()
 
-Function VarsDecl(VarList, Place = Undefined)
-	Return Struct("VarsDecl",
-		"List"  // array (VarL)
+Function VarLocListDecl(VarList, Place = Undefined)
+	Return Struct("VarLocListDecl",
+		"List"  // array (VarLoc)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
-EndFunction // VarsDecl()
+EndFunction // VarLocListDecl()
 
 Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	Return Struct("ProcDecl",
 		"Object" // structure (Proc)
 		"Decls"  // array (one of #Declarations)
-		"Auto"   // array (VarL)
+		"Auto"   // array (VarLoc)
 		"Body"   // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
 	, Object, Decls, Auto, Body, Place);
@@ -528,7 +528,7 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 	Return Struct("FuncDecl",
 		"Object" // structure (Func)
 		"Decls"  // array (one of #Declarations)
-		"Auto"   // array (VarL)
+		"Auto"   // array (VarLoc)
 		"Body"   // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
 	, Object, Decls, Auto, Body, Place);
@@ -583,7 +583,7 @@ EndFunction // Selector()
 
 Function DesigExpr(Object, Selectors, Call, Place = Undefined)
 	Return Struct("DesigExpr",
-		"Object" // structure (Unknown, Func, Proc, VarM, VarL, Param)
+		"Object" // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
 		"Select" // array (Selector)
 		"Call"   // boolean
 		"Place"  // undefined, structure (Place)
@@ -808,7 +808,7 @@ Function Parser(Source) Export
 		"Lit"       // string
 		"Val"       // number, string, date, boolean, undefined, null
 		"Scope"     // structure (Scope)
-		"Vars"      // structure as map[string] (VarM, VarL)
+		"Vars"      // structure as map[string] (VarMod, VarLoc)
 		"Methods"   // structure as map[string] (Func, Proc)
 		"Module"    // structure (Module)
 		"Unknown"   // structure as map[string] (Unknown)
@@ -1108,7 +1108,7 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = VarL(Name, True);
+			Object = VarLoc(Name, True);
 			Parser.Vars.Insert(Name, Object);
 			Parser.Scope.Auto.Add(Object);
 		Else
@@ -1285,15 +1285,15 @@ Function ParseModVarListDecl(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	VarList = New Array;
-	VarList.Add(ParseVarM(Parser));
+	VarList.Add(ParseVarMod(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarM(Parser));
+		VarList.Add(ParseVarMod(Parser));
 	EndDo;
-	Return ModVarsDecl(VarList, Place(Parser, Pos, Line));
+	Return VarModListDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseModVarListDecl()
 
-Function ParseVarM(Parser)
+Function ParseVarMod(Parser)
 	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1304,7 +1304,7 @@ Function ParseVarM(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarM(Name, Parser.Directive, Exported);
+	Object = VarMod(Name, Parser.Directive, Exported);
 	If Exported Then
 		Parser.Interface.Add(Object);
 	EndIf;
@@ -1313,7 +1313,7 @@ Function ParseVarM(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseVarM()
+EndFunction // ParseVarMod()
 
 Function ParseVarDecls(Parser)
 	Var Tok, Decls;
@@ -1333,15 +1333,15 @@ Function ParseVarListDecl(Parser)
 	Pos = Parser.Pos;
 	Line = Parser.Line;
 	VarList = New Array;
-	VarList.Add(ParseVarL(Parser));
+	VarList.Add(ParseVarLoc(Parser));
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
-		VarList.Add(ParseVarL(Parser));
+		VarList.Add(ParseVarLoc(Parser));
 	EndDo;
-	Return VarsDecl(VarList, Place(Parser, Pos, Line));
+	Return VarLocListDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseVarListDecl()
 
-Function ParseVarL(Parser)
+Function ParseVarLoc(Parser)
 	Var Name, Object, Exported, Pos;
 	Pos = Parser.Pos;
 	Expect(Parser, Tokens.Ident);
@@ -1352,7 +1352,7 @@ Function ParseVarL(Parser)
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarL(Name);
+	Object = VarLoc(Name);
 	If Exported Then
 		Parser.Interface.Add(Object);
 	EndIf;
@@ -1361,7 +1361,7 @@ Function ParseVarL(Parser)
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
-EndFunction // ParseVarL()
+EndFunction // ParseVarLoc()
 
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
@@ -1992,10 +1992,10 @@ EndFunction // VisitStatements()
 Procedure VisitDecl(Visitor, Decl)
 	Var Type, Hook;
 	Type = Decl.Type;
-	If Type = "ModVarsDecl" Then
-		VisitModVarsDecl(Visitor, Decl);
-	ElsIf Type = "VarsDecl" Then
-		VisitVarsDecl(Visitor, Decl);
+	If Type = "VarModListDecl" Then
+		VisitVarModListDecl(Visitor, Decl);
+	ElsIf Type = "VarLocListDecl" Then
+		VisitVarLocListDecl(Visitor, Decl);
 	ElsIf Type = "ProcDecl" Then
 		VisitProcDecl(Visitor, Decl);
 	ElsIf Type = "FuncDecl" Then
@@ -2012,19 +2012,19 @@ Procedure VisitDecl(Visitor, Decl)
 	EndDo;
 EndProcedure // VisitDecl()
 
-Procedure VisitModVarsDecl(Visitor, ModVarsDecl)
+Procedure VisitVarModListDecl(Visitor, VarModListDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitModVarsDecl Do
-		Hook.VisitModVarsDecl(ModVarsDecl);
+	For Each Hook In Visitor.Hooks.VisitVarModListDecl Do
+		Hook.VisitVarModListDecl(VarModListDecl);
 	EndDo;
-EndProcedure // VisitModVarsDecl()
+EndProcedure // VisitVarModListDecl()
 
-Procedure VisitVarsDecl(Visitor, VarsDecl)
+Procedure VisitVarLocListDecl(Visitor, VarLocListDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitVarsDecl Do
-		Hook.VisitVarsDecl(VarsDecl);
+	For Each Hook In Visitor.Hooks.VisitVarLocListDecl Do
+		Hook.VisitVarLocListDecl(VarLocListDecl);
 	EndDo;
-EndProcedure // VisitVarsDecl()
+EndProcedure // VisitVarLocListDecl()
 
 Procedure VisitProcDecl(Visitor, ProcDecl)
 	Var Hook;
