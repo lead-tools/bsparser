@@ -88,9 +88,7 @@ EndProcedure // InitEnums()
 #Region Enums
 
 Function Keywords() Export
-	Var Keywords;
-
-	Keywords = Enum(New Structure,
+	Return Enum(New Structure,
 		"If.Если, Then.Тогда, ElsIf.ИначеЕсли, Else.Иначе, EndIf.КонецЕсли,
 		|For.Для, Each.Каждого, In.Из, To.По, While.Пока, Do.Цикл, EndDo.КонецЦикла,
 		|Procedure.Процедура, EndProcedure.КонецПроцедуры, Function.Функция, EndFunction.КонецФункции,
@@ -100,8 +98,6 @@ Function Keywords() Export
 		|New.Новый, Execute.Выполнить, Export.Экспорт, Goto.Перейти,
 		|True.Истина, False.Ложь, Undefined.Неопределено, Null"
 	);
-
-	Return Keywords;
 EndFunction // Keywords()
 
 Function Tokens(Keywords = Undefined) Export
@@ -142,35 +138,25 @@ Function Tokens(Keywords = Undefined) Export
 EndFunction // Tokens()
 
 Function SelectorKinds() Export
-	Var SelectorKinds;
-
-	SelectorKinds = Enum(New Structure,
+	Return Enum(New Structure,
 		"Ident," // Something._
 		"Index," // Something[_]
 		"Call,"  // Something(_)
 	);
-
-	Return SelectorKinds;
 EndFunction // SelectorKinds()
 
 Function Directives() Export
-	Var Directives;
-
-	Directives = Enum(New Structure,
+	Return Enum(New Structure,
 		"AtClient.НаКлиенте,"
 		"AtServer.НаСервере,"
 		"AtServerNoContext.НаСервереБезКонтекста,"
 		"AtClientAtServerNoContext.НаКлиентеНаСервереБезКонтекста,"
 		"AtClientAtServer.НаКлиентеНаСервере,"
 	);
-
-	Return Directives;
 EndFunction // Directives()
 
 Function PrepInstructions() Export
-	Var PrepInstructions;
-
-	PrepInstructions = Enum(New Structure,
+	Return Enum(New Structure,
 		"If.Если,"
 		"ElsIf.ИначеЕсли,"
 		"Else.Иначе,"
@@ -178,12 +164,10 @@ Function PrepInstructions() Export
 		"Region.Область,"
 		"EndRegion.КонецОбласти,"
 	);
-
-	Return PrepInstructions;
 EndFunction // PrepInstructions()
 
 Function Enum(Structure, Keys)
-	Var ItemList, Value;
+	Var Items, Item, ItemList, Value;
 
 	For Each Items In StrSplit(Keys, ",", False) Do
 		ItemList = StrSplit(Items, ".", False);
@@ -902,7 +886,7 @@ Function CloseScope(Parser)
 EndFunction // CloseScope()
 
 Procedure ParseModule(Parser) Export
-	Var Decls, Auto, VarObj, Statements;
+	Var Decls, Auto, VarObj, Item, Statements;
 	Next(Parser);
 	Decls = ParseModDecls(Parser);
 	Statements = ParseStatements(Parser);
@@ -1889,7 +1873,7 @@ Function Value(Tok, Lit)
 EndFunction // Value()
 
 Function AsDate(DateLit)
-	Var List, Char;
+	Var List, Char, Num;
 	List = New Array;
 	For Num = 1 To StrLen(DateLit) Do
 		Char = Mid(DateLit, Num, 1);
@@ -1966,7 +1950,7 @@ Function Visitor(Hooks) Export
 	Var Visitor;
 
 	Visitor = Class("Visitor",
-		"Hooks"
+		"Hooks" // structure as map[string] (array)
 	);
 
 	Visitor.Hooks = Hooks;
