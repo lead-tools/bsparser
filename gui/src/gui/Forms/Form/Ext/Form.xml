@@ -84,6 +84,14 @@
 								<Value xsi:type="xs:string">Backend</Value>
 							</xr:Value>
 						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation/>
+								<Value xsi:type="xs:string">Plugin</Value>
+							</xr:Value>
+						</xr:Item>
 					</ChoiceList>
 					<ContextMenu name="OutputContextMenu" id="15"/>
 					<ExtendedTooltip name="OutputExtendedTooltip" id="16"/>

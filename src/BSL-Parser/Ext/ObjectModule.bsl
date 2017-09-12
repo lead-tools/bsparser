@@ -1958,16 +1958,16 @@ Function Visitor(Hooks) Export
 	Return Visitor;
 EndFunction // Visitor()
 
-Function VisitModule(Visitor, Module) Export
+Procedure VisitModule(Visitor, Module) Export
 	Var Hook;
 	VisitDeclarations(Visitor, Module.Decls);
 	VisitStatements(Visitor, Module.Body);
 	For Each Hook In Visitor.Hooks.VisitModule Do
 		Hook.VisitModule(Module);
 	EndDo;
-EndFunction // VisitModule()
+EndProcedure // VisitModule()
 
-Function VisitDeclarations(Visitor, Declarations)
+Procedure VisitDeclarations(Visitor, Declarations)
 	Var Decl, Hook;
 	For Each Decl In Declarations Do
 		VisitDecl(Visitor, Decl);
@@ -1975,9 +1975,9 @@ Function VisitDeclarations(Visitor, Declarations)
 	For Each Hook In Visitor.Hooks.VisitDeclarations Do
 		Hook.VisitDeclarations(Declarations);
 	EndDo;
-EndFunction // VisitDeclarations()
+EndProcedure // VisitDeclarations()
 
-Function VisitStatements(Visitor, Statements)
+Procedure VisitStatements(Visitor, Statements)
 	Var Stmt, Hook;
 	For Each Stmt In Statements Do
 		VisitStmt(Visitor, Stmt);
@@ -1985,7 +1985,7 @@ Function VisitStatements(Visitor, Statements)
 	For Each Hook In Visitor.Hooks.VisitStatements Do
 		Hook.VisitStatements(Statements);
 	EndDo;
-EndFunction // VisitStatements()
+EndProcedure // VisitStatements()
 
 #Region VisitDecl
 
