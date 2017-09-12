@@ -28,27 +28,27 @@ Procedure TranslateAtServer()
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
 
-	OneShellProcessor = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
+	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
 
-	OneShellProcessor.Verbose = Verbose;
-	OneShellProcessor.Location = Location;
-	OneShellProcessor.Debug = Debug;
+	BSLParser.Verbose = Verbose;
+	BSLParser.Location = Location;
+	BSLParser.Debug = Debug;
 
 	Start = CurrentUniversalDateInMilliseconds();
 
 	If Output = "Lexems" Then
 
-		Eof = OneShellProcessor.Tokens().Eof;
+		Eof = BSLParser.Tokens().Eof;
 
-		Scanner = OneShellProcessor.Scanner(Source.GetText());
-		While OneShellProcessor.Scan(Scanner) <> Eof Do
+		Scanner = BSLParser.Scanner(Source.GetText());
+		While BSLParser.Scan(Scanner) <> Eof Do
 			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
 		EndDo;
 
 	ElsIf Output = "AST" Then
 
-		Parser = OneShellProcessor.Parser(Source.GetText());
-		OneShellProcessor.ParseModule(Parser);
+		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.ParseModule(Parser);
 		JSONWriter = New JSONWriter;
 		FileName = GetTempFileName(".json");
 		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
@@ -68,11 +68,71 @@ Procedure TranslateAtServer()
 	ElsIf Output = "Backend" Then
 
 		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
-		BackendProcessor.Init(OneShellProcessor);
-		Parser = OneShellProcessor.Parser(Source.GetText());
-		OneShellProcessor.ParseModule(Parser);
+		BackendProcessor.Init(BSLParser);
+		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.ParseModule(Parser);
 		BackendResult = BackendProcessor.VisitModule(Parser.Module);
 		Result.SetText(BackendResult);
+		
+	ElsIf Output = "Plugin" Then
+
+		PluginProcessor = ExternalDataProcessors.Create(BackendPath, False);
+		PluginProcessor.Init(BSLParser);
+		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.ParseModule(Parser);
+		Hooks = New Structure(
+			"VisitModule,"
+			"VisitDeclarations,"
+			"VisitStatements,"
+			"VisitDecl,"
+			"VisitVarModListDecl,"
+			"VisitVarLocListDecl,"
+			"VisitProcDecl,"
+			"VisitFuncDecl,"
+			"VisitPrepIfDecl,"
+			"VisitPrepElsIfDecl,"
+			"VisitPrepRegionDecl,"
+			"VisitExpr,"
+			"VisitBasicLitExpr,"
+			"VisitDesigExpr,"
+			"VisitUnaryExpr,"
+			"VisitBinaryExpr,"
+			"VisitNewExpr,"
+			"VisitTernaryExpr,"
+			"VisitParenExpr,"
+			"VisitNotExpr,"
+			"VisitStringExpr,"
+			"VisitStmt,"
+			"VisitAssignStmt,"
+			"VisitReturnStmt,"
+			"VisitBreakStmt,"
+			"VisitContinueStmt,"
+			"VisitRaiseStmt,"
+			"VisitExecuteStmt,"
+			"VisitCallStmt,"
+			"VisitIfStmt,"
+			"VisitElsIfStmt,"
+			"VisitPrepIfStmt,"
+			"VisitPrepElsIfStmt,"
+			"VisitWhileStmt,"
+			"VisitPrepRegionStmt,"
+			"VisitForStmt,"
+			"VisitForEachStmt,"
+			"VisitTryStmt,"
+			"VisitGotoStmt,"
+			"VisitLabelStmt,"
+		);
+		For Each Item In Hooks Do
+			Hooks[Item.Key] = New Array;	
+		EndDo;
+		List = Undefined;
+		For Each MethodName In PluginProcessor.Interface() Do
+			If Hooks.Property(MethodName, List) Then
+				List.Add(PluginProcessor);
+			EndIf; 
+		EndDo; 
+		Visitor = BSLParser.Visitor(Hooks);
+		BSLParser.VisitModule(Visitor, Parser.Module);
 
 	EndIf;
 
@@ -96,7 +156,7 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 
 	If Reason = Items.Output Or Reason = Undefined Then
 
-		Items.BackendPath.Visible = (ThisObject.Output = "Backend");
+		Items.BackendPath.Visible = (ThisObject.Output = "Backend" Or ThisObject.Output = "Plugin");
 		Items.ShowComments.Visible = (ThisObject.Output = "AST");
 
 	EndIf;

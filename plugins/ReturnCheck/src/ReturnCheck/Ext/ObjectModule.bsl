@@ -1,35 +1,25 @@
 ﻿
-Var Result;
-
-Procedure Init(OneShellProcessor) Export
-	Result = New Array;	
+Procedure Init(BSLParser) Export
+		
 EndProcedure // Init() 
 
-Function VisitModule(Module) Export
-	VisitDecls(Module.Decls);
-	Return StrConcat(Result);
-EndFunction // VisitModule()
+Function Interface() Export
+	Var Interface;
+	Interface = New Array;
+	Interface.Add("VisitFuncDecl");
+	Return Interface;
+EndFunction // Interface() 
 
-Procedure VisitDecls(Decls)
-	For Each Decl In Decls Do
-		VisitDecl(Decl);
-	EndDo;
-EndProcedure // VisitDecls()
-
-Procedure VisitDecl(Decl)
+Procedure VisitFuncDecl(FuncDecl) Export
 	Var ReturnCount, Stmt;
 	ReturnCount = 0;
-	If Decl.Type = "FuncDecl" Then
-		Stmt = VisitStatements(Decl.Body, ReturnCount);
-		If Stmt = Undefined
-			Or Stmt.Type <> "ReturnStmt"
-			Or ReturnCount <> 1 Then
-			Result.Add(StrTemplate("Функция %1() должна иметь один Возврат в конце" "", Decl.Object.Name));
-		EndIf;
-	ElsIf Decl.Type = "PrepRegionDecl" Then
-		VisitDecls(Decl.Decls);
+	Stmt = VisitStatements(FuncDecl.Body, ReturnCount);
+	If Stmt = Undefined
+		Or Stmt.Type <> "ReturnStmt"
+		Or ReturnCount <> 1 Then
+		Message(StrTemplate("Функция %1() должна иметь один Возврат в конце" "", FuncDecl.Object.Name));
 	EndIf;
-EndProcedure // VisitDecl()
+EndProcedure // VisitFuncDecl()
 
 Function VisitStatements(Statements, ReturnCount)
 	Var Stmt;
