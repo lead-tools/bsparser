@@ -2382,8 +2382,8 @@ EndProcedure // VisitForEachStmt()
 
 Procedure VisitTryStmt(Visitor, TryStmt)
 	Var Hook;
-	VisitStatements(Visitor, TryStmt.TryPart);
-	VisitStatements(Visitor, TryStmt.ExceptPart);
+	VisitStatements(Visitor, TryStmt.Try);
+	VisitStatements(Visitor, TryStmt.Except);
 	For Each Hook In Visitor.Hooks.VisitTryStmt Do
 		Hook.VisitTryStmt(TryStmt);
 	EndDo;
