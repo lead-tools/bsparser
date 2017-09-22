@@ -3,6 +3,7 @@
 
 Var Keywords;         // enum
 Var Tokens;           // enum
+Var Nodes;            // enum
 Var SelectorKinds;    // enum
 Var Directives;       // enum
 Var PrepInstructions; // enum
@@ -78,6 +79,7 @@ EndProcedure // Init()
 Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
+	Nodes = Nodes();
 	SelectorKinds = SelectorKinds();
 	Directives = Directives();
 	PrepInstructions = PrepInstructions();
@@ -136,6 +138,16 @@ Function Tokens(Keywords = Undefined) Export
 
 	Return Tokens;
 EndFunction // Tokens()
+
+Function Nodes() Export
+	Return Enum(New Structure,
+		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param,
+		|VarModListDecl, VarLocListDecl, ProcDecl, FuncDecl, PrepIfDecl, PrepElsIfDecl, PrepRegionDecl,
+		|BasicLitExpr, Selector, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
+		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, CallStmt, IfStmt, ElsIfStmt,
+		|PrepIfStmt, PrepElsIfStmt, WhileStmt, PrepRegionStmt, ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt"
+	);
+EndFunction // Nodes()
 
 Function SelectorKinds() Export
 	Return Enum(New Structure,
@@ -430,7 +442,7 @@ EndFunction // ScanDateTime()
 #Region AbstractSyntaxTree
 
 Function Module(Decls, Auto, Statements, Interface, Comments)
-	Return Struct("Module",
+	Return Struct(Nodes.Module,
 		"Decls"     // array (one of #Declarations)
 		"Auto"      // array (VarLoc)
 		"Body"      // array (one of #Statements)
@@ -450,13 +462,13 @@ Function Scope(Outer)
 EndFunction // Scope()
 
 Function Unknown(Name)
-	Return Struct("Unknown",
+	Return Struct(Nodes.Unknown,
 		"Name" // string
 	, Name);
 EndFunction // Unknown()
 
 Function Func(Name, Directive, Params, Exported)
-	Return Struct("Func",
+	Return Struct(Nodes.Func,
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Params" // array (Parameter)
@@ -465,7 +477,7 @@ Function Func(Name, Directive, Params, Exported)
 EndFunction // Func()
 
 Function Proc(Name, Directive, Params, Exported)
-	Return Struct("Proc",
+	Return Struct(Nodes.Proc,
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Params" // array (Parameter)
@@ -474,7 +486,7 @@ Function Proc(Name, Directive, Params, Exported)
 EndFunction // Proc()
 
 Function VarMod(Name, Directive, Exported)
-	Return Struct("VarMod",
+	Return Struct(Nodes.VarMod,
 		"Name"   // string
 		"Dir"    // string (one of Directives)
 		"Export" // boolean
@@ -482,14 +494,14 @@ Function VarMod(Name, Directive, Exported)
 EndFunction // VarMod()
 
 Function VarLoc(Name, Auto = False)
-	Return Struct("VarLoc",
+	Return Struct(Nodes.VarLoc,
 		"Name" // string
 		"Auto" // boolean
 	, Name, Auto);
 EndFunction // VarLoc()
 
 Function Param(Name, ByVal, Value = Undefined)
-	Return Struct("Param",
+	Return Struct(Nodes.Param,
 		"Name"  // string
 		"ByVal" // boolean
 		"Value" // undefined, structure (UnaryExpr, BasicLitExpr)
@@ -501,21 +513,21 @@ EndFunction // Param()
 #Region Declarations
 
 Function VarModListDecl(VarList, Place = Undefined)
-	Return Struct("VarModListDecl",
+	Return Struct(Nodes.VarModListDecl,
 		"List"  // array (VarMod)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
 EndFunction // VarModListDecl()
 
 Function VarLocListDecl(VarList, Place = Undefined)
-	Return Struct("VarLocListDecl",
+	Return Struct(Nodes.VarLocListDecl,
 		"List"  // array (VarLoc)
 		"Place" // undefined, structure (Place)
 	, VarList, Place);
 EndFunction // VarLocListDecl()
 
 Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
-	Return Struct("ProcDecl",
+	Return Struct(Nodes.ProcDecl,
 		"Object" // structure (Proc)
 		"Decls"  // array (one of #Declarations)
 		"Auto"   // array (VarLoc)
@@ -525,7 +537,7 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 EndFunction // ProcDecl()
 
 Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
-	Return Struct("FuncDecl",
+	Return Struct(Nodes.FuncDecl,
 		"Object" // structure (Func)
 		"Decls"  // array (one of #Declarations)
 		"Auto"   // array (VarLoc)
@@ -535,7 +547,7 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 EndFunction // FuncDecl()
 
 Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Struct("PrepIfDecl",
+	Return Struct(Nodes.PrepIfDecl,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Declarations)
 		"ElsIf" // undefined, array (PrepElsIfDecl)
@@ -545,7 +557,7 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 EndFunction // PrepIfDecl()
 
 Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
-	Return Struct("PrepElsIfDecl",
+	Return Struct(Nodes.PrepElsIfDecl,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Declarations)
 		"Place" // undefined, structure (Place)
@@ -553,7 +565,7 @@ Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
 EndFunction // PrepElsIfDecl()
 
 Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
-	Return Struct("PrepRegionDecl",
+	Return Struct(Nodes.PrepRegionDecl,
 		"Name"  // structure (one of #Expressions)
 		"Decls" // array (one of #Declarations)
 		"Body"  // array (one of #Statements)
@@ -566,7 +578,7 @@ EndFunction // PrepRegionDecl()
 #Region Expressions
 
 Function BasicLitExpr(Kind, Value, Place = Undefined)
-	Return Struct("BasicLitExpr",
+	Return Struct(Nodes.BasicLitExpr,
 		"Kind"  // string (one of Tokens)
 		"Value" // undefined, string, number, boolean, date, null
 		"Place" // undefined, structure (Place)
@@ -574,15 +586,15 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 EndFunction // BasicLitExpr()
 
 Function Selector(Kind, Value, Place = Undefined)
-	Return Struct("Selector",
+	Return Struct(Nodes.Selector,
 		"Kind"  // string (one of SelectorKinds)
-		"Value" // string, array (one of #Expressions)
+		"Value" // string, array (undefined, one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Kind, Value, Place);
 EndFunction // Selector()
 
 Function DesigExpr(Object, Selectors, Call, Place = Undefined)
-	Return Struct("DesigExpr",
+	Return Struct(Nodes.DesigExpr,
 		"Object" // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
 		"Select" // array (Selector)
 		"Call"   // boolean
@@ -591,7 +603,7 @@ Function DesigExpr(Object, Selectors, Call, Place = Undefined)
 EndFunction // DesigExpr()
 
 Function UnaryExpr(Operator, Operand, Place = Undefined)
-	Return Struct("UnaryExpr",
+	Return Struct(Nodes.UnaryExpr,
 		"Operator" // string (one of Tokens)
 		"Operand"  // structure (one of #Expressions)
 		"Place"    // undefined, structure (Place)
@@ -599,7 +611,7 @@ Function UnaryExpr(Operator, Operand, Place = Undefined)
 EndFunction // UnaryExpr()
 
 Function BinaryExpr(Left, Operator, Right, Place = Undefined)
-	Return Struct("BinaryExpr",
+	Return Struct(Nodes.BinaryExpr,
 		"Left"     // structure (one of #Expressions)
 		"Operator" // string (one of Tokens)
 		"Right"    // structure (one of #Expressions)
@@ -608,14 +620,14 @@ Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 EndFunction // BinaryExpr()
 
 Function NewExpr(Constr, Place = Undefined)
-	Return Struct("NewExpr",
+	Return Struct(Nodes.NewExpr,
 		"Constr" // structure (DesigExpr) or array (one of #Expressions)
 		"Place"  // undefined, structure (Place)
 	, Constr, Place);
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place = Undefined)
-	Return Struct("TernaryExpr",
+	Return Struct(Nodes.TernaryExpr,
 		"Cond"   // structure (one of #Expressions)
 		"Then"   // structure (one of #Expressions)
 		"Else"   // structure (one of #Expressions)
@@ -625,21 +637,21 @@ Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place = Undefined)
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
-	Return Struct("ParenExpr",
+	Return Struct(Nodes.ParenExpr,
 		"Expr"  // structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ParenExpr()
 
 Function NotExpr(Expr, Place = Undefined)
-	Return Struct("NotExpr",
+	Return Struct(Nodes.NotExpr,
 		"Expr"  // structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // NotExpr()
 
 Function StringExpr(ExprList, Place = Undefined)
-	Return Struct("StringExpr",
+	Return Struct(Nodes.StringExpr,
 		"List"  // array (BasicLitExpr)
 		"Place" // undefined, structure (Place)
 	, ExprList, Place);
@@ -650,7 +662,7 @@ EndFunction // StringExpr()
 #Region Statements
 
 Function AssignStmt(Left, Right, Place = Undefined)
-	Return Struct("AssignStmt",
+	Return Struct(Nodes.AssignStmt,
 		"Left"  // structure (DesigExpr)
 		"Right" // structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
@@ -658,47 +670,47 @@ Function AssignStmt(Left, Right, Place = Undefined)
 EndFunction // AssignStmt()
 
 Function ReturnStmt(Expr = Undefined, Place = Undefined)
-	Return Struct("ReturnStmt",
+	Return Struct(Nodes.ReturnStmt,
 		"Expr"  // undefined, structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ReturnStmt()
 
 Function BreakStmt(Place = Undefined)
-	Return Struct("BreakStmt",
+	Return Struct(Nodes.BreakStmt,
 		"Place" // undefined, structure (Place)
 	, Place);
 EndFunction // BreakStmt()
 
 Function ContinueStmt(Place = Undefined)
-	Return Struct("ContinueStmt",
+	Return Struct(Nodes.ContinueStmt,
 		"Place" // undefined, structure (Place)
 	, Place);
 EndFunction // ContinueStmt()
 
 Function RaiseStmt(Expr = Undefined, Place = Undefined)
-	Return Struct("RaiseStmt",
+	Return Struct(Nodes.RaiseStmt,
 		"Expr"  // undefined, structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // RaiseStmt()
 
 Function ExecuteStmt(Expr, Place = Undefined)
-	Return Struct("ExecuteStmt",
+	Return Struct(Nodes.ExecuteStmt,
 		"Expr"  // structure (one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Expr, Place);
 EndFunction // ExecuteStmt()
 
 Function CallStmt(DesigExpr, Place = Undefined)
-	Return Struct("CallStmt",
+	Return Struct(Nodes.CallStmt,
 		"Desig" // structure (DesigExpr)
 		"Place" // undefined, structure (Place)
 	, DesigExpr, Place);
 EndFunction // CallStmt()
 
 Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Struct("IfStmt",
+	Return Struct(Nodes.IfStmt,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
 		"ElsIf" // undefined, array (ElsIfStmt)
@@ -708,7 +720,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 EndFunction // IfStmt()
 
 Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
-	Return Struct("ElsIfStmt",
+	Return Struct(Nodes.ElsIfStmt,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
 		"Place" // undefined, structure (Place)
@@ -716,7 +728,7 @@ Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 EndFunction // ElsIfStmt()
 
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	Return Struct("PrepIfStmt",
+	Return Struct(Nodes.PrepIfStmt,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
 		"ElsIf" // undefined, array (PrepElsIfStmt)
@@ -726,7 +738,7 @@ Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 EndFunction // PrepIfStmt()
 
 Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
-	Return Struct("PrepElsIfStmt",
+	Return Struct(Nodes.PrepElsIfStmt,
 		"Cond"  // structure (one of #Expressions)
 		"Then"  // array (one of #Statements)
 		"Place" // undefined, structure (Place)
@@ -734,7 +746,7 @@ Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
 EndFunction // PrepElsIfStmt()
 
 Function WhileStmt(Cond, Statements, Place = Undefined)
-	Return Struct("WhileStmt",
+	Return Struct(Nodes.WhileStmt,
 		"Cond"  // structure (one of #Expressions)
 		"Body"  // array (one of #Statements)
 		"Place" // undefined, structure (Place)
@@ -742,7 +754,7 @@ Function WhileStmt(Cond, Statements, Place = Undefined)
 EndFunction // WhileStmt()
 
 Function PrepRegionStmt(Name, Statements, Place = Undefined)
-	Return Struct("PrepRegionStmt",
+	Return Struct(Nodes.PrepRegionStmt,
 		"Name"  // structure (one of #Expressions)
 		"Body"  // array (one of #Statements)
 		"Place" // undefined, structure (Place)
@@ -750,7 +762,7 @@ Function PrepRegionStmt(Name, Statements, Place = Undefined)
 EndFunction // PrepRegionStmt()
 
 Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
-	Return Struct("ForStmt",
+	Return Struct(Nodes.ForStmt,
 		"Desig" // structure (DesigExpr)
 		"From"  // structure (one of #Expressions)
 		"To"    // structure (one of #Expressions)
@@ -760,7 +772,7 @@ Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
 EndFunction // ForStmt()
 
 Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
-	Return Struct("ForEachStmt",
+	Return Struct(Nodes.ForEachStmt,
 		"Desig" // structure (DesigExpr)
 		"In"    // structure (one of #Expressions)
 		"Body"  // array (one of #Statements)
@@ -769,7 +781,7 @@ Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
 EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart, Place = Undefined)
-	Return Struct("TryStmt",
+	Return Struct(Nodes.TryStmt,
 		"Try"    // array (one of #Statements)
 		"Except" // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
@@ -777,14 +789,14 @@ Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 EndFunction // TryStmt()
 
 Function GotoStmt(Label, Place = Undefined)
-	Return Struct("GotoStmt",
+	Return Struct(Nodes.GotoStmt,
 		"Label" // string
 		"Place" // undefined, structure (Place)
 	, Label, Place);
 EndFunction // GotoStmt()
 
 Function LabelStmt(Label, Place = Undefined)
-	Return Struct("LabelStmt",
+	Return Struct(Nodes.LabelStmt,
 		"Label" // string
 		"Place" // undefined, structure (Place)
 	, Label, Place);
@@ -1379,7 +1391,7 @@ Function ParseFuncDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
-		Object.Type = "Func";
+		Object.Type = Nodes.Func;
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
@@ -1423,7 +1435,7 @@ Function ParseProcDecl(Parser)
 		Next(Parser);
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
-		Object.Type = "Proc";
+		Object.Type = Nodes.Proc;
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
@@ -1992,19 +2004,19 @@ EndProcedure // VisitStatements()
 Procedure VisitDecl(Visitor, Decl)
 	Var Type, Hook;
 	Type = Decl.Type;
-	If Type = "VarModListDecl" Then
+	If Type = Nodes.VarModListDecl Then
 		VisitVarModListDecl(Visitor, Decl);
-	ElsIf Type = "VarLocListDecl" Then
+	ElsIf Type = Nodes.VarLocListDecl Then
 		VisitVarLocListDecl(Visitor, Decl);
-	ElsIf Type = "ProcDecl" Then
+	ElsIf Type = Nodes.ProcDecl Then
 		VisitProcDecl(Visitor, Decl);
-	ElsIf Type = "FuncDecl" Then
+	ElsIf Type = Nodes.FuncDecl Then
 		VisitFuncDecl(Visitor, Decl);
-	ElsIf Type = "PrepIfDecl" Then
+	ElsIf Type = Nodes.PrepIfDecl Then
 		VisitPrepIfDecl(Visitor, Decl);
-	ElsIf Type = "PrepElsIfDecl" Then
+	ElsIf Type = Nodes.PrepElsIfDecl Then
 		VisitPrepElsIfDecl(Visitor, Decl);
-	ElsIf Type = "PrepRegionDecl" Then
+	ElsIf Type = Nodes.PrepRegionDecl Then
 		VisitPrepRegionDecl(Visitor, Decl);
 	EndIf;
 	For Each Hook In Visitor.Hooks.VisitDecl Do
@@ -2084,23 +2096,23 @@ EndProcedure // VisitPrepRegionDecl()
 Procedure VisitExpr(Visitor, Expr)
 	Var Type;
 	Type = Expr.Type;
-	If Type = "BasicLitExpr" Then
+	If Type = Nodes.BasicLitExpr Then
 		VisitBasicLitExpr(Visitor, Expr);
-	ElsIf Type = "DesigExpr" Then
+	ElsIf Type = Nodes.DesigExpr Then
 		VisitDesigExpr(Visitor, Expr);
-	ElsIf Type = "UnaryExpr" Then
+	ElsIf Type = Nodes.UnaryExpr Then
 		VisitUnaryExpr(Visitor, Expr);
-	ElsIf Type = "BinaryExpr" Then
+	ElsIf Type = Nodes.BinaryExpr Then
 		VisitBinaryExpr(Visitor, Expr);
-	ElsIf Type = "NewExpr" Then
+	ElsIf Type = Nodes.NewExpr Then
 		VisitNewExpr(Visitor, Expr);
-	ElsIf Type = "TernaryExpr" Then
+	ElsIf Type = Nodes.TernaryExpr Then
 		VisitTernaryExpr(Visitor, Expr);
-	ElsIf Type = "ParenExpr" Then
+	ElsIf Type = Nodes.ParenExpr Then
 		VisitParenExpr(Visitor, Expr);
-	ElsIf Type = "NotExpr" Then
+	ElsIf Type = Nodes.NotExpr Then
 		VisitNotExpr(Visitor, Expr);
-	ElsIf Type = "StringExpr" Then
+	ElsIf Type = Nodes.StringExpr Then
 		VisitStringExpr(Visitor, Expr);
 	EndIf;
 EndProcedure // VisitExpr()
@@ -2117,10 +2129,12 @@ Procedure VisitDesigExpr(Visitor, DesigExpr)
 	For Each Selector In DesigExpr.Select Do
 		If Selector.Kind <> SelectorKinds.Ident Then
 			For Each Expr In Selector.Value Do
-				VisitExpr(Visitor, Expr);
-			EndDo; 
-		EndIf; 
-	EndDo; 
+				If Expr <> Undefined Then
+					VisitExpr(Visitor, Expr);
+				EndIf;
+			EndDo;
+		EndIf;
+	EndDo;
 	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
 		Hook.VisitDesigExpr(DesigExpr);
 	EndDo;
@@ -2165,9 +2179,11 @@ Procedure VisitTernaryExpr(Visitor, TernaryExpr)
 	For Each Selector In TernaryExpr.Select Do
 		If Selector.Kind <> SelectorKinds.Ident Then
 			For Each Expr In Selector.Value Do
-				VisitExpr(Visitor, Expr);
-			EndDo; 
-		EndIf; 
+				If Expr <> Undefined Then
+					VisitExpr(Visitor, Expr);
+				EndIf;
+			EndDo;
+		EndIf;
 	EndDo;
 	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
 		Hook.VisitTernaryExpr(TernaryExpr);
@@ -2207,37 +2223,37 @@ EndProcedure // VisitStringExpr()
 Procedure VisitStmt(Visitor, Stmt)
 	Var Type, Hook;
 	Type = Stmt.Type;
-	If Type = "AssignStmt" Then
+	If Type = Nodes.AssignStmt Then
 		VisitAssignStmt(Visitor, Stmt);
-	ElsIf Type = "ReturnStmt" Then
+	ElsIf Type = Nodes.ReturnStmt Then
 		VisitReturnStmt(Visitor, Stmt);
-	ElsIf Type = "BreakStmt" Then
+	ElsIf Type = Nodes.BreakStmt Then
 		VisitBreakStmt(Visitor, Stmt);
-	ElsIf Type = "ContinueStmt" Then
+	ElsIf Type = Nodes.ContinueStmt Then
 		VisitContinueStmt(Visitor, Stmt);
-	ElsIf Type = "RaiseStmt" Then
+	ElsIf Type = Nodes.RaiseStmt Then
 		VisitRaiseStmt(Visitor, Stmt);
-	ElsIf Type = "ExecuteStmt" Then
+	ElsIf Type = Nodes.ExecuteStmt Then
 		VisitExecuteStmt(Visitor, Stmt);
-	ElsIf Type = "CallStmt" Then
+	ElsIf Type = Nodes.CallStmt Then
 		VisitCallStmt(Visitor, Stmt);
-	ElsIf Type = "IfStmt" Then
+	ElsIf Type = Nodes.IfStmt Then
 		VisitIfStmt(Visitor, Stmt);
-	ElsIf Type = "PrepIfStmt" Then
+	ElsIf Type = Nodes.PrepIfStmt Then
 		VisitPrepIfStmt(Visitor, Stmt);
-	ElsIf Type = "WhileStmt" Then
+	ElsIf Type = Nodes.WhileStmt Then
 		VisitWhileStmt(Visitor, Stmt);
-	ElsIf Type = "PrepRegionStmt" Then
+	ElsIf Type = Nodes.PrepRegionStmt Then
 		VisitPrepRegionStmt(Visitor, Stmt);
-	ElsIf Type = "ForStmt" Then
+	ElsIf Type = Nodes.ForStmt Then
 		VisitForStmt(Visitor, Stmt);
-	ElsIf Type = "ForEachStmt" Then
+	ElsIf Type = Nodes.ForEachStmt Then
 		VisitForEachStmt(Visitor, Stmt);
-	ElsIf Type = "TryStmt" Then
+	ElsIf Type = Nodes.TryStmt Then
 		VisitTryStmt(Visitor, Stmt);
-	ElsIf Type = "GotoStmt" Then
+	ElsIf Type = Nodes.GotoStmt Then
 		VisitGotoStmt(Visitor, Stmt);
-	ElsIf Type = "LabelStmt" Then
+	ElsIf Type = Nodes.LabelStmt Then
 		VisitLabelStmt(Visitor, Stmt);
 	EndIf;
 	For Each Hook In Visitor.Hooks.VisitStmt Do
