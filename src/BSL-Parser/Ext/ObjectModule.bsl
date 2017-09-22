@@ -2020,7 +2020,7 @@ Procedure VisitDecl(Visitor, Decl)
 		VisitPrepRegionDecl(Visitor, Decl);
 	EndIf;
 	For Each Hook In Visitor.Hooks.VisitDecl Do
-		Hook.VisitDecl(Visitor, Decl);
+		Hook.VisitDecl(Decl);
 	EndDo;
 EndProcedure // VisitDecl()
 
