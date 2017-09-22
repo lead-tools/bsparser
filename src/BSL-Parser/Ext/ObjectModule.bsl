@@ -2113,7 +2113,14 @@ Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
 EndProcedure // VisitBasicLitExpr()
 
 Procedure VisitDesigExpr(Visitor, DesigExpr)
-	Var Hook;
+	Var Selector, Expr, Hook;
+	For Each Selector In DesigExpr.Select Do
+		If Selector.Kind <> SelectorKinds.Ident Then
+			For Each Expr In Selector.Value Do
+				VisitExpr(Visitor, Expr);
+			EndDo; 
+		EndIf; 
+	EndDo; 
 	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
 		Hook.VisitDesigExpr(DesigExpr);
 	EndDo;
@@ -2151,10 +2158,17 @@ Procedure VisitNewExpr(Visitor, NewExpr)
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(Visitor, TernaryExpr)
-	Var Hook;
+	Var Selector, Expr, Hook;
 	VisitExpr(Visitor, TernaryExpr.Cond);
 	VisitExpr(Visitor, TernaryExpr.Then);
 	VisitExpr(Visitor, TernaryExpr.Else);
+	For Each Selector In TernaryExpr.Select Do
+		If Selector.Kind <> SelectorKinds.Ident Then
+			For Each Expr In Selector.Value Do
+				VisitExpr(Visitor, Expr);
+			EndDo; 
+		EndIf; 
+	EndDo;
 	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
 		Hook.VisitTernaryExpr(TernaryExpr);
 	EndDo;
