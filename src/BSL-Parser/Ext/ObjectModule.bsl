@@ -1609,7 +1609,7 @@ Function ParseStmt(Parser)
 		Stmt = LabelStmt(Parser.Lit);
 		Next(Parser);
 		Expect(Parser, Tokens.Colon);
-		Next(Parser);
+		Parser.Tok = Tokens.Semicolon; // cheat code
 	ElsIf Tok = Tokens._Region Then
 		Stmt = ParsePrepRegionStmt(Parser);
 	ElsIf Tok = Tokens._If Then
