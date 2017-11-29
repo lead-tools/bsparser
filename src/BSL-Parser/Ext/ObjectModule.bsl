@@ -13,6 +13,9 @@ Var AddOperators;     // array (one of Tokens)
 Var MulOperators;     // array (one of Tokens)
 Var InitOfExpression; // array (one of Tokens)
 Var EmptyArray;       // array
+Var TokenMap;         // map[string] (string)
+Var AlphaDigitMap;    // map[string] (string)
+Var Alpha, Digit;     // string
 
 #EndRegion // Constants
 
@@ -74,6 +77,51 @@ Procedure Init()
 
 	EmptyArray = New Array;
 
+	Alpha = "Alpha";
+	Digit = "Digit";
+
+	TokenMap = New Map;
+	AlphaDigitMap = New Map;
+
+	Letters = (
+		"abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+		"абвгдеёжзийклмнопрстуфхцчшщъыьэюя" +
+		"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+	);
+	Index = 1;
+	Char = "_";
+	While Char <> "" Do
+		TokenMap[Char] = Alpha;
+		AlphaDigitMap[Char] = Alpha;
+		Char = Mid(Letters, Index, 1);
+		Index = Index + 1;
+	EndDo;
+
+	For Index = 0 To 9 Do
+		TokenMap[String(Index)] = Digit;
+		AlphaDigitMap[String(Index)] = Digit;
+	EndDo;
+
+	TokenMap[""""] = Tokens.String;
+	TokenMap["|"] = Tokens.String;
+	TokenMap["'"] = Tokens.DateTime;
+	TokenMap["="] = Tokens.Eql;
+	TokenMap["+"] = Tokens.Add;
+	TokenMap["-"] = Tokens.Sub;
+	TokenMap["*"] = Tokens.Mul;
+	TokenMap["%"] = Tokens.Mod;
+	TokenMap["("] = Tokens.Lparen;
+	TokenMap[")"] = Tokens.Rparen;
+	TokenMap["["] = Tokens.Lbrack;
+	TokenMap["]"] = Tokens.Rbrack;
+	TokenMap["?"] = Tokens.Ternary;
+	TokenMap[","] = Tokens.Comma;
+	TokenMap["."] = Tokens.Period;
+	TokenMap[":"] = Tokens.Colon;
+	TokenMap[";"] = Tokens.Semicolon;
+	TokenMap[""] = Tokens.Eof;
+
 EndProcedure // Init()
 
 Procedure InitEnums()
@@ -131,8 +179,8 @@ Function Tokens(Keywords = Undefined) Export
 
 		// Other
 
-		//         //          &      ~
-		|Eof, Comment, Directive, Label"
+		//         //          &      ~        #
+		|Eof, Comment, Directive, Label, Preproc"
 
 	);
 
@@ -193,251 +241,6 @@ Function Enum(Structure, Keys)
 EndFunction // Enum()
 
 #EndRegion // Enums
-
-#Region Scanner
-
-Function Scanner(Source) Export
-	Var Scanner;
-
-	Scanner = Class("Scanner",
-		"Path"   // string
-		"Source" // string
-		"Len"    // number
-		"Pos"    // number
-		"Tok"    // string (one of Tokens)
-		"Lit"    // string
-		"Char"   // string
-		"Line"   // number
-	);
-
-	Scanner.Path = "";
-	Scanner.Source = Source;
-	Scanner.Len = StrLen(Source);
-	Scanner.Line = 1;
-	Scanner.Pos = 0;
-	Scanner.Lit = "";
-
-	Return Scanner;
-EndFunction // Scanner()
-
-Function Scan(Scanner) Export
-	Var Char, Tok, Lit;
-	SkipWhitespace(Scanner);
-	Char = Scanner.Char;
-	If IsLetter(Char) Then
-		Lit = ScanIdentifier(Scanner);
-		Tok = Lookup(Lit);
-	ElsIf IsDigit(Char) Then
-		Lit = ScanNumber(Scanner);
-		Tok = Tokens.Number;
-	ElsIf Char = """" Or Char = "|" Then
-		Lit = ScanString(Scanner);
-		Tok = StringToken(Lit);
-	ElsIf Char = "'" Then
-		Lit = ScanDateTime(Scanner);
-		Tok = Tokens.DateTime;
-	ElsIf Char = "=" Then
-		Tok = Tokens.Eql;
-		NextChar(Scanner);
-	ElsIf Char = "<" Then
-		If NextChar(Scanner) = "=" Then
-			Lit = "<=";
-			Tok = Tokens.Leq;
-			NextChar(Scanner);
-		ElsIf Scanner.Char = ">" Then
-			Lit = "<>";
-			Tok = Tokens.Neq;
-			NextChar(Scanner);
-		Else
-			Tok = Tokens.Lss;
-		EndIf;
-	ElsIf Char = ">" Then
-		If NextChar(Scanner) = "=" Then
-			Lit = ">=";
-			Tok = Tokens.Geq;
-			NextChar(Scanner);
-		Else
-			Tok = Tokens.Gtr;
-		EndIf;
-	ElsIf Char = "+" Then
-		Tok = Tokens.Add;
-		NextChar(Scanner);
-	ElsIf Char = "-" Then
-		Tok = Tokens.Sub;
-		NextChar(Scanner);
-	ElsIf Char = "*" Then
-		Tok = Tokens.Mul;
-		NextChar(Scanner);
-	ElsIf Char = "/" Then
-		If NextChar(Scanner) = "/" Then
-			Lit = ScanComment(Scanner);
-			Tok = Tokens.Comment;
-		Else
-			Tok = Tokens.Div;
-		EndIf;
-	ElsIf Char = "%" Then
-		Tok = Tokens.Mod;
-		NextChar(Scanner);
-	ElsIf Char = "(" Then
-		Tok = Tokens.Lparen;
-		NextChar(Scanner);
-	ElsIf Char = ")" Then
-		Tok = Tokens.Rparen;
-		NextChar(Scanner);
-	ElsIf Char = "[" Then
-		Tok = Tokens.Lbrack;
-		NextChar(Scanner);
-	ElsIf Char = "]" Then
-		Tok = Tokens.Rbrack;
-		NextChar(Scanner);
-	ElsIf Char = "?" Then
-		Tok = Tokens.Ternary;
-		NextChar(Scanner);
-	ElsIf Char = "," Then
-		Tok = Tokens.Comma;
-		NextChar(Scanner);
-	ElsIf Char = "." Then
-		Tok = Tokens.Period;
-		NextChar(Scanner);
-	ElsIf Char = ":" Then
-		Tok = Tokens.Colon;
-		NextChar(Scanner);
-	ElsIf Char = ";" Then
-		Tok = Tokens.Semicolon;
-		NextChar(Scanner);
-	ElsIf Char = "" Then
-		Tok = Tokens.Eof;
-	ElsIf Char = "&" Then
-		NextChar(Scanner);
-		Lit = ScanIdentifier(Scanner);
-		If Not Directives.Property(Lit) Then
-			Error(Scanner, StrTemplate("Unknown directive: '%1'", Lit));
-		EndIf;
-		Tok = Tokens.Directive;
-	ElsIf Char = "#" Then
-		NextChar(Scanner);
-		SkipWhitespace(Scanner);
-		Lit = ScanIdentifier(Scanner);
-		If PrepInstructions.Property(Lit, Tok) Then
-			Tok = "_" + Tok;
-		Else
-			Error(Scanner, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
-		EndIf;
-	ElsIf Char = "~" Then
-		Lit = ScanIdentifier(Scanner);
-		Tok = Tokens.Label;
-	Else
-		Error(Scanner, "Unknown char");
-	EndIf;
-	If ValueIsFilled(Lit) Then
-		Scanner.Lit = Lit;
-	Else
-		Scanner.Lit = Char;
-	EndIf;
-	Scanner.Tok = Tok;
-	Return Tok;
-EndFunction // Scan()
-
-Function NextChar(Scanner)
-	If Scanner.Char <> "" Then
-		Scanner.Pos = Scanner.Pos + 1;
-		Scanner.Char = Mid(Scanner.Source, Scanner.Pos, 1);
-	EndIf;
-	Return Scanner.Char;
-EndFunction // NextChar()
-
-Procedure SkipWhitespace(Scanner)
-	Var Char;
-	Char = Scanner.Char;
-	While IsBlankString(Char) And Char <> "" Do
-		If Char = Chars.LF Then
-			Scanner.Line = Scanner.Line + 1;
-		EndIf;
-		Char = NextChar(Scanner);
-	EndDo;
-EndProcedure // SkipWhitespace()
-
-Function ScanComment(Scanner)
-	Var Len, Char;
-	Len = 0;
-	Char = NextChar(Scanner);
-	While Char <> Chars.LF And Char <> "" Do
-		Len = Len + 1;
-		Char = NextChar(Scanner);
-	EndDo;
-	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
-EndFunction // ScanComment()
-
-Function ScanIdentifier(Scanner)
-	Var Len, Char;
-	Len = 1;
-	Char = NextChar(Scanner);
-	While IsLetter(Char) Or IsDigit(Char) Do
-		Len = Len + 1;
-		Char = NextChar(Scanner);
-	EndDo;
-	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
-EndFunction // ScanIdentifier()
-
-Function ScanNumber(Scanner)
-	Var Len;
-	Len = ScanIntegerLen(Scanner); // Len >= 1
-	If Scanner.Char = "." Then
-		Len = Len + ScanIntegerLen(Scanner);
-	EndIf;
-	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
-EndFunction // ScanNumber()
-
-Function ScanIntegerLen(Scanner)
-	Var Len;
-	Len = 1;
-	While IsDigit(NextChar(Scanner)) Do
-		Len = Len + 1;
-	EndDo;
-	Return Len;
-EndFunction // ScanIntegerLen()
-
-Function ScanString(Scanner)
-	Var Len;
-	Len = ScanStringLen(Scanner);
-	While NextChar(Scanner) = """" Do
-		Len = Len + ScanStringLen(Scanner);
-	EndDo;
-	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
-EndFunction // ScanString()
-
-Function ScanStringLen(Scanner)
-	Var Len, Char;
-	Len = 1;
-	Char = NextChar(Scanner);
-	While Char <> """" And Char <> Chars.LF And Char <> "" Do
-		Len = Len + 1;
-		Char = NextChar(Scanner);
-	EndDo;
-	If Char = Chars.LF Then
-		Scanner.Line = Scanner.Line + 1;
-	EndIf;
-	Return Len + ?(Char <> "", 1, 0);
-EndFunction // ScanStringLen()
-
-Function ScanDateTime(Scanner)
-	Var Len, Char;
-	Len = 1;
-	Char = NextChar(Scanner);
-	While Char <> "'" And Char <> "" Do
-		Len = Len + 1;
-		Char = NextChar(Scanner);
-	EndDo;
-	If Char = "'" Then
-		Len = Len + 1;
-		NextChar(Scanner);
-	Else
-		Error(Scanner, "expected `'`");
-	EndIf;
-	Return Mid(Scanner.Source, Scanner.Pos - Len, Len);
-EndFunction // ScanDateTime()
-
-#EndRegion // Scanner
 
 #Region AbstractSyntaxTree
 
@@ -812,10 +615,12 @@ Function Parser(Source) Export
 	Var Parser;
 
 	Parser = Class("Parser",
-		"Scanner"   // structure (Scanner)
+		"Source"    // string
+		"Len"       // number
 		"Line"      // number
 		"Pos"       // number
 		"PrevPos"   // number
+		"Char"      // string
 		"Tok"       // string (one of Tokens)
 		"Lit"       // string
 		"Val"       // number, string, date, boolean, undefined, null
@@ -830,7 +635,7 @@ Function Parser(Source) Export
 		"Comments"  // map[number] (string)
 	);
 
-	Parser.Scanner = Scanner(Source);
+	Parser.Source = Source;
 	Parser.Pos = 0;
 	Parser.Line = 1;
 	Parser.PrevPos = 0;
@@ -840,6 +645,9 @@ Function Parser(Source) Export
 	Parser.Interface = New Array;
 	Parser.Comments = New Map;
 
+	Parser.Len = StrLen(Source);
+	Parser.Lit = "";
+
 	OpenScope(Parser);
 
 	Return Parser;
@@ -847,28 +655,176 @@ Function Parser(Source) Export
 EndFunction // Parser()
 
 Function Next(Parser)
-	Var Scanner, Tok, Lit;
-	Scanner = Parser.Scanner;
-	Parser.PrevPos = Scanner.Pos;
-	Tok = SkipComments(Scanner, Parser.Comments);
-	Lit = Scanner.Lit;
-	Parser.Line = Scanner.Line;
-	Parser.Pos = Scanner.Pos - StrLen(Lit);
-	Parser.Tok = Tok;
-	Parser.Lit = Lit;
-	Parser.Val = Value(Tok, Lit);
-	Return Tok;
-EndFunction // Next()
+	Var Tok, Lit, Pos, Char, Source, Beg, Prev;
 
-Function SkipComments(Scanner, Comments)
-	Var Tok;
-	Tok = Scan(Scanner);
-	While Tok = Tokens.Comment Do
-		Comments[Scanner.Line] = Scanner.Lit;
-		Tok = Scan(Scanner);
+	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
+
+	~Scan:
+
+	// skip space
+	While IsBlankString(Char) And Char <> "" Do
+		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 	EndDo;
+
+	Parser.PrevPos = Parser.Pos;
+
+	Tok = TokenMap[Char];
+	If Tok = Alpha Then
+
+		// scan ident
+		Beg = Pos; Pos = Pos + 1;
+		While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+		Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+
+		// lookup
+		If Not Keywords.Property(Lit, Tok) Then Tok = Tokens.Ident EndIf;
+
+	ElsIf Tok = Tokens.String Then
+
+		Beg = Pos;
+		~ScanString:
+		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+		While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
+		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+		If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
+		If Char = """" Then Goto ~ScanString EndIf;
+		Lit = Mid(Source, Beg, Pos - Beg);
+
+		Tok = StringToken(Lit);
+
+	ElsIf Tok = Digit Then
+
+		Beg = Pos;
+		~ScanNumber: Pos = Pos + 1;
+		While TokenMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
+		Char = Mid(Source, Pos, 1); If Char = "." Then Goto ~ScanNumber EndIf;
+		Lit = Mid(Source, Beg, Pos - Beg);
+
+		Tok = Tokens.Number;
+
+	ElsIf Tok = Tokens.DateTime Then
+
+		Pos = Pos + 1; Beg = Pos;
+		Pos = StrFind(Source, "'",, Pos);
+		If Pos = 0 Then
+			Char = ""
+		Else
+			Lit = Mid(Source, Beg, Pos - Beg);
+			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+		EndIf;
+
+	ElsIf Tok = Undefined Then
+
+		Prev = Char;
+		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+
+		If Prev = "/" Then
+
+			If Char = "/" Then
+				// scan comment
+				Beg = Pos + 1; Pos = StrFind(Source, Chars.LF,, Beg);
+				Parser.Comments[Parser.Line] = Mid(Source, Beg, Pos - Beg);
+				If Pos = 0 Then Char = "" Else Char = Mid(Source, Pos, 1) EndIf;
+				Goto ~Scan;
+			Else
+				Tok = Tokens.Div;
+			EndIf;
+
+		ElsIf Prev = "<" Then
+
+			If Char = ">" Then
+				Tok = Tokens.Neq;
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			ElsIf Char = "=" Then
+				Tok = Tokens.Leq;
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			Else
+				Tok = Tokens.Lss;
+			EndIf;
+
+		ElsIf Prev = ">" Then
+
+			If Char = "=" Then
+				Tok = Tokens.Geq;
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			Else
+				Tok = Tokens.Gtr;
+			EndIf;
+
+		ElsIf Prev = "&" Then
+
+			// scan ident
+			Beg = Pos; Pos = Pos + 1;
+			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+
+			If Not Directives.Property(Lit) Then
+				Error(Parser, StrTemplate("Unknown directive: '%1'", Lit));
+			EndIf;
+
+			Tok = Tokens.Directive;
+
+		ElsIf Prev = "#" Then
+
+			// skip space
+			While IsBlankString(Char) And Char <> "" Do
+				If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			EndDo;
+
+			// scan ident
+			Beg = Pos; Pos = Pos + 1;
+			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+
+			// match token
+			If PrepInstructions.Property(Lit, Tok) Then Tok = "_" + Tok;
+			Else Error(Parser, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
+			EndIf;
+
+		ElsIf Prev = "~" Then
+
+			// scan ident
+			Beg = Pos; Pos = Pos + 1;
+			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+
+			Tok = Tokens.Label;
+
+		Else
+
+			Raise "Unknown char!";
+
+		EndIf;
+
+	Else
+
+		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+
+	EndIf;
+
+	Parser.Char = Char; Parser.Pos = Pos; Parser.Tok = Tok; Parser.Lit = Lit;
+
+	If Tok = Tokens.Number Then
+		Parser.Val = Number(Lit);
+	ElsIf Tok = Tokens.True Then
+		Parser.Val = True;
+	ElsIf Tok = Tokens.False Then
+		Parser.Val = False;
+	ElsIf Tok = Tokens.DateTime Then
+		Parser.Val = AsDate(Lit);
+	ElsIf StrStartsWith(Tok, Tokens.String) Then
+		Parser.Val = Mid(Lit, 2, StrLen(Lit) - 2);
+	ElsIf Tok = Tokens.Null Then
+		Parser.Val = Null;
+	Else
+		Parser.Val = Undefined;
+	EndIf;
+
 	Return Tok;
-EndFunction // SkipComments()
+
+EndFunction // Next()
 
 Function FindObject(Parser, Name)
 	Var Scope, Object;
@@ -1028,7 +984,7 @@ Function ParseOperand(Parser)
 	ElsIf Tok = Tokens.Ternary Then
 		Operand = ParseTernaryExpr(Parser);
 	Else
-		Error(Parser.Scanner, "Expected operand",, True);
+		Error(Parser, "Expected operand",, True);
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
@@ -1055,7 +1011,7 @@ Function ParseStringExpr(Parser)
 				Tok = Next(Parser);
 			EndDo;
 			If Tok <> Tokens.StringEnd Then
-				Error(Parser.Scanner, "Expected """,, True);
+				Error(Parser, "Expected """,, True);
 			EndIf;
 			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
 			Tok = Next(Parser);
@@ -1126,7 +1082,7 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 		Else
 			Object = Unknown(Name);
 			If Verbose Then
-				Error(Parser.Scanner, StrTemplate("Undeclared identifier `%1`", Name), Pos);
+				Error(Parser, StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf;
@@ -1149,7 +1105,7 @@ Function ParseSelector(Parser)
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
-			Error(Parser.Scanner, "Expected expression", Pos, True);
+			Error(Parser, "Expected expression", Pos, True);
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
@@ -1321,7 +1277,7 @@ Function ParseVarMod(Parser)
 		Parser.Interface.Add(Object);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+		Error(Parser, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
@@ -1369,7 +1325,7 @@ Function ParseVarLoc(Parser)
 		Parser.Interface.Add(Object);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+		Error(Parser, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
@@ -1399,7 +1355,7 @@ Function ParseFuncDecl(Parser)
 		Object = Func(Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared", Pos, True);
+		Error(Parser, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	If Exported Then
@@ -1443,7 +1399,7 @@ Function ParseProcDecl(Parser)
 		Object = Proc(Name, Parser.Directive, ParamList, Exported);
 	EndIf;
 	If Parser.Methods.Property(Name) Then
-		Error(Parser.Scanner, "Method already declared", Pos, True);
+		Error(Parser, "Method already declared", Pos, True);
 	EndIf;
 	Parser.Methods.Insert(Name, Object);
 	If Exported Then
@@ -1498,7 +1454,7 @@ Function ParseParameter(Parser)
 		Object = Param(Name, ByVal);
 	EndIf;
 	If Parser.Vars.Property(Name) Then
-		Error(Parser.Scanner, "Identifier already declared", Pos, True);
+		Error(Parser, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
 	Return Object;
@@ -1715,7 +1671,7 @@ Function ParseForStmt(Parser)
 	VarPos = Parser.Pos;
 	DesigExpr = ParseDesigExpr(Parser, True);
 	If DesigExpr.Call Then
-		Error(Parser.Scanner, "Expected variable", VarPos, True);
+		Error(Parser, "Expected variable", VarPos, True);
 	EndIf;
 	Expect(Parser, Tokens.Eql);
 	Next(Parser);
@@ -1738,7 +1694,7 @@ Function ParseForEachStmt(Parser)
 	VarPos = Parser.Pos;
 	DesigExpr = ParseDesigExpr(Parser, True);
 	If DesigExpr.Call Then
-		Error(Parser.Scanner, "Expected variable", VarPos, True);
+		Error(Parser, "Expected variable", VarPos, True);
 	EndIf;
 	Expect(Parser, Tokens.In);
 	Next(Parser);
@@ -1860,36 +1816,18 @@ Function Place(Parser, Pos = Undefined, Line = Undefined)
 			"Len,"  // number
 		, Line, Pos, Len);
 		If Debug Then
-			Place.Insert("Str", Mid(Parser.Scanner.Source, Pos, Len));
+			Place.Insert("Str", Mid(Parser.Source, Pos, Len));
 		EndIf;
 	EndIf;
 	Return Place;
 EndFunction // Place()
-
-Function Value(Tok, Lit)
-	Var Value;
-	If Tok = Tokens.Number Then
-		Value = Number(Lit);
-	ElsIf Tok = Tokens.DateTime Then
-		Value = AsDate(Lit);
-	ElsIf StrStartsWith(Tok, Tokens.String) Then
-		Value = Mid(Lit, 2, StrLen(Lit) - 2);
-	ElsIf Tok = Tokens.True Then
-		Value = True;
-	ElsIf Tok = Tokens.False Then
-		Value = False;
-	ElsIf Tok = Tokens.Null Then
-		Value = Null;
-	EndIf;
-	Return Value;
-EndFunction // Value()
 
 Function AsDate(DateLit)
 	Var List, Char, Num;
 	List = New Array;
 	For Num = 1 To StrLen(DateLit) Do
 		Char = Mid(DateLit, Num, 1);
-		If IsDigit(Char) Then
+		If AlphaDigitMap[Char] = Digit Then
 			List.Add(Char);
 		EndIf;
 	EndDo;
@@ -1898,7 +1836,7 @@ EndFunction // AsDate()
 
 Procedure Expect(Parser, Tok)
 	If Parser.Tok <> Tok Then
-		Error(Parser.Scanner, "Expected " + Tok,, True);
+		Error(Parser, "Expected " + Tok,, True);
 	EndIf;
 EndProcedure // Expect()
 
@@ -1920,32 +1858,15 @@ Function StringToken(Lit)
 	Return Tok;
 EndFunction // StringToken()
 
-Function Lookup(Lit)
-	Var Tok;
-	If Not Keywords.Property(Lit, Tok) Then
-		Tok = Tokens.Ident;
-	EndIf;
-	Return Tok;
-EndFunction // Lookup()
-
-Function IsLetter(Char)
-	Return Char <> "" And StrFind("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZабвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", Char) > 0;
-EndFunction // IsLetter()
-
-Function IsDigit(Char)
-	Return "0" <= Char And Char <= "9";
-EndFunction // IsDigit()
-
-Procedure Error(Scanner, Note, Pos = Undefined, Stop = False)
+Procedure Error(Parser, Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
 	If Pos = Undefined Then
-		Pos = Min(Scanner.Pos - StrLen(Scanner.Lit), Scanner.Len);
+		Pos = Min(Parser.Pos - StrLen(Parser.Lit), Parser.Len);
 	EndIf;
-	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3" "%4",
-		StrOccurrenceCount(Mid(Scanner.Source, 1, Pos), Chars.LF) + 1,
-		Pos - StrFind(Scanner.Source, Chars.LF, SearchDirection.FromEnd, Pos),
-		Note,
-		Scanner.Path
+	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
+		StrOccurrenceCount(Mid(Parser.Source, 1, Pos), Chars.LF) + 1,
+		Pos - StrFind(Parser.Source, Chars.LF, SearchDirection.FromEnd, Pos),
+		Note
 	);
 	If Stop Then
 		Raise ErrorText;
@@ -1968,17 +1889,17 @@ Function Visitor(Hooks) Export
 
 	Visitor.Hooks = Hooks;
 	PushInfo(Visitor, Undefined);
-	
+
 	Return Visitor;
 EndFunction // Visitor()
 
 Procedure PushInfo(Visitor, Parent)
 	Visitor.Info = New FixedStructure("Outer, Parent", Visitor.Info, Parent);
-EndProcedure // PushInfo() 
+EndProcedure // PushInfo()
 
 Procedure PopInfo(Visitor)
 	Visitor.Info = Visitor.Info.Outer;
-EndProcedure // PopInfo()  
+EndProcedure // PopInfo()
 
 Procedure VisitModule(Visitor, Module) Export
 	Var Hook;
