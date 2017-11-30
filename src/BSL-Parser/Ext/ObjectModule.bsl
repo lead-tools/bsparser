@@ -179,8 +179,8 @@ Function Tokens(Keywords = Undefined) Export
 
 		// Other
 
-		//         //          &      ~        #
-		|Eof, Comment, Directive, Label, Preproc"
+		//         //          &      ~
+		|Eof, Comment, Directive, Label"
 
 	);
 
@@ -683,8 +683,7 @@ Function Next(Parser)
 	ElsIf Tok = Tokens.String Then
 
 		Beg = Pos;
-		~ScanString:
-		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+		~ScanString: Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 		While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
 		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 		If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
@@ -697,7 +696,7 @@ Function Next(Parser)
 
 		Beg = Pos;
 		~ScanNumber: Pos = Pos + 1;
-		While TokenMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
+		While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
 		Char = Mid(Source, Pos, 1); If Char = "." Then Goto ~ScanNumber EndIf;
 		Lit = Mid(Source, Beg, Pos - Beg);
 
