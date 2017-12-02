@@ -40,18 +40,20 @@ Procedure TranslateAtServer()
 
 		Eof = BSLParser.Tokens().Eof;
 
-		Scanner = BSLParser.Scanner(Source.GetText());
-		While BSLParser.Scan(Scanner) <> Eof Do
-			Result.AddLine(StrTemplate("%1: %2 -- `%3`", Scanner.Line, Scanner.Tok, Scanner.Lit));
+		Parser = BSLParser.Parser(Source.GetText());
+		Lexems = New Array;
+		While BSLParser.Next(Parser) <> Eof Do
+			Lexems.Add(StrTemplate("%1: %2 -- `%3`", Parser.Line, Parser.Tok, Parser.Lit));
 		EndDo;
-
+		
+		Result.SetText(StrConcat(Lexems, Chars.LF));
+		
 	ElsIf Output = "AST" Then
 
 		Parser = BSLParser.Parser(Source.GetText());
 		BSLParser.ParseModule(Parser);
 		JSONWriter = New JSONWriter;
-		FileName = GetTempFileName(".json");
-		JSONWriter.OpenFile(FileName,,, New JSONWriterSettings(, Chars.Tab));
+		JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
 		If ShowComments Then
 			Comments = New Map;
 			For Each Item In Parser.Module.Comments Do
@@ -62,8 +64,7 @@ Procedure TranslateAtServer()
 			Parser.Module.Delete("Comments");
 		EndIf;
 		WriteJSON(JSONWriter, Parser.Module,, "ConvertJSON", ThisObject);
-		JSONWriter.Close();
-		Result.Read(FileName, TextEncoding.UTF8);
+		Result.SetText(JSONWriter.Close());
 
 	ElsIf Output = "Backend" Then
 
