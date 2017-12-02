@@ -654,7 +654,7 @@ Function Parser(Source) Export
 
 EndFunction // Parser()
 
-Function Next(Parser)
+Function Next(Parser) Export
 	Var Tok, Lit, Pos, Char, Source, Beg, Prev;
 
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;

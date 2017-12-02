@@ -1,3 +1,4 @@
 *.epf
 temp/*
 build/*
+*.html
