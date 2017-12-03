@@ -662,17 +662,17 @@ Function Next(Parser) Export
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
 	Parser.EndPos = Pos;
-	
+
 	~Scan:
-	
+
 	// skip space
 	While IsBlankString(Char) And Char <> "" Do
 		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 	EndDo;
-	
+
 	Parser.BegPos = Pos;
-	
+
 	Tok = TokenMap[Char];
 	If Tok = Alpha Then
 
