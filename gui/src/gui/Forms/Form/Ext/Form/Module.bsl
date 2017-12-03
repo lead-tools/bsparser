@@ -6,7 +6,7 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 		Message("Only for file bases")
 	EndIf;
 
-	Output = "AST";
+	Output = "Tree";
 
 	SetVisibilityOfAttributes(ThisObject);
 
@@ -65,7 +65,13 @@ Procedure TranslateAtServer()
 		EndIf;
 		WriteJSON(JSONWriter, Parser.Module,, "ConvertJSON", ThisObject);
 		Result.SetText(JSONWriter.Close());
+		
+	ElsIf Output = "Tree" Then
 
+		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.ParseModule(Parser);
+		FillTree(Parser.Module);
+		
 	ElsIf Output = "Backend" Then
 
 		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
@@ -144,6 +150,66 @@ Procedure TranslateAtServer()
 EndProcedure // TranslateAtServer()
 
 &AtServer
+Function FillTree(Module)
+	Var Place;
+	TreeItems = Tree.GetItems();
+	TreeItems.Clear();
+	Row = TreeItems.Add();
+	Row.Name = "Module";
+	Row.Type = Module.Type;
+	Row.Value = "<...>";
+	FillNode(Row, Module);
+EndFunction // FillTree() 
+
+&AtServer
+Function FillNode(Row, Node)
+	Var Place;
+	If Node.Property("Place", Place) And Place <> Undefined Then
+		Row.Line = Place.Line;
+		Row.Pos = Place.Pos;
+		Row.Len = Place.Len;
+	EndIf;
+	TreeItems = Row.GetItems();
+	For Each Item In Node Do
+		If Item.Key = "Place"
+			Or Item.Key = "Type" Then
+			Continue;
+		EndIf; 
+		If TypeOf(Item.Value) = Type("Array") Then
+			Row = TreeItems.Add();
+			Row.Name = Item.Key;
+			Row.Type = StrTemplate("List (%1)", Item.Value.Count());
+			Row.Value = "<...>";
+			RowItems = Row.GetItems();
+			Index = 0;
+			For Each Item In Item.Value Do
+				Row = RowItems.Add();
+				Index = Index + 1;
+				Row.Name = Index;
+				If Item = Undefined Then
+					Row.Value = "Undefined";
+				Else
+					Item.Property("Type", Row.Type);
+					Row.Value = "<...>";
+					FillNode(Row, Item);
+				EndIf; 
+			EndDo;			
+		ElsIf TypeOf(Item.Value) = Type("Structure") Then
+			Row = TreeItems.Add();
+			Row.Name = Item.Key;
+			Row.Type = Item.Value.Type;
+			Row.Value = "<...>";
+			FillNode(Row, Item.Value);
+		Else
+			Row = TreeItems.Add();
+			Row.Name = Item.Key;
+			Row.Value = Item.Value;
+			Row.Type = TypeOf(Item.Value);
+		EndIf; 
+	EndDo;
+EndFunction // FillNode() 
+
+&AtServer
 Function ConvertJSON(Property, Value, Other, Cancel) Export
 	If Value = Null Then
 		Return Undefined;
@@ -159,7 +225,9 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 
 		Items.BackendPath.Visible = (ThisObject.Output = "Backend" Or ThisObject.Output = "Plugin");
 		Items.ShowComments.Visible = (ThisObject.Output = "AST");
-
+		Items.Tree.Visible = (ThisObject.Output = "Tree");
+		Items.Result.Visible = (ThisObject.Output <> "Tree");
+		
 	EndIf;
 
 EndProcedure // SetVisibilityOfAttributes()
@@ -201,4 +269,13 @@ Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
 	EndIf;
 
 EndProcedure // ChoosePathHandle()
+
+&AtClient
+Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
+	Row = Tree.FindByID(SelectedRow);
+	If Row.Line > 0 Then
+		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
+		CurrentItem = Items.Source;
+	EndIf; 
+EndProcedure
 
