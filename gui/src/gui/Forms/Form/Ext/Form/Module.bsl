@@ -28,7 +28,7 @@ Procedure TranslateAtServer()
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
 
-	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSL-Parser.epf", False);
+	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSLParser.epf", False);
 
 	BSLParser.Verbose = Verbose;
 	BSLParser.Location = Location;

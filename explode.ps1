@@ -1,7 +1,7 @@
 Write-Progress -Activity "Extract" -Status "Progress:" -PercentComplete 0
 
 Remove-Item .\src\* -recurse
-$ArgList = @('DESIGNER', '/F .\temp\', '/DumpExternalDataProcessorOrReportToFiles .\src\BSL-Parser.xml .\build\BSL-Parser.epf')
+$ArgList = @('DESIGNER', '/F .\temp\', '/DumpExternalDataProcessorOrReportToFiles .\src\BSLParser.xml .\build\BSLParser.epf')
 Start-Process 'C:\Program Files (x86)\1cv8\common\1cestart.exe' -ArgumentList $ArgList -Wait
 
 Write-Progress -Activity "Extract" -Status "Progress:" -PercentComplete 25
