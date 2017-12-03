@@ -20,8 +20,7 @@ Function Interface() Export
 EndFunction // Interface() 
 
 Procedure VisitFuncDecl(FuncDecl, Info) Export
-	Var ReturnCount, Stmt;
-	ReturnCount = 0;
+	Var StmtCount;
 	StmtCount = FuncDecl.Body.Count();
 	If StmtCount = 0 Or FuncDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
 		Message(StrTemplate("Последней инструкцией функции `%1()` должен быть `Возврат`" "", FuncDecl.Object.Name));
