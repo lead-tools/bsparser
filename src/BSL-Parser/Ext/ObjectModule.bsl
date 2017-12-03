@@ -619,7 +619,8 @@ Function Parser(Source) Export
 		"Len"       // number
 		"Line"      // number
 		"Pos"       // number
-		"PrevPos"   // number
+		"BegPos"    // number
+		"EndPos"    // number
 		"Char"      // string
 		"Tok"       // string (one of Tokens)
 		"Lit"       // string
@@ -638,7 +639,8 @@ Function Parser(Source) Export
 	Parser.Source = Source;
 	Parser.Pos = 0;
 	Parser.Line = 1;
-	Parser.PrevPos = 0;
+	Parser.BegPos = 0;
+	Parser.EndPos = 0;
 	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
@@ -659,16 +661,18 @@ Function Next(Parser) Export
 
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
+	Parser.EndPos = Pos;
+	
 	~Scan:
-
+	
 	// skip space
 	While IsBlankString(Char) And Char <> "" Do
 		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 	EndDo;
-
-	Parser.PrevPos = Parser.Pos;
-
+	
+	Parser.BegPos = Pos;
+	
 	Tok = TokenMap[Char];
 	If Tok = Alpha Then
 
@@ -874,7 +878,7 @@ EndProcedure // ParseModule()
 
 Function ParseExpression(Parser)
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Expr = ParseAndExpr(Parser);
 	While Parser.Tok = Tokens.Or Do
@@ -887,7 +891,7 @@ EndFunction // ParseExpression()
 
 Function ParseAndExpr(Parser)
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Expr = ParseNotExpr(Parser);
 	While Parser.Tok = Tokens.And Do
@@ -900,7 +904,7 @@ EndFunction // ParseAndExpr()
 
 Function ParseNotExpr(Parser)
 	Var Expr, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	If Parser.Tok = Tokens.Not Then
 		Next(Parser);
@@ -913,7 +917,7 @@ EndFunction // ParseNotExpr()
 
 Function ParseRelExpr(Parser)
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Expr = ParseAddExpr(Parser);
 	While RelOperators.Find(Parser.Tok) <> Undefined Do
@@ -926,7 +930,7 @@ EndFunction // ParseRelExpr()
 
 Function ParseAddExpr(Parser)
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Expr = ParseMulExpr(Parser);
 	While AddOperators.Find(Parser.Tok) <> Undefined Do
@@ -939,7 +943,7 @@ EndFunction // ParseAddExpr()
 
 Function ParseMulExpr(Parser)
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Expr = ParseUnaryExpr(Parser);
 	While MulOperators.Find(Parser.Tok) <> Undefined Do
@@ -952,7 +956,7 @@ EndFunction // ParseMulExpr()
 
 Function ParseUnaryExpr(Parser)
 	Var Operator, Expr, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Operator = Parser.Tok;
 	If AddOperators.Find(Parser.Tok) <> Undefined Then
@@ -990,7 +994,7 @@ EndFunction // ParseOperand()
 
 Function ParseStringExpr(Parser)
 	Var Tok, ExprList, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Parser.Tok;
 	ExprList = New Array;
@@ -1023,7 +1027,7 @@ EndFunction // ParseStringExpr()
 
 Function ParseNewExpr(Parser)
 	Var Tok, Constr, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Next(Parser);
 	If Tok = Tokens.Lparen Then
@@ -1043,7 +1047,7 @@ EndFunction // ParseNewExpr()
 
 Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	Var Name, Selector, Object, List, Kind, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Name = Parser.Lit;
 	Next(Parser);
@@ -1090,7 +1094,7 @@ EndFunction // ParseDesigExpr()
 
 Function ParseSelector(Parser)
 	Var Tok, Value, Selector, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Period Then
@@ -1099,8 +1103,8 @@ Function ParseSelector(Parser)
 			Expect(Parser, Tokens.Ident);
 		EndIf;
 		Value = Parser.Lit;
-		Selector = Selector(SelectorKinds.Ident, Value, Place(Parser, Pos, Line));
 		Next(Parser);
+		Selector = Selector(SelectorKinds.Ident, Value, Place(Parser, Pos, Line));
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
@@ -1108,8 +1112,8 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
-		Selector = Selector(SelectorKinds.Index, Value, Place(Parser, Pos, Line));
 		Next(Parser);
+		Selector = Selector(SelectorKinds.Index, Value, Place(Parser, Pos, Line));
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1118,8 +1122,8 @@ Function ParseSelector(Parser)
 			Value = ParseArguments(Parser);
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
-		Selector = Selector(SelectorKinds.Call, Value, Place(Parser, Pos, Line));
 		Next(Parser);
+		Selector = Selector(SelectorKinds.Call, Value, Place(Parser, Pos, Line));
 	EndIf;
 	Return Selector;
 EndFunction // ParseSelector()
@@ -1158,7 +1162,7 @@ EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
 	Var Cond, ThenPart, ElsePart, Selectors, Selector, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
 	Expect(Parser, Tokens.Lparen);
@@ -1186,7 +1190,7 @@ EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr(Parser)
 	Var Expr, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
 	Expr = ParseExpression(Parser);
@@ -1249,7 +1253,7 @@ EndFunction // ParseModVarDecls()
 
 Function ParseModVarListDecl(Parser)
 	Var VarList, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	VarList = New Array;
 	VarList.Add(ParseVarMod(Parser));
@@ -1262,7 +1266,7 @@ EndFunction // ParseModVarListDecl()
 
 Function ParseVarMod(Parser)
 	Var Name, Object, Exported, Pos;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	If Next(Parser) = Tokens.Export Then
@@ -1297,7 +1301,7 @@ EndFunction // ParseVarDecls()
 
 Function ParseVarListDecl(Parser)
 	Var VarList, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	VarList = New Array;
 	VarList.Add(ParseVarLoc(Parser));
@@ -1310,7 +1314,7 @@ EndFunction // ParseVarListDecl()
 
 Function ParseVarLoc(Parser)
 	Var Name, Object, Exported, Pos;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
 	If Next(Parser) = Tokens.Export Then
@@ -1332,7 +1336,7 @@ EndFunction // ParseVarLoc()
 
 Function ParseFuncDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Exported = False;
 	Next(Parser);
@@ -1376,7 +1380,7 @@ EndFunction // ParseFuncDecl()
 
 Function ParseProcDecl(Parser)
 	Var Object, Name, Decls, ParamList, Exported, Auto, VarObj, Statements, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Exported = False;
 	Next(Parser);
@@ -1437,7 +1441,7 @@ EndFunction // ParseParamList()
 
 Function ParseParameter(Parser)
 	Var Name, Object, ByVal, Pos;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	If Parser.Tok = Tokens.Val Then
 		ByVal = True;
 		Next(Parser);
@@ -1471,7 +1475,7 @@ Function ParsePrepIfDecl(Parser)
 	If Tok = Tokens._ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens._ElsIf Do
-			Pos = Parser.Pos;
+			Pos = Parser.BegPos;
 			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
@@ -1493,7 +1497,7 @@ EndFunction // ParsePrepIfDecl()
 
 Function ParsePrepRegionDecl(Parser)
 	Var Name, Decls, Statements, Region, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
@@ -1529,7 +1533,7 @@ EndFunction // ParseStatements()
 
 Function ParseStmt(Parser)
 	Var Tok, Stmt, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Parser.Tok;
 	If Tok = Tokens.Ident Then
@@ -1594,8 +1598,7 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Left, Right, Stmt, Pos;
-	Pos = Parser.Pos;
+	Var Left, Right, Stmt;
 	Left = ParseDesigExpr(Parser, True);
 	If Left.Call Then
 		Stmt = CallStmt(Left);
@@ -1620,7 +1623,7 @@ Function ParseIfStmt(Parser)
 	If Tok = Tokens.ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens.ElsIf Do
-			Pos = Parser.Pos;
+			Pos = Parser.BegPos;
 			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
@@ -1667,7 +1670,7 @@ EndFunction // ParseWhileStmt()
 Function ParseForStmt(Parser)
 	Var DesigExpr, From, Until, Statements, VarPos;
 	Expect(Parser, Tokens.Ident);
-	VarPos = Parser.Pos;
+	VarPos = Parser.BegPos;
 	DesigExpr = ParseDesigExpr(Parser, True);
 	If DesigExpr.Call Then
 		Error(Parser, "Expected variable", VarPos, True);
@@ -1690,7 +1693,7 @@ Function ParseForEachStmt(Parser)
 	Var DesigExpr, Left, Right, Collection, Statements, VarPos;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
-	VarPos = Parser.Pos;
+	VarPos = Parser.BegPos;
 	DesigExpr = ParseDesigExpr(Parser, True);
 	If DesigExpr.Call Then
 		Error(Parser, "Expected variable", VarPos, True);
@@ -1717,7 +1720,7 @@ EndFunction // ParseGotoStmt()
 
 Function ParseReturnStmt(Parser)
 	Var Expr, Pos, Line;
-	Pos = Parser.Pos;
+	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
 	If Parser.IsFunc Then
@@ -1738,7 +1741,7 @@ Function ParsePrepIfStmt(Parser)
 	If Tok = Tokens._ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens._ElsIf Do
-			Pos = Parser.Pos;
+			Pos = Parser.BegPos;
 			Line = Parser.Line;
 			Next(Parser);
 			ElsIfCond = ParseExpression(Parser);
@@ -1804,7 +1807,7 @@ Function Place(Parser, Pos = Undefined, Line = Undefined)
 			Len = StrLen(Parser.Lit);
 			Pos = Parser.Pos - Len;
 		Else
-			Len = Parser.PrevPos - Pos;
+			Len = Parser.EndPos - Pos;
 		EndIf;
 		If Line = Undefined Then
 			Line = Parser.Line;
