@@ -1,4 +1,13 @@
 ﻿
+// Простая и эффективная проверка на наличие возврата из функции.
+// Чаще всего возврат просто забывают написать.
+// Нет никакого смысла разбирать сложные случаи,
+// когда пропущен возврат в одной из логических ветвей,
+// так как такие ошибки встречаются редко.
+// Гораздо проще договориться с командой, что функция всегда
+// должна оканчиваться инструкцией Возврат и автоматически
+// проверять код подобным плагином.
+
 Procedure Init(BSLParser) Export
 		
 EndProcedure // Init() 
@@ -10,43 +19,11 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl) Export
+Procedure VisitFuncDecl(FuncDecl, Info) Export
 	Var ReturnCount, Stmt;
 	ReturnCount = 0;
-	Stmt = VisitStatements(FuncDecl.Body, ReturnCount);
-	If Stmt = Undefined
-		Or Stmt.Type <> "ReturnStmt"
-		Or ReturnCount <> 1 Then
-		Message(StrTemplate("Функция %1() должна иметь один Возврат в конце" "", FuncDecl.Object.Name));
+	StmtCount = FuncDecl.Body.Count();
+	If StmtCount = 0 Or FuncDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
+		Message(StrTemplate("Последней инструкцией функции `%1()` должен быть `Возврат`" "", FuncDecl.Object.Name));
 	EndIf;
 EndProcedure // VisitFuncDecl()
-
-Function VisitStatements(Statements, ReturnCount)
-	Var Stmt;
-	For Each Stmt In Statements Do
-		VisitStmt(Stmt, ReturnCount);
-	EndDo;
-	Return Stmt;
-EndFunction // VisitStatements()
-
-Procedure VisitStmt(Stmt, ReturnCount)
-	NodeType = Stmt.Type;
-	If NodeType = "ReturnStmt" Then
-		ReturnCount = ReturnCount + 1;
-	ElsIf NodeType = "IfStmt" Then
-		VisitStatements(Stmt.Then, ReturnCount);
-		If Stmt.ElsIf <> Undefined Then
-			VisitStatements(Stmt.ElsIf, ReturnCount)
-		EndIf;
-		If Stmt.Else <> Undefined Then
-			VisitStatements(Stmt.Else, ReturnCount);
-		EndIf;
-	ElsIf NodeType = "WhileStmt" Then
-		VisitStatements(Stmt.Body, ReturnCount);
-	ElsIf NodeType = "ForStmt" Then
-		VisitStatements(Stmt.Body, ReturnCount);
-	ElsIf NodeType = "TryStmt" Then
-		VisitStatements(Stmt.Try, ReturnCount);
-		VisitStatements(Stmt.Except, ReturnCount);
-	EndIf;
-EndProcedure // VisitStmt()
