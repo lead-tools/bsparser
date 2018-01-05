@@ -52,7 +52,9 @@ send $ssh 'config load-ext-files --file="..\backends\BSL\src\BSL.xml" --ext-file
 complete 80
 send $ssh 'config load-ext-files --file="..\plugins\ReturnCheck\src\ReturnCheck.xml" --ext-file="..\build\ReturnCheck.epf"'
 complete 90
-send $ssh 'config load-ext-files --file="..\plugins\ReturnCheck\src\AutoVarsCheck.xml" --ext-file="..\build\AutoVarsCheck.epf"'
+send $ssh 'config load-ext-files --file="..\plugins\AutoVarsCheck\src\AutoVarsCheck.xml" --ext-file="..\build\AutoVarsCheck.epf"'
+complete 95
+send $ssh 'config load-ext-files --file="..\plugins\TestCheck\src\TestCheck.xml" --ext-file="..\build\TestCheck.epf"'
 complete 100
 send $ssh 'common disconnect-ib'
 $ssh.WriteLine('common shutdown')

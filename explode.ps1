@@ -63,6 +63,10 @@ complete 90
 
 Remove-Item .\plugins\AutoVarsCheck\src\* -recurse
 send $ssh 'config dump-ext-files --file="..\plugins\AutoVarsCheck\src\AutoVarsCheck.xml" --ext-file="..\build\AutoVarsCheck.epf"'
+complete 95
+
+Remove-Item .\plugins\TestCheck\src\* -recurse
+send $ssh 'config dump-ext-files --file="..\plugins\TestCheck\src\TestCheck.xml" --ext-file="..\build\TestCheck.epf"'
 complete 100
 
 send $ssh 'common disconnect-ib'
