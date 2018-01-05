@@ -8,8 +8,10 @@
 // должна оканчиваться инструкцией Возврат и автоматически
 // проверять код подобным плагином.
 
+Var Nodes;
+
 Procedure Init(BSLParser) Export
-		
+	Nodes = BSLParser.Nodes();	
 EndProcedure // Init() 
 
 Function Interface() Export
@@ -19,7 +21,7 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl, Info) Export
+Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
 	Var StmtCount;
 	StmtCount = FuncDecl.Body.Count();
 	If StmtCount = 0 Or FuncDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
