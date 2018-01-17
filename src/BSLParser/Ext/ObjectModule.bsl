@@ -698,10 +698,10 @@ Function Next(Parser) Export
 
 	ElsIf Tok = Digit Then
 
-		Beg = Pos;
-		~ScanNumber: Pos = Pos + 1;
+		Beg = Pos; Pos = Pos + 1;
 		While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
-		Char = Mid(Source, Pos, 1); If Char = "." Then Goto ~ScanNumber EndIf;
+		Char = Mid(Source, Pos, 1);
+		If Char = "." Then While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo EndIf;
 		Lit = Mid(Source, Beg, Pos - Beg);
 
 		Tok = Tokens.Number;
@@ -787,12 +787,22 @@ Function Next(Parser) Export
 			EndIf;
 
 		ElsIf Prev = "~" Then
-
-			// scan ident
-			Beg = Pos; Pos = Pos + 1;
-			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
-
+			
+			// skip space
+			While IsBlankString(Char) And Char <> "" Do
+				If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			EndDo;
+							
+			If AlphaDigitMap[Mid(Source, Pos, 1)] = Undefined Then
+				Lit = "";
+			Else 
+				// scan ident
+				Beg = Pos; Pos = Pos + 1;
+				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+			EndIf; 
+			
 			Tok = Tokens.Label;
 
 		Else
