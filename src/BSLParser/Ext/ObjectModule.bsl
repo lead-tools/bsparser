@@ -701,7 +701,11 @@ Function Next(Parser) Export
 		Beg = Pos; Pos = Pos + 1;
 		While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
 		Char = Mid(Source, Pos, 1);
-		If Char = "." Then While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo EndIf;
+		If Char = "." Then
+			Pos = Pos + 1;
+			While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
+			Char = Mid(Source, Pos, 1);
+		EndIf;
 		Lit = Mid(Source, Beg, Pos - Beg);
 
 		Tok = Tokens.Number;
