@@ -662,7 +662,9 @@ Function Next(Parser) Export
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
 	Parser.EndPos = Pos;
-
+	
+	If Right(Parser.Lit, 1) = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+	
 	~Scan:
 
 	// skip space
@@ -689,7 +691,7 @@ Function Next(Parser) Export
 		Beg = Pos;
 		~ScanString: Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 		While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
-		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+		//If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 		If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
 		If Char = """" Then Goto ~ScanString EndIf;
 		Lit = Mid(Source, Beg, Pos - Beg);
