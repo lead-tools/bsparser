@@ -23,6 +23,8 @@ Procedure Init(BSLParserProcessor) Export
 	Tokens = BSLParserProcessor.Tokens();
 	SelectorKinds = BSLParserProcessor.SelectorKinds();
 
+	LastLine = 1;
+
 	Result = New Array;
 	Indent = -1;
 
@@ -57,7 +59,7 @@ EndProcedure // VisitStatements()
 Procedure VisitDecl(Decl)
     Var Type;
     Type = Decl.Type;
-	LastLine = Decl.Place.Line; // !!!
+	LastLine = Decl.Place.Line;
     If Type = Nodes.VarModListDecl Then
         VisitVarModListDecl(Decl);
     ElsIf Type = Nodes.VarLocListDecl Then
@@ -166,7 +168,7 @@ EndProcedure // VisitPrepRegionDecl()
 Procedure VisitExpr(Expr)
     Var Type, Hook;
     Type = Expr.Type;
-	For LastLine = LastLine To Expr.Place.Line - 1 Do // !!!
+	For LastLine = LastLine To Expr.Place.Line - 1 Do
 		If LastComment <> Undefined Then
 			Result.Add(" //" + LastComment);
 		EndIf;
@@ -196,8 +198,14 @@ EndProcedure // VisitExpr()
 
 Procedure VisitBasicLitExpr(BasicLitExpr)
 	BasicLitKind = BasicLitExpr.Kind;
-	If StrStartsWith(BasicLitKind, Tokens.String) Then
-		Result.Add(StrTemplate("""%1""", BasicLitExpr.Value));;
+	If BasicLitKind = Tokens.String Then
+		Result.Add(StrTemplate("""%1""", BasicLitExpr.Value));
+	ElsIf BasicLitKind = Tokens.StringBeg Then
+		Result.Add(StrTemplate("""%1", BasicLitExpr.Value));
+	ElsIf BasicLitKind = Tokens.StringMid Then
+		Result.Add(StrTemplate("|%1", BasicLitExpr.Value));
+	ElsIf BasicLitKind = Tokens.StringEnd Then
+		Result.Add(StrTemplate("|%1""", BasicLitExpr.Value));
 	ElsIf BasicLitKind = Tokens.Number Then
 		Result.Add(Format(BasicLitExpr.Value, "NZ=0; NG="));
 	ElsIf BasicLitKind = Tokens.DateTime Then
@@ -216,31 +224,7 @@ EndProcedure // VisitBasicLitExpr()
 Procedure VisitDesigExpr(DesigExpr)
 	Result.Add(DesigExpr.Object.Name);
 	LastLine = DesigExpr.Place.Line;
-	For Each Selector In DesigExpr.Select Do
-		If Selector.Kind = SelectorKinds.Ident Then
-			Result.Add(".");
-			Result.Add(Selector.Value);
-		ElsIf Selector.Kind = SelectorKinds.Index Then
-			Result.Add("[");
-			VisitExprList(Selector.Value);
-			Result.Add("]");
-		ElsIf Selector.Kind = SelectorKinds.Call Then
-			Result.Add("(");
-			Indent = Indent + 1; // >>
-			VisitExprList(Selector.Value);
-			Indent = Indent - 1;
-			If LastLine > Selector.Place.Line Then // !!!
-				If LastComment <> Undefined Then
-					Result.Add(" //" + LastComment);
-					LastComment = Undefined;
-				EndIf;
-				Result.Add(Chars.LF); Indent();
-			EndIf;
-			Result.Add(")");
-		Else
-			Raise "Unknown selector kind";
-		EndIf;
-	EndDo;
+	VisitSelectors(DesigExpr.Select);
 EndProcedure // VisitDesigExpr()
 
 Procedure VisitUnaryExpr(UnaryExpr)
@@ -263,7 +247,7 @@ Procedure VisitNewExpr(NewExpr)
 		Indent = Indent + 1; // >>
 		VisitExprList(NewExpr.Constr);
 		Indent = Indent - 1; // <<
-		If LastLine > NewExpr.Place.Line Then // !!!
+		If LastLine > NewExpr.Place.Line Then
 			Result.Add(Chars.LF); Indent();
 		EndIf;
 		Result.Add(")");
@@ -278,16 +262,7 @@ Procedure VisitTernaryExpr(TernaryExpr)
 	Result.Add(", ");
 	VisitExpr(TernaryExpr.Else);
 	Result.Add(")");
-	// TODO
-	//For Each Selector In TernaryExpr.Select Do
-	//    If Selector.Kind <> SelectorKinds.Ident Then
-	//        For Each Expr In Selector.Value Do
-	//            If Expr <> Undefined Then
-	//                VisitExpr(Expr);
-	//            EndIf;
-	//        EndDo;
-	//    EndIf;
-	//EndDo;
+	VisitSelectors(TernaryExpr.Select);
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitParenExpr(ParenExpr)
@@ -295,7 +270,7 @@ Procedure VisitParenExpr(ParenExpr)
 	Indent = Indent + 1; // >>
 	VisitExpr(ParenExpr.Expr);
 	Indent = Indent - 1; // <<
-	If LastLine > ParenExpr.Place.Line Then // !!!
+	If LastLine > ParenExpr.Place.Line Then
 		Result.Add(Chars.LF); Indent();
 	EndIf;
 	Result.Add(")");
@@ -320,7 +295,7 @@ EndProcedure // VisitStringExpr()
 Procedure VisitStmt(Stmt)
     Type = Stmt.Type;
 	Indent();
-	LastLine = Stmt.Place.Line; // !!!
+	LastLine = Stmt.Place.Line;
 	If Type = Nodes.AssignStmt Then
         VisitAssignStmt(Stmt);
     ElsIf Type = Nodes.ReturnStmt Then
@@ -416,7 +391,7 @@ Procedure VisitIfStmt(IfStmt)
 EndProcedure // VisitIfStmt()
 
 Procedure VisitElsIfStmt(ElsIfStmt)
-	Result.Add("ElsIf "); LastLine = ElsIfStmt.Cond.Place.Line; // !!!
+	Result.Add("ElsIf "); LastLine = ElsIfStmt.Cond.Place.Line;
 	VisitExpr(ElsIfStmt.Cond);
 	Result.Add(" Then"); Result.Add(Chars.LF);
     VisitStatements(ElsIfStmt.Then);
@@ -552,7 +527,7 @@ Procedure VisitParams(ParamList)
 	EndIf;
 EndProcedure // VisitParams()
 
-Function VisitExprList(ExprList)
+Procedure VisitExprList(ExprList)
 	If ExprList.Count() > 0 Then
 		For Each Expr In ExprList Do
 			If Expr = Undefined Then
@@ -564,6 +539,34 @@ Function VisitExprList(ExprList)
 		EndDo;
 		Result[Result.UBound()] = "";
 	EndIf;
-EndFunction // VisitExprList()
+EndProcedure // VisitExprList()
+
+Procedure VisitSelectors(Selectors)
+	For Each Selector In Selectors Do
+		If Selector.Kind = SelectorKinds.Ident Then
+			Result.Add(".");
+			Result.Add(Selector.Value);
+		ElsIf Selector.Kind = SelectorKinds.Index Then
+			Result.Add("[");
+			VisitExprList(Selector.Value);
+			Result.Add("]");
+		ElsIf Selector.Kind = SelectorKinds.Call Then
+			Result.Add("(");
+			Indent = Indent + 1; // >>
+			VisitExprList(Selector.Value);
+			Indent = Indent - 1;
+			If LastLine > Selector.Place.Line Then
+				If LastComment <> Undefined Then
+					Result.Add(" //" + LastComment);
+					LastComment = Undefined;
+				EndIf;
+				Result.Add(Chars.LF); Indent();
+			EndIf;
+			Result.Add(")");
+		Else
+			Raise "Unknown selector kind";
+		EndIf;
+	EndDo;
+EndProcedure // VisitSelectors()
 
 #EndRegion // Aux
