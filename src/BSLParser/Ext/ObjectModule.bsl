@@ -1481,7 +1481,9 @@ EndFunction // ParseParameter()
 
 Function ParsePrepIfDecl(Parser)
 	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
+	Var ElsIfPart, ElsIfCond, ElsIfThen, BegPos, Pos, Line;
+	BegPos = Parser.BegPos;
+	Line = Parser.Line;
 	Next(Parser);
 	Cond = ParseExpression(Parser); // todo: only logic operators
 	Expect(Parser, Tokens.Then);
@@ -1508,7 +1510,7 @@ Function ParsePrepIfDecl(Parser)
 	EndIf;
 	Expect(Parser, Tokens._EndIf);
 	Next(Parser);
-	Return PrepIfDecl(Cond, ThenPart, ElsIfPart, ElsePart);
+	Return PrepIfDecl(Cond, ThenPart, ElsIfPart, ElsePart, Place(Parser, BegPos, Line));
 EndFunction // ParsePrepIfDecl()
 
 Function ParsePrepRegionDecl(Parser)
@@ -2026,12 +2028,14 @@ Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
 	Var Hook;
 	PushInfo(Visitor, PrepIfDecl);
 	VisitExpr(Visitor, PrepIfDecl.Cond);
-	VisitStatements(Visitor, PrepIfDecl.Then);
+	VisitDeclarations(Visitor, PrepIfDecl.Then);
 	If PrepIfDecl.ElsIf <> Undefined Then
-		VisitPrepElsIfDecl(Visitor, PrepIfDecl.ElsIf);
+		For Each PrepElsIfDecl In PrepIfDecl.ElsIf Do
+            VisitPrepElsIfDecl(Visitor, PrepElsIfDecl);
+        EndDo;
 	EndIf;
 	If PrepIfDecl.Else <> Undefined Then
-		VisitStatements(Visitor, PrepIfDecl.Else);
+		VisitDeclarations(Visitor, PrepIfDecl.Else);
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.VisitPrepIfDecl Do
@@ -2043,7 +2047,7 @@ Procedure VisitPrepElsIfDecl(Visitor, PrepElsIfDecl)
 	Var Hook;
 	PushInfo(Visitor, PrepElsIfDecl);
 	VisitExpr(Visitor, PrepElsIfDecl.Cond);
-	VisitStatements(Visitor, PrepElsIfDecl.Then);
+	VisitDeclarations(Visitor, PrepElsIfDecl.Then);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.VisitPrepElsIfDecl Do
 		Hook.VisitPrepElsIfDecl(PrepElsIfDecl, Visitor.Stack, Visitor.Count);
