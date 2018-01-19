@@ -662,9 +662,9 @@ Function Next(Parser) Export
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
 	Parser.EndPos = Pos;
-	
+
 	If Right(Parser.Lit, 1) = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-	
+
 	~Scan:
 
 	// skip space
@@ -793,22 +793,22 @@ Function Next(Parser) Export
 			EndIf;
 
 		ElsIf Prev = "~" Then
-			
+
 			// skip space
 			While IsBlankString(Char) And Char <> "" Do
 				If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 			EndDo;
-							
+
 			If AlphaDigitMap[Mid(Source, Pos, 1)] = Undefined Then
 				Lit = "";
-			Else 
+			Else
 				// scan ident
 				Beg = Pos; Pos = Pos + 1;
 				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
 				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
-			EndIf; 
-			
+			EndIf;
+
 			Tok = Tokens.Label;
 
 		Else

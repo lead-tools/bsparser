@@ -11,23 +11,23 @@ Var LastLine, LastComment;
 Var Comments;      // map[number](string)
 
 Procedure Init(BSLParserProcessor) Export
-	
+
 	BSLParserProcessor.Location = True;
-	
+
 	Operators = New Structure(
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
 		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Or", "And", "Not"
 	);
-	
+
 	Nodes = BSLParserProcessor.Nodes();
 	Tokens = BSLParserProcessor.Tokens();
 	SelectorKinds = BSLParserProcessor.SelectorKinds();
 
 	Result = New Array;
 	Indent = -1;
-	
+
 EndProcedure // Init()
-	
+
 Function VisitModule(Module) Export
 	Comments = Module.Comments;
 	VisitDeclarations(Module.Decls);
@@ -36,20 +36,20 @@ Function VisitModule(Module) Export
 EndFunction // VisitModule()
 
 Procedure VisitDeclarations(Declarations)
-	Indent = Indent + 1; 
+	Indent = Indent + 1;
 	For Each Decl In Declarations Do
 		VisitDecl(Decl);
 	EndDo;
-	Indent = Indent - 1; 
+	Indent = Indent - 1;
 EndProcedure // VisitDeclarations()
 
 Procedure VisitStatements(Statements)
-	Indent = Indent + 1;  
+	Indent = Indent + 1;
 	For Each Stmt In Statements Do
 		VisitStmt(Stmt);
 	EndDo;
 	Indent = Indent - 1;
-	Indent(); 
+	Indent();
 EndProcedure // VisitStatements()
 
 #Region VisitDecl
@@ -123,7 +123,7 @@ Procedure VisitPrepIfDecl(PrepIfDecl)
 	Result.Add("#If ");
 	VisitExpr(PrepIfDecl.Cond);
 	Result.Add(" Then"); Comment(PrepIfDecl); Result.Add(Chars.LF);
-	Indent = Indent - 1; // <<  
+	Indent = Indent - 1; // <<
 	VisitDeclarations(PrepIfDecl.Then);
     If PrepIfDecl.ElsIf <> Undefined Then
 		For Each PrepElsIfDecl In PrepIfDecl.ElsIf Do
@@ -134,7 +134,7 @@ Procedure VisitPrepIfDecl(PrepIfDecl)
 		Result.Add("#Else"); Result.Add(Chars.LF);
 		VisitDeclarations(PrepIfDecl.Else);
 	EndIf;
-	Indent = Indent + 1; // >>  
+	Indent = Indent + 1; // >>
 	Result.Add("#EndIf;"); Result.Add(Chars.LF);
 EndProcedure // VisitPrepIfDecl()
 
@@ -226,7 +226,7 @@ Procedure VisitDesigExpr(DesigExpr)
 			Result.Add("]");
 		ElsIf Selector.Kind = SelectorKinds.Call Then
 			Result.Add("(");
-			Indent = Indent + 1; // >>  
+			Indent = Indent + 1; // >>
 			VisitExprList(Selector.Value);
 			Indent = Indent - 1;
 			If LastLine > Selector.Place.Line Then // !!!
@@ -236,7 +236,7 @@ Procedure VisitDesigExpr(DesigExpr)
 				EndIf;
 				Result.Add(Chars.LF); Indent();
 			EndIf;
-			Result.Add(")");  
+			Result.Add(")");
 		Else
 			Raise "Unknown selector kind";
 		EndIf;
@@ -244,36 +244,36 @@ Procedure VisitDesigExpr(DesigExpr)
 EndProcedure // VisitDesigExpr()
 
 Procedure VisitUnaryExpr(UnaryExpr)
-	Result.Add(Operators[UnaryExpr.Operator]); 
+	Result.Add(Operators[UnaryExpr.Operator]);
 	VisitExpr(UnaryExpr.Operand);
 EndProcedure // VisitUnaryExpr()
 
 Procedure VisitBinaryExpr(BinaryExpr)
 	VisitExpr(BinaryExpr.Left);
-	Result.Add(StrTemplate(" %1 ", Operators[BinaryExpr.Operator])); 
+	Result.Add(StrTemplate(" %1 ", Operators[BinaryExpr.Operator]));
     VisitExpr(BinaryExpr.Right);
 EndProcedure // VisitBinaryExpr()
 
 Procedure VisitNewExpr(NewExpr)
     If TypeOf(NewExpr.Constr) = Type("Structure") Then
-		Result.Add("New "); 
+		Result.Add("New ");
 		VisitDesigExpr(NewExpr.Constr);
     Else
 		Result.Add("New (");
-		Indent = Indent + 1; // >>  
+		Indent = Indent + 1; // >>
 		VisitExprList(NewExpr.Constr);
-		Indent = Indent - 1; // << 
+		Indent = Indent - 1; // <<
 		If LastLine > NewExpr.Place.Line Then // !!!
 			Result.Add(Chars.LF); Indent();
 		EndIf;
-		Result.Add(")");  
+		Result.Add(")");
     EndIf;
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(TernaryExpr)
-	Result.Add("?("); 
+	Result.Add("?(");
 	VisitExpr(TernaryExpr.Cond);
-	Result.Add(", "); 
+	Result.Add(", ");
 	VisitExpr(TernaryExpr.Then);
 	Result.Add(", ");
 	VisitExpr(TernaryExpr.Else);
@@ -291,10 +291,10 @@ Procedure VisitTernaryExpr(TernaryExpr)
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitParenExpr(ParenExpr)
-	Result.Add("("); 
-	Indent = Indent + 1; // >>  
+	Result.Add("(");
+	Indent = Indent + 1; // >>
 	VisitExpr(ParenExpr.Expr);
-	Indent = Indent - 1; // << 
+	Indent = Indent - 1; // <<
 	If LastLine > ParenExpr.Place.Line Then // !!!
 		Result.Add(Chars.LF); Indent();
 	EndIf;
@@ -302,7 +302,7 @@ Procedure VisitParenExpr(ParenExpr)
 EndProcedure // VisitParenExpr()
 
 Procedure VisitNotExpr(NotExpr)
-	Result.Add("Not "); 
+	Result.Add("Not ");
 	VisitExpr(NotExpr.Expr);
 EndProcedure // VisitNotExpr()
 
@@ -493,7 +493,7 @@ Procedure VisitGotoStmt(GotoStmt)
 EndProcedure // VisitGotoStmt()
 
 Procedure VisitLabelStmt(LabelStmt)
-	Result.Add(StrTemplate("~%1:%2", LabelStmt.Label, Chars.LF)); 
+	Result.Add(StrTemplate("~%1:%2", LabelStmt.Label, Chars.LF));
 EndProcedure // VisitLabelStmt()
 
 #EndRegion // VisitStmt
@@ -509,7 +509,7 @@ EndProcedure // Indent()
 Procedure Comment(Node)
 	If Node = Undefined Then
 		Return;
-	EndIf; 
+	EndIf;
 	Comment = Comments[Node.Place.Line];
 	If Comment <> Undefined Then
 		Result.Add(" //" + Comment);
@@ -524,7 +524,7 @@ Procedure VisitVarList(VarList)
 		If Object.Property("Export")
 			And Object.Export Then
 			Buffer.Add(" Export");
-		EndIf; 
+		EndIf;
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
@@ -537,19 +537,19 @@ Procedure VisitParams(ParamList)
 	If ParamList.Count() > 0 Then
 		For Each Object In ParamList Do
 			If Object.ByVal Then
-				Result.Add("Val "); 
-			EndIf; 
-			Result.Add(Object.Name); 
+				Result.Add("Val ");
+			EndIf;
+			Result.Add(Object.Name);
 			If Object.Value <> Undefined Then
 				Result.Add(" = ");
 				VisitExpr(Object.Value);
 			EndIf;
-			Result.Add(", "); 
+			Result.Add(", ");
 		EndDo;
 		Result[Result.UBound()] = ")";
 	Else
 		Result.Add(")");
-	EndIf; 
+	EndIf;
 EndProcedure // VisitParams()
 
 Function VisitExprList(ExprList)
@@ -560,7 +560,7 @@ Function VisitExprList(ExprList)
 			Else
 				VisitExpr(Expr);
 			EndIf;
-			Result.Add(", "); 
+			Result.Add(", ");
 		EndDo;
 		Result[Result.UBound()] = "";
 	EndIf;
