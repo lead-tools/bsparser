@@ -120,21 +120,29 @@ Procedure VisitFuncDecl(FuncDecl)
 EndProcedure // VisitFuncDecl()
 
 Procedure VisitPrepIfDecl(PrepIfDecl)
-	// TODO
+	Result.Add("#If ");
 	VisitExpr(PrepIfDecl.Cond);
-    VisitStatements(PrepIfDecl.Then);
+	Result.Add(" Then"); Comment(PrepIfDecl); Result.Add(Chars.LF);
+	Indent = Indent - 1; // <<  
+	VisitDeclarations(PrepIfDecl.Then);
     If PrepIfDecl.ElsIf <> Undefined Then
-        VisitPrepElsIfDecl(PrepIfDecl.ElsIf);
+		For Each PrepElsIfDecl In PrepIfDecl.ElsIf Do
+            VisitPrepElsIfDecl(PrepElsIfDecl);
+        EndDo;
     EndIf;
     If PrepIfDecl.Else <> Undefined Then
-        VisitStatements(PrepIfDecl.Else);
-    EndIf;
+		Result.Add("#Else"); Result.Add(Chars.LF);
+		VisitDeclarations(PrepIfDecl.Else);
+	EndIf;
+	Indent = Indent + 1; // >>  
+	Result.Add("#EndIf;"); Result.Add(Chars.LF);
 EndProcedure // VisitPrepIfDecl()
 
 Procedure VisitPrepElsIfDecl(PrepElsIfDecl)
-	// TODO
+	Result.Add("#ElsIf "); LastLine = PrepElsIfDecl.Cond.Place.Line;
 	VisitExpr(PrepElsIfDecl.Cond);
-    VisitStatements(PrepElsIfDecl.Then);
+	Result.Add(" Then"); Result.Add(Chars.LF);
+	VisitDeclarations(PrepElsIfDecl.Then);
 EndProcedure // VisitPrepElsIfDecl()
 
 Procedure VisitPrepRegionDecl(PrepRegionDecl)
@@ -183,7 +191,7 @@ Procedure VisitExpr(Expr)
         VisitNotExpr(Expr);
     ElsIf Type = Nodes.StringExpr Then
         VisitStringExpr(Expr);
-    EndIf;
+	EndIf;
 EndProcedure // VisitExpr()
 
 Procedure VisitBasicLitExpr(BasicLitExpr)
@@ -206,16 +214,8 @@ Procedure VisitBasicLitExpr(BasicLitExpr)
 EndProcedure // VisitBasicLitExpr()
 
 Procedure VisitDesigExpr(DesigExpr)
-	//For Each Selector In DesigExpr.Select Do
-	//    If Selector.Kind <> SelectorKinds.Ident Then
-	//        For Each Expr In Selector.Value Do
-	//            If Expr <> Undefined Then
-	//                VisitExpr(Expr);
-	//            EndIf;
-	//        EndDo;
-	//    EndIf;
-	//EndDo;
 	Result.Add(DesigExpr.Object.Name);
+	LastLine = DesigExpr.Place.Line;
 	For Each Selector In DesigExpr.Select Do
 		If Selector.Kind = SelectorKinds.Ident Then
 			Result.Add(".");
@@ -230,6 +230,10 @@ Procedure VisitDesigExpr(DesigExpr)
 			VisitExprList(Selector.Value);
 			Indent = Indent - 1;
 			If LastLine > Selector.Place.Line Then // !!!
+				If LastComment <> Undefined Then
+					Result.Add(" //" + LastComment);
+					LastComment = Undefined;
+				EndIf;
 				Result.Add(Chars.LF); Indent();
 			EndIf;
 			Result.Add(")");  
@@ -257,9 +261,6 @@ Procedure VisitNewExpr(NewExpr)
     Else
 		Result.Add("New (");
 		Indent = Indent + 1; // >>  
-		//For Each Expr In NewExpr.Constr Do
-		//    VisitExpr(Expr);
-		//EndDo;
 		VisitExprList(NewExpr.Constr);
 		Indent = Indent - 1; // << 
 		If LastLine > NewExpr.Place.Line Then // !!!
@@ -422,23 +423,27 @@ Procedure VisitElsIfStmt(ElsIfStmt)
 EndProcedure // VisitElsIfStmt()
 
 Procedure VisitPrepIfStmt(PrepIfStmt)
-	// TODO
+	Result.Add("#If ");
 	VisitExpr(PrepIfStmt.Cond);
-    VisitStatements(PrepIfStmt.Then);
+	Result.Add(" Then"); Comment(PrepIfStmt); Result.Add(Chars.LF);
+	VisitStatements(PrepIfStmt.Then);
     If PrepIfStmt.ElsIf <> Undefined Then
         For Each PrepElsIfStmt In PrepIfStmt.ElsIf Do
             VisitPrepElsIfStmt(PrepElsIfStmt);
         EndDo;
     EndIf;
     If PrepIfStmt.Else <> Undefined Then
-        VisitStatements(PrepIfStmt.Else);
-    EndIf;
+		Result.Add("#Else"); Result.Add(Chars.LF);
+		VisitStatements(PrepIfStmt.Else);
+	EndIf;
+	Result.Add("#EndIf;"); Result.Add(Chars.LF);
 EndProcedure // VisitPrepIfStmt()
 
 Procedure VisitPrepElsIfStmt(PrepElsIfStmt)
-	// TODO
+	Result.Add("#ElsIf "); LastLine = PrepElsIfStmt.Cond.Place.Line;
 	VisitExpr(PrepElsIfStmt.Cond);
-    VisitStatements(PrepElsIfStmt.Then);
+	Result.Add(" Then"); Result.Add(Chars.LF);
+	VisitStatements(PrepElsIfStmt.Then);
 EndProcedure // VisitPrepElsIfStmt()
 
 Procedure VisitWhileStmt(WhileStmt)
@@ -484,11 +489,11 @@ Procedure VisitTryStmt(TryStmt)
 EndProcedure // VisitTryStmt()
 
 Procedure VisitGotoStmt(GotoStmt)
-	// TODO	
+	Result.Add(StrTemplate("Goto ~%1%2%3", GotoStmt.Label, ";", Chars.LF));
 EndProcedure // VisitGotoStmt()
 
 Procedure VisitLabelStmt(LabelStmt)
-	// TODO
+	Result.Add(StrTemplate("~%1:%2", LabelStmt.Label, Chars.LF)); 
 EndProcedure // VisitLabelStmt()
 
 #EndRegion // VisitStmt
