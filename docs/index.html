@@ -9,6 +9,9 @@
 		font-family: Menlo, monospace;
 		font-size: 14px;
 	}
+	h2 {
+		color:#963200;
+	}
 </style>
 </head>
 <body>
@@ -21,6 +24,7 @@
 		<li><strong>Interface</strong>: array (<a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>)</li>
 		<li><strong>Comments</strong>: map[number] (string)</li>
 	</ul>
+	<h2 id='#Scope'>#Scope</h2>
 	<h3 id='Unknown'>Unknown</h3>
 	<ul>
 		<li><strong>Name</strong>: string</li>
@@ -56,6 +60,7 @@
 		<li><strong>ByVal</strong>: boolean</li>
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 	</ul>
+	<h2 id='#Declarations'>#Declarations</h2>
 	<h3 id='VarModListDecl'>VarModListDecl</h3>
 	<ul>
 		<li><strong>Dir</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
@@ -104,6 +109,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h2 id='#Expressions'>#Expressions</h2>
 	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
 	<ul>
 		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
@@ -164,6 +170,7 @@
 		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h2 id='#Statements'>#Statements</h2>
 	<h3 id='AssignStmt'>AssignStmt</h3>
 	<ul>
 		<li><strong>Left</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>

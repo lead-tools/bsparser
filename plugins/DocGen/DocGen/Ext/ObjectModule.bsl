@@ -21,10 +21,12 @@ Procedure Init(BSLParser) Export
 		|		font-family: Menlo, monospace;
 		|		font-size: 14px;
 		|	}
+		|	h2 {
+    	|		color:#963200;
+		|	}
 		|</style>
 		|</head>
-		|<body>
-		|	<h1>Abstract syntax tree</h1>" ""
+		|<body>" ""
 	);
 EndProcedure // Init() 
 
@@ -53,8 +55,14 @@ Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Count) Export
 	If Count.PrepRegionDecl = 0 Then
 		Region = PrepRegionDecl.Name;
 		SubRegion = "";
+		If Region = "AbstractSyntaxTree" Then
+			Result.Add("	<h1>Abstract syntax tree</h1>" "");	
+		EndIf; 
 	ElsIf Count.PrepRegionDecl = 1 Then
 		SubRegion = PrepRegionDecl.Name;
+		If Region = "AbstractSyntaxTree" Then
+			Result.Add(StrTemplate("	<h2 id='#%1'>#%1</h2>" "", SubRegion));
+		EndIf; 
 	EndIf; 	
 EndProcedure // VisitPrepRegionDecl()
 
