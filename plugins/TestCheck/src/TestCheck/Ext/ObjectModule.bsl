@@ -2,13 +2,19 @@
 // Тестовый плагин.
 
 Var Nodes;
+Var Result;
 
 Procedure Init(BSLParser) Export
 	Nodes = BSLParser.Nodes();
 	If Not BSLParser.Location Then
 		Raise "Необходимо включить флаг Location";
-	EndIf; 
+	EndIf;
+	Result = New Array;
 EndProcedure // Init() 
+
+Function Result() Export
+	Return StrConcat(Result, Chars.LF);
+EndFunction // Result()
 
 Function Interface() Export
 	Var Interface;
@@ -36,6 +42,6 @@ Procedure VisitLoopStmt(Stmt, Stack, Count) Export
 	Var LoopCount;
 	LoopCount = Count.WhileStmt + Count.ForStmt + Count.ForEachStmt;
 	If LoopCount > 0 Then
-		Message(StrTemplate("Вложенный цикл `%1` в строке %2" "", Stmt.Type, Stmt.Place.Line));
+		Result.Add(StrTemplate("Вложенный цикл `%1` в строке %2", Stmt.Type, Stmt.Place.Line));
 	EndIf;
 EndProcedure // VisitLoopStmt()

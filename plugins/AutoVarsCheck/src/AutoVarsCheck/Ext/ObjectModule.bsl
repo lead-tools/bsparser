@@ -3,10 +3,16 @@
 // Возможны ложные срабатывания, т.к. не учитывается контекст выполнения.
 
 Var Nodes;
+Var Result;
 
 Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();	
+	Nodes = BSLParser.Nodes();
+	Result = New Array;
 EndProcedure // Init() 
+
+Function Result() Export
+	Return StrConcat(Result, Chars.LF);
+EndFunction // Result() 
 
 Function Interface() Export
 	Var Interface;
@@ -19,9 +25,9 @@ EndFunction // Interface()
 Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
 	Var Item;
 	If FuncDecl.Auto.Count() > 0 Then
-		Message(StrTemplate("Функция `%1()` содержит авто-переменные:", FuncDecl.Object.Name));
+		Result.Add(StrTemplate("Функция `%1()` содержит авто-переменные:", FuncDecl.Object.Name));
 		For Each Item In FuncDecl.Auto Do
-			Message(Chars.Tab + Item.Name);
+			Result.Add(Chars.Tab + Item.Name);
 		EndDo; 
 	EndIf; 
 EndProcedure // VisitFuncDecl()
@@ -29,9 +35,9 @@ EndProcedure // VisitFuncDecl()
 Procedure VisitProcDecl(ProcDecl, Stack, Count) Export
 	Var Item;
 	If ProcDecl.Auto.Count() > 0 Then
-		Message(StrTemplate("Процедура `%1()` содержит авто-переменные:", ProcDecl.Object.Name));
+		Result.Add(StrTemplate("Процедура `%1()` содержит авто-переменные:", ProcDecl.Object.Name));
 		For Each Item In ProcDecl.Auto Do
-			Message(Chars.Tab + Item.Name);
+			Result.Add(Chars.Tab + Item.Name);
 		EndDo; 
 	EndIf;
 EndProcedure // VisitProcDecl()
