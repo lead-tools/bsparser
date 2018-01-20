@@ -1,13 +1,16 @@
 ﻿
 // ...
 
-Var Nodes;
+Var Tokens, SelectorKinds, Directives, PrepInstructions;
 Var Region, SubRegion;
 Var Comments; 
 Var Result;
 
 Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
+	Tokens = BSLParser.Tokens();
+	SelectorKinds = BSLParser.SelectorKinds();
+	Directives = BSLParser.Directives();
+	PrepInstructions = BSLParser.PrepInstructions();
 	Result = New Array;
 	Result.Add(
 		"<!DOCTYPE html>
@@ -31,8 +34,13 @@ Procedure Init(BSLParser) Export
 EndProcedure // Init() 
 
 Function Result() Export
+	Result.Add("<h2 id='#Enums'>#Enums</h2>");
+	Result.Add(GenerateEnum("Tokens", Tokens));
+	Result.Add(GenerateEnum("SelectorKinds", SelectorKinds));
+	Result.Add(GenerateEnum("Directives", Directives));
+	Result.Add(GenerateEnum("PrepInstructions", PrepInstructions));
 	Result.Add(
-		"<h2 id='#Auxiliary'>#Auxiliary</h2>
+		"<h2 id='#Other'>#Other</h2>
 		|<h3 id='Place'>Place</h3>
 		|<ul>
 		|	<li><strong>Line</strong>: number</li>
@@ -44,6 +52,25 @@ Function Result() Export
 	);
 	Return StrConcat(Result);
 EndFunction // Refult() 
+
+Function GenerateEnum(Name, Enum)
+	Var Buffer;
+	Buffer = New Array;
+	Buffer.Add(StrTemplate(
+		"<h3 id='%1'>%1</h3>
+		|<ul>",
+		Name
+	));
+	EnumValues = New Structure;
+	For Each Item In Enum Do
+		EnumValues.Insert(Item.Value);
+	EndDo;
+	For Each Item In EnumValues Do
+		Buffer.Add(StrTemplate("<li>""%1""</li>" "", Item.Key));
+	EndDo;
+	Buffer.Add("</ul>" "");
+	Return StrConcat(Buffer);
+EndFunction // GenerateEnum() 
 
 Function Interface() Export
 	Var Interface;

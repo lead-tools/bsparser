@@ -1,12 +1,17 @@
 :target {
 	background-color: #F0F0F0 ;
-	margin: -8px ;
-	padding: 8px ;
-	border-radius: 8px ;
+	margin: -4px ;
+	padding: 4px ;
+	border-radius: 4px ;
 	outline: none ;
 }
 
-a:link, a:visited, a:hover, a:active {
+a:link, a:visited {
 	text-decoration: none;
+	color: blue;
+}
+
+a:hover, a:active {
+	text-decoration: underline;
 	color: blue;
 }
