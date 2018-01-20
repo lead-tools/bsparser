@@ -32,7 +32,14 @@ EndProcedure // Init()
 
 Function Result() Export
 	Result.Add(
-		"</body>
+		"<h2 id='#Auxiliary'>#Auxiliary</h2>
+		|<h3 id='Place'>Place</h3>
+		|<ul>
+		|	<li><strong>Line</strong>: number</li>
+		|	<li><strong>Pos</strong>: number</li>
+		|	<li><strong>Len</strong>: number</li>
+		|</ul>
+		|</body>
 		|</html>"
 	);
 	Return StrConcat(Result);
