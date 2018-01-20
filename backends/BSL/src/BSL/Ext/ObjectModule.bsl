@@ -79,6 +79,9 @@ EndProcedure // VisitDecl()
 
 Procedure VisitVarModListDecl(VarModListDecl)
 	Indent();
+	If VarModListDecl.Dir <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", VarModListDecl.Dir, Chars.LF));
+	EndIf;
 	Result.Add("Var ");
 	VisitVarList(VarModListDecl.List);
 	Result.Add(";"); Comment(VarModListDecl); Result.Add(Chars.LF);
@@ -92,32 +95,40 @@ Procedure VisitVarLocListDecl(VarLocListDecl)
 EndProcedure // VisitVarLocListDecl()
 
 Procedure VisitProcDecl(ProcDecl)
-	Result.Add(Chars.LF);
+	Var Object;
+	Object = ProcDecl.Object;
+	If Object.Dir <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", Object.Dir, Chars.LF));
+	EndIf; 
 	Result.Add("Procedure ");
-	Result.Add(ProcDecl.Object.Name);
-	VisitParams(ProcDecl.Object.Params);
-	If ProcDecl.Object.Export Then
+	Result.Add(Object.Name);
+	VisitParams(Object.Params);
+	If Object.Export Then
 		Result.Add(" Export");
 	EndIf;
 	Comment(ProcDecl); Result.Add(Chars.LF);
 	VisitDeclarations(ProcDecl.Decls);
     VisitStatements(ProcDecl.Body);
-	Result.Add(StrTemplate("EndProcedure // %1()", ProcDecl.Object.Name));
+	Result.Add(StrTemplate("EndProcedure // %1()", Object.Name));
 	Result.Add(Chars.LF);
 EndProcedure // VisitProcDecl()
 
 Procedure VisitFuncDecl(FuncDecl)
-	Result.Add(Chars.LF);
+	Var Object;
+	Object = FuncDecl.Object;
+	If Object.Dir <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", Object.Dir, Chars.LF));
+	EndIf;	
 	Result.Add("Function ");
-	Result.Add(FuncDecl.Object.Name);
-	VisitParams(FuncDecl.Object.Params);
-	If FuncDecl.Object.Export Then
+	Result.Add(Object.Name);
+	VisitParams(Object.Params);
+	If Object.Export Then
 		Result.Add(" Export");
 	EndIf;
 	Comment(FuncDecl); Result.Add(Chars.LF);
 	VisitDeclarations(FuncDecl.Decls);
     VisitStatements(FuncDecl.Body);
-	Result.Add(StrTemplate("EndFunction // %1()", FuncDecl.Object.Name));
+	Result.Add(StrTemplate("EndFunction // %1()", Object.Name));
 	Result.Add(Chars.LF);
 EndProcedure // VisitFuncDecl()
 
@@ -282,10 +293,15 @@ Procedure VisitNotExpr(NotExpr)
 EndProcedure // VisitNotExpr()
 
 Procedure VisitStringExpr(StringExpr)
-	For Each Expr In StringExpr.List Do
-		VisitExpr(Expr);
-		Result.Add(" ");
-	EndDo;
+	If StringExpr.List.Count() > 1 Then
+		For Each Expr In StringExpr.List Do
+			Result.Add(Chars.LF);
+			Indent();
+			VisitBasicLitExpr(Expr);
+		EndDo;
+	Else
+		VisitExpr(StringExpr.List[0]);
+	EndIf; 
 EndProcedure // VisitStringExpr()
 
 #EndRegion // VisitExpr
@@ -494,11 +510,11 @@ EndProcedure // Comment()
 Procedure VisitVarList(VarList)
 	Var Buffer, Object;
 	Buffer = New Array;
-	For Each Object In VarList Do
-		Buffer.Add(Object.Name);
-		If Object.Property("Export")
-			And Object.Export Then
-			Buffer.Add(" Export");
+	For Each Object In VarList Do 
+		If Object.Property("Export") And Object.Export Then
+			Buffer.Add(Object.Name + " Export");
+		Else
+			Buffer.Add(Object.Name);
 		EndIf;
 	EndDo;
 	If Buffer.Count() > 0 Then

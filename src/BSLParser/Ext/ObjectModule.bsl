@@ -315,11 +315,12 @@ EndFunction // Param()
 
 #Region Declarations
 
-Function VarModListDecl(VarList, Place = Undefined)
+Function VarModListDecl(Directive, VarList, Place = Undefined)
 	Return Struct(Nodes.VarModListDecl,
+	    "Dir"   // string (one of Directives)
 		"List"  // array (VarMod)
 		"Place" // undefined, structure (Place)
-	, VarList, Place);
+	, Directive, VarList, Place);
 EndFunction // VarModListDecl()
 
 Function VarLocListDecl(VarList, Place = Undefined)
@@ -1277,7 +1278,7 @@ Function ParseModVarListDecl(Parser)
 		Next(Parser);
 		VarList.Add(ParseVarMod(Parser));
 	EndDo;
-	Return VarModListDecl(VarList, Place(Parser, Pos, Line));
+	Return VarModListDecl(Parser.Directive, VarList, Place(Parser, Pos, Line));
 EndFunction // ParseModVarListDecl()
 
 Function ParseVarMod(Parser)
@@ -1367,6 +1368,7 @@ Function ParseFuncDecl(Parser)
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Func;
+		Object.Insert("Dir", Parser.Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
@@ -1411,6 +1413,7 @@ Function ParseProcDecl(Parser)
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Proc;
+		Object.Insert("Dir", Parser.Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
