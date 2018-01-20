@@ -274,7 +274,7 @@ Function Func(Name, Directive, Params, Exported)
 	Return Struct(Nodes.Func,
 		"Name"   // string
 		"Dir"    // string (one of Directives)
-		"Params" // array (Parameter)
+		"Params" // array (Param)
 		"Export" // boolean
 	, Name, Directive, Params, Exported);
 EndFunction // Func()
@@ -283,7 +283,7 @@ Function Proc(Name, Directive, Params, Exported)
 	Return Struct(Nodes.Proc,
 		"Name"   // string
 		"Dir"    // string (one of Directives)
-		"Params" // array (Parameter)
+		"Params" // array (Param)
 		"Export" // boolean
 	, Name, Directive, Params, Exported);
 EndFunction // Proc()
