@@ -87,51 +87,7 @@ Procedure TranslateAtServer()
 		PluginProcessor.Init(BSLParser);
 		Parser = BSLParser.Parser(Source.GetText());
 		BSLParser.ParseModule(Parser);
-		Hooks = New Structure(
-			"VisitModule,"
-			"VisitDeclarations,"
-			"VisitStatements,"
-			"VisitDecl,"
-			"VisitVarModListDecl,"
-			"VisitVarLocListDecl,"
-			"VisitProcDecl,"
-			"VisitFuncDecl,"
-			"VisitPrepIfDecl,"
-			"VisitPrepElsIfDecl,"
-			"VisitPrepRegionDecl,"
-			"VisitExpr,"
-			"VisitBasicLitExpr,"
-			"VisitDesigExpr,"
-			"VisitUnaryExpr,"
-			"VisitBinaryExpr,"
-			"VisitNewExpr,"
-			"VisitTernaryExpr,"
-			"VisitParenExpr,"
-			"VisitNotExpr,"
-			"VisitStringExpr,"
-			"VisitStmt,"
-			"VisitAssignStmt,"
-			"VisitReturnStmt,"
-			"VisitBreakStmt,"
-			"VisitContinueStmt,"
-			"VisitRaiseStmt,"
-			"VisitExecuteStmt,"
-			"VisitCallStmt,"
-			"VisitIfStmt,"
-			"VisitElsIfStmt,"
-			"VisitPrepIfStmt,"
-			"VisitPrepElsIfStmt,"
-			"VisitWhileStmt,"
-			"VisitPrepRegionStmt,"
-			"VisitForStmt,"
-			"VisitForEachStmt,"
-			"VisitTryStmt,"
-			"VisitGotoStmt,"
-			"VisitLabelStmt,"
-		);
-		For Each Item In Hooks Do
-			Hooks[Item.Key] = New Array;	
-		EndDo;
+		Hooks = BSLParser.Hooks();
 		List = Undefined;
 		For Each MethodName In PluginProcessor.Interface() Do
 			If Hooks.Property(MethodName, List) Then

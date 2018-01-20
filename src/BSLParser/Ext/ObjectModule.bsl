@@ -1935,6 +1935,58 @@ Procedure PopInfo(Visitor)
 	Visitor.Stack = Visitor.Stack.Outer;
 EndProcedure // PopInfo()
 
+Function Hooks() Export
+	
+	Hooks = New Structure(
+		"VisitModule,"
+		"VisitDeclarations,"
+		"VisitStatements,"
+		"VisitDecl,"
+		"VisitVarModListDecl,"
+		"VisitVarLocListDecl,"
+		"VisitProcDecl,"
+		"VisitFuncDecl,"
+		"VisitPrepIfDecl,"
+		"VisitPrepElsIfDecl,"
+		"VisitPrepRegionDecl,"
+		"VisitExpr,"
+		"VisitBasicLitExpr,"
+		"VisitDesigExpr,"
+		"VisitUnaryExpr,"
+		"VisitBinaryExpr,"
+		"VisitNewExpr,"
+		"VisitTernaryExpr,"
+		"VisitParenExpr,"
+		"VisitNotExpr,"
+		"VisitStringExpr,"
+		"VisitStmt,"
+		"VisitAssignStmt,"
+		"VisitReturnStmt,"
+		"VisitBreakStmt,"
+		"VisitContinueStmt,"
+		"VisitRaiseStmt,"
+		"VisitExecuteStmt,"
+		"VisitCallStmt,"
+		"VisitIfStmt,"
+		"VisitElsIfStmt,"
+		"VisitPrepIfStmt,"
+		"VisitPrepElsIfStmt,"
+		"VisitWhileStmt,"
+		"VisitPrepRegionStmt,"
+		"VisitForStmt,"
+		"VisitForEachStmt,"
+		"VisitTryStmt,"
+		"VisitGotoStmt,"
+		"VisitLabelStmt,"
+	);
+	For Each Item In Hooks Do
+		Hooks[Item.Key] = New Array;	
+	EndDo;
+	
+	Return Hooks;
+	
+EndFunction // Hooks()
+
 Procedure VisitModule(Visitor, Module) Export
 	Var Hook;
 	PushInfo(Visitor, Module);
