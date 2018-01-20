@@ -10,6 +10,7 @@
 			<v8:content>BSL Parser</v8:content>
 		</v8:item>
 	</Title>
+	<AutoSaveDataInSettings>Use</AutoSaveDataInSettings>
 	<AutoTitle>false</AutoTitle>
 	<AutoCommandBar name="FormCommandBar" id="-1">
 		<Autofill>false</Autofill>
@@ -331,6 +332,9 @@
 					<v8:AllowedLength>Variable</v8:AllowedLength>
 				</v8:StringQualifiers>
 			</Type>
+			<Save>
+				<Field>Output</Field>
+			</Save>
 		</Attribute>
 		<Attribute name="BackendPath" id="6">
 			<Title>
@@ -346,6 +350,9 @@
 					<v8:AllowedLength>Variable</v8:AllowedLength>
 				</v8:StringQualifiers>
 			</Type>
+			<Save>
+				<Field>BackendPath</Field>
+			</Save>
 		</Attribute>
 		<Attribute name="Measure" id="7">
 			<Title>

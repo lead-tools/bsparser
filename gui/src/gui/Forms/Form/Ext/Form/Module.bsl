@@ -96,7 +96,8 @@ Procedure TranslateAtServer()
 		EndDo; 
 		Visitor = BSLParser.Visitor(Hooks);
 		BSLParser.VisitModule(Visitor, Parser.Module);
-
+		Result.SetText(PluginProcessor.Result());
+		
 	EndIf;
 
 	If Measure Then

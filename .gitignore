@@ -1,5 +1,4 @@
 *.epf
 temp/*
 build/*
-*.html
 log.txt
