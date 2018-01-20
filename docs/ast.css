@@ -1,3 +1,8 @@
+html {
+	scroll-behavior: smooth;
+	margin-bottom: 25%;
+}
+
 :target {
 	background-color: #F0F0F0 ;
 	margin: -4px ;
