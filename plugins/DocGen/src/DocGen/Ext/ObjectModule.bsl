@@ -1,14 +1,14 @@
 ﻿
 // Генератор технической документации по парсеру
 
-Var Tokens, SelectorKinds, Directives, PrepInstructions;
+Var Tokens, SelectKinds, Directives, PrepInstructions;
 Var Region, SubRegion;
 Var Comments; 
 Var Result;
 
 Procedure Init(BSLParser) Export
 	Tokens = BSLParser.Tokens();
-	SelectorKinds = BSLParser.SelectorKinds();
+	SelectKinds = BSLParser.SelectKinds();
 	Directives = BSLParser.Directives();
 	PrepInstructions = BSLParser.PrepInstructions();
 	Result = New Array;
@@ -27,7 +27,7 @@ EndProcedure // Init()
 Function Result() Export
 	Result.Add("<h2 id='#Enums'>#Enums</h2>");
 	Result.Add(GenerateEnum("Tokens", Tokens));
-	Result.Add(GenerateEnum("SelectorKinds", SelectorKinds));
+	Result.Add(GenerateEnum("SelectKinds", SelectKinds));
 	Result.Add(GenerateEnum("Directives", Directives));
 	Result.Add(GenerateEnum("PrepInstructions", PrepInstructions));
 	Result.Add(
@@ -98,11 +98,11 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Count) Export
 		If DesigExpr.Call Then
 			
 			If DesigExpr.Object.Name = "Struct" Then
-				CallSelector = DesigExpr.Select[0]; 
-				FirstArg = CallSelector.Value[0];
+				CallExpr = DesigExpr.Select[0]; 
+				FirstArg = CallExpr.Value[0];
 				If FirstArg.Object.Name = "Nodes" Then
 					NodeName = FirstArg.Select[0].Value;
-					NodeFields = CallSelector.Value[1].List;
+					NodeFields = CallExpr.Value[1].List;
 					
 					Result.Add(StrTemplate(
 						"	<h3 id='%1'>%1</h3>

@@ -107,16 +107,16 @@
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='Selector'>Selector</h3>
+	<h3 id='SelectExpr'>SelectExpr</h3>
 	<ul>
-		<li><strong>Kind</strong>: string (one of <a href='#SelectorKinds'>SelectorKinds</a>)</li>
+		<li><strong>Kind</strong>: string (one of <a href='#SelectKinds'>SelectKinds</a>)</li>
 		<li><strong>Value</strong>: string, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='DesigExpr'>DesigExpr</h3>
 	<ul>
 		<li><strong>Object</strong>: structure (<a href='#Unknown'>Unknown</a>, <a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>, <a href='#VarMod'>VarMod</a>, <a href='#VarLoc'>VarLoc</a>, <a href='#Param'>Param</a>)</li>
-		<li><strong>Select</strong>: array (<a href='#Selector'>Selector</a>)</li>
+		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
 		<li><strong>Call</strong>: boolean</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -143,7 +143,7 @@
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Select</strong>: array (<a href='#Selector'>Selector</a>)</li>
+		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ParenExpr'>ParenExpr</h3>
@@ -342,7 +342,7 @@
 <li>"Directive"</li>
 <li>"Label"</li>
 </ul>
-<h3 id='SelectorKinds'>SelectorKinds</h3>
+<h3 id='SelectKinds'>SelectKinds</h3>
 <ul><li>"Ident"</li>
 <li>"Index"</li>
 <li>"Call"</li>

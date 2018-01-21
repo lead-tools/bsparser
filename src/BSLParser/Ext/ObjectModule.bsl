@@ -4,7 +4,7 @@
 Var Keywords;         // enum
 Var Tokens;           // enum
 Var Nodes;            // enum
-Var SelectorKinds;    // enum
+Var SelectKinds;      // enum
 Var Directives;       // enum
 Var PrepInstructions; // enum
 Var BasicLitNoString; // array (one of Tokens)
@@ -128,7 +128,7 @@ Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
 	Nodes = Nodes();
-	SelectorKinds = SelectorKinds();
+	SelectKinds = SelectKinds();
 	Directives = Directives();
 	PrepInstructions = PrepInstructions();
 EndProcedure // InitEnums()
@@ -191,19 +191,19 @@ Function Nodes() Export
 	Return Enum(New Structure,
 		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param,
 		|VarModListDecl, VarLocListDecl, ProcDecl, FuncDecl, PrepIfDecl, PrepElsIfDecl, PrepRegionDecl,
-		|BasicLitExpr, Selector, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
+		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, CallStmt, IfStmt, ElsIfStmt,
 		|PrepIfStmt, PrepElsIfStmt, WhileStmt, PrepRegionStmt, ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt"
 	);
 EndFunction // Nodes()
 
-Function SelectorKinds() Export
+Function SelectKinds() Export
 	Return Enum(New Structure,
 		"Ident," // Something._
 		"Index," // Something[_]
 		"Call,"  // Something(_)
 	);
-EndFunction // SelectorKinds()
+EndFunction // SelectKinds()
 
 Function Directives() Export
 	Return Enum(New Structure,
@@ -389,21 +389,21 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 	, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
-Function Selector(Kind, Value, Place = Undefined)
-	Return Struct(Nodes.Selector,
-		"Kind"  // string (one of SelectorKinds)
+Function SelectExpr(Kind, Value, Place = Undefined)
+	Return Struct(Nodes.SelectExpr,
+		"Kind"  // string (one of SelectKinds)
 		"Value" // string, array (undefined, one of #Expressions)
 		"Place" // undefined, structure (Place)
 	, Kind, Value, Place);
-EndFunction // Selector()
+EndFunction // SelectExpr()
 
-Function DesigExpr(Object, Selectors, Call, Place = Undefined)
+Function DesigExpr(Object, Select, Call, Place = Undefined)
 	Return Struct(Nodes.DesigExpr,
 		"Object" // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
-		"Select" // array (Selector)
+		"Select" // array (SelectExpr)
 		"Call"   // boolean
 		"Place"  // undefined, structure (Place)
-	, Object, Selectors, Call, Place);
+	, Object, Select, Call, Place);
 EndFunction // DesigExpr()
 
 Function UnaryExpr(Operator, Operand, Place = Undefined)
@@ -430,14 +430,14 @@ Function NewExpr(Constr, Place = Undefined)
 	, Constr, Place);
 EndFunction // NewExpr()
 
-Function TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place = Undefined)
+Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
 	Return Struct(Nodes.TernaryExpr,
 		"Cond"   // structure (one of #Expressions)
 		"Then"   // structure (one of #Expressions)
 		"Else"   // structure (one of #Expressions)
-		"Select" // array (Selector)
+		"Select" // array (SelectExpr)
 		"Place"  // undefined, structure (Place)
-	, Cond, ThenPart, ElsePart, Selectors, Place);
+	, Cond, ThenPart, ElsePart, Select, Place);
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
@@ -1062,18 +1062,18 @@ Function ParseNewExpr(Parser)
 EndFunction // ParseNewExpr()
 
 Function ParseDesigExpr(Parser, Val AllowNewVar = False)
-	Var Name, Selector, Object, List, Kind, Pos, Line;
+	Var Name, SelectExpr, Object, List, Kind, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Name = Parser.Lit;
 	Next(Parser);
-	Selector = ParseSelector(Parser);
-	If Selector = Undefined Then
+	SelectExpr = ParseSelectExpr(Parser);
+	If SelectExpr = Undefined Then
 		Object = FindObject(Parser, Name);
 		List = EmptyArray;
 	Else
 		AllowNewVar = False;
-		Kind = Selector.Kind;
+		Kind = SelectExpr.Kind;
 		If Kind = "Call" Then
 			If Not Parser.Methods.Property(Name, Object) Then
 				If Not Parser.Unknown.Property(Name, Object) Then
@@ -1085,12 +1085,12 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 			Object = FindObject(Parser, Name);
 		EndIf;
 		List = New Array;
-		List.Add(Selector);
-		Selector = ParseSelector(Parser);
-		While Selector <> Undefined Do
-			Kind = Selector.Kind;
-			List.Add(Selector);
-			Selector = ParseSelector(Parser);
+		List.Add(SelectExpr);
+		SelectExpr = ParseSelectExpr(Parser);
+		While SelectExpr <> Undefined Do
+			Kind = SelectExpr.Kind;
+			List.Add(SelectExpr);
+			SelectExpr = ParseSelectExpr(Parser);
 		EndDo;
 	EndIf;
 	If Object = Undefined Then
@@ -1105,11 +1105,11 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 			EndIf;
 		EndIf;
 	EndIf;
-	Return DesigExpr(Object, List, Kind = SelectorKinds.Call, Place(Parser, Pos, Line));
+	Return DesigExpr(Object, List, Kind = SelectKinds.Call, Place(Parser, Pos, Line));
 EndFunction // ParseDesigExpr()
 
-Function ParseSelector(Parser)
-	Var Tok, Value, Selector, Pos, Line;
+Function ParseSelectExpr(Parser)
+	Var Tok, Value, SelectExpr, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Parser.Tok;
@@ -1120,7 +1120,7 @@ Function ParseSelector(Parser)
 		EndIf;
 		Value = Parser.Lit;
 		Next(Parser);
-		Selector = Selector(SelectorKinds.Ident, Value, Place(Parser, Pos, Line));
+		SelectExpr = SelectExpr(SelectKinds.Ident, Value, Place(Parser, Pos, Line));
 	ElsIf Tok = Tokens.Lbrack Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rbrack Then
@@ -1129,7 +1129,7 @@ Function ParseSelector(Parser)
 		Value = ParseExprList(Parser);
 		Expect(Parser, Tokens.Rbrack);
 		Next(Parser);
-		Selector = Selector(SelectorKinds.Index, Value, Place(Parser, Pos, Line));
+		SelectExpr = SelectExpr(SelectKinds.Index, Value, Place(Parser, Pos, Line));
 	ElsIf Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
 		If Tok = Tokens.Rparen Then
@@ -1139,10 +1139,10 @@ Function ParseSelector(Parser)
 		EndIf;
 		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
-		Selector = Selector(SelectorKinds.Call, Value, Place(Parser, Pos, Line));
+		SelectExpr = SelectExpr(SelectKinds.Call, Value, Place(Parser, Pos, Line));
 	EndIf;
-	Return Selector;
-EndFunction // ParseSelector()
+	Return SelectExpr;
+EndFunction // ParseSelectExpr()
 
 Function ParseExprList(Parser, HeadExpr = Undefined)
 	Var ExprList;
@@ -1177,7 +1177,7 @@ Function ParseArguments(Parser)
 EndFunction // ParseArguments()
 
 Function ParseTernaryExpr(Parser)
-	Var Cond, ThenPart, ElsePart, Selectors, Selector, Pos, Line;
+	Var Cond, ThenPart, ElsePart, SelectList, SelectExpr, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
@@ -1192,16 +1192,16 @@ Function ParseTernaryExpr(Parser)
 	ElsePart = ParseExpression(Parser);
 	Expect(Parser, Tokens.Rparen);
 	If Next(Parser) = Tokens.Period Then
-		Selectors = New Array;
-		Selector = ParseSelector(Parser);
-		While Selector <> Undefined Do
-			Selectors.Add(Selector);
-			Selector = ParseSelector(Parser);
+		SelectList = New Array;
+		SelectExpr = ParseSelectExpr(Parser);
+		While SelectExpr <> Undefined Do
+			SelectList.Add(SelectExpr);
+			SelectExpr = ParseSelectExpr(Parser);
 		EndDo;
 	Else
-		Selectors = EmptyArray;
+		SelectList = EmptyArray;
 	EndIf;
-	Return TernaryExpr(Cond, ThenPart, ElsePart, Selectors, Place(Parser, Pos, Line));
+	Return TernaryExpr(Cond, ThenPart, ElsePart, SelectList, Place(Parser, Pos, Line));
 EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr(Parser)
@@ -2197,14 +2197,14 @@ Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
 EndProcedure // VisitBasicLitExpr()
 
 Procedure VisitDesigExpr(Visitor, DesigExpr)
-	Var Selector, Expr, Hook;
+	Var SelectExpr, Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
 		Hook.VisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Count);
 	EndDo;
 	PushInfo(Visitor, DesigExpr);
-	For Each Selector In DesigExpr.Select Do
-		If Selector.Kind <> SelectorKinds.Ident Then
-			For Each Expr In Selector.Value Do
+	For Each SelectExpr In DesigExpr.Select Do
+		If SelectExpr.Kind <> SelectKinds.Ident Then
+			For Each Expr In SelectExpr.Value Do
 				If Expr <> Undefined Then
 					VisitExpr(Visitor, Expr);
 				EndIf;
@@ -2264,7 +2264,7 @@ Procedure VisitNewExpr(Visitor, NewExpr)
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(Visitor, TernaryExpr)
-	Var Selector, Expr, Hook;
+	Var SelectExpr, Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
 		Hook.VisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Count);
 	EndDo;
@@ -2272,9 +2272,9 @@ Procedure VisitTernaryExpr(Visitor, TernaryExpr)
 	VisitExpr(Visitor, TernaryExpr.Cond);
 	VisitExpr(Visitor, TernaryExpr.Then);
 	VisitExpr(Visitor, TernaryExpr.Else);
-	For Each Selector In TernaryExpr.Select Do
-		If Selector.Kind <> SelectorKinds.Ident Then
-			For Each Expr In Selector.Value Do
+	For Each SelectExpr In TernaryExpr.Select Do
+		If SelectExpr.Kind <> SelectKinds.Ident Then
+			For Each Expr In SelectExpr.Value Do
 				If Expr <> Undefined Then
 					VisitExpr(Visitor, Expr);
 				EndIf;
