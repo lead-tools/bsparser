@@ -6,9 +6,6 @@ Var Result;
 
 Procedure Init(BSLParser) Export
 	Nodes = BSLParser.Nodes();
-	If Not BSLParser.Location Then
-		Raise "Необходимо включить флаг Location";
-	EndIf;
 	Result = New Array;
 EndProcedure // Init() 
 

@@ -8,9 +8,14 @@ Procedure OnCreateAtServer(Cancel, StandardProcessing)
 
 	Output = "Tree";
 
-	SetVisibilityOfAttributes(ThisObject);
-
 EndProcedure // OnCreateAtServer()
+
+&AtClient
+Procedure OnOpen(Cancel)
+	
+	SetVisibilityOfAttributes(ThisObject);
+	
+EndProcedure // OnOpen()
 
 &AtClient
 Procedure Translate(Command)
@@ -72,20 +77,12 @@ Procedure TranslateAtServer()
 		BSLParser.ParseModule(Parser);
 		FillTree(Parser.Module);
 		
-	ElsIf Output = "Backend" Then
-
-		BackendProcessor = ExternalDataProcessors.Create(BackendPath, False);
-		BackendProcessor.Init(BSLParser);
-		Parser = BSLParser.Parser(Source.GetText());
-		BSLParser.ParseModule(Parser);
-		BackendResult = BackendProcessor.VisitModule(Parser.Module);
-		Result.SetText(BackendResult);
-		
 	ElsIf Output = "Plugin" Then
 
-		PluginProcessor = ExternalDataProcessors.Create(BackendPath, False);
+		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
 		PluginProcessor.Init(BSLParser);
 		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.Location = True;
 		BSLParser.ParseModule(Parser);
 		Hooks = BSLParser.Hooks();
 		List = Undefined;
@@ -180,7 +177,8 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 
 	If Reason = Items.Output Or Reason = Undefined Then
 
-		Items.BackendPath.Visible = (ThisObject.Output = "Backend" Or ThisObject.Output = "Plugin");
+		Items.PluginPath.Visible = (ThisObject.Output = "Plugin");
+		Items.Location.Visible = (ThisObject.Output <> "Plugin");
 		Items.ShowComments.Visible = (ThisObject.Output = "AST");
 		Items.Tree.Visible = (ThisObject.Output = "Tree");
 		Items.Result.Visible = (ThisObject.Output <> "Tree");
@@ -197,12 +195,12 @@ Procedure OutputOnChange(Item)
 EndProcedure // OutputOnChange()
 
 &AtClient
-Procedure BackendPathStartChoice(Item, ChoiceData, StandardProcessing)
+Procedure PluginPathStartChoice(Item, ChoiceData, StandardProcessing)
 
 	StandardProcessing = False;
 	ChoosePath(Item, ThisObject, FileDialogMode.Open, "(*.epf)|*.epf");
 
-EndProcedure // BackendPathStartChoice()
+EndProcedure // PluginPathStartChoice()
 
 &AtClient
 Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined)
@@ -222,7 +220,7 @@ EndProcedure // ChoosePath()
 Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
 
 	If Result <> Undefined Then
-		BackendPath = Result[0];
+		PluginPath = Result[0];
 	EndIf;
 
 EndProcedure // ChoosePathHandle()
@@ -235,4 +233,5 @@ Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
 		CurrentItem = Items.Source;
 	EndIf; 
 EndProcedure
+
 

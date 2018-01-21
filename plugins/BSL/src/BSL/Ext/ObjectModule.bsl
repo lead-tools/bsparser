@@ -1,4 +1,6 @@
 ﻿
+// Транслятор BSL -> BSL
+
 Var Result; // array (string)
 Var Indent; // number
 
@@ -11,8 +13,6 @@ Var LastLine, LastComment;
 Var Comments;      // map[number](string)
 
 Procedure Init(BSLParserProcessor) Export
-
-	BSLParserProcessor.Location = True;
 
 	Operators = New Structure(
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
@@ -30,12 +30,22 @@ Procedure Init(BSLParserProcessor) Export
 
 EndProcedure // Init()
 
-Function VisitModule(Module) Export
+Function Interface() Export
+	Var Interface;
+	Interface = New Array;
+	Interface.Add("VisitModule");
+	Return Interface;
+EndFunction // Interface()
+
+Function Result() Export
+	Return StrConcat(Result);
+EndFunction // Refult()
+
+Procedure VisitModule(Module, Stack, Count) Export
 	Comments = Module.Comments;
 	VisitDeclarations(Module.Decls);
 	VisitStatements(Module.Body);
-	Return StrConcat(Result);
-EndFunction // VisitModule()
+EndProcedure // VisitModule()
 
 Procedure VisitDeclarations(Declarations)
 	Indent = Indent + 1;
