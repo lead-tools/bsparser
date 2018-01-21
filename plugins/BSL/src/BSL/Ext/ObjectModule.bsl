@@ -6,7 +6,7 @@ Var Indent; // number
 
 Var Nodes;         // enum
 Var Tokens;        // enum
-Var SelectorKinds; // enum
+Var SelectKinds;   // enum
 Var Operators;     // structure as map[one of Tokens](string)
 
 Var LastLine, LastComment;
@@ -21,7 +21,7 @@ Procedure Init(BSLParserProcessor) Export
 
 	Nodes = BSLParserProcessor.Nodes();
 	Tokens = BSLParserProcessor.Tokens();
-	SelectorKinds = BSLParserProcessor.SelectorKinds();
+	SelectKinds = BSLParserProcessor.SelectKinds();
 
 	LastLine = 1;
 
@@ -245,7 +245,7 @@ EndProcedure // VisitBasicLitExpr()
 Procedure VisitDesigExpr(DesigExpr)
 	Result.Add(DesigExpr.Object.Name);
 	LastLine = DesigExpr.Place.Line;
-	VisitSelectors(DesigExpr.Select);
+	VisitSelectList(DesigExpr.Select);
 EndProcedure // VisitDesigExpr()
 
 Procedure VisitUnaryExpr(UnaryExpr)
@@ -283,7 +283,7 @@ Procedure VisitTernaryExpr(TernaryExpr)
 	Result.Add(", ");
 	VisitExpr(TernaryExpr.Else);
 	Result.Add(")");
-	VisitSelectors(TernaryExpr.Select);
+	VisitSelectList(TernaryExpr.Select);
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitParenExpr(ParenExpr)
@@ -567,21 +567,21 @@ Procedure VisitExprList(ExprList)
 	EndIf;
 EndProcedure // VisitExprList()
 
-Procedure VisitSelectors(Selectors)
-	For Each Selector In Selectors Do
-		If Selector.Kind = SelectorKinds.Ident Then
+Procedure VisitSelectList(SelectList)
+	For Each SelectExpr In SelectList Do
+		If SelectExpr.Kind = SelectKinds.Ident Then
 			Result.Add(".");
-			Result.Add(Selector.Value);
-		ElsIf Selector.Kind = SelectorKinds.Index Then
+			Result.Add(SelectExpr.Value);
+		ElsIf SelectExpr.Kind = SelectKinds.Index Then
 			Result.Add("[");
-			VisitExprList(Selector.Value);
+			VisitExprList(SelectExpr.Value);
 			Result.Add("]");
-		ElsIf Selector.Kind = SelectorKinds.Call Then
+		ElsIf SelectExpr.Kind = SelectKinds.Call Then
 			Result.Add("(");
 			Indent = Indent + 1; // >>
-			VisitExprList(Selector.Value);
+			VisitExprList(SelectExpr.Value);
 			Indent = Indent - 1;
-			If LastLine > Selector.Place.Line Then
+			If LastLine > SelectExpr.Place.Line Then
 				If LastComment <> Undefined Then
 					Result.Add(" //" + LastComment);
 					LastComment = Undefined;
@@ -593,6 +593,6 @@ Procedure VisitSelectors(Selectors)
 			Raise "Unknown selector kind";
 		EndIf;
 	EndDo;
-EndProcedure // VisitSelectors()
+EndProcedure // VisitSelectList()
 
 #EndRegion // Aux
