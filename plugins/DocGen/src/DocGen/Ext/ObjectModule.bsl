@@ -72,18 +72,18 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitModule(Module, Stack, Count) Export
+Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;
 EndProcedure // VisitModule 
 
-Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Count) Export	
-	If Count.PrepRegionDecl = 0 Then
+Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Counters) Export	
+	If Counters.PrepRegionDecl = 0 Then
 		Region = PrepRegionDecl.Name;
 		SubRegion = "";
 		If Region = "AbstractSyntaxTree" Then
 			Result.Add("	<h1>Abstract syntax tree</h1>" "");	
 		EndIf; 
-	ElsIf Count.PrepRegionDecl = 1 Then
+	ElsIf Counters.PrepRegionDecl = 1 Then
 		SubRegion = PrepRegionDecl.Name;
 		If Region = "AbstractSyntaxTree" Then
 			Result.Add(StrTemplate("	<h2 id='#%1'>#%1</h2>" "", SubRegion));
@@ -91,7 +91,7 @@ Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Count) Export
 	EndIf; 	
 EndProcedure // VisitPrepRegionDecl()
 
-Procedure VisitDesigExpr(DesigExpr, Stack, Count) Export
+Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 	
 	If Region = "AbstractSyntaxTree" Then
 		

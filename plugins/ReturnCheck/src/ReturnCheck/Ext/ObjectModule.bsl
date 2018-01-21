@@ -27,7 +27,7 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
+Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
 	Var StmtCount;
 	StmtCount = FuncDecl.Body.Count();
 	If StmtCount = 0 Or FuncDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then

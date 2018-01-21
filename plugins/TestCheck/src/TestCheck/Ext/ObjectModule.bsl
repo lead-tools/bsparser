@@ -22,22 +22,22 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitWhileStmt(WhileStmt, Stack, Count) Export
-	VisitLoopStmt(WhileStmt, Stack, Count);
+Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
+	VisitLoopStmt(WhileStmt, Stack, Counters);
 EndProcedure // VisitWhileStmt()
 
-Procedure VisitForStmt(ForStmt, Stack, Count) Export
-	VisitLoopStmt(ForStmt, Stack, Count);
+Procedure VisitForStmt(ForStmt, Stack, Counters) Export
+	VisitLoopStmt(ForStmt, Stack, Counters);
 EndProcedure // VisitForStmt()
 
-Procedure VisitForEachStmt(ForEachStmt, Stack, Count) Export
-	VisitLoopStmt(ForEachStmt, Stack, Count);
+Procedure VisitForEachStmt(ForEachStmt, Stack, Counters) Export
+	VisitLoopStmt(ForEachStmt, Stack, Counters);
 EndProcedure // VisitForEachStmt()
 
 // Использование информации из счетчика узлов.
-Procedure VisitLoopStmt(Stmt, Stack, Count) Export
+Procedure VisitLoopStmt(Stmt, Stack, Counters) Export
 	Var LoopCount;
-	LoopCount = Count.WhileStmt + Count.ForStmt + Count.ForEachStmt;
+	LoopCount = Counters.WhileStmt + Counters.ForStmt + Counters.ForEachStmt;
 	If LoopCount > 0 Then
 		Result.Add(StrTemplate("Вложенный цикл `%1` в строке %2", Stmt.Type, Stmt.Place.Line));
 	EndIf;

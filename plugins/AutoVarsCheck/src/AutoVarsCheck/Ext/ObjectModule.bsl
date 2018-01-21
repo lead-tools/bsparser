@@ -22,7 +22,7 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
+Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
 	Var Item;
 	If FuncDecl.Auto.Count() > 0 Then
 		Result.Add(StrTemplate("Функция `%1()` содержит авто-переменные:", FuncDecl.Object.Name));
@@ -32,7 +32,7 @@ Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
 	EndIf; 
 EndProcedure // VisitFuncDecl()
 
-Procedure VisitProcDecl(ProcDecl, Stack, Count) Export
+Procedure VisitProcDecl(ProcDecl, Stack, Counters) Export
 	Var Item;
 	If ProcDecl.Auto.Count() > 0 Then
 		Result.Add(StrTemplate("Процедура `%1()` содержит авто-переменные:", ProcDecl.Object.Name));

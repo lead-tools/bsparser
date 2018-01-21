@@ -25,15 +25,15 @@ Function Interface() Export
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitAssignStmt(AssignStmt, Stack, Count) Export
+Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
 	AssignCount = AssignCount + 1;
 EndProcedure // VisitAssignStmt()
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Count) Export
+Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
 	AssignCount = 0;
 EndProcedure // VisitFuncDecl()
 
-Procedure AfterVisitFuncDecl(FuncDecl, Stack, Count) Export
+Procedure AfterVisitFuncDecl(FuncDecl, Stack, Counters) Export
 	Result.Add(StrTemplate("Функция `%1()` содержит %2 присваиваний", FuncDecl.Object.Name, AssignCount));
 EndProcedure // AfterVisitFuncDecl()
 

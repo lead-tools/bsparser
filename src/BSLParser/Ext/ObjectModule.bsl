@@ -1905,18 +1905,18 @@ Function Visitor(Hooks) Export
 	Var Visitor;
 
 	Visitor = Class("Visitor",
-		"Hooks" // structure as map[string] (array)
-		"Stack" // structure
-		"Count" // structure as map[string] (number)
+		"Hooks"    // structure as map[string] (array)
+		"Stack"    // structure
+		"Counters" // structure as map[string] (number)
 	);
 
 	Visitor.Hooks = Hooks;
 	Visitor.Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 
-	Count = New Structure;
-	Visitor.Count = Count;
+	Counters = New Structure;
+	Visitor.Counters = Counters;
 	For Each Item In Nodes Do
-		Count.Insert(Item.Key, 0);
+		Counters.Insert(Item.Key, 0);
 	EndDo;
 
 	Return Visitor;
@@ -1925,12 +1925,12 @@ EndFunction // Visitor()
 Procedure PushInfo(Visitor, Parent)
 	Visitor.Stack = New FixedStructure("Outer, Parent", Visitor.Stack, Parent);
 	NodeType = Parent.Type;
-	Visitor.Count[NodeType] = Visitor.Count[NodeType] + 1;
+	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] + 1;
 EndProcedure // PushInfo()
 
 Procedure PopInfo(Visitor)
 	NodeType = Visitor.Stack.Parent.Type;
-	Visitor.Count[NodeType] = Visitor.Count[NodeType] - 1;
+	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] - 1;
 	Visitor.Stack = Visitor.Stack.Outer;
 EndProcedure // PopInfo()
 
@@ -1989,40 +1989,40 @@ EndFunction // Hooks()
 Procedure VisitModule(Visitor, Module) Export
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitModule Do
-		Hook.VisitModule(Module, Visitor.Stack, Visitor.Count);
+		Hook.VisitModule(Module, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, Module);
 	VisitDeclarations(Visitor, Module.Decls);
 	VisitStatements(Visitor, Module.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitModule Do
-		Hook.AfterVisitModule(Module, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitModule(Module, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitModule()
 
 Procedure VisitDeclarations(Visitor, Declarations)
 	Var Decl, Hook;
 	For Each Hook In Visitor.Hooks.VisitDeclarations Do
-		Hook.VisitDeclarations(Declarations, Visitor.Stack, Visitor.Count);
+		Hook.VisitDeclarations(Declarations, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Decl In Declarations Do
 		VisitDecl(Visitor, Decl);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitDeclarations Do
-		Hook.AfterVisitDeclarations(Declarations, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitDeclarations(Declarations, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitDeclarations()
 
 Procedure VisitStatements(Visitor, Statements)
 	Var Stmt, Hook;
 	For Each Hook In Visitor.Hooks.VisitStatements Do
-		Hook.VisitStatements(Statements, Visitor.Stack, Visitor.Count);
+		Hook.VisitStatements(Statements, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Stmt In Statements Do
 		VisitStmt(Visitor, Stmt);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitStatements Do
-		Hook.AfterVisitStatements(Statements, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitStatements(Statements, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitStatements()
 
@@ -2031,7 +2031,7 @@ EndProcedure // VisitStatements()
 Procedure VisitDecl(Visitor, Decl)
 	Var Type, Hook;
 	For Each Hook In Visitor.Hooks.VisitDecl Do
-		Hook.VisitDecl(Decl, Visitor.Stack, Visitor.Count);
+		Hook.VisitDecl(Decl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	Type = Decl.Type;
 	If Type = Nodes.VarModListDecl Then
@@ -2050,62 +2050,62 @@ Procedure VisitDecl(Visitor, Decl)
 		VisitPrepRegionDecl(Visitor, Decl);
 	EndIf;
 	For Each Hook In Visitor.Hooks.AfterVisitDecl Do
-		Hook.AfterVisitDecl(Decl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitDecl(Decl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitDecl()
 
 Procedure VisitVarModListDecl(Visitor, VarModListDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitVarModListDecl Do
-		Hook.VisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitVarModListDecl Do
-		Hook.AfterVisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitVarModListDecl()
 
 Procedure VisitVarLocListDecl(Visitor, VarLocListDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitVarLocListDecl Do
-		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitVarLocListDecl Do
-		Hook.AfterVisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitVarLocListDecl()
 
 Procedure VisitProcDecl(Visitor, ProcDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitProcDecl Do
-		Hook.VisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ProcDecl);
 	VisitDeclarations(Visitor, ProcDecl.Decls);
 	VisitStatements(Visitor, ProcDecl.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitProcDecl Do
-		Hook.AfterVisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitProcDecl()
 
 Procedure VisitFuncDecl(Visitor, FuncDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitFuncDecl Do
-		Hook.VisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, FuncDecl);
 	VisitDeclarations(Visitor, FuncDecl.Decls);
 	VisitStatements(Visitor, FuncDecl.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitFuncDecl Do
-		Hook.AfterVisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitFuncDecl()
 
 Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepIfDecl Do
-		Hook.VisitPrepIfDecl(PrepIfDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepIfDecl(PrepIfDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepIfDecl);
 	VisitExpr(Visitor, PrepIfDecl.Cond);
@@ -2120,35 +2120,35 @@ Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepIfDecl Do
-		Hook.AfterVisitPrepIfDecl(PrepIfDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepIfDecl(PrepIfDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepIfDecl()
 
 Procedure VisitPrepElsIfDecl(Visitor, PrepElsIfDecl)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepElsIfDecl Do
-		Hook.VisitPrepElsIfDecl(PrepElsIfDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepElsIfDecl(PrepElsIfDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepElsIfDecl);
 	VisitExpr(Visitor, PrepElsIfDecl.Cond);
 	VisitDeclarations(Visitor, PrepElsIfDecl.Then);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepElsIfDecl Do
-		Hook.AfterVisitPrepElsIfDecl(PrepElsIfDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepElsIfDecl(PrepElsIfDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepElsIfDecl()
 
 Procedure VisitPrepRegionDecl(Visitor, PrepRegionDecl)
 	Var Hook, Decl, Stmt;
 	For Each Hook In Visitor.Hooks.VisitPrepRegionDecl Do
-		Hook.VisitPrepRegionDecl(PrepRegionDecl, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepRegionDecl(PrepRegionDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepRegionDecl);
 	VisitDeclarations(Visitor, PrepRegionDecl.Decls);
 	VisitStatements(Visitor, PrepRegionDecl.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepRegionDecl Do
-		Hook.AfterVisitPrepRegionDecl(PrepRegionDecl, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepRegionDecl(PrepRegionDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepRegionDecl()
 
@@ -2159,7 +2159,7 @@ EndProcedure // VisitPrepRegionDecl()
 Procedure VisitExpr(Visitor, Expr)
 	Var Type, Hook;
 	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
-		Hook.VisitExpr(Expr, Visitor.Stack, Visitor.Count);
+		Hook.VisitExpr(Expr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	Type = Expr.Type;
 	If Type = Nodes.BasicLitExpr Then
@@ -2182,24 +2182,24 @@ Procedure VisitExpr(Visitor, Expr)
 		VisitStringExpr(Visitor, Expr);
 	EndIf;
 	For Each Hook In Visitor.Hooks.AfterVisitBasicLitExpr Do
-		Hook.AfterVisitExpr(Expr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitExpr(Expr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitExpr()
 
 Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
-		Hook.VisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitBasicLitExpr Do
-		Hook.AfterVisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitBasicLitExpr()
 
 Procedure VisitDesigExpr(Visitor, DesigExpr)
 	Var SelectExpr, Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
-		Hook.VisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, DesigExpr);
 	For Each SelectExpr In DesigExpr.Select Do
@@ -2213,41 +2213,41 @@ Procedure VisitDesigExpr(Visitor, DesigExpr)
 	EndDo;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitDesigExpr Do
-		Hook.AfterVisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitDesigExpr()
 
 Procedure VisitUnaryExpr(Visitor, UnaryExpr)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitUnaryExpr Do
-		Hook.VisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, UnaryExpr);
 	VisitExpr(Visitor, UnaryExpr.Operand);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitUnaryExpr Do
-		Hook.AfterVisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitUnaryExpr()
 
 Procedure VisitBinaryExpr(Visitor, BinaryExpr)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitBinaryExpr Do
-		Hook.VisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, BinaryExpr);
 	VisitExpr(Visitor, BinaryExpr.Left);
 	VisitExpr(Visitor, BinaryExpr.Right);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitBinaryExpr Do
-		Hook.AfterVisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitBinaryExpr()
 
 Procedure VisitNewExpr(Visitor, NewExpr)
 	Var Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitNewExpr Do
-		Hook.VisitNewExpr(NewExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, NewExpr);
 	If TypeOf(NewExpr.Constr) = Type("Structure") Then
@@ -2259,14 +2259,14 @@ Procedure VisitNewExpr(Visitor, NewExpr)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitNewExpr Do
-		Hook.AfterVisitNewExpr(NewExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(Visitor, TernaryExpr)
 	Var SelectExpr, Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
-		Hook.VisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, TernaryExpr);
 	VisitExpr(Visitor, TernaryExpr.Cond);
@@ -2283,40 +2283,40 @@ Procedure VisitTernaryExpr(Visitor, TernaryExpr)
 	EndDo;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitTernaryExpr Do
-		Hook.AfterVisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitParenExpr(Visitor, ParenExpr)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitParenExpr Do
-		Hook.VisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ParenExpr);
 	VisitExpr(Visitor, ParenExpr.Expr);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitParenExpr Do
-		Hook.AfterVisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitParenExpr()
 
 Procedure VisitNotExpr(Visitor, NotExpr)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitNotExpr Do
-		Hook.VisitNotExpr(NotExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitNotExpr(NotExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, NotExpr);
 	VisitExpr(Visitor, NotExpr.Expr);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitNotExpr Do
-		Hook.AfterVisitNotExpr(NotExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitNotExpr(NotExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitNotExpr()
 
 Procedure VisitStringExpr(Visitor, StringExpr)
 	Var Expr, Hook;
 	For Each Hook In Visitor.Hooks.VisitStringExpr Do
-		Hook.VisitStringExpr(StringExpr, Visitor.Stack, Visitor.Count);
+		Hook.VisitStringExpr(StringExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, StringExpr);
 	For Each Expr In StringExpr.List Do
@@ -2324,7 +2324,7 @@ Procedure VisitStringExpr(Visitor, StringExpr)
 	EndDo;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitStringExpr Do
-		Hook.AfterVisitStringExpr(StringExpr, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitStringExpr(StringExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitStringExpr()
 
@@ -2335,7 +2335,7 @@ EndProcedure // VisitStringExpr()
 Procedure VisitStmt(Visitor, Stmt)
 	Var Type, Hook;
 	For Each Hook In Visitor.Hooks.VisitStmt Do
-		Hook.VisitStmt(Stmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitStmt(Stmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	Type = Stmt.Type;
 	If Type = Nodes.AssignStmt Then
@@ -2372,28 +2372,28 @@ Procedure VisitStmt(Visitor, Stmt)
 		VisitLabelStmt(Visitor, Stmt);
 	EndIf;
 	For Each Hook In Visitor.Hooks.AfterVisitStmt Do
-		Hook.AfterVisitStmt(Stmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitStmt(Stmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitStmt()
 
 Procedure VisitAssignStmt(Visitor, AssignStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitAssignStmt Do
-		Hook.VisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, AssignStmt);
 	VisitDesigExpr(Visitor, AssignStmt.Left);
 	VisitExpr(Visitor, AssignStmt.Right);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitAssignStmt Do
-		Hook.AfterVisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitAssignStmt()
 
 Procedure VisitReturnStmt(Visitor, ReturnStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitReturnStmt Do
-		Hook.VisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ReturnStmt);
 	If ReturnStmt.Expr <> Undefined Then
@@ -2401,34 +2401,34 @@ Procedure VisitReturnStmt(Visitor, ReturnStmt)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitReturnStmt Do
-		Hook.AfterVisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitReturnStmt()
 
 Procedure VisitBreakStmt(Visitor, BreakStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitBreakStmt Do
-		Hook.VisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitBreakStmt Do
-		Hook.AfterVisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitBreakStmt()
 
 Procedure VisitContinueStmt(Visitor, ContinueStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitContinueStmt Do
-		Hook.VisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitContinueStmt Do
-		Hook.AfterVisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitContinueStmt()
 
 Procedure VisitRaiseStmt(Visitor, RaiseStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitRaiseStmt Do
-		Hook.VisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, RaiseStmt);
 	If RaiseStmt.Expr <> Undefined Then
@@ -2436,40 +2436,40 @@ Procedure VisitRaiseStmt(Visitor, RaiseStmt)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitRaiseStmt Do
-		Hook.AfterVisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitRaiseStmt()
 
 Procedure VisitExecuteStmt(Visitor, ExecuteStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitExecuteStmt Do
-		Hook.VisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ExecuteStmt);
 	VisitExpr(Visitor, ExecuteStmt.Expr);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitExecuteStmt Do
-		Hook.AfterVisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitExecuteStmt()
 
 Procedure VisitCallStmt(Visitor, CallStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitCallStmt Do
-		Hook.VisitCallStmt(CallStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitCallStmt(CallStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, CallStmt);
 	VisitDesigExpr(Visitor, CallStmt.Desig);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitCallStmt Do
-		Hook.AfterVisitCallStmt(CallStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitCallStmt(CallStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitCallStmt()
 
 Procedure VisitIfStmt(Visitor, IfStmt)
 	Var ElsIfStmt, Hook;
 	For Each Hook In Visitor.Hooks.VisitIfStmt Do
-		Hook.VisitIfStmt(IfStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitIfStmt(IfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, IfStmt);
 	VisitExpr(Visitor, IfStmt.Cond);
@@ -2484,28 +2484,28 @@ Procedure VisitIfStmt(Visitor, IfStmt)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitIfStmt Do
-		Hook.AfterVisitIfStmt(IfStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitIfStmt(IfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitIfStmt()
 
 Procedure VisitElsIfStmt(Visitor, ElsIfStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitElsIfStmt Do
-		Hook.VisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ElsIfStmt);
 	VisitExpr(Visitor, ElsIfStmt.Cond);
 	VisitStatements(Visitor, ElsIfStmt.Then);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitElsIfStmt Do
-		Hook.AfterVisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitElsIfStmt()
 
 Procedure VisitPrepIfStmt(Visitor, PrepIfStmt)
 	Var PrepElsIfStmt, Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepIfStmt Do
-		Hook.VisitPrepIfStmt(PrepIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepIfStmt(PrepIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepIfStmt);
 	VisitExpr(Visitor, PrepIfStmt.Cond);
@@ -2520,55 +2520,55 @@ Procedure VisitPrepIfStmt(Visitor, PrepIfStmt)
 	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepIfStmt Do
-		Hook.AfterVisitPrepIfStmt(PrepIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepIfStmt(PrepIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepIfStmt()
 
 Procedure VisitPrepElsIfStmt(Visitor, PrepElsIfStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepElsIfStmt Do
-		Hook.VisitPrepElsIfStmt(PrepElsIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepElsIfStmt(PrepElsIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepElsIfStmt);
 	VisitExpr(Visitor, PrepElsIfStmt.Cond);
 	VisitStatements(Visitor, PrepElsIfStmt.Then);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepElsIfStmt Do
-		Hook.AfterVisitPrepElsIfStmt(PrepElsIfStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepElsIfStmt(PrepElsIfStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepElsIfStmt()
 
 Procedure VisitWhileStmt(Visitor, WhileStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitWhileStmt Do
-		Hook.VisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, WhileStmt);
 	VisitExpr(Visitor, WhileStmt.Cond);
 	VisitStatements(Visitor, WhileStmt.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitWhileStmt Do
-		Hook.AfterVisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitWhileStmt()
 
 Procedure VisitPrepRegionStmt(Visitor, PrepRegionStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepRegionStmt Do
-		Hook.VisitPrepRegionStmt(PrepRegionStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitPrepRegionStmt(PrepRegionStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, PrepRegionStmt);
 	VisitStatements(Visitor, PrepRegionStmt.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepRegionStmt Do
-		Hook.AfterVisitPrepRegionStmt(PrepRegionStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitPrepRegionStmt(PrepRegionStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepRegionStmt()
 
 Procedure VisitForStmt(Visitor, ForStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitForStmt Do
-		Hook.VisitForStmt(ForStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitForStmt(ForStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ForStmt);
 	VisitDesigExpr(Visitor, ForStmt.Desig);
@@ -2577,14 +2577,14 @@ Procedure VisitForStmt(Visitor, ForStmt)
 	VisitStatements(Visitor, ForStmt.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitForStmt Do
-		Hook.AfterVisitForStmt(ForStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitForStmt(ForStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitForStmt()
 
 Procedure VisitForEachStmt(Visitor, ForEachStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitForEachStmt Do
-		Hook.VisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, ForEachStmt);
 	VisitDesigExpr(Visitor, ForEachStmt.Desig);
@@ -2592,41 +2592,41 @@ Procedure VisitForEachStmt(Visitor, ForEachStmt)
 	VisitStatements(Visitor, ForEachStmt.Body);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitForEachStmt Do
-		Hook.AfterVisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitForEachStmt()
 
 Procedure VisitTryStmt(Visitor, TryStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitTryStmt Do
-		Hook.VisitTryStmt(TryStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitTryStmt(TryStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, TryStmt);
 	VisitStatements(Visitor, TryStmt.Try);
 	VisitStatements(Visitor, TryStmt.Except);
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitTryStmt Do
-		Hook.AfterVisitTryStmt(TryStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitTryStmt(TryStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitTryStmt()
 
 Procedure VisitGotoStmt(Visitor, GotoStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitGotoStmt Do
-		Hook.VisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitGotoStmt Do
-		Hook.AfterVisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitGotoStmt()
 
 Procedure VisitLabelStmt(Visitor, LabelStmt)
 	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitLabelStmt Do
-		Hook.VisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Count);
+		Hook.VisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	For Each Hook In Visitor.Hooks.AfterVisitLabelStmt Do
-		Hook.AfterVisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Count);
+		Hook.AfterVisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitLabelStmt()
 

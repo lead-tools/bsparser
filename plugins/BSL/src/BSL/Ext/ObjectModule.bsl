@@ -41,7 +41,7 @@ Function Result() Export
 	Return StrConcat(Result);
 EndFunction // Refult()
 
-Procedure VisitModule(Module, Stack, Count) Export
+Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;
 	VisitDeclarations(Module.Decls);
 	VisitStatements(Module.Body);
