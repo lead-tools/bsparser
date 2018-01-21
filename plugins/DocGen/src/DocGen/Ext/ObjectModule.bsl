@@ -19,15 +19,6 @@ Procedure Init(BSLParser) Export
 		|<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 		|<title>BSL-Parser</title>
 		|<link rel='stylesheet' type='text/css' href='ast.css'>
-		|<style>
-		|	body {
-		|		font-family: Menlo, monospace;
-		|		font-size: 14px;
-		|	}
-		|	h2 {
-    	|		color:#963200;
-		|	}
-		|</style>
 		|</head>
 		|<body>" ""
 	);

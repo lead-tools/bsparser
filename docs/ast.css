@@ -3,6 +3,15 @@ html {
 	margin-bottom: 25%;
 }
 
+body {
+	font-family: Menlo, monospace;
+	font-size: 14px;
+}
+
+h2 {
+	color:#963200;
+}
+
 :target {
 	background-color: #F0F0F0 ;
 	margin: -4px ;
