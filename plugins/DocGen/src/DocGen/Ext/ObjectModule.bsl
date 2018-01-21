@@ -1,5 +1,5 @@
 ﻿
-// ...
+// Генератор технической документации по парсеру
 
 Var Tokens, SelectorKinds, Directives, PrepInstructions;
 Var Region, SubRegion;
