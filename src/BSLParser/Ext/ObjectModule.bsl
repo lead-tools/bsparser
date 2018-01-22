@@ -1061,7 +1061,7 @@ Function ParseNewExpr(Parser)
 	Return NewExpr(Constr, Place(Parser, Pos, Line));
 EndFunction // ParseNewExpr()
 
-Function ParseDesigExpr(Parser, Val AllowNewVar = False)
+Function ParseDesigExpr(Parser, Val AllowNewVar = False, NewVar = Undefined)
 	Var Name, SelectExpr, Object, List, Kind, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
@@ -1096,8 +1096,7 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False)
 	If Object = Undefined Then
 		If AllowNewVar Then
 			Object = VarLoc(Name, True);
-			Parser.Vars.Insert(Name, Object);
-			Parser.Scope.Auto.Add(Object);
+			NewVar = Object;
 		Else
 			Object = Unknown(Name);
 			If Verbose Then
@@ -1618,14 +1617,18 @@ Function ParseExecuteStmt(Parser)
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt(Parser)
-	Var Left, Right, Stmt;
-	Left = ParseDesigExpr(Parser, True);
+	Var Left, Right, Stmt, NewVar;
+	Left = ParseDesigExpr(Parser, True, NewVar);
 	If Left.Call Then
 		Stmt = CallStmt(Left);
 	Else
 		Expect(Parser, Tokens.Eql);
-		Next(Parser);
+		Next(Parser); 
 		Right = ParseExpression(Parser);
+		If NewVar <> Undefined Then
+			Parser.Vars.Insert(NewVar.Name, NewVar);
+			Parser.Scope.Auto.Add(NewVar);
+		EndIf; 
 		Stmt = AssignStmt(Left, Right);
 	EndIf;
 	Return Stmt;
