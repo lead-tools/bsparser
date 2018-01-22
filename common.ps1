@@ -61,4 +61,5 @@ $list = @{
     AutoVarsCheck = "\plugins\AutoVarsCheck\"
     TestCheck     = "\plugins\TestCheck\"
     TestStat      = "\plugins\TestStat\"
+    TestVars      = "\plugins\TestVars\"
 }
