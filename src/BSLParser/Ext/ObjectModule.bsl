@@ -1691,10 +1691,10 @@ Function ParseWhileStmt(Parser)
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt(Parser)
-	Var DesigExpr, From, Until, Statements, VarPos;
+	Var DesigExpr, From, Until, Statements, VarPos, NewVar;
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.BegPos;
-	DesigExpr = ParseDesigExpr(Parser, True);
+	DesigExpr = ParseDesigExpr(Parser, True, NewVar);
 	If DesigExpr.Call Then
 		Error(Parser, "Expected variable", VarPos, True);
 	EndIf;
@@ -1704,6 +1704,10 @@ Function ParseForStmt(Parser)
 	Expect(Parser, Tokens.To);
 	Next(Parser);
 	Until = ParseExpression(Parser);
+	If NewVar <> Undefined Then
+		Parser.Vars.Insert(NewVar.Name, NewVar);
+		Parser.Scope.Auto.Add(NewVar);
+	EndIf;
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
@@ -1713,17 +1717,21 @@ Function ParseForStmt(Parser)
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt(Parser)
-	Var DesigExpr, Left, Right, Collection, Statements, VarPos;
+	Var DesigExpr, Left, Right, Collection, Statements, VarPos, NewVar;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.BegPos;
-	DesigExpr = ParseDesigExpr(Parser, True);
+	DesigExpr = ParseDesigExpr(Parser, True, NewVar);
 	If DesigExpr.Call Then
 		Error(Parser, "Expected variable", VarPos, True);
 	EndIf;
 	Expect(Parser, Tokens.In);
 	Next(Parser);
 	Collection = ParseExpression(Parser);
+	If NewVar <> Undefined Then
+		Parser.Vars.Insert(NewVar.Name, NewVar);
+		Parser.Scope.Auto.Add(NewVar);
+	EndIf;
 	Expect(Parser, Tokens.Do);
 	Next(Parser);
 	Statements = ParseStatements(Parser);
