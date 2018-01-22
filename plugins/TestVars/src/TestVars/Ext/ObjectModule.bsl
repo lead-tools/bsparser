@@ -5,7 +5,9 @@
 // - значение параметра-значения не читается после присваивания
 // - к параметру-ссылке нет обращений
 //
-// прим.: В текущей реализации присваивания внутри циклов игнорируются для простоты.
+// примечания:
+// В текущей реализации для простоты анализа присваивания внутри циклов считаются чтением.
+// Анализ в целом выполняется поверхностно и возможны ложные срабатывания.
 
 // todo: проверять два присваивания одной переменной подряд
 
@@ -38,18 +40,19 @@ Function Interface() Export
 EndFunction // Interface() 
 
 Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
-	Var Object;
+	Var Object, Operation;
+	Operation = "Set";
 	If AssignStmt.Left.Select.Count() > 0 
 		Or Counters.WhileStmt > 0
 		Or Counters.ForEachStmt > 0
 		Or Counters.ForStmt > 0 Then
-		Return;
+		Operation = "Get";
 	EndIf; 
 	Object = AssignStmt.Left.Object;
 	If Vars[Object] <> Undefined Then
-		Vars[Object] = "Set";
+		Vars[Object] = Operation;
 	ElsIf Params[Object] <> Undefined Then
-		Params[Object] = "Set";
+		Params[Object] = Operation;
 	EndIf; 
 EndProcedure // VisitAssignStmt()
 
