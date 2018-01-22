@@ -1332,20 +1332,12 @@ Function ParseVarLoc(Parser)
 	Pos = Parser.BegPos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
-	If Next(Parser) = Tokens.Export Then
-		Exported = True;
-		Next(Parser);
-	Else
-		Exported = False;
-	EndIf;
 	Object = VarLoc(Name);
-	If Exported Then
-		Parser.Interface.Add(Object);
-	EndIf;
 	If Parser.Vars.Property(Name) Then
 		Error(Parser, "Identifier already declared", Pos, True);
 	EndIf;
 	Parser.Vars.Insert(Name, Object);
+	Next(Parser);
 	Return Object;
 EndFunction // ParseVarLoc()
 
