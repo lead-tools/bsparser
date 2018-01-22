@@ -89,8 +89,8 @@ EndProcedure // VisitDecl()
 
 Procedure VisitVarModListDecl(VarModListDecl)
 	Indent();
-	If VarModListDecl.Dir <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", VarModListDecl.Dir, Chars.LF));
+	If VarModListDecl.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", VarModListDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Var ");
 	VisitVarList(VarModListDecl.List);
@@ -107,8 +107,8 @@ EndProcedure // VisitVarLocListDecl()
 Procedure VisitProcDecl(ProcDecl)
 	Var Object;
 	Object = ProcDecl.Object;
-	If Object.Dir <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", Object.Dir, Chars.LF));
+	If Object.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
 	EndIf; 
 	Result.Add("Procedure ");
 	Result.Add(Object.Name);
@@ -126,8 +126,8 @@ EndProcedure // VisitProcDecl()
 Procedure VisitFuncDecl(FuncDecl)
 	Var Object;
 	Object = FuncDecl.Object;
-	If Object.Dir <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", Object.Dir, Chars.LF));
+	If Object.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
 	EndIf;	
 	Result.Add("Function ");
 	Result.Add(Object.Name);

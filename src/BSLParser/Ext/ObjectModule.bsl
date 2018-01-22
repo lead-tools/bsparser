@@ -272,27 +272,27 @@ EndFunction // Unknown()
 
 Function Func(Name, Directive, Params, Exported)
 	Return Struct(Nodes.Func,
-		"Name"   // string
-		"Dir"    // string (one of Directives)
-		"Params" // array (Param)
-		"Export" // boolean
+		"Name"      // string
+		"Directive" // string (one of Directives)
+		"Params"    // array (Param)
+		"Export"    // boolean
 	, Name, Directive, Params, Exported);
 EndFunction // Func()
 
 Function Proc(Name, Directive, Params, Exported)
 	Return Struct(Nodes.Proc,
-		"Name"   // string
-		"Dir"    // string (one of Directives)
-		"Params" // array (Param)
-		"Export" // boolean
+		"Name"      // string
+		"Directive" // string (one of Directives)
+		"Params"    // array (Param)
+		"Export"    // boolean
 	, Name, Directive, Params, Exported);
 EndFunction // Proc()
 
 Function VarMod(Name, Directive, Exported)
 	Return Struct(Nodes.VarMod,
-		"Name"   // string
-		"Dir"    // string (one of Directives)
-		"Export" // boolean
+		"Name"      // string
+		"Directive" // string (one of Directives)
+		"Export"    // boolean
 	, Name, Directive, Exported);
 EndFunction // VarMod()
 
@@ -317,9 +317,9 @@ EndFunction // Param()
 
 Function VarModListDecl(Directive, VarList, Place = Undefined)
 	Return Struct(Nodes.VarModListDecl,
-		"Dir"   // string (one of Directives)
-		"List"  // array (VarMod)
-		"Place" // undefined, structure (Place)
+		"Directive" // string (one of Directives)
+		"List"      // array (VarMod)
+		"Place"     // undefined, structure (Place)
 	, Directive, VarList, Place);
 EndFunction // VarModListDecl()
 
@@ -1358,7 +1358,7 @@ Function ParseFuncDecl(Parser)
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Func;
-		Object.Insert("Dir", Parser.Directive);
+		Object.Insert("Directive", Parser.Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
@@ -1403,7 +1403,7 @@ Function ParseProcDecl(Parser)
 	EndIf;
 	If Parser.Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Proc;
-		Object.Insert("Dir", Parser.Directive);
+		Object.Insert("Directive", Parser.Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
 		Parser.Unknown.Delete(Name);
