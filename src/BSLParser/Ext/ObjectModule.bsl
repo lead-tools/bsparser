@@ -19,6 +19,14 @@ Var Alpha, Digit;     // string
 
 #EndRegion // Constants
 
+#Region Settings
+
+Var Verbose Export;  // boolean
+Var Debug Export;    // boolean
+Var Location Export; // boolean
+
+#EndRegion // Settings
+
 #Region Cache
 
 Var StructKeysCache; // structure as map[string] (string)
@@ -28,7 +36,11 @@ Var StructKeysCache; // structure as map[string] (string)
 #Region Init
 
 Procedure Init()
-
+	
+	Verbose = False;
+	Debug = False;
+	Location = True;
+	
 	StructKeysCache = New Structure;
 
 	InitEnums();
