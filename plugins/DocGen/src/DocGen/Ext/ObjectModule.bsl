@@ -3,7 +3,7 @@
 
 Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions;
 Var Region, SubRegion;
-Var Comments; 
+Var Comments;
 Var Result;
 
 Procedure Init(BSLParser) Export
@@ -23,7 +23,7 @@ Procedure Init(BSLParser) Export
 		|</head>
 		|<body>" ""
 	);
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Result.Add(
@@ -44,7 +44,7 @@ Function Result() Export
 	Result.Add(GenerateEnum("Nodes", Nodes, True));
 	Result.Add(GenerateEnum("Tokens", Tokens));
 	Return StrConcat(Result);
-EndFunction // Refult() 
+EndFunction // Refult()
 
 Function GenerateEnum(Name, Enum, Links = False)
 	Var Buffer;
@@ -63,11 +63,11 @@ Function GenerateEnum(Name, Enum, Links = False)
 			Buffer.Add(StrTemplate("<li>""<a href='#%1'>%1</a>""</li>" "", Item.Key));
 		Else
 			Buffer.Add(StrTemplate("<li>""%1""</li>" "", Item.Key));
-		EndIf; 
+		EndIf;
 	EndDo;
 	Buffer.Add("</ul>" "");
 	Return StrConcat(Buffer);
-EndFunction // GenerateEnum() 
+EndFunction // GenerateEnum()
 
 Function Interface() Export
 	Var Interface;
@@ -76,46 +76,46 @@ Function Interface() Export
 	Interface.Add("VisitPrepRegionDecl");
 	Interface.Add("VisitDesigExpr");
 	Return Interface;
-EndFunction // Interface() 
+EndFunction // Interface()
 
 Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;
-EndProcedure // VisitModule 
+EndProcedure // VisitModule
 
-Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Counters) Export	
+Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Counters) Export
 	If Counters.PrepRegionDecl = 0 Then
 		Region = PrepRegionDecl.Name;
 		SubRegion = "";
 		If Region = "AbstractSyntaxTree" Then
-			Result.Add("	<h1>Abstract syntax tree</h1>" "");	
-		EndIf; 
+			Result.Add("	<h1>Abstract syntax tree</h1>" "");
+		EndIf;
 	ElsIf Counters.PrepRegionDecl = 1 Then
 		SubRegion = PrepRegionDecl.Name;
 		If Region = "AbstractSyntaxTree" Then
 			Result.Add(StrTemplate("	<h2 id='#%1'>#%1</h2>" "", SubRegion));
-		EndIf; 
-	EndIf; 	
+		EndIf;
+	EndIf;
 EndProcedure // VisitPrepRegionDecl()
 
 Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
-	
+
 	If Region = "AbstractSyntaxTree" Then
-		
+
 		If DesigExpr.Call Then
-			
+
 			If DesigExpr.Object.Name = "Structure" Then
 				Tag = Comments[DesigExpr.Place.Line];
 				If Tag <> Undefined And StrFind(Tag, "@Node") Then
-					CallExpr = DesigExpr.Select[0]; 
+					CallExpr = DesigExpr.Select[0];
 					NodeFields = CallExpr.Value[0].List;
-					NodeName = CallExpr.Value[1].Select[0].Value; 
-					
+					NodeName = CallExpr.Value[1].Select[0].Value;
+
 					Result.Add(StrTemplate(
 						"	<h3 id='%1'>%1</h3>
 						|	<ul>" "",
 						NodeName
 					));
-					
+
 					For Each Field In NodeFields Do
 						FieldName = Field.Value;
 						If Right(FieldName, 1) = "," Then
@@ -127,21 +127,21 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 							FieldName,
 							GenerateTypeLinks(TypeList)
 						));
-					EndDo; 
-					
+					EndDo;
+
 					Result.Add("	</ul>" "");
 
-				EndIf; 
-			EndIf; 
-		
-		EndIf; 
-		
-	EndIf; 
-	
+				EndIf;
+			EndIf;
+
+		EndIf;
+
+	EndIf;
+
 EndProcedure // VisitDesigExpr()
 
 Function GenerateTypeLinks(TypeList)
-	Var Buffer;	
+	Var Buffer;
 	Buffer = New Array;
 	For Each Item In TypeList Do
 		If Item.Child = Undefined Then
@@ -152,7 +152,7 @@ Function GenerateTypeLinks(TypeList)
 					"<a href='#%1'>%1</a>",
 					Item.Ident
 				));
-			EndIf; 
+			EndIf;
 		ElsIf TypeOf(Item.Child) = Type("String") Then
 			Buffer.Add(StrTemplate(
 				"%1 <a href='#%2'>%2</a>",
@@ -165,10 +165,10 @@ Function GenerateTypeLinks(TypeList)
 				Item.Ident,
 				GenerateTypeLinks(Item.Child)
 			));
-		EndIf; 
-	EndDo; 
-	Return StrConcat(Buffer, ", ");	
-EndFunction // GenerateTypeLinks() 
+		EndIf;
+	EndDo;
+	Return StrConcat(Buffer, ", ");
+EndFunction // GenerateTypeLinks()
 
 #Region TypeParser
 
@@ -177,13 +177,13 @@ Function ParseTypes(Types)
 	Pos = 1; List = New Array;
 	~Scan:
 	Child = Undefined;
-	SkipSpace(Types, Pos); 
-	Ident = ScanIdent(Types, Pos); 
+	SkipSpace(Types, Pos);
+	Ident = ScanIdent(Types, Pos);
 	SkipSpace(Types, Pos);
 	If Ident = "one" Then
 		If Mid(Types, Pos, 2) <> "of" Then
 			Raise "error";
-		EndIf; 
+		EndIf;
 		Pos = Pos + 2;
 		Ident = "one of";
 		SkipSpace(Types, Pos);
@@ -207,7 +207,7 @@ Procedure SkipSpace(Str, Pos)
 	For Pos = Pos To StrLen(Str) Do
 		If Not IsBlankString(Mid(Str, Pos, 1)) Then
 			Break;
-		EndIf; 
+		EndIf;
 	EndDo;
 EndProcedure // SkipSpace()
 
