@@ -237,7 +237,7 @@ Function Enum(Structure, Keys)
 		ItemList = StrSplit(Items, ".", False);
 		Value = TrimAll(ItemList[0]);
 		For Each Item In ItemList Do
-			Structure.Insert(Item, Value);
+			Structure.Insert(TrimAll(Item), Value);
 		EndDo;
 	EndDo;
 
@@ -265,7 +265,7 @@ Function Scope(Outer)
 	Return New Structure(
 		"Outer,"   // undefined, structure (Scope)
 		"Objects," // structure as map[string] (Unknown, Func, Proc, VarMod, VarLoc, Param)
-		"Auto,"    // array (VarLoc)
+		"Auto"     // array (VarLoc)
 	, Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -704,7 +704,7 @@ Function Parser(Source) Export
 EndFunction // Parser()
 
 Function Next(Parser) Export
-	Var Tok, Lit, Pos, Char, Source, Beg, Prev;
+	Var Tok, Lit, Pos, Char, Source, Beg, Prev, Comment;
 
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
@@ -712,162 +712,172 @@ Function Next(Parser) Export
 
 	If Right(Parser.Lit, 1) = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 
-	~Scan:
+	While True Do
 
-	// skip space
-	While IsBlankString(Char) And Char <> "" Do
-		If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-	EndDo;
+		Comment = False;
 
-	Parser.BegPos = Pos;
+		// skip space
+		While IsBlankString(Char) And Char <> "" Do
+			If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+		EndDo;
 
-	Tok = TokenMap[Char];
-	If Tok = Alpha Then
+		Parser.BegPos = Pos;
 
-		// scan ident
-		Beg = Pos; Pos = Pos + 1;
-		While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-		Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+		Tok = TokenMap[Char];
+		If Tok = Alpha Then
 
-		// lookup
-		If Not Keywords.Property(Lit, Tok) Then Tok = Tokens.Ident EndIf;
+			// scan ident
+			Beg = Pos; Pos = Pos + 1;
+			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
 
-	ElsIf Tok = Tokens.String Then
+			// lookup
+			If Not Keywords.Property(Lit, Tok) Then Tok = Tokens.Ident EndIf;
 
-		Beg = Pos;
-		~ScanString: Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-		While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
-		If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
-		If Char = """" Then Goto ~ScanString EndIf;
-		Lit = Mid(Source, Beg, Pos - Beg);
+		ElsIf Tok = Tokens.String Then
 
-		Tok = StringToken(Lit);
+			Beg = Pos;
+			Char = """"; // cheat code
+			While Char = """" Do
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
+				If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
+			EndDo;
+			Lit = Mid(Source, Beg, Pos - Beg);
 
-	ElsIf Tok = Digit Then
+			Tok = StringToken(Lit);
 
-		Beg = Pos; Pos = Pos + 1;
-		While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
-		Char = Mid(Source, Pos, 1);
-		If Char = "." Then
-			Pos = Pos + 1;
+		ElsIf Tok = Digit Then
+
+			Beg = Pos; Pos = Pos + 1;
 			While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
 			Char = Mid(Source, Pos, 1);
-		EndIf;
-		Lit = Mid(Source, Beg, Pos - Beg);
-
-		Tok = Tokens.Number;
-
-	ElsIf Tok = Tokens.DateTime Then
-
-		Pos = Pos + 1; Beg = Pos;
-		Pos = StrFind(Source, "'",, Pos);
-		If Pos = 0 Then
-			Char = ""
-		Else
+			If Char = "." Then
+				Pos = Pos + 1;
+				While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
+				Char = Mid(Source, Pos, 1);
+			EndIf;
 			Lit = Mid(Source, Beg, Pos - Beg);
+
+			Tok = Tokens.Number;
+
+		ElsIf Tok = Tokens.DateTime Then
+
+			Pos = Pos + 1; Beg = Pos;
+			Pos = StrFind(Source, "'",, Pos);
+			If Pos = 0 Then
+				Char = ""
+			Else
+				Lit = Mid(Source, Beg, Pos - Beg);
+				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			EndIf;
+
+		ElsIf Tok = Undefined Then
+
+			Prev = Char;
 			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-		EndIf;
 
-	ElsIf Tok = Undefined Then
+			If Prev = "/" Then
 
-		Prev = Char;
-		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				If Char = "/" Then
+					// scan comment
+					Beg = Pos + 1; Pos = StrFind(Source, Chars.LF,, Beg);
+					Parser.Comments[Parser.Line] = Mid(Source, Beg, Pos - Beg);
+					If Pos = 0 Then Char = "" Else Char = Mid(Source, Pos, 1) EndIf;
+					Comment = True;
+				Else
+					Tok = Tokens.Div;
+				EndIf;
 
-		If Prev = "/" Then
+			ElsIf Prev = "<" Then
 
-			If Char = "/" Then
-				// scan comment
-				Beg = Pos + 1; Pos = StrFind(Source, Chars.LF,, Beg);
-				Parser.Comments[Parser.Line] = Mid(Source, Beg, Pos - Beg);
-				If Pos = 0 Then Char = "" Else Char = Mid(Source, Pos, 1) EndIf;
-				Goto ~Scan;
-			Else
-				Tok = Tokens.Div;
-			EndIf;
+				If Char = ">" Then
+					Tok = Tokens.Neq;
+					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				ElsIf Char = "=" Then
+					Tok = Tokens.Leq;
+					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				Else
+					Tok = Tokens.Lss;
+				EndIf;
 
-		ElsIf Prev = "<" Then
+			ElsIf Prev = ">" Then
 
-			If Char = ">" Then
-				Tok = Tokens.Neq;
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-			ElsIf Char = "=" Then
-				Tok = Tokens.Leq;
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-			Else
-				Tok = Tokens.Lss;
-			EndIf;
+				If Char = "=" Then
+					Tok = Tokens.Geq;
+					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				Else
+					Tok = Tokens.Gtr;
+				EndIf;
 
-		ElsIf Prev = ">" Then
+			ElsIf Prev = "&" Then
 
-			If Char = "=" Then
-				Tok = Tokens.Geq;
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-			Else
-				Tok = Tokens.Gtr;
-			EndIf;
-
-		ElsIf Prev = "&" Then
-
-			// scan ident
-			Beg = Pos; Pos = Pos + 1;
-			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
-
-			If Not Directives.Property(Lit) Then
-				Error(Parser, StrTemplate("Unknown directive: '%1'", Lit));
-			EndIf;
-
-			Tok = Tokens.Directive;
-
-		ElsIf Prev = "#" Then
-
-			// skip space
-			While IsBlankString(Char) And Char <> "" Do
-				If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-			EndDo;
-
-			// scan ident
-			Beg = Pos; Pos = Pos + 1;
-			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
-
-			// match token
-			If PrepInstructions.Property(Lit, Tok) Then Tok = "_" + Tok;
-			Else Error(Parser, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
-			EndIf;
-
-		ElsIf Prev = "~" Then
-
-			// skip space
-			While IsBlankString(Char) And Char <> "" Do
-				If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-			EndDo;
-
-			If AlphaDigitMap[Mid(Source, Pos, 1)] = Undefined Then
-				Lit = "";
-			Else
 				// scan ident
 				Beg = Pos; Pos = Pos + 1;
 				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
 				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
-			EndIf;
 
-			Tok = Tokens.Label;
+				If Not Directives.Property(Lit) Then
+					Error(Parser, StrTemplate("Unknown directive: '%1'", Lit));
+				EndIf;
+
+				Tok = Tokens.Directive;
+
+			ElsIf Prev = "#" Then
+
+				// skip space
+				While IsBlankString(Char) And Char <> "" Do
+					If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				EndDo;
+
+				// scan ident
+				Beg = Pos; Pos = Pos + 1;
+				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+
+				// match token
+				If PrepInstructions.Property(Lit, Tok) Then Tok = "_" + Tok;
+				Else Error(Parser, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
+				EndIf;
+
+			ElsIf Prev = "~" Then
+
+				// skip space
+				While IsBlankString(Char) And Char <> "" Do
+					If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				EndDo;
+
+				If AlphaDigitMap[Mid(Source, Pos, 1)] = Undefined Then
+					Lit = "";
+				Else
+					// scan ident
+					Beg = Pos; Pos = Pos + 1;
+					While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
+					Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+				EndIf;
+
+				Tok = Tokens.Label;
+
+			Else
+
+				Raise "Unknown char!";
+
+			EndIf;
 
 		Else
 
-			Raise "Unknown char!";
+			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 
 		EndIf;
 
-	Else
+		If Not Comment Then
+			Break;
+		EndIf;
 
-		Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-
-	EndIf;
+	EndDo;
 
 	Parser.Char = Char; Parser.Pos = Pos; Parser.Tok = Tok; Parser.Lit = Lit;
 
@@ -879,7 +889,7 @@ Function Next(Parser) Export
 		Parser.Val = False;
 	ElsIf Tok = Tokens.DateTime Then
 		Parser.Val = AsDate(Lit);
-	ElsIf StrStartsWith(Tok, Tokens.String) Then
+	ElsIf Left(Tok, 6) = Tokens.String Then
 		Parser.Val = Mid(Lit, 2, StrLen(Lit) - 2);
 	ElsIf Tok = Tokens.Null Then
 		Parser.Val = Null;
@@ -1863,7 +1873,7 @@ Function Place(Parser, Pos = Undefined, Line = Undefined)
 		Place = New Structure(
 			"Line," // number
 			"Pos,"  // number
-			"Len,"  // number
+			"Len"   // number
 		, Line, Pos, Len);
 		If Debug Then
 			Place.Insert("Str", Mid(Parser.Source, Pos, Len));
@@ -2004,7 +2014,7 @@ Function Hooks() Export
 		"VisitForEachStmt,    AfterVisitForEachStmt,"
 		"VisitTryStmt,        AfterVisitTryStmt,"
 		"VisitGotoStmt,       AfterVisitGotoStmt,"
-		"VisitLabelStmt,      AfterVisitLabelStmt,"
+		"VisitLabelStmt,      AfterVisitLabelStmt"
 	);
 	For Each Item In Hooks Do
 		Hooks[Item.Key] = New Array;
