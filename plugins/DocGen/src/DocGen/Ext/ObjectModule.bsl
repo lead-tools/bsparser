@@ -1,13 +1,14 @@
 ﻿
 // Генератор технической документации по парсеру
 
-Var Tokens, SelectKinds, Directives, PrepInstructions;
+Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions;
 Var Region, SubRegion;
 Var Comments; 
 Var Result;
 
 Procedure Init(BSLParser) Export
 	Tokens = BSLParser.Tokens();
+	Nodes = BSLParser.Nodes();
 	SelectKinds = BSLParser.SelectKinds();
 	Directives = BSLParser.Directives();
 	PrepInstructions = BSLParser.PrepInstructions();
@@ -25,11 +26,6 @@ Procedure Init(BSLParser) Export
 EndProcedure // Init() 
 
 Function Result() Export
-	Result.Add("<h2 id='#Enums'>#Enums</h2>");
-	Result.Add(GenerateEnum("Tokens", Tokens));
-	Result.Add(GenerateEnum("SelectKinds", SelectKinds));
-	Result.Add(GenerateEnum("Directives", Directives));
-	Result.Add(GenerateEnum("PrepInstructions", PrepInstructions));
 	Result.Add(
 		"<h2 id='#Other'>#Other</h2>
 		|<h3 id='Place'>Place</h3>
@@ -41,10 +37,16 @@ Function Result() Export
 		|</body>
 		|</html>"
 	);
+	Result.Add("<h2 id='#Enums'>#Enums</h2>");
+	Result.Add(GenerateEnum("SelectKinds", SelectKinds));
+	Result.Add(GenerateEnum("Directives", Directives));
+	Result.Add(GenerateEnum("PrepInstructions", PrepInstructions));
+	Result.Add(GenerateEnum("Nodes", Nodes, True));
+	Result.Add(GenerateEnum("Tokens", Tokens));
 	Return StrConcat(Result);
 EndFunction // Refult() 
 
-Function GenerateEnum(Name, Enum)
+Function GenerateEnum(Name, Enum, Links = False)
 	Var Buffer;
 	Buffer = New Array;
 	Buffer.Add(StrTemplate(
@@ -57,7 +59,11 @@ Function GenerateEnum(Name, Enum)
 		EnumValues.Insert(Item.Value);
 	EndDo;
 	For Each Item In EnumValues Do
-		Buffer.Add(StrTemplate("<li>""%1""</li>" "", Item.Key));
+		If Links Then
+			Buffer.Add(StrTemplate("<li>""<a href='#%1'>%1</a>""</li>" "", Item.Key));
+		Else
+			Buffer.Add(StrTemplate("<li>""%1""</li>" "", Item.Key));
+		EndIf; 
 	EndDo;
 	Buffer.Add("</ul>" "");
 	Return StrConcat(Buffer);
@@ -97,12 +103,12 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 		
 		If DesigExpr.Call Then
 			
-			If DesigExpr.Object.Name = "Struct" Then
-				CallExpr = DesigExpr.Select[0]; 
-				FirstArg = CallExpr.Value[0];
-				If FirstArg.Object.Name = "Nodes" Then
-					NodeName = FirstArg.Select[0].Value;
-					NodeFields = CallExpr.Value[1].List;
+			If DesigExpr.Object.Name = "Structure" Then
+				Tag = Comments[DesigExpr.Place.Line];
+				If Tag <> Undefined And StrFind(Tag, "@Node") Then
+					CallExpr = DesigExpr.Select[0]; 
+					NodeFields = CallExpr.Value[0].List;
+					NodeName = CallExpr.Value[1].Select[0].Value; 
 					
 					Result.Add(StrTemplate(
 						"	<h3 id='%1'>%1</h3>
@@ -111,16 +117,20 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 					));
 					
 					For Each Field In NodeFields Do
+						FieldName = Field.Value;
+						If Right(FieldName, 1) = "," Then
+							FieldName = Left(FieldName, StrLen(FieldName) - 1);
+						EndIf;
 						TypeList = ParseTypes(Comments[Field.Place.Line]);
 						Result.Add(StrTemplate(
 							"		<li><strong>%1</strong>: %2</li>" "",
-							Field.Value,
+							FieldName,
 							GenerateTypeLinks(TypeList)
 						));
 					EndDo; 
 					
 					Result.Add("	</ul>" "");
-					
+
 				EndIf; 
 			EndIf; 
 		
@@ -160,6 +170,8 @@ Function GenerateTypeLinks(TypeList)
 	Return StrConcat(Buffer, ", ");	
 EndFunction // GenerateTypeLinks() 
 
+#Region TypeParser
+
 Function ParseTypes(Types)
 	Var Pos, Ident, List;
 	Pos = 1; List = New Array;
@@ -189,7 +201,7 @@ Function ParseTypes(Types)
 		Goto ~Scan;
 	EndIf;
 	Return List;
-EndFunction // ParseType()
+EndFunction // ParseTypes()
 
 Procedure SkipSpace(Str, Pos)
 	For Pos = Pos To StrLen(Str) Do
@@ -217,4 +229,6 @@ Function ScanIdent(Str, Pos)
 		EndIf;
 	EndDo;
 	Return Mid(Str, Beg, Pos - Beg);
-EndFunction // ScanIdent() 
+EndFunction // ScanIdent()
+
+#EndRegion // TypeParser

@@ -9,6 +9,7 @@
 	<h1>Abstract syntax tree</h1>
 	<h3 id='Module'>Module</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -18,10 +19,12 @@
 	<h2 id='#Scope'>#Scope</h2>
 	<h3 id='Unknown'>Unknown</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 	</ul>
 	<h3 id='Func'>Func</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
@@ -29,6 +32,7 @@
 	</ul>
 	<h3 id='Proc'>Proc</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
@@ -36,17 +40,20 @@
 	</ul>
 	<h3 id='VarMod'>VarMod</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 	</ul>
 	<h3 id='VarLoc'>VarLoc</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Auto</strong>: boolean</li>
 	</ul>
 	<h3 id='Param'>Param</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>ByVal</strong>: boolean</li>
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
@@ -54,17 +61,20 @@
 	<h2 id='#Declarations'>#Declarations</h2>
 	<h3 id='VarModListDecl'>VarModListDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>List</strong>: array (<a href='#VarMod'>VarMod</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='VarLocListDecl'>VarLocListDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>List</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ProcDecl'>ProcDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Object</strong>: structure (<a href='#Proc'>Proc</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
@@ -73,6 +83,7 @@
 	</ul>
 	<h3 id='FuncDecl'>FuncDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Object</strong>: structure (<a href='#Func'>Func</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
@@ -81,6 +92,7 @@
 	</ul>
 	<h3 id='PrepIfDecl'>PrepIfDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfDecl'>PrepElsIfDecl</a>)</li>
@@ -89,12 +101,14 @@
 	</ul>
 	<h3 id='PrepElsIfDecl'>PrepElsIfDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepRegionDecl'>PrepRegionDecl</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -103,18 +117,21 @@
 	<h2 id='#Expressions'>#Expressions</h2>
 	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='SelectExpr'>SelectExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Kind</strong>: string (one of <a href='#SelectKinds'>SelectKinds</a>)</li>
 		<li><strong>Value</strong>: string, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='DesigExpr'>DesigExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Object</strong>: structure (<a href='#Unknown'>Unknown</a>, <a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>, <a href='#VarMod'>VarMod</a>, <a href='#VarLoc'>VarLoc</a>, <a href='#Param'>Param</a>)</li>
 		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
 		<li><strong>Call</strong>: boolean</li>
@@ -122,12 +139,14 @@
 	</ul>
 	<h3 id='UnaryExpr'>UnaryExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Operand</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='BinaryExpr'>BinaryExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -135,11 +154,13 @@
 	</ul>
 	<h3 id='NewExpr'>NewExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Constr</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='TernaryExpr'>TernaryExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -148,56 +169,67 @@
 	</ul>
 	<h3 id='ParenExpr'>ParenExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='NotExpr'>NotExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='StringExpr'>StringExpr</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Statements'>#Statements</h2>
 	<h3 id='AssignStmt'>AssignStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Left</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ReturnStmt'>ReturnStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='BreakStmt'>BreakStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ContinueStmt'>ContinueStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='RaiseStmt'>RaiseStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ExecuteStmt'>ExecuteStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='CallStmt'>CallStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IfStmt'>IfStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#ElsIfStmt'>ElsIfStmt</a>)</li>
@@ -206,12 +238,14 @@
 	</ul>
 	<h3 id='ElsIfStmt'>ElsIfStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepIfStmt'>PrepIfStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfStmt'>PrepElsIfStmt</a>)</li>
@@ -220,24 +254,28 @@
 	</ul>
 	<h3 id='PrepElsIfStmt'>PrepElsIfStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='WhileStmt'>WhileStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepRegionStmt'>PrepRegionStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ForStmt'>ForStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>From</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>To</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -246,6 +284,7 @@
 	</ul>
 	<h3 id='ForEachStmt'>ForEachStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>In</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -253,21 +292,96 @@
 	</ul>
 	<h3 id='TryStmt'>TryStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Try</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Except</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='GotoStmt'>GotoStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='LabelStmt'>LabelStmt</h3>
 	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-<h2 id='#Enums'>#Enums</h2><h3 id='Tokens'>Tokens</h3>
+<h2 id='#Other'>#Other</h2>
+<h3 id='Place'>Place</h3>
+<ul>
+	<li><strong>Line</strong>: number</li>
+	<li><strong>Pos</strong>: number</li>
+	<li><strong>Len</strong>: number</li>
+</ul>
+</body>
+</html><h2 id='#Enums'>#Enums</h2><h3 id='SelectKinds'>SelectKinds</h3>
+<ul><li>"Ident"</li>
+<li>"Index"</li>
+<li>"Call"</li>
+</ul>
+<h3 id='Directives'>Directives</h3>
+<ul><li>"AtClient"</li>
+<li>"AtServer"</li>
+<li>"AtServerNoContext"</li>
+<li>"AtClientAtServerNoContext"</li>
+<li>"AtClientAtServer"</li>
+</ul>
+<h3 id='PrepInstructions'>PrepInstructions</h3>
+<ul><li>"If"</li>
+<li>"ElsIf"</li>
+<li>"Else"</li>
+<li>"EndIf"</li>
+<li>"Region"</li>
+<li>"EndRegion"</li>
+</ul>
+<h3 id='Nodes'>Nodes</h3>
+<ul><li>"<a href='#Module'>Module</a>"</li>
+<li>"<a href='#Unknown'>Unknown</a>"</li>
+<li>"<a href='#Func'>Func</a>"</li>
+<li>"<a href='#Proc'>Proc</a>"</li>
+<li>"<a href='#VarMod'>VarMod</a>"</li>
+<li>"<a href='#VarLoc'>VarLoc</a>"</li>
+<li>"<a href='#Param'>Param</a>"</li>
+<li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
+<li>"<a href='#VarLocListDecl'>VarLocListDecl</a>"</li>
+<li>"<a href='#ProcDecl'>ProcDecl</a>"</li>
+<li>"<a href='#FuncDecl'>FuncDecl</a>"</li>
+<li>"<a href='#PrepIfDecl'>PrepIfDecl</a>"</li>
+<li>"<a href='#PrepElsIfDecl'>PrepElsIfDecl</a>"</li>
+<li>"<a href='#PrepRegionDecl'>PrepRegionDecl</a>"</li>
+<li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
+<li>"<a href='#SelectExpr'>SelectExpr</a>"</li>
+<li>"<a href='#DesigExpr'>DesigExpr</a>"</li>
+<li>"<a href='#UnaryExpr'>UnaryExpr</a>"</li>
+<li>"<a href='#BinaryExpr'>BinaryExpr</a>"</li>
+<li>"<a href='#NewExpr'>NewExpr</a>"</li>
+<li>"<a href='#TernaryExpr'>TernaryExpr</a>"</li>
+<li>"<a href='#ParenExpr'>ParenExpr</a>"</li>
+<li>"<a href='#NotExpr'>NotExpr</a>"</li>
+<li>"<a href='#StringExpr'>StringExpr</a>"</li>
+<li>"<a href='#AssignStmt'>AssignStmt</a>"</li>
+<li>"<a href='#ReturnStmt'>ReturnStmt</a>"</li>
+<li>"<a href='#BreakStmt'>BreakStmt</a>"</li>
+<li>"<a href='#ContinueStmt'>ContinueStmt</a>"</li>
+<li>"<a href='#RaiseStmt'>RaiseStmt</a>"</li>
+<li>"<a href='#ExecuteStmt'>ExecuteStmt</a>"</li>
+<li>"<a href='#CallStmt'>CallStmt</a>"</li>
+<li>"<a href='#IfStmt'>IfStmt</a>"</li>
+<li>"<a href='#ElsIfStmt'>ElsIfStmt</a>"</li>
+<li>"<a href='#PrepIfStmt'>PrepIfStmt</a>"</li>
+<li>"<a href='#PrepElsIfStmt'>PrepElsIfStmt</a>"</li>
+<li>"<a href='#WhileStmt'>WhileStmt</a>"</li>
+<li>"<a href='#PrepRegionStmt'>PrepRegionStmt</a>"</li>
+<li>"<a href='#ForStmt'>ForStmt</a>"</li>
+<li>"<a href='#ForEachStmt'>ForEachStmt</a>"</li>
+<li>"<a href='#TryStmt'>TryStmt</a>"</li>
+<li>"<a href='#GotoStmt'>GotoStmt</a>"</li>
+<li>"<a href='#LabelStmt'>LabelStmt</a>"</li>
+</ul>
+<h3 id='Tokens'>Tokens</h3>
 <ul><li>"If"</li>
 <li>"Then"</li>
 <li>"ElsIf"</li>
@@ -342,32 +456,3 @@
 <li>"Directive"</li>
 <li>"Label"</li>
 </ul>
-<h3 id='SelectKinds'>SelectKinds</h3>
-<ul><li>"Ident"</li>
-<li>"Index"</li>
-<li>"Call"</li>
-</ul>
-<h3 id='Directives'>Directives</h3>
-<ul><li>"AtClient"</li>
-<li>"AtServer"</li>
-<li>"AtServerNoContext"</li>
-<li>"AtClientAtServerNoContext"</li>
-<li>"AtClientAtServer"</li>
-</ul>
-<h3 id='PrepInstructions'>PrepInstructions</h3>
-<ul><li>"If"</li>
-<li>"ElsIf"</li>
-<li>"Else"</li>
-<li>"EndIf"</li>
-<li>"Region"</li>
-<li>"EndRegion"</li>
-</ul>
-<h2 id='#Other'>#Other</h2>
-<h3 id='Place'>Place</h3>
-<ul>
-	<li><strong>Line</strong>: number</li>
-	<li><strong>Pos</strong>: number</li>
-	<li><strong>Len</strong>: number</li>
-</ul>
-</body>
-</html>
