@@ -1925,7 +1925,7 @@ Procedure Error(Parser, Note, Pos = Undefined, Stop = False)
 	EndIf;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
 		StrOccurrenceCount(Mid(Parser.Source, 1, Pos), Chars.LF) + 1,
-		Pos - StrFind(Parser.Source, Chars.LF, SearchDirection.FromEnd, Pos),
+		Pos - ?(Pos = 0, 0, StrFind(Parser.Source, Chars.LF, SearchDirection.FromEnd, Pos)),
 		Note
 	);
 	If Stop Then
