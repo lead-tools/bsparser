@@ -153,7 +153,7 @@ Function GenerateTypeLinks(TypeList)
 					Item.Ident
 				));
 			EndIf;
-		ElsIf TypeOf(Item.Child) = Type("String") Then
+		ElsIf TypeOf(Item.Child) = Type("Строка") Then
 			Buffer.Add(StrTemplate(
 				"%1 <a href='#%2'>%2</a>",
 				Item.Ident,
@@ -175,31 +175,32 @@ EndFunction // GenerateTypeLinks()
 Function ParseTypes(Types)
 	Var Pos, Ident, List;
 	Pos = 1; List = New Array;
-	~Scan:
-	Child = Undefined;
-	SkipSpace(Types, Pos);
-	Ident = ScanIdent(Types, Pos);
-	SkipSpace(Types, Pos);
-	If Ident = "one" Then
-		If Mid(Types, Pos, 2) <> "of" Then
-			Raise "error";
-		EndIf;
-		Pos = Pos + 2;
-		Ident = "one of";
+	While True Do
+		Child = Undefined;
 		SkipSpace(Types, Pos);
-		Child = ScanIdent(Types, Pos);
-	ElsIf Mid(Types, Pos, 1) = "(" Then
+		Ident = ScanIdent(Types, Pos);
+		SkipSpace(Types, Pos);
+		If Ident = "one" Then
+			If Mid(Types, Pos, 2) <> "of" Then
+				Raise "error";
+			EndIf;
+			Pos = Pos + 2;
+			Ident = "one of";
+			SkipSpace(Types, Pos);
+			Child = ScanIdent(Types, Pos);
+		ElsIf Mid(Types, Pos, 1) = "(" Then
+			Pos = Pos + 1;
+			Beg = Pos;
+			SkipUntil(Types, Pos, ")");
+			Child = ParseTypes(Mid(Types, Beg, Pos - Beg));
+			Pos = Pos + 1;
+		EndIf;
+		List.Add(New Structure("Ident, Child", Ident, Child));
+		If Mid(Types, Pos, 1) <> "," Then
+			Break;
+		EndIf; 
 		Pos = Pos + 1;
-		Beg = Pos;
-		SkipUntil(Types, Pos, ")");
-		Child = ParseTypes(Mid(Types, Beg, Pos - Beg));
-		Pos = Pos + 1;
-	EndIf;
-	List.Add(New Structure("Ident, Child", Ident, Child));
-	If Mid(Types, Pos, 1) = "," Then
-		Pos = Pos + 1;
-		Goto ~Scan;
-	EndIf;
+	EndDo; 
 	Return List;
 EndFunction // ParseTypes()
 
