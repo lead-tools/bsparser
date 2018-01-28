@@ -133,7 +133,8 @@
 	</ul>
 	<h3 id='PrepIfDecl'>PrepIfDecl</h3>
 	<ul>
-	<i> Хранит информацию об инструкции препроцессора #Если.</i><br>
+	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
+	<i> которая ноходится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
@@ -151,7 +152,8 @@
 	</ul>
 	<h3 id='PrepElsIfDecl'>PrepElsIfDecl</h3>
 	<ul>
-	<i> Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если.</i><br>
+	<i> Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,</i><br>
+	<i> которая ноходится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
@@ -164,7 +166,17 @@
 	</ul>
 	<h3 id='PrepRegionDecl'>PrepRegionDecl</h3>
 	<ul>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ #Область Интерфейс   // поле "Name" хранит имя области
+     Перем П1;        // поле "Decls" содержит объявления переменных,
+     Процедура Тест() // процедур и функций.
+         ...
+     КонецПроцедуры
+     П1 = 2;          // поле "Body" содержит операторы тела модуля.
+ #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Name</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -172,13 +184,19 @@
 	</ul>
 	<h3 id='PrepUseDecl'>PrepUseDecl</h3>
 	<ul>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
+	<i> Это нестандартная инструкция из OneScript</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ #Использовать 1commands // поле "Path" содержит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Path</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
 	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
 	<ul>
+	<i> Хранит информацию о литерале примитивного типа.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
@@ -186,7 +204,17 @@
 	</ul>
 	<h3 id='SelectExpr'>SelectExpr</h3>
 	<ul>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Хранит информацию о селекторе.</i><br>
+	<i> Селектор может быть обращением через точку, обращением по индексу или вызовом метода.</i><br>
+	<i> Примеры:</i><br>
+ <pre>
+ // селекторы заключены в скобки <...>
+ Значение = Объект<.Поле>  // обращение через точку; поле "Kind" = SelectKinds.Ident;
+                           // поле "Value" содержит имя поля
+ Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
+                           // поле "Value" содержит индекс-выражение
+ Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
+                           // поле "Value" содержит список аргументов-выражений</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Kind</strong>: string (one of <a href='#SelectKinds'>SelectKinds</a>)</li>
 		<li><strong>Value</strong>: string, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>

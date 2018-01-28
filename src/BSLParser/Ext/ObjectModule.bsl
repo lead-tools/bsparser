@@ -416,7 +416,8 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 EndFunction // FuncDecl()
 
 Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
-	// Хранит информацию об инструкции препроцессора #Если.
+	// Хранит информацию об инструкции препроцессора #Если,
+	// которая ноходится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
@@ -438,7 +439,8 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 EndFunction // PrepIfDecl()
 
 Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
-	// Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если.
+	// Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,
+	// которая ноходится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// ...
@@ -455,6 +457,18 @@ Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
 EndFunction // PrepElsIfDecl()
 
 Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
+	// Хранит информацию об инструкции препроцессора #Обрасть,
+	// которая находится непосредственно в модуле.
+	// Пример:
+	// <pre>
+	// #Область Интерфейс   // поле "Name" хранит имя области
+	//     Перем П1;        // поле "Decls" содержит объявления переменных,
+	//     Процедура Тест() // процедур и функций.
+	//         ...
+	//     КонецПроцедуры
+	//     П1 = 2;          // поле "Body" содержит операторы тела модуля.
+	// #КонецОбласти
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // structure (one of #Expressions)
@@ -465,6 +479,13 @@ Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 EndFunction // PrepRegionDecl()
 
 Function PrepUseDecl(Path, Place = Undefined)
+	// Хранит информацию об инструкции препроцессора #Использовать,
+	// которая находится непосредственно в модуле.
+	// Это нестандартная инструкция из OneScript
+	// Пример:
+	// <pre>
+	// #Использовать 1commands // поле "Path" содержит имя библиотеки или путь в кавычках
+	// </pre>
 	Return New Structure( // @Node @OneScript
 	  "Type," // string (one of Nodes)
 	  "Path," // string
@@ -477,6 +498,7 @@ EndFunction // PrepUseDecl()
 #Region Expressions
 
 Function BasicLitExpr(Kind, Value, Place = Undefined)
+	// Хранит информацию о литерале примитивного типа.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of Tokens)
@@ -486,6 +508,18 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 EndFunction // BasicLitExpr()
 
 Function SelectExpr(Kind, Value, Place = Undefined)
+	// Хранит информацию о селекторе.
+	// Селектор может быть обращением через точку, обращением по индексу или вызовом метода.
+	// Примеры:
+	// <pre>
+	// // селекторы заключены в скобки <...>
+	// Значение = Объект<.Поле>  // обращение через точку; поле "Kind" = SelectKinds.Ident;
+	//                           // поле "Value" содержит имя поля
+	// Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
+	//                           // поле "Value" содержит индекс-выражение
+	// Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
+	//                           // поле "Value" содержит список аргументов-выражений
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of SelectKinds)
