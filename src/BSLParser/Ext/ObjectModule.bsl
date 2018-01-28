@@ -250,6 +250,7 @@ EndFunction // Enum()
 #Region AbstractSyntaxTree
 
 Function Module(Decls, Auto, Statements, Interface, Comments)
+	// Корень AST. Узел хранит информацию о модуле в целом.
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Decls,"     // array (one of #Declarations)
@@ -271,6 +272,9 @@ Function Scope(Outer)
 EndFunction // Scope()
 
 Function Unknown(Name)
+	// Узел хранит информацию об идентификаторе, для которого не удалось
+	// обнаружить объект (переменную, метод) в определенной области видимости.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name"  // string
@@ -278,6 +282,8 @@ Function Unknown(Name)
 EndFunction // Unknown()
 
 Function Func(Name, Directive, Params, Exported)
+	// Узел хранит информацию о функции.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
@@ -288,6 +294,8 @@ Function Func(Name, Directive, Params, Exported)
 EndFunction // Func()
 
 Function Proc(Name, Directive, Params, Exported)
+	// Узел хранит информацию о процедуре.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
@@ -298,6 +306,8 @@ Function Proc(Name, Directive, Params, Exported)
 EndFunction // Proc()
 
 Function VarMod(Name, Directive, Exported)
+	// Узел хранит информацию о переменной уровня модуля.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
@@ -307,6 +317,8 @@ Function VarMod(Name, Directive, Exported)
 EndFunction // VarMod()
 
 Function VarLoc(Name, Auto = False)
+	// Узел хранит информацию о локальной переменной.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name," // string
@@ -315,6 +327,8 @@ Function VarLoc(Name, Auto = False)
 EndFunction // VarLoc()
 
 Function Param(Name, ByVal, Value = Undefined)
+	// Узел хранит информацию о параметре функции или процедуры.
+	// Является объектом области видимости.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
@@ -402,7 +416,7 @@ Function PrepUseDecl(Path, Place = Undefined)
 	  "Path," // string
 	  "Place" // undefined, structure (Place)
 	, Nodes.PrepUseDecl, Path);
-EndFunction // PrepUseDecl() 
+EndFunction // PrepUseDecl()
 
 #EndRegion // Declarations
 
@@ -1583,7 +1597,7 @@ Function ParsePrepRegionDecl(Parser)
 EndFunction // ParsePrepRegionDecl()
 
 Function ParsePrepUseDecl(Parser)
-	Var Path, Pos, Line; 
+	Var Path, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
@@ -1595,16 +1609,16 @@ Function ParsePrepUseDecl(Parser)
 		If AlphaDigitMap[Parser.Char] = Alpha Then // can be a keyword
 			Next(Parser);
 			Path = Path + Parser.Lit;
-		EndIf; 
+		EndIf;
 	ElsIf Parser.Tok = Tokens.Ident
 		Or Parser.Tok = Tokens.String Then
 		Path = Parser.Lit;
 	Else
 		Error(Parser, "Expected string or identifier", Pos, True);
-	EndIf; 
+	EndIf;
 	Next(Parser);
 	Return PrepUseDecl(Path, Place(Parser, Pos, Line));
-EndFunction // ParsePrepUseDecl() 
+EndFunction // ParsePrepUseDecl()
 
 #EndRegion // ParseDecl
 

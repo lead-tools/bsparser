@@ -106,6 +106,17 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 			If DesigExpr.Object.Name = "Structure" Then
 				Tag = Comments[DesigExpr.Place.Line];
 				If Tag <> Undefined And StrFind(Tag, "@Node") Then
+					
+					DescriptionList = New ValueList;
+					
+					DescriptionLine = DesigExpr.Place.Line - 1;
+					Description = Comments[DescriptionLine];
+					While Description <> Undefined Do
+						DescriptionList.Insert(0, Description);
+						DescriptionLine = DescriptionLine - 1;
+						Description = Comments[DescriptionLine];
+					EndDo;  
+					
 					CallExpr = DesigExpr.Select[0];
 					NodeFields = CallExpr.Value[0].List;
 					NodeName = CallExpr.Value[1].Select[0].Value;
@@ -116,6 +127,11 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 						NodeName
 					));
 
+					For Each Item In DescriptionList Do
+						Result.Add(StrTemplate("	<i>%1</i><br>", Item.Value));
+					EndDo;
+					Result.Add("	<p>");
+					
 					For Each Field In NodeFields Do
 						FieldName = Field.Value;
 						If Right(FieldName, 1) = "," Then
