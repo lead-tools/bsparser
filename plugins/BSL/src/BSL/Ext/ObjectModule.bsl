@@ -574,7 +574,7 @@ Procedure VisitSelectList(SelectList)
 			Result.Add(SelectExpr.Value);
 		ElsIf SelectExpr.Kind = SelectKinds.Index Then
 			Result.Add("[");
-			VisitExprList(SelectExpr.Value);
+			VisitExpr(SelectExpr.Value);
 			Result.Add("]");
 		ElsIf SelectExpr.Kind = SelectKinds.Call Then
 			Result.Add("(");

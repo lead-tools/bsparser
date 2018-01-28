@@ -523,7 +523,7 @@ Function SelectExpr(Kind, Value, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of SelectKinds)
-		"Value," // string, array (undefined, one of #Expressions)
+		"Value," // string, structure (one of #Expressions), array (undefined, one of #Expressions)
 		"Place"  // undefined, structure (Place)
 	, Nodes.SelectExpr, Kind, Value, Place);
 EndFunction // SelectExpr()
@@ -1294,7 +1294,7 @@ Function ParseSelectExpr(Parser)
 		If Tok = Tokens.Rbrack Then
 			Error(Parser, "Expected expression", Pos, True);
 		EndIf;
-		Value = ParseExprList(Parser);
+		Value = ParseExpression(Parser);
 		Expect(Parser, Tokens.Rbrack);
 		Next(Parser);
 		SelectExpr = SelectExpr(SelectKinds.Index, Value, Place(Parser, Pos, Line));
@@ -2372,7 +2372,9 @@ Procedure VisitDesigExpr(Visitor, DesigExpr)
 	EndDo;
 	PushInfo(Visitor, DesigExpr);
 	For Each SelectExpr In DesigExpr.Select Do
-		If SelectExpr.Kind <> SelectKinds.Ident Then
+		If SelectExpr.Kind = SelectKinds.Index Then
+			VisitExpr(Visitor, SelectExpr.Value);
+		ElsIf SelectExpr.Kind = SelectKinds.Call Then
 			For Each Expr In SelectExpr.Value Do
 				If Expr <> Undefined Then
 					VisitExpr(Visitor, Expr);
