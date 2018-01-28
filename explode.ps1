@@ -1,7 +1,7 @@
 
 . .\common.ps1
 
-complete 0
+complete 0 "Explode"
 
 "#explode.ps1 START $(Get-Date)`n`n" >> log.txt
 
@@ -12,7 +12,7 @@ foreach ($item in $list.GetEnumerator()) {
     Remove-Item ".$($item.Value)src\*" -recurse
     send $ssh "config dump-ext-files --file=""..$($item.Value)src\$($item.Name).xml"" --ext-file=""..\build\$($item.Name).epf"""
     $x += $dx
-    complete $x
+    complete $x "Explode"
 }
 
 disconnect $1c $ssh

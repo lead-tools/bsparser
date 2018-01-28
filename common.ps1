@@ -18,8 +18,8 @@ function send($ssh, $cmd) {
     }
 }
 
-function complete($percent) {
-    Write-Progress -Activity "Extract" -Status "Progress:" -PercentComplete $percent
+function complete($percent, $activity) {
+    Write-Progress -Activity $activity -Status "Progress:" -PercentComplete $percent
 }
 
 function connect() {
