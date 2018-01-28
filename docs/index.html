@@ -114,6 +114,12 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h3 id='PrepUseDecl'>PrepUseDecl</h3>
+	<ul>
+		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+		<li><strong>Path</strong>: string</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
 	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
 	<ul>
@@ -336,6 +342,7 @@
 <li>"EndIf"</li>
 <li>"Region"</li>
 <li>"EndRegion"</li>
+<li>"Use"</li>
 </ul>
 <h3 id='Nodes'>Nodes</h3>
 <ul><li>"<a href='#Module'>Module</a>"</li>
@@ -380,6 +387,7 @@
 <li>"<a href='#TryStmt'>TryStmt</a>"</li>
 <li>"<a href='#GotoStmt'>GotoStmt</a>"</li>
 <li>"<a href='#LabelStmt'>LabelStmt</a>"</li>
+<li>"<a href='#PrepUseDecl'>PrepUseDecl</a>"</li>
 </ul>
 <h3 id='Tokens'>Tokens</h3>
 <ul><li>"If"</li>
@@ -451,6 +459,7 @@
 <li>"_EndIf"</li>
 <li>"_Region"</li>
 <li>"_EndRegion"</li>
+<li>"_Use"</li>
 <li>"Eof"</li>
 <li>"Comment"</li>
 <li>"Directive"</li>

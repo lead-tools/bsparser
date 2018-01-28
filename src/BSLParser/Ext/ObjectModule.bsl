@@ -179,7 +179,7 @@ Function Tokens(Keywords = Undefined) Export
 		|Ternary, Comma, Period, Colon, Semicolon,
 
 		// Preprocessor instructions
-		|_If, _ElsIf, _Else, _EndIf, _Region, _EndRegion,
+		|_If, _ElsIf, _Else, _EndIf, _Region, _EndRegion, _Use,
 
 		// Other
 
@@ -197,7 +197,7 @@ Function Nodes() Export
 		|VarModListDecl, VarLocListDecl, ProcDecl, FuncDecl, PrepIfDecl, PrepElsIfDecl, PrepRegionDecl,
 		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, CallStmt, IfStmt, ElsIfStmt,
-		|PrepIfStmt, PrepElsIfStmt, WhileStmt, PrepRegionStmt, ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt"
+		|PrepIfStmt, PrepElsIfStmt, WhileStmt, PrepRegionStmt, ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt, PrepUseDecl"
 	);
 EndFunction // Nodes()
 
@@ -226,7 +226,8 @@ Function PrepInstructions() Export
 		"Else.Иначе,"
 		"EndIf.КонецЕсли,"
 		"Region.Область,"
-		"EndRegion.КонецОбласти"
+		"EndRegion.КонецОбласти,"
+		"Use.Использовать" // onescript
 	);
 EndFunction // PrepInstructions()
 
@@ -394,6 +395,14 @@ Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 		"Place"  // undefined, structure (Place)
 	, Nodes.PrepRegionDecl, Name, Decls, Body, Place);
 EndFunction // PrepRegionDecl()
+
+Function PrepUseDecl(Path, Place = Undefined)
+	Return New Structure( // @Node @OneScript
+	  "Type," // string (one of Nodes)
+	  "Path," // string
+	  "Place" // undefined, structure (Place)
+	, Nodes.PrepUseDecl, Path);
+EndFunction // PrepUseDecl() 
 
 #EndRegion // Declarations
 
@@ -678,6 +687,7 @@ Function Parser(Source) Export
 		"Module,"    // structure (Module)
 		"Unknown,"   // structure as map[string] (Unknown)
 		"IsFunc,"    // boolean
+		"AllowVar,"  // boolean
 		"Directive," // string (one of Directives)
 		"Interface," // array (Func, Proc)
 		"Comments"   // map[number] (string)
@@ -691,6 +701,7 @@ Function Parser(Source) Export
 	Parser.Methods = New Structure;
 	Parser.Unknown = New Structure;
 	Parser.IsFunc = False;
+	Parser.AllowVar = True;
 	Parser.Interface = New Array;
 	Parser.Comments = New Map;
 
@@ -1276,17 +1287,27 @@ EndFunction // ParseParenExpr()
 
 Function ParseModDecls(Parser)
 	Var Tok, Decls;
-	Decls = ParseModVarDecls(Parser);
 	Tok = Parser.Tok;
+	Decls = New Array;
+	While Tok = Tokens.Directive Do
+		Parser.Directive = Parser.Lit;
+		Tok = Next(Parser);
+	EndDo;
 	While True Do
-		If Tok = Tokens.Function Then
+		If Tok = Tokens.Var And Parser.AllowVar Then
+			Decls.Add(ParseModVarListDecl(Parser));
+		ElsIf Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
+			Parser.AllowVar = False;
 		ElsIf Tok = Tokens.Procedure Then
 			Decls.Add(ParseProcDecl(Parser));
+			Parser.AllowVar = False;
 		ElsIf Tok = Tokens._Region Then
 			Decls.Add(ParsePrepRegionDecl(Parser));
 		ElsIf Tok = Tokens._If Then
 			Decls.Add(ParsePrepIfDecl(Parser));
+		ElsIf Tok = Tokens._Use Then
+			Decls.Add(ParsePrepUseDecl(Parser));
 		Else
 			Break;
 		EndIf;
@@ -1300,30 +1321,9 @@ Function ParseModDecls(Parser)
 	Return Decls;
 EndFunction // ParseModDecls()
 
-Function ParseModVarDecls(Parser)
-	Var Tok, Decls;
-	Decls = New Array;
-	Tok = Parser.Tok;
-	While Tok = Tokens.Directive Do
-		Parser.Directive = Parser.Lit;
-		Tok = Next(Parser);
-	EndDo;
-	While Tok = Tokens.Var Do
-		Next(Parser);
-		Decls.Add(ParseModVarListDecl(Parser));
-		Expect(Parser, Tokens.Semicolon);
-		Tok = Next(Parser);
-		Parser.Directive = Undefined;
-		While Tok = Tokens.Directive Do
-			Parser.Directive = Parser.Lit;
-			Tok = Next(Parser);
-		EndDo;
-	EndDo;
-	Return Decls;
-EndFunction // ParseModVarDecls()
-
 Function ParseModVarListDecl(Parser)
 	Var VarList, Pos, Line;
+	Next(Parser);
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	VarList = New Array;
@@ -1331,6 +1331,11 @@ Function ParseModVarListDecl(Parser)
 	While Parser.Tok = Tokens.Comma Do
 		Next(Parser);
 		VarList.Add(ParseVarMod(Parser));
+	EndDo;
+	Expect(Parser, Tokens.Semicolon);
+	Next(Parser);
+	While Parser.Tok = Tokens.Semicolon Do
+		Next(Parser);
 	EndDo;
 	Return VarModListDecl(Parser.Directive, VarList, Place(Parser, Pos, Line));
 EndFunction // ParseModVarListDecl()
@@ -1576,6 +1581,30 @@ Function ParsePrepRegionDecl(Parser)
 	Next(Parser);
 	Return PrepRegionDecl(Name, Decls, Statements, Place(Parser, Pos, Line));
 EndFunction // ParsePrepRegionDecl()
+
+Function ParsePrepUseDecl(Parser)
+	Var Path, Pos, Line; 
+	Pos = Parser.BegPos;
+	Line = Parser.Line;
+	Next(Parser);
+	If Line <> Parser.Line Then
+		Error(Parser, "Expected string or identifier", Pos, True);
+	EndIf;
+	If Parser.Tok = Tokens.Number Then
+		Path = Parser.Lit;
+		If AlphaDigitMap[Parser.Char] = Alpha Then // can be a keyword
+			Next(Parser);
+			Path = Path + Parser.Lit;
+		EndIf; 
+	ElsIf Parser.Tok = Tokens.Ident
+		Or Parser.Tok = Tokens.String Then
+		Path = Parser.Lit;
+	Else
+		Error(Parser, "Expected string or identifier", Pos, True);
+	EndIf; 
+	Next(Parser);
+	Return PrepUseDecl(Path, Place(Parser, Pos, Line));
+EndFunction // ParsePrepUseDecl() 
 
 #EndRegion // ParseDecl
 
