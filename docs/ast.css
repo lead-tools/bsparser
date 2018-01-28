@@ -12,6 +12,12 @@ h2 {
 	color:#963200;
 }
 
+pre {
+	background: #cce4f0;
+	width: 50%;
+	padding: 15px;
+}
+
 :target {
 	background-color: #F0F0F0 ;
 	margin: -4px ;

@@ -126,11 +126,25 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 						|	<ul>" "",
 						NodeName
 					));
-
-					For Each Item In DescriptionList Do
-						Result.Add(StrTemplate("	<i>%1</i><br>", Item.Value));
+					
+					DescriptionListCount = DescriptionList.Count();
+					Index = 0;
+					While Index < DescriptionListCount Do
+						Item = DescriptionList[Index]; 
+						If TrimAll(Item.Value) = "<pre>" Then
+							Buffer = New Array;
+							While TrimAll(Item.Value) <> "</pre>" Do
+								Buffer.Add(Item.Value);
+								Index = Index + 1;
+								Item = DescriptionList[Index];
+							EndDo;
+							Result.Add(StrConcat(Buffer, Chars.LF));
+							Result.Add("</pre>");
+						Else
+							Result.Add(StrTemplate("	<i>%1</i><br>" "", Item.Value));
+						EndIf; 
+						Index = Index + 1;
 					EndDo;
-					Result.Add("	<p>");
 					
 					For Each Field In NodeFields Do
 						FieldName = Field.Value;

@@ -342,6 +342,12 @@ EndFunction // Param()
 #Region Declarations
 
 Function VarModListDecl(Directive, VarList, Place = Undefined)
+	// Хранит информацию об инструкции объявления переменных уровня модуля.
+	// Пример:
+	// <pre>
+	// &НаКлиенте            // поле "Directive"
+	// Перем П1 Экспорт, П2; // поле "List"
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Directive," // string (one of Directives)
@@ -351,6 +357,11 @@ Function VarModListDecl(Directive, VarList, Place = Undefined)
 EndFunction // VarModListDecl()
 
 Function VarLocListDecl(VarList, Place = Undefined)
+	// Хранит информацию об инструкции объявления локальных переменных.
+	// Пример:
+	// <pre>
+	// Перем П1, П2; // поле "List"
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"List,"  // array (VarLoc)
@@ -359,6 +370,18 @@ Function VarLocListDecl(VarList, Place = Undefined)
 EndFunction // VarLocListDecl()
 
 Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
+	// Хранит информацию об инструкции объявления процедуры.
+	// Директива и признак экспорта хранятся в поле-узле "Object",
+	// который является объектом области видимости представляющим эту процедуру.
+	// Пример:
+	// <pre>
+	// &НаКлиенте
+	// Процедура Тест() Экспорт
+	//     Перем П1;    // поле "Decls" содержит объявления переменных.
+	//     П1 = 2;      // поле "Body" содержит операторы.
+	//     П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
+	// КонецПроцедуры
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Object," // structure (Proc)
@@ -370,6 +393,18 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 EndFunction // ProcDecl()
 
 Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
+	// Хранит информацию об инструкции объявления функции.
+	// Директива и признак экспорта хранятся в поле-узле "Object",
+	// который является объектом области видимости представляющим эту функцию.
+	// Пример:
+	// <pre>
+	// &НаКлиенте
+	// Процедура Тест() Экспорт
+	//     Перем П1;    // поле "Decls" содержит объявления переменных.
+	//     П1 = 2;      // поле "Body" содержит операторы.
+	//     П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
+	// КонецПроцедуры
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Object," // structure (Func)
@@ -381,6 +416,17 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 EndFunction // FuncDecl()
 
 Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
+	// Хранит информацию об инструкции препроцессора #Если.
+	// Пример:
+	// <pre>
+	// #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
+	//     // поле "Then" содержит операторы в этом блоке
+	// #ИначеЕсли Клиент Тогда
+	//     // поле-узел "ElsIf" содержит этот блок
+	// #Иначе
+	//     // поле "Else" содержит операторы в этом блоке
+	// #КонецЕсли
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
@@ -392,6 +438,10 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 EndFunction // PrepIfDecl()
 
 Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
+	// Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если.
+	// Пример:
+	// #ИначеЕсли Клиент Тогда // поле "Cond" содержит условие (выражение)
+	//     // поле "Then" содержит операторы в этом блоке
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
