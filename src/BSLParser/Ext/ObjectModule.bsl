@@ -529,6 +529,15 @@ Function SelectExpr(Kind, Value, Place = Undefined)
 EndFunction // SelectExpr()
 
 Function DesigExpr(Object, Select, Call, Place = Undefined)
+	// Хранит информацию об указателе (идентификатор + селекторы).
+	// Пример:
+	// <pre>
+	// // указатель заключен в скобки <...>
+	// // поле "Object" будет содержать объект переменной "Запрос";
+	// // поле "Select" будет содержать пять селекторов;
+	// // поле "Call" будет равно Ложь, т.к. последний селектор не является вызовом.
+	// Возврат <Запрос.Выполнить().Выгрузить()[0]>;
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Object," // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
@@ -539,6 +548,16 @@ Function DesigExpr(Object, Select, Call, Place = Undefined)
 EndFunction // DesigExpr()
 
 Function UnaryExpr(Operator, Operand, Place = Undefined)
+	// Хранит унарное выражение.
+	// Пример:
+	// <pre>
+	// // унарные выражения заключены в скобки <...>
+	// // поле "Operator" равно либо Tokens.Add, либо Tokens.Sub
+	// // поле "Operand" содержит операнд-выражение
+	// Значение = <-Сумма> * 2;
+	// Значение = <+Сумма>;
+	// Значение = <-(Сумма1 + Сумма2)> / 2;
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"     // string (one of Nodes)
 		"Operator," // string (one of Tokens)
@@ -548,6 +567,19 @@ Function UnaryExpr(Operator, Operand, Place = Undefined)
 EndFunction // UnaryExpr()
 
 Function BinaryExpr(Left, Operator, Right, Place = Undefined)
+	// Хранит бинарное выражение.
+	// Пример:
+	// <pre>
+	// // бинарные выражения заключены в скобки <...>
+	// // поле "Operator" равно одному из допустимых операторов:
+	// // - логических (кроме "Не")
+	// // - реляционных
+	// // - арифметических
+	// // поля "Left" и "Right" содержат операнды-выражения
+	// Если <Не Отмена И Продолжить> Тогда
+	//     Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
+	// КонецЕсли;
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"     // string (one of Nodes)
 		"Left,"     // structure (one of #Expressions)
@@ -558,6 +590,7 @@ Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 EndFunction // BinaryExpr()
 
 Function NewExpr(Constr, Place = Undefined)
+	// Хранит выражение "Новый".
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Constr," // structure (DesigExpr) or array (one of #Expressions)
@@ -566,6 +599,7 @@ Function NewExpr(Constr, Place = Undefined)
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
+	// Хранит тернарное выражение "?(,,)".
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Cond,"   // structure (one of #Expressions)
@@ -577,6 +611,7 @@ Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
+	// Хранит скобочное выражение.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
@@ -585,6 +620,12 @@ Function ParenExpr(Expr, Place = Undefined)
 EndFunction // ParenExpr()
 
 Function NotExpr(Expr, Place = Undefined)
+	// Хранит выражение, к которому применено логическое отрицание "Не".
+	// Пример:
+	// <pre>
+	// // выражение-отрицание заключено в скобки <...>
+	// НеРавны = <Не Сумма1 = Сумма2>;
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
@@ -593,6 +634,7 @@ Function NotExpr(Expr, Place = Undefined)
 EndFunction // NotExpr()
 
 Function StringExpr(ExprList, Place = Undefined)
+	// Хранит строковое выражение.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"List," // array (BasicLitExpr)
@@ -605,6 +647,7 @@ EndFunction // StringExpr()
 #Region Statements
 
 Function AssignStmt(Left, Right, Place = Undefined)
+	// Хранит оператор присваивания.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Left,"  // structure (DesigExpr)
@@ -614,6 +657,7 @@ Function AssignStmt(Left, Right, Place = Undefined)
 EndFunction // AssignStmt()
 
 Function ReturnStmt(Expr = Undefined, Place = Undefined)
+	// Хранит оператор "Возврат".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
@@ -622,6 +666,7 @@ Function ReturnStmt(Expr = Undefined, Place = Undefined)
 EndFunction // ReturnStmt()
 
 Function BreakStmt(Place = Undefined)
+	// Хранит оператор "Прервать".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Place" // undefined, structure (Place)
@@ -629,6 +674,7 @@ Function BreakStmt(Place = Undefined)
 EndFunction // BreakStmt()
 
 Function ContinueStmt(Place = Undefined)
+	// Хранит оператор "Продолжить".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Place" // undefined, structure (Place)
@@ -636,6 +682,7 @@ Function ContinueStmt(Place = Undefined)
 EndFunction // ContinueStmt()
 
 Function RaiseStmt(Expr = Undefined, Place = Undefined)
+	// Хранит оператор "ВызватьИсключение".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
@@ -644,6 +691,7 @@ Function RaiseStmt(Expr = Undefined, Place = Undefined)
 EndFunction // RaiseStmt()
 
 Function ExecuteStmt(Expr, Place = Undefined)
+	// Хранит оператор "Выполнить".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
@@ -652,6 +700,7 @@ Function ExecuteStmt(Expr, Place = Undefined)
 EndFunction // ExecuteStmt()
 
 Function CallStmt(DesigExpr, Place = Undefined)
+	// Хранит вызов метода.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -660,6 +709,7 @@ Function CallStmt(DesigExpr, Place = Undefined)
 EndFunction // CallStmt()
 
 Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
+	// Хранит оператор "Если".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
@@ -671,6 +721,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 EndFunction // IfStmt()
 
 Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
+	// Хранит блок "ИначеЕсли" оператора "Если".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -680,6 +731,8 @@ Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 EndFunction // ElsIfStmt()
 
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
+	// Хранит инструкцию препроцессора "#Если",
+	// которая находится внутри процедуры или функции.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
@@ -691,6 +744,8 @@ Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 EndFunction // PrepIfStmt()
 
 Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
+	// Хранит блок "#ИначеЕсли" инструкции препроцессора "#Если",
+	// которая находится внутри процедуры или функции.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -700,6 +755,7 @@ Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
 EndFunction // PrepElsIfStmt()
 
 Function WhileStmt(Cond, Statements, Place = Undefined)
+	// Хранит оператор цикла "Пока".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -709,6 +765,8 @@ Function WhileStmt(Cond, Statements, Place = Undefined)
 EndFunction // WhileStmt()
 
 Function PrepRegionStmt(Name, Statements, Place = Undefined)
+	// Хранит инструкцию препроцессора "Область",
+	// которая находится внутри процедуры или функции.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name," // structure (one of #Expressions)
@@ -718,6 +776,7 @@ Function PrepRegionStmt(Name, Statements, Place = Undefined)
 EndFunction // PrepRegionStmt()
 
 Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
+	// Хранит оператор цикла "Для".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -729,6 +788,7 @@ Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
 EndFunction // ForStmt()
 
 Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
+	// Хранит оператор цикла "Для Каждого".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -739,6 +799,7 @@ Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
 EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart, Place = Undefined)
+	// Хранит оператор "Попытка"
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Try,"    // array (one of #Statements)
@@ -748,6 +809,7 @@ Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 EndFunction // TryStmt()
 
 Function GotoStmt(Label, Place = Undefined)
+	// Хранит оператор "Перейти"
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
@@ -756,6 +818,7 @@ Function GotoStmt(Label, Place = Undefined)
 EndFunction // GotoStmt()
 
 Function LabelStmt(Label, Place = Undefined)
+	// Хранит оператор метки.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
