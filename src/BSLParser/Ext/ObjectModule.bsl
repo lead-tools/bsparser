@@ -440,8 +440,12 @@ EndFunction // PrepIfDecl()
 Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
 	// Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если.
 	// Пример:
+	// <pre>
+	// ...
 	// #ИначеЕсли Клиент Тогда // поле "Cond" содержит условие (выражение)
 	//     // поле "Then" содержит операторы в этом блоке
+	// ...
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)

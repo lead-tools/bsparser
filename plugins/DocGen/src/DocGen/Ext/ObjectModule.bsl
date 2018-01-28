@@ -146,6 +146,8 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 						Index = Index + 1;
 					EndDo;
 					
+					Result.Add("	<p>");
+					
 					For Each Field In NodeFields Do
 						FieldName = Field.Value;
 						If Right(FieldName, 1) = "," Then
