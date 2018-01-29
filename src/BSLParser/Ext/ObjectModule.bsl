@@ -609,6 +609,13 @@ EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
 	// Хранит тернарное выражение "?(,,)".
+	// Пример:
+	// <pre>
+	// Значение = ?(Ложь,   // поле "Cond"
+	//     Неопределено,    // поле "Then"
+	//     Новый Массив     // поле "Else"
+	// ).Количество();      // поле "Select"
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Cond,"   // structure (one of #Expressions)
@@ -621,6 +628,11 @@ EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
 	// Хранит скобочное выражение.
+	// Пример:
+	// <pre>
+	// // скобочное выражение заключено в скобки <...>
+	// Сумма = <(Сумма1 + Сумма2)> * Количество;
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
@@ -644,6 +656,17 @@ EndFunction // NotExpr()
 
 Function StringExpr(ExprList, Place = Undefined)
 	// Хранит строковое выражение.
+	// Поле "List" содержит упорядоченный список частей строки.
+	// Пример:
+	// <pre>
+	// Строка1 = "Часть1" "Часть2"; // эта строка состоит из двух частей типа Nodes.String
+	// Строка2 =                    // эта строка состоит из пяти частей типа:
+	// "Начало строки               // Nodes.StringBeg
+	// | продолжение строки         // Nodes.StringMid
+	// | еще продолжение строки     // Nodes.StringMid
+	// | окончание строки"          // Nodes.StringEnd
+	// "еще часть";                 // Nodes.String
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"List," // array (BasicLitExpr)

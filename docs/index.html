@@ -285,7 +285,12 @@
 	<h3 id='TernaryExpr'>TernaryExpr</h3>
 	<ul>
 	<i> Хранит тернарное выражение "?(,,)".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Пример:</i><br>
+ <pre>
+ Значение = ?(Ложь,   // поле "Cond"
+     Неопределено,    // поле "Then"
+     Новый Массив     // поле "Else"
+ ).Количество();      // поле "Select"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -295,7 +300,10 @@
 	<h3 id='ParenExpr'>ParenExpr</h3>
 	<ul>
 	<i> Хранит скобочное выражение.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Пример:</i><br>
+ <pre>
+ // скобочное выражение заключено в скобки <...>
+ Сумма = <(Сумма1 + Сумма2)> * Количество;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -312,7 +320,16 @@
 	<h3 id='StringExpr'>StringExpr</h3>
 	<ul>
 	<i> Хранит строковое выражение.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Поле "List" содержит упорядоченный список частей строки.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ Строка1 = "Часть1" "Часть2"; // эта строка состоит из двух частей типа Nodes.String
+ Строка2 =                    // эта строка состоит из пяти частей типа:
+ "Начало строки               // Nodes.StringBeg
+ | продолжение строки         // Nodes.StringMid
+ | еще продолжение строки     // Nodes.StringMid
+ | окончание строки"          // Nodes.StringEnd
+ "еще часть";                 // Nodes.String</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
