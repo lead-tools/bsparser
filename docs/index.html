@@ -134,7 +134,7 @@
 	<h3 id='PrepIfDecl'>PrepIfDecl</h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
-	<i> которая ноходится непосредственно в модуле.</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
@@ -153,7 +153,7 @@
 	<h3 id='PrepElsIfDecl'>PrepElsIfDecl</h3>
 	<ul>
 	<i> Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,</i><br>
-	<i> которая ноходится непосредственно в модуле.</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
@@ -177,7 +177,7 @@
      КонецПроцедуры
      П1 = 2;          // поле "Body" содержит операторы тела модуля.
  #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
-		<li><strong>Name</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Name</strong>: string</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -271,7 +271,14 @@
 	<h3 id='NewExpr'>NewExpr</h3>
 	<ul>
 	<i> Хранит выражение "Новый".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<i> Пример:</i><br>
+ <pre>
+ // выражения "Новый" заключены в скобки <...>
+ // в этом варианте поле "Constr" содержит узел типа DesigExpr
+ Параметры = <Новый Массив(1)>;
+ Параметры[0] = 10;
+ // в этом варианте поле "Constr" содержит массив из двух выражений
+ Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
 		<li><strong>Constr</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -409,7 +416,7 @@
 	<i> Хранит инструкцию препроцессора "Область",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
-		<li><strong>Name</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Name</strong>: string</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>

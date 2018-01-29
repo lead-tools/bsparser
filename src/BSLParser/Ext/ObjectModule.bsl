@@ -417,7 +417,7 @@ EndFunction // FuncDecl()
 
 Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #Если,
-	// которая ноходится непосредственно в модуле.
+	// которая находится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
@@ -440,7 +440,7 @@ EndFunction // PrepIfDecl()
 
 Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
 	// Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,
-	// которая ноходится непосредственно в модуле.
+	// которая находится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// ...
@@ -471,7 +471,7 @@ Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Name,"  // structure (one of #Expressions)
+		"Name,"  // string
 		"Decls," // array (one of #Declarations)
 		"Body,"  // array (one of #Statements)
 		"Place"  // undefined, structure (Place)
@@ -591,6 +591,15 @@ EndFunction // BinaryExpr()
 
 Function NewExpr(Constr, Place = Undefined)
 	// Хранит выражение "Новый".
+	// Пример:
+	// <pre>
+	// // выражения "Новый" заключены в скобки <...>
+	// // в этом варианте поле "Constr" содержит узел типа DesigExpr
+	// Параметры = <Новый Массив(1)>;
+	// Параметры[0] = 10;
+	// // в этом варианте поле "Constr" содержит массив из двух выражений
+	// Массив = <Новый (Тип("Массив"), Параметры)>;
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Constr," // structure (DesigExpr) or array (one of #Expressions)
@@ -769,7 +778,7 @@ Function PrepRegionStmt(Name, Statements, Place = Undefined)
 	// которая находится внутри процедуры или функции.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Name," // structure (one of #Expressions)
+		"Name," // string
 		"Body," // array (one of #Statements)
 		"Place" // undefined, structure (Place)
 	, Nodes.PrepRegionStmt, Name, Statements, Place);
