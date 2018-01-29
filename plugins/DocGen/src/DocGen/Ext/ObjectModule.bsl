@@ -149,15 +149,16 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 					Result.Add("	<p>");
 					
 					For Each Field In NodeFields Do
-						FieldName = Field.Value;
+						FieldName = TrimAll(Field.Value);
 						If Right(FieldName, 1) = "," Then
 							FieldName = Left(FieldName, StrLen(FieldName) - 1);
 						EndIf;
 						TypeList = ParseTypes(Comments[Field.Place.Line]);
 						Result.Add(StrTemplate(
-							"		<li><strong>%1</strong>: %2</li>" "",
+							"		<li><strong>%1</strong>: %2%3</li>" "",
 							FieldName,
-							GenerateTypeLinks(TypeList)
+							GenerateTypeLinks(TypeList),
+							?(FieldName = "Type", " = Nodes." + NodeName, "")
 						));
 					EndDo;
 

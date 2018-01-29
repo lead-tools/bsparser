@@ -10,7 +10,7 @@
 	<h3 id='Module'>Module</h3>
 	<ul>
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -23,14 +23,14 @@
 	<i> Узел хранит информацию об идентификаторе, для которого не удалось</i><br>
 	<i> обнаружить объект (переменную, метод) в определенной области видимости.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Unknown</li>
 		<li><strong>Name</strong>: string</li>
 	</ul>
 	<h3 id='Func'>Func</h3>
 	<ul>
 	<i> Узел хранит информацию о функции.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Func</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
@@ -40,7 +40,7 @@
 	<ul>
 	<i> Узел хранит информацию о процедуре.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Proc</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
@@ -50,7 +50,7 @@
 	<ul>
 	<i> Узел хранит информацию о переменной уровня модуля.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarMod</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
@@ -59,7 +59,7 @@
 	<ul>
 	<i> Узел хранит информацию о локальной переменной.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLoc</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Auto</strong>: boolean</li>
 	</ul>
@@ -67,7 +67,7 @@
 	<ul>
 	<i> Узел хранит информацию о параметре функции или процедуры.</i><br>
 	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Param</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>ByVal</strong>: boolean</li>
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
@@ -79,7 +79,7 @@
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте            // поле "Directive"
- Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModListDecl</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>List</strong>: array (<a href='#VarMod'>VarMod</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -89,7 +89,7 @@
 	<i> Хранит информацию об инструкции объявления локальных переменных.</i><br>
 	<i> Пример:</i><br>
  <pre>
- Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocListDecl</li>
 		<li><strong>List</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -105,7 +105,7 @@
      Перем П1;    // поле "Decls" содержит объявления переменных.
      П1 = 2;      // поле "Body" содержит операторы.
      П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
- КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcDecl</li>
 		<li><strong>Object</strong>: structure (<a href='#Proc'>Proc</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
@@ -124,7 +124,7 @@
      Перем П1;    // поле "Decls" содержит объявления переменных.
      П1 = 2;      // поле "Body" содержит операторы.
      П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
- КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncDecl</li>
 		<li><strong>Object</strong>: structure (<a href='#Func'>Func</a>)</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
@@ -143,7 +143,7 @@
      // поле-узел "ElsIf" содержит этот блок
  #Иначе
      // поле "Else" содержит операторы в этом блоке
- #КонецЕсли</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ #КонецЕсли</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfDecl</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfDecl'>PrepElsIfDecl</a>)</li>
@@ -159,7 +159,7 @@
  ...
  #ИначеЕсли Клиент Тогда // поле "Cond" содержит условие (выражение)
      // поле "Then" содержит операторы в этом блоке
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfDecl</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -176,7 +176,7 @@
          ...
      КонецПроцедуры
      П1 = 2;          // поле "Body" содержит операторы тела модуля.
- #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionDecl</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -189,7 +189,7 @@
 	<i> Это нестандартная инструкция из OneScript</i><br>
 	<i> Пример:</i><br>
  <pre>
- #Использовать 1commands // поле "Path" содержит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ #Использовать 1commands // поле "Path" содержит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseDecl</li>
 		<li><strong>Path</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -197,7 +197,7 @@
 	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
 	<ul>
 	<i> Хранит информацию о литерале примитивного типа.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BasicLitExpr</li>
 		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -214,7 +214,7 @@
  Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
                            // поле "Value" содержит индекс-выражение
  Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
-                           // поле "Value" содержит список аргументов-выражений</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+                           // поле "Value" содержит список аргументов-выражений</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.SelectExpr</li>
 		<li><strong>Kind</strong>: string (one of <a href='#SelectKinds'>SelectKinds</a>)</li>
 		<li><strong>Value</strong>: string, structure (one of <a href='##Expressions'>#Expressions</a>), array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -228,7 +228,7 @@
  // поле "Object" будет содержать объект переменной "Запрос";
  // поле "Select" будет содержать пять селекторов;
  // поле "Call" будет равно Ложь, т.к. последний селектор не является вызовом.
- Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.DesigExpr</li>
 		<li><strong>Object</strong>: structure (<a href='#Unknown'>Unknown</a>, <a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>, <a href='#VarMod'>VarMod</a>, <a href='#VarLoc'>VarLoc</a>, <a href='#Param'>Param</a>)</li>
 		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
 		<li><strong>Call</strong>: boolean</li>
@@ -244,7 +244,7 @@
  // поле "Operand" содержит операнд-выражение
  Значение = <-Сумма> * 2;
  Значение = <+Сумма>;
- Значение = <-(Сумма1 + Сумма2)> / 2;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Значение = <-(Сумма1 + Сумма2)> / 2;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.UnaryExpr</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Operand</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -262,7 +262,7 @@
  // поля "Left" и "Right" содержат операнды-выражения
  Если <Не Отмена И Продолжить> Тогда
      Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
- КонецЕсли;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ КонецЕсли;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BinaryExpr</li>
 		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -278,7 +278,7 @@
  Параметры = <Новый Массив(1)>;
  Параметры[0] = 10;
  // в этом варианте поле "Constr" содержит массив из двух выражений
- Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NewExpr</li>
 		<li><strong>Constr</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -290,7 +290,7 @@
  Значение = ?(Ложь,   // поле "Cond"
      Неопределено,    // поле "Then"
      Новый Массив     // поле "Else"
- ).Количество();      // поле "Select"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ ).Количество();      // поле "Select"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TernaryExpr</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -303,7 +303,7 @@
 	<i> Пример:</i><br>
  <pre>
  // скобочное выражение заключено в скобки <...>
- Сумма = <(Сумма1 + Сумма2)> * Количество;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ Сумма = <(Сумма1 + Сумма2)> * Количество;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParenExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -313,7 +313,7 @@
 	<i> Пример:</i><br>
  <pre>
  // выражение-отрицание заключено в скобки <...>
- НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NotExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -329,7 +329,7 @@
  | продолжение строки         // Nodes.StringMid
  | еще продолжение строки     // Nodes.StringMid
  | окончание строки"          // Nodes.StringEnd
- "еще часть";                 // Nodes.String</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+ "еще часть";                 // Nodes.String</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.StringExpr</li>
 		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -337,7 +337,7 @@
 	<h3 id='AssignStmt'>AssignStmt</h3>
 	<ul>
 	<i> Хранит оператор присваивания.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AssignStmt</li>
 		<li><strong>Left</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -345,47 +345,47 @@
 	<h3 id='ReturnStmt'>ReturnStmt</h3>
 	<ul>
 	<i> Хранит оператор "Возврат".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ReturnStmt</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='BreakStmt'>BreakStmt</h3>
 	<ul>
 	<i> Хранит оператор "Прервать".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BreakStmt</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ContinueStmt'>ContinueStmt</h3>
 	<ul>
 	<i> Хранит оператор "Продолжить".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ContinueStmt</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='RaiseStmt'>RaiseStmt</h3>
 	<ul>
 	<i> Хранит оператор "ВызватьИсключение".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.RaiseStmt</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ExecuteStmt'>ExecuteStmt</h3>
 	<ul>
 	<i> Хранит оператор "Выполнить".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExecuteStmt</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='CallStmt'>CallStmt</h3>
 	<ul>
 	<i> Хранит вызов метода.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.CallStmt</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IfStmt'>IfStmt</h3>
 	<ul>
 	<i> Хранит оператор "Если".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IfStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#ElsIfStmt'>ElsIfStmt</a>)</li>
@@ -395,7 +395,7 @@
 	<h3 id='ElsIfStmt'>ElsIfStmt</h3>
 	<ul>
 	<i> Хранит блок "ИначеЕсли" оператора "Если".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElsIfStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -404,7 +404,7 @@
 	<ul>
 	<i> Хранит инструкцию препроцессора "#Если",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfStmt'>PrepElsIfStmt</a>)</li>
@@ -415,7 +415,7 @@
 	<ul>
 	<i> Хранит блок "#ИначеЕсли" инструкции препроцессора "#Если",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -423,7 +423,7 @@
 	<h3 id='WhileStmt'>WhileStmt</h3>
 	<ul>
 	<i> Хранит оператор цикла "Пока".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.WhileStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -432,7 +432,7 @@
 	<ul>
 	<i> Хранит инструкцию препроцессора "Область",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionStmt</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -440,7 +440,7 @@
 	<h3 id='ForStmt'>ForStmt</h3>
 	<ul>
 	<i> Хранит оператор цикла "Для".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForStmt</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>From</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>To</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
@@ -450,7 +450,7 @@
 	<h3 id='ForEachStmt'>ForEachStmt</h3>
 	<ul>
 	<i> Хранит оператор цикла "Для Каждого".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForEachStmt</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>In</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -459,7 +459,7 @@
 	<h3 id='TryStmt'>TryStmt</h3>
 	<ul>
 	<i> Хранит оператор "Попытка"</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TryStmt</li>
 		<li><strong>Try</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Except</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
@@ -467,14 +467,14 @@
 	<h3 id='GotoStmt'>GotoStmt</h3>
 	<ul>
 	<i> Хранит оператор "Перейти"</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.GotoStmt</li>
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='LabelStmt'>LabelStmt</h3>
 	<ul>
 	<i> Хранит оператор метки.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>)</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.LabelStmt</li>
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
