@@ -22,9 +22,11 @@ h2 {
 }
 
 pre {
-	background: #cce4f0;
+	background: #dce5e9;
 	width: 50%;
 	padding: 15px;
+	overflow: auto;
+	min-width: 80ch
 }
 
 :target {
