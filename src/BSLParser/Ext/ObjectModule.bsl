@@ -319,6 +319,7 @@ EndFunction // VarMod()
 Function VarLoc(Name, Auto = False)
 	// Узел хранит информацию о локальной переменной.
 	// Является объектом области видимости.
+	// Поле "Auto" равно истине если это авто-переменная.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name," // string
@@ -329,6 +330,9 @@ EndFunction // VarLoc()
 Function Param(Name, ByVal, Value = Undefined)
 	// Узел хранит информацию о параметре функции или процедуры.
 	// Является объектом области видимости.
+	// Поле "ByVal" равно истине если параметр передается по значению.
+	// Поле "Value" хранит значение параметра по умолчанию.
+	// Если оно равно Неопределено, то значение не задано.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
@@ -377,9 +381,9 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	// <pre>
 	// &НаКлиенте
 	// Процедура Тест() Экспорт
-	//     Перем П1;    // поле "Decls" содержит объявления переменных.
-	//     П1 = 2;      // поле "Body" содержит операторы.
-	//     П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
+	//     Перем П1;    // поле "Decls" хранит объявления переменных.
+	//     П1 = 2;      // поле "Body" хранит операторы.
+	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецПроцедуры
 	// </pre>
 	Return New Structure( // @Node
@@ -399,11 +403,11 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 	// Пример:
 	// <pre>
 	// &НаКлиенте
-	// Процедура Тест() Экспорт
-	//     Перем П1;    // поле "Decls" содержит объявления переменных.
-	//     П1 = 2;      // поле "Body" содержит операторы.
-	//     П2 = П1 + 2; // Авто-переменные собираются в поле "Auto".
-	// КонецПроцедуры
+	// Функция Тест() Экспорт
+	//     Перем П1;    // поле "Decls" хранит объявления переменных.
+	//     П1 = 2;      // поле "Body" хранит операторы.
+	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
+	// КонецФункции
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
@@ -420,12 +424,12 @@ Function PrepIfDecl(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined,
 	// которая находится непосредственно в модуле.
 	// Пример:
 	// <pre>
-	// #Если Сервер Тогда // поле "Cond" содержит условие (выражение)
-	//     // поле "Then" содержит операторы в этом блоке
+	// #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит объявления в этом блоке
 	// #ИначеЕсли Клиент Тогда
-	//     // поле-узел "ElsIf" содержит этот блок
+	//     // поле-массив "ElsIf" хранит последовательность блоков #ИначеЕсли
 	// #Иначе
-	//     // поле "Else" содержит операторы в этом блоке
+	//     // поле "Else" хранит объявления в этом блоке
 	// #КонецЕсли
 	// </pre>
 	Return New Structure( // @Node
@@ -444,8 +448,8 @@ Function PrepElsIfDecl(Cond, ThenPart, Place = Undefined)
 	// Пример:
 	// <pre>
 	// ...
-	// #ИначеЕсли Клиент Тогда // поле "Cond" содержит условие (выражение)
-	//     // поле "Then" содержит операторы в этом блоке
+	// #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит объявления в этом блоке
 	// ...
 	// </pre>
 	Return New Structure( // @Node
@@ -462,11 +466,11 @@ Function PrepRegionDecl(Name, Decls, Body, Place = Undefined)
 	// Пример:
 	// <pre>
 	// #Область Интерфейс   // поле "Name" хранит имя области
-	//     Перем П1;        // поле "Decls" содержит объявления переменных,
+	//     Перем П1;        // поле "Decls" хранит объявления переменных,
 	//     Процедура Тест() // процедур и функций.
 	//         ...
 	//     КонецПроцедуры
-	//     П1 = 2;          // поле "Body" содержит операторы тела модуля.
+	//     П1 = 2;          // поле "Body" хранит операторы тела модуля.
 	// #КонецОбласти
 	// </pre>
 	Return New Structure( // @Node
@@ -484,7 +488,7 @@ Function PrepUseDecl(Path, Place = Undefined)
 	// Это нестандартная инструкция из OneScript
 	// Пример:
 	// <pre>
-	// #Использовать 1commands // поле "Path" содержит имя библиотеки или путь в кавычках
+	// #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках
 	// </pre>
 	Return New Structure( // @Node @OneScript
 	  "Type," // string (one of Nodes)
@@ -514,11 +518,11 @@ Function SelectExpr(Kind, Value, Place = Undefined)
 	// <pre>
 	// // селекторы заключены в скобки <...>
 	// Значение = Объект<.Поле>  // обращение через точку; поле "Kind" = SelectKinds.Ident;
-	//                           // поле "Value" содержит имя поля
+	//                           // поле "Value" хранит имя поля
 	// Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
-	//                           // поле "Value" содержит индекс-выражение
+	//                           // поле "Value" хранит индекс-выражение
 	// Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
-	//                           // поле "Value" содержит список аргументов-выражений
+	//                           // поле "Value" хранит список аргументов-выражений
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -553,7 +557,7 @@ Function UnaryExpr(Operator, Operand, Place = Undefined)
 	// <pre>
 	// // унарные выражения заключены в скобки <...>
 	// // поле "Operator" равно либо Tokens.Add, либо Tokens.Sub
-	// // поле "Operand" содержит операнд-выражение
+	// // поле "Operand" хранит операнд-выражение
 	// Значение = <-Сумма> * 2;
 	// Значение = <+Сумма>;
 	// Значение = <-(Сумма1 + Сумма2)> / 2;
@@ -594,10 +598,10 @@ Function NewExpr(Constr, Place = Undefined)
 	// Пример:
 	// <pre>
 	// // выражения "Новый" заключены в скобки <...>
-	// // в этом варианте поле "Constr" содержит узел типа DesigExpr
+	// // в этом варианте поле "Constr" хранит узел типа DesigExpr
 	// Параметры = <Новый Массив(1)>;
 	// Параметры[0] = 10;
-	// // в этом варианте поле "Constr" содержит массив из двух выражений
+	// // в этом варианте поле "Constr" хранит массив из двух выражений
 	// Массив = <Новый (Тип("Массив"), Параметры)>;
 	// </pre>
 	Return New Structure( // @Node
@@ -656,7 +660,7 @@ EndFunction // NotExpr()
 
 Function StringExpr(ExprList, Place = Undefined)
 	// Хранит строковое выражение.
-	// Поле "List" содержит упорядоченный список частей строки.
+	// Поле "List" хранит упорядоченный список частей строки.
 	// Пример:
 	// <pre>
 	// Строка1 = "Часть1" "Часть2"; // эта строка состоит из двух частей типа Nodes.String
@@ -690,6 +694,7 @@ EndFunction // AssignStmt()
 
 Function ReturnStmt(Expr = Undefined, Place = Undefined)
 	// Хранит оператор "Возврат".
+	// Поле "Expr" равно Неопределено если это возврат из процедуры.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
@@ -715,6 +720,7 @@ EndFunction // ContinueStmt()
 
 Function RaiseStmt(Expr = Undefined, Place = Undefined)
 	// Хранит оператор "ВызватьИсключение".
+	// Поле "Expr" равно Неопределено если это вариант оператора без выражения.
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
@@ -732,7 +738,7 @@ Function ExecuteStmt(Expr, Place = Undefined)
 EndFunction // ExecuteStmt()
 
 Function CallStmt(DesigExpr, Place = Undefined)
-	// Хранит вызов метода.
+	// Хранит вызов процедуры или функции как процедуры.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -742,6 +748,18 @@ EndFunction // CallStmt()
 
 Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	// Хранит оператор "Если".
+	// Пример:
+	// <pre>
+	// Если Сумма > 0 Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит операторы в этом блоке
+	// ИначеЕсли Сумма = 0 Тогда
+	//     // поле-массив "ElsIf" хранит последовательность блоков ИначеЕсли
+	// Иначе
+	//     // поле "Else" хранит операторы в этом блоке
+	// КонецЕсли
+	// </pre>
+	// Поля "ElsIf" и "Else" равны Неопределено если
+	// соответствующие блоки отсутствуют в исходном коде.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
@@ -754,6 +772,13 @@ EndFunction // IfStmt()
 
 Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 	// Хранит блок "ИначеЕсли" оператора "Если".
+	// Пример:
+	// <pre>
+	// ...
+	// ИначеЕсли Сумма < 0 Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит операторы в этом блоке
+	// ...
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -765,6 +790,16 @@ EndFunction // ElsIfStmt()
 Function PrepIfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
 	// Хранит инструкцию препроцессора "#Если",
 	// которая находится внутри процедуры или функции.
+	// Пример:
+	// <pre>
+	// #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит операторы в этом блоке
+	// #ИначеЕсли Клиент Тогда
+	//     // поле-массив "ElsIf" хранит последовательность блоков ИначеЕсли
+	// #Иначе
+	//     // поле "Else" хранит операторы в этом блоке
+	// #КонецЕсли
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
@@ -778,6 +813,13 @@ EndFunction // PrepIfStmt()
 Function PrepElsIfStmt(Cond, ThenPart, Place = Undefined)
 	// Хранит блок "#ИначеЕсли" инструкции препроцессора "#Если",
 	// которая находится внутри процедуры или функции.
+	// Пример:
+	// <pre>
+	// ...
+	// #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
+	//     // поле "Then" хранит операторы в этом блоке
+	// ...
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -788,6 +830,12 @@ EndFunction // PrepElsIfStmt()
 
 Function WhileStmt(Cond, Statements, Place = Undefined)
 	// Хранит оператор цикла "Пока".
+	// Пример:
+	// <pre>
+	// Пока Индекс > 0 Цикл // поле "Cond" хранит условие (выражение)
+	//     // поле "Body" хранит операторы в этом блоке
+	// КонецЦикла
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
@@ -799,6 +847,12 @@ EndFunction // WhileStmt()
 Function PrepRegionStmt(Name, Statements, Place = Undefined)
 	// Хранит инструкцию препроцессора "Область",
 	// которая находится внутри процедуры или функции.
+	// <pre>
+	// #Область ТекстЗапроса   // поле "Name" хранит имя области
+	// Запрос.Текст =          // поле "Body" хранит операторы внутри области.
+	//     "ВЫБРАТЬ * ИЗ Таблица";
+	// #КонецОбласти
+	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name," // string
@@ -809,6 +863,13 @@ EndFunction // PrepRegionStmt()
 
 Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
 	// Хранит оператор цикла "Для".
+	// Пример:
+	// <pre>
+	// Для Индекс = 0      // поля "Desig" и "From" хранят переменную и выражение инициализации.
+	//   По Длина - 1 Цикл // поле "To" хранит выражение границы
+	//     // поле "Body" хранит операторы в этом блоке
+	// КонецЦикла
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -821,6 +882,13 @@ EndFunction // ForStmt()
 
 Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
 	// Хранит оператор цикла "Для Каждого".
+	// Пример:
+	// <pre>
+	// Для Каждого Элемент // поле "Desig" хранит переменную.
+	//   Из Список Цикл    // поле "In" хранит выражение коллекции.
+	//     // поле "Body" хранит операторы в этом блоке
+	// КонецЦикла
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
@@ -832,6 +900,14 @@ EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 	// Хранит оператор "Попытка"
+	// Пример:
+	// <pre>
+	// Попытка
+	//     // поле "Try" хранит операторы в этом блоке.
+	// Исключение
+	//     // поле "Except" хранит операторы в этом блоке
+	// КонецПопытки
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Try,"    // array (one of #Statements)
