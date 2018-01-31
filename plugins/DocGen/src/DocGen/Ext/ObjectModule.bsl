@@ -122,7 +122,7 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 					NodeName = CallExpr.Value[1].Select[0].Value;
 
 					Result.Add(StrTemplate(
-						"	<h3 id='%1'>%1</h3>
+						"	<h3 id='%1'>%1<a class='permalink' href='#%1'>¶</a></h3>
 						|	<ul>" "",
 						NodeName
 					));

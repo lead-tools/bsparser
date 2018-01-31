@@ -8,6 +8,15 @@ body {
 	font-size: 14px;
 }
 
+.permalink {
+    display: none;
+}
+
+:hover > .permalink {
+	display: inline;
+	color: black;
+}
+
 h2 {
 	color:#963200;
 }

@@ -7,7 +7,7 @@
 </head>
 <body>
 	<h1>Abstract syntax tree</h1>
-	<h3 id='Module'>Module</h3>
+	<h3 id='Module'>Module<a class='permalink' href='#Module'>¶</a></h3>
 	<ul>
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
@@ -18,7 +18,7 @@
 		<li><strong>Comments</strong>: map[number] (string)</li>
 	</ul>
 	<h2 id='#Scope'>#Scope</h2>
-	<h3 id='Unknown'>Unknown</h3>
+	<h3 id='Unknown'>Unknown<a class='permalink' href='#Unknown'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию об идентификаторе, для которого не удалось</i><br>
 	<i> обнаружить объект (переменную, метод) в определенной области видимости.</i><br>
@@ -26,7 +26,7 @@
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Unknown</li>
 		<li><strong>Name</strong>: string</li>
 	</ul>
-	<h3 id='Func'>Func</h3>
+	<h3 id='Func'>Func<a class='permalink' href='#Func'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о функции.</i><br>
 	<i> Является объектом области видимости.</i><br>
@@ -36,7 +36,7 @@
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 	</ul>
-	<h3 id='Proc'>Proc</h3>
+	<h3 id='Proc'>Proc<a class='permalink' href='#Proc'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о процедуре.</i><br>
 	<i> Является объектом области видимости.</i><br>
@@ -46,7 +46,7 @@
 		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 	</ul>
-	<h3 id='VarMod'>VarMod</h3>
+	<h3 id='VarMod'>VarMod<a class='permalink' href='#VarMod'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о переменной уровня модуля.</i><br>
 	<i> Является объектом области видимости.</i><br>
@@ -55,7 +55,7 @@
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 	</ul>
-	<h3 id='VarLoc'>VarLoc</h3>
+	<h3 id='VarLoc'>VarLoc<a class='permalink' href='#VarLoc'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о локальной переменной.</i><br>
 	<i> Является объектом области видимости.</i><br>
@@ -64,7 +64,7 @@
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Auto</strong>: boolean</li>
 	</ul>
-	<h3 id='Param'>Param</h3>
+	<h3 id='Param'>Param<a class='permalink' href='#Param'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о параметре функции или процедуры.</i><br>
 	<i> Является объектом области видимости.</i><br>
@@ -77,7 +77,7 @@
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 	</ul>
 	<h2 id='#Declarations'>#Declarations</h2>
-	<h3 id='VarModListDecl'>VarModListDecl</h3>
+	<h3 id='VarModListDecl'>VarModListDecl<a class='permalink' href='#VarModListDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления переменных уровня модуля.</i><br>
 	<i> Пример:</i><br>
@@ -88,7 +88,7 @@
 		<li><strong>List</strong>: array (<a href='#VarMod'>VarMod</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='VarLocListDecl'>VarLocListDecl</h3>
+	<h3 id='VarLocListDecl'>VarLocListDecl<a class='permalink' href='#VarLocListDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления локальных переменных.</i><br>
 	<i> Пример:</i><br>
@@ -97,7 +97,7 @@
 		<li><strong>List</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ProcDecl'>ProcDecl</h3>
+	<h3 id='ProcDecl'>ProcDecl<a class='permalink' href='#ProcDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления процедуры.</i><br>
 	<i> Директива и признак экспорта хранятся в поле-узле "Object",</i><br>
@@ -116,7 +116,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='FuncDecl'>FuncDecl</h3>
+	<h3 id='FuncDecl'>FuncDecl<a class='permalink' href='#FuncDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления функции.</i><br>
 	<i> Директива и признак экспорта хранятся в поле-узле "Object",</i><br>
@@ -135,7 +135,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepIfDecl'>PrepIfDecl</h3>
+	<h3 id='PrepIfDecl'>PrepIfDecl<a class='permalink' href='#PrepIfDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
 	<i> которая находится непосредственно в модуле.</i><br>
@@ -154,7 +154,7 @@
 		<li><strong>Else</strong>: undefined, array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepElsIfDecl'>PrepElsIfDecl</h3>
+	<h3 id='PrepElsIfDecl'>PrepElsIfDecl<a class='permalink' href='#PrepElsIfDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,</i><br>
 	<i> которая находится непосредственно в модуле.</i><br>
@@ -168,7 +168,7 @@
 		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepRegionDecl'>PrepRegionDecl</h3>
+	<h3 id='PrepRegionDecl'>PrepRegionDecl<a class='permalink' href='#PrepRegionDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
 	<i> которая находится непосредственно в модуле.</i><br>
@@ -186,7 +186,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepUseDecl'>PrepUseDecl</h3>
+	<h3 id='PrepUseDecl'>PrepUseDecl<a class='permalink' href='#PrepUseDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
 	<i> которая находится непосредственно в модуле.</i><br>
@@ -198,7 +198,7 @@
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
-	<h3 id='BasicLitExpr'>BasicLitExpr</h3>
+	<h3 id='BasicLitExpr'>BasicLitExpr<a class='permalink' href='#BasicLitExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о литерале примитивного типа.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BasicLitExpr</li>
@@ -206,7 +206,7 @@
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='SelectExpr'>SelectExpr</h3>
+	<h3 id='SelectExpr'>SelectExpr<a class='permalink' href='#SelectExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о селекторе.</i><br>
 	<i> Селектор может быть обращением через точку, обращением по индексу или вызовом метода.</i><br>
@@ -223,7 +223,7 @@
 		<li><strong>Value</strong>: string, structure (one of <a href='##Expressions'>#Expressions</a>), array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='DesigExpr'>DesigExpr</h3>
+	<h3 id='DesigExpr'>DesigExpr<a class='permalink' href='#DesigExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об указателе (идентификатор + селекторы).</i><br>
 	<i> Пример:</i><br>
@@ -238,7 +238,7 @@
 		<li><strong>Call</strong>: boolean</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='UnaryExpr'>UnaryExpr</h3>
+	<h3 id='UnaryExpr'>UnaryExpr<a class='permalink' href='#UnaryExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит унарное выражение.</i><br>
 	<i> Пример:</i><br>
@@ -253,7 +253,7 @@
 		<li><strong>Operand</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='BinaryExpr'>BinaryExpr</h3>
+	<h3 id='BinaryExpr'>BinaryExpr<a class='permalink' href='#BinaryExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит бинарное выражение.</i><br>
 	<i> Пример:</i><br>
@@ -272,7 +272,7 @@
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='NewExpr'>NewExpr</h3>
+	<h3 id='NewExpr'>NewExpr<a class='permalink' href='#NewExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение "Новый".</i><br>
 	<i> Пример:</i><br>
@@ -286,7 +286,7 @@
 		<li><strong>Constr</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='TernaryExpr'>TernaryExpr</h3>
+	<h3 id='TernaryExpr'>TernaryExpr<a class='permalink' href='#TernaryExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит тернарное выражение "?(,,)".</i><br>
 	<i> Пример:</i><br>
@@ -301,7 +301,7 @@
 		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ParenExpr'>ParenExpr</h3>
+	<h3 id='ParenExpr'>ParenExpr<a class='permalink' href='#ParenExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит скобочное выражение.</i><br>
 	<i> Пример:</i><br>
@@ -311,7 +311,7 @@
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='NotExpr'>NotExpr</h3>
+	<h3 id='NotExpr'>NotExpr<a class='permalink' href='#NotExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение, к которому применено логическое отрицание "Не".</i><br>
 	<i> Пример:</i><br>
@@ -321,7 +321,7 @@
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='StringExpr'>StringExpr</h3>
+	<h3 id='StringExpr'>StringExpr<a class='permalink' href='#StringExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит строковое выражение.</i><br>
 	<i> Поле "List" хранит упорядоченный список частей строки.</i><br>
@@ -338,7 +338,7 @@
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Statements'>#Statements</h2>
-	<h3 id='AssignStmt'>AssignStmt</h3>
+	<h3 id='AssignStmt'>AssignStmt<a class='permalink' href='#AssignStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор присваивания.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AssignStmt</li>
@@ -346,7 +346,7 @@
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ReturnStmt'>ReturnStmt</h3>
+	<h3 id='ReturnStmt'>ReturnStmt<a class='permalink' href='#ReturnStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Возврат".</i><br>
 	<i> Поле "Expr" равно Неопределено если это возврат из процедуры.</i><br>
@@ -354,19 +354,19 @@
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='BreakStmt'>BreakStmt</h3>
+	<h3 id='BreakStmt'>BreakStmt<a class='permalink' href='#BreakStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Прервать".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BreakStmt</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ContinueStmt'>ContinueStmt</h3>
+	<h3 id='ContinueStmt'>ContinueStmt<a class='permalink' href='#ContinueStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Продолжить".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ContinueStmt</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='RaiseStmt'>RaiseStmt</h3>
+	<h3 id='RaiseStmt'>RaiseStmt<a class='permalink' href='#RaiseStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "ВызватьИсключение".</i><br>
 	<i> Поле "Expr" равно Неопределено если это вариант оператора без выражения.</i><br>
@@ -374,21 +374,21 @@
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ExecuteStmt'>ExecuteStmt</h3>
+	<h3 id='ExecuteStmt'>ExecuteStmt<a class='permalink' href='#ExecuteStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Выполнить".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExecuteStmt</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='CallStmt'>CallStmt</h3>
+	<h3 id='CallStmt'>CallStmt<a class='permalink' href='#CallStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит вызов процедуры или функции как процедуры.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.CallStmt</li>
 		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='IfStmt'>IfStmt</h3>
+	<h3 id='IfStmt'>IfStmt<a class='permalink' href='#IfStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Если".</i><br>
 	<i> Пример:</i><br>
@@ -408,7 +408,7 @@
 		<li><strong>Else</strong>: undefined, array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ElsIfStmt'>ElsIfStmt</h3>
+	<h3 id='ElsIfStmt'>ElsIfStmt<a class='permalink' href='#ElsIfStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "ИначеЕсли" оператора "Если".</i><br>
 	<i> Пример:</i><br>
@@ -421,7 +421,7 @@
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepIfStmt'>PrepIfStmt</h3>
+	<h3 id='PrepIfStmt'>PrepIfStmt<a class='permalink' href='#PrepIfStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит инструкцию препроцессора "#Если",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
@@ -440,7 +440,7 @@
 		<li><strong>Else</strong>: undefined, array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepElsIfStmt'>PrepElsIfStmt</h3>
+	<h3 id='PrepElsIfStmt'>PrepElsIfStmt<a class='permalink' href='#PrepElsIfStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "#ИначеЕсли" инструкции препроцессора "#Если",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
@@ -454,7 +454,7 @@
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='WhileStmt'>WhileStmt</h3>
+	<h3 id='WhileStmt'>WhileStmt<a class='permalink' href='#WhileStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Пока".</i><br>
 	<i> Пример:</i><br>
@@ -466,7 +466,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepRegionStmt'>PrepRegionStmt</h3>
+	<h3 id='PrepRegionStmt'>PrepRegionStmt<a class='permalink' href='#PrepRegionStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит инструкцию препроцессора "Область",</i><br>
 	<i> которая находится внутри процедуры или функции.</i><br>
@@ -479,7 +479,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ForStmt'>ForStmt</h3>
+	<h3 id='ForStmt'>ForStmt<a class='permalink' href='#ForStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Для".</i><br>
 	<i> Пример:</i><br>
@@ -494,7 +494,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ForEachStmt'>ForEachStmt</h3>
+	<h3 id='ForEachStmt'>ForEachStmt<a class='permalink' href='#ForEachStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Для Каждого".</i><br>
 	<i> Пример:</i><br>
@@ -508,7 +508,7 @@
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='TryStmt'>TryStmt</h3>
+	<h3 id='TryStmt'>TryStmt<a class='permalink' href='#TryStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Попытка"</i><br>
 	<i> Пример:</i><br>
@@ -522,14 +522,14 @@
 		<li><strong>Except</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='GotoStmt'>GotoStmt</h3>
+	<h3 id='GotoStmt'>GotoStmt<a class='permalink' href='#GotoStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Перейти"</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.GotoStmt</li>
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='LabelStmt'>LabelStmt</h3>
+	<h3 id='LabelStmt'>LabelStmt<a class='permalink' href='#LabelStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор метки.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.LabelStmt</li>
