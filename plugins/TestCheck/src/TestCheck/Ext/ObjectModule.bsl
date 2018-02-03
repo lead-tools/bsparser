@@ -39,6 +39,6 @@ Procedure VisitLoopStmt(Stmt, Stack, Counters) Export
 	Var LoopCount;
 	LoopCount = Counters.WhileStmt + Counters.ForStmt + Counters.ForEachStmt;
 	If LoopCount > 0 Then
-		Result.Add(StrTemplate("Вложенный цикл `%1` в строке %2", Stmt.Type, Stmt.Place.Line));
+		Result.Add(StrTemplate("Вложенный цикл `%1` в строке %2", Stmt.Type, Stmt.Place.BegLine));
 	EndIf;
 EndProcedure // VisitLoopStmt()

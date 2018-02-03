@@ -9,7 +9,7 @@ Var Tokens;        // enum
 Var SelectKinds;   // enum
 Var Operators;     // structure as map[one of Tokens](string)
 
-Var LastLine, LastComment;
+Var LastLine;
 Var Comments;      // map[number](string)
 
 Procedure Init(BSLParserProcessor) Export
@@ -48,19 +48,19 @@ Procedure VisitModule(Module, Stack, Counters) Export
 EndProcedure // VisitModule()
 
 Procedure VisitDeclarations(Declarations)
-	Indent = Indent + 1;
+	Indent = Indent + 1; // >>
 	For Each Decl In Declarations Do
 		VisitDecl(Decl);
 	EndDo;
-	Indent = Indent - 1;
+	Indent = Indent - 1; // <<
 EndProcedure // VisitDeclarations()
 
 Procedure VisitStatements(Statements)
-	Indent = Indent + 1;
+	Indent = Indent + 1; // >>
 	For Each Stmt In Statements Do
 		VisitStmt(Stmt);
 	EndDo;
-	Indent = Indent - 1;
+	Indent = Indent - 1; // <<
 	Indent();
 EndProcedure // VisitStatements()
 
@@ -68,8 +68,8 @@ EndProcedure // VisitStatements()
 
 Procedure VisitDecl(Decl)
     Var Type;
-    Type = Decl.Type;
-	LastLine = Decl.Place.Line;
+	AlignLine(Decl.Place.BegLine);
+	Type = Decl.Type;
     If Type = Nodes.VarModListDecl Then
         VisitVarModListDecl(Decl);
     ElsIf Type = Nodes.VarLocListDecl Then
@@ -88,20 +88,18 @@ Procedure VisitDecl(Decl)
 EndProcedure // VisitDecl()
 
 Procedure VisitVarModListDecl(VarModListDecl)
-	Indent();
 	If VarModListDecl.Directive <> Undefined Then
 		Result.Add(StrTemplate("&%1%2", VarModListDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Var ");
 	VisitVarList(VarModListDecl.List);
-	Result.Add(";"); Comment(VarModListDecl); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitVarModListDecl()
 
 Procedure VisitVarLocListDecl(VarLocListDecl)
-	Indent();
 	Result.Add("Var ");
 	VisitVarList(VarLocListDecl.List);
-	Result.Add(";"); Comment(VarLocListDecl); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitVarLocListDecl()
 
 Procedure VisitProcDecl(ProcDecl)
@@ -116,11 +114,10 @@ Procedure VisitProcDecl(ProcDecl)
 	If Object.Export Then
 		Result.Add(" Export");
 	EndIf;
-	Comment(ProcDecl); Result.Add(Chars.LF);
 	VisitDeclarations(ProcDecl.Decls);
     VisitStatements(ProcDecl.Body);
-	Result.Add(StrTemplate("EndProcedure // %1()", Object.Name));
-	Result.Add(Chars.LF);
+	AlignLine(ProcDecl.Place.EndLine);
+	Result.Add("EndProcedure");
 EndProcedure // VisitProcDecl()
 
 Procedure VisitFuncDecl(FuncDecl)
@@ -135,17 +132,16 @@ Procedure VisitFuncDecl(FuncDecl)
 	If Object.Export Then
 		Result.Add(" Export");
 	EndIf;
-	Comment(FuncDecl); Result.Add(Chars.LF);
 	VisitDeclarations(FuncDecl.Decls);
     VisitStatements(FuncDecl.Body);
-	Result.Add(StrTemplate("EndFunction // %1()", Object.Name));
-	Result.Add(Chars.LF);
+	AlignLine(FuncDecl.Place.EndLine);
+	Result.Add("EndFunction");
 EndProcedure // VisitFuncDecl()
 
 Procedure VisitPrepIfDecl(PrepIfDecl)
 	Result.Add("#If ");
 	VisitExpr(PrepIfDecl.Cond);
-	Result.Add(" Then"); Comment(PrepIfDecl); Result.Add(Chars.LF);
+	Result.Add(" Then");
 	Indent = Indent - 1; // <<
 	VisitDeclarations(PrepIfDecl.Then);
     If PrepIfDecl.ElsIf <> Undefined Then
@@ -154,32 +150,30 @@ Procedure VisitPrepIfDecl(PrepIfDecl)
         EndDo;
     EndIf;
     If PrepIfDecl.Else <> Undefined Then
-		Result.Add("#Else"); Result.Add(Chars.LF);
+		Result.Add("#Else");
 		VisitDeclarations(PrepIfDecl.Else);
 	EndIf;
 	Indent = Indent + 1; // >>
-	Result.Add("#EndIf;"); Result.Add(Chars.LF);
+	AlignLine(PrepIfDecl.Place.EndLine);
+	Result.Add("#EndIf;");
 EndProcedure // VisitPrepIfDecl()
 
 Procedure VisitPrepElsIfDecl(PrepElsIfDecl)
-	Result.Add("#ElsIf "); LastLine = PrepElsIfDecl.Cond.Place.Line;
+	Result.Add("#ElsIf ");
 	VisitExpr(PrepElsIfDecl.Cond);
-	Result.Add(" Then"); Result.Add(Chars.LF);
+	Result.Add(" Then");
 	VisitDeclarations(PrepElsIfDecl.Then);
 EndProcedure // VisitPrepElsIfDecl()
 
 Procedure VisitPrepRegionDecl(PrepRegionDecl)
 	Result.Add("#Region ");
 	Result.Add(PrepRegionDecl.Name);
-	Result.Add(Chars.LF);
 	Indent = Indent - 1; // <<
 	VisitDeclarations(PrepRegionDecl.Decls);
     VisitStatements(PrepRegionDecl.Body);
 	Indent = Indent + 1; // >>
-	Result.Add("#EndRegion // ");
-	Result.Add(PrepRegionDecl.Name);
-	Result.Add(Chars.LF);
-	Result.Add(Chars.LF);
+	AlignLine(PrepRegionDecl.Place.EndLine);
+	Result.Add("#EndRegion");
 EndProcedure // VisitPrepRegionDecl()
 
 #EndRegion // VisitDecl
@@ -188,14 +182,8 @@ EndProcedure // VisitPrepRegionDecl()
 
 Procedure VisitExpr(Expr)
     Var Type, Hook;
-    Type = Expr.Type;
-	For LastLine = LastLine To Expr.Place.Line - 1 Do
-		If LastComment <> Undefined Then
-			Result.Add(" //" + LastComment);
-		EndIf;
-		Result.Add(Chars.LF); Indent();
-		LastComment = Comments[Expr.Place.Line];
-	EndDo;
+	AlignLine(Expr.Place.BegLine);
+	Type = Expr.Type;
 	If Type = Nodes.BasicLitExpr Then
         VisitBasicLitExpr(Expr);
     ElsIf Type = Nodes.DesigExpr Then
@@ -244,7 +232,6 @@ EndProcedure // VisitBasicLitExpr()
 
 Procedure VisitDesigExpr(DesigExpr)
 	Result.Add(DesigExpr.Object.Name);
-	LastLine = DesigExpr.Place.Line;
 	VisitSelectList(DesigExpr.Select);
 EndProcedure // VisitDesigExpr()
 
@@ -270,9 +257,7 @@ Procedure VisitNewExpr(NewExpr)
 		Indent = Indent + 1; // >>
 		VisitExprList(NewExpr.Args);
 		Indent = Indent - 1; // <<
-		If LastLine > NewExpr.Place.Line Then
-			Result.Add(Chars.LF); Indent();
-		EndIf;
+		AlignLine(NewExpr.Place.EndLine);
 		Result.Add(")");
 	EndIf;
 EndProcedure // VisitNewExpr()
@@ -293,9 +278,7 @@ Procedure VisitParenExpr(ParenExpr)
 	Indent = Indent + 1; // >>
 	VisitExpr(ParenExpr.Expr);
 	Indent = Indent - 1; // <<
-	If LastLine > ParenExpr.Place.Line Then
-		Result.Add(Chars.LF); Indent();
-	EndIf;
+	AlignLine(ParenExpr.Place.EndLine);
 	Result.Add(")");
 EndProcedure // VisitParenExpr()
 
@@ -307,8 +290,7 @@ EndProcedure // VisitNotExpr()
 Procedure VisitStringExpr(StringExpr)
 	If StringExpr.List.Count() > 1 Then
 		For Each Expr In StringExpr.List Do
-			Result.Add(Chars.LF);
-			Indent();
+			AlignLine(Expr.Place.BegLine);
 			VisitBasicLitExpr(Expr);
 		EndDo;
 	Else
@@ -321,9 +303,8 @@ EndProcedure // VisitStringExpr()
 #Region VisitStmt
 
 Procedure VisitStmt(Stmt)
-    Type = Stmt.Type;
-	Indent();
-	LastLine = Stmt.Place.Line;
+	AlignLine(Stmt.Place.BegLine);
+	Type = Stmt.Type;
 	If Type = Nodes.AssignStmt Then
         VisitAssignStmt(Stmt);
     ElsIf Type = Nodes.ReturnStmt Then
@@ -363,7 +344,7 @@ Procedure VisitAssignStmt(AssignStmt)
     VisitDesigExpr(AssignStmt.Left);
 	Result.Add(" = ");
 	VisitExpr(AssignStmt.Right);
-	Result.Add(";"); Comment(AssignStmt); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitAssignStmt()
 
 Procedure VisitReturnStmt(ReturnStmt)
@@ -371,15 +352,15 @@ Procedure VisitReturnStmt(ReturnStmt)
 	If ReturnStmt.Expr <> Undefined Then
         VisitExpr(ReturnStmt.Expr);
 	EndIf;
-	Result.Add(";"); Comment(ReturnStmt); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitReturnStmt()
 
 Procedure VisitBreakStmt(BreakStmt)
-	Result.Add("Break;"); Comment(BreakStmt); Result.Add(Chars.LF);
+	Result.Add("Break;");
 EndProcedure // VisitBreakStmt()
 
 Procedure VisitContinueStmt(ContinueStmt)
-	Result.Add("Continue;"); Comment(ContinueStmt); Result.Add(Chars.LF);
+	Result.Add("Continue;");
 EndProcedure // VisitContinueStmt()
 
 Procedure VisitRaiseStmt(RaiseStmt)
@@ -387,48 +368,51 @@ Procedure VisitRaiseStmt(RaiseStmt)
 	If RaiseStmt.Expr <> Undefined Then
         VisitExpr(RaiseStmt.Expr);
 	EndIf;
-	Result.Add(";"); Comment(RaiseStmt); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitRaiseStmt()
 
 Procedure VisitExecuteStmt(ExecuteStmt)
 	Result.Add("Execute(");
 	VisitExpr(ExecuteStmt.Expr);
-	Result.Add(");"); Comment(ExecuteStmt); Result.Add(Chars.LF);
+	Result.Add(");");
 EndProcedure // VisitExecuteStmt()
 
 Procedure VisitCallStmt(CallStmt)
     VisitDesigExpr(CallStmt.Desig);
-	Result.Add(";"); Comment(CallStmt); Result.Add(Chars.LF);
+	Result.Add(";");
 EndProcedure // VisitCallStmt()
 
 Procedure VisitIfStmt(IfStmt)
 	Result.Add("If ");
 	VisitExpr(IfStmt.Cond);
-	Result.Add(" Then"); Comment(IfStmt); Result.Add(Chars.LF);
+	Result.Add(" Then");
     VisitStatements(IfStmt.Then);
     If IfStmt.ElsIf <> Undefined Then
         For Each ElsIfStmt In IfStmt.ElsIf Do
+			AlignLine(ElsIfStmt.Place.BegLine);
 			VisitElsIfStmt(ElsIfStmt);
         EndDo;
     EndIf;
     If IfStmt.Else <> Undefined Then
-		Result.Add("Else"); Result.Add(Chars.LF);
+		AlignLine(LastLine + 1);
+		Result.Add("Else");
 		VisitStatements(IfStmt.Else);
 	EndIf;
-	Result.Add("EndIf;"); Result.Add(Chars.LF);
+	AlignLine(IfStmt.Place.EndLine);
+	Result.Add("EndIf;");
 EndProcedure // VisitIfStmt()
 
 Procedure VisitElsIfStmt(ElsIfStmt)
-	Result.Add("ElsIf "); LastLine = ElsIfStmt.Cond.Place.Line;
+	Result.Add("ElsIf ");
 	VisitExpr(ElsIfStmt.Cond);
-	Result.Add(" Then"); Result.Add(Chars.LF);
+	Result.Add(" Then");
     VisitStatements(ElsIfStmt.Then);
 EndProcedure // VisitElsIfStmt()
 
 Procedure VisitPrepIfStmt(PrepIfStmt)
 	Result.Add("#If ");
 	VisitExpr(PrepIfStmt.Cond);
-	Result.Add(" Then"); Comment(PrepIfStmt); Result.Add(Chars.LF);
+	Result.Add(" Then");
 	VisitStatements(PrepIfStmt.Then);
     If PrepIfStmt.ElsIf <> Undefined Then
         For Each PrepElsIfStmt In PrepIfStmt.ElsIf Do
@@ -436,25 +420,27 @@ Procedure VisitPrepIfStmt(PrepIfStmt)
         EndDo;
     EndIf;
     If PrepIfStmt.Else <> Undefined Then
-		Result.Add("#Else"); Result.Add(Chars.LF);
+		Result.Add("#Else");
 		VisitStatements(PrepIfStmt.Else);
 	EndIf;
-	Result.Add("#EndIf;"); Result.Add(Chars.LF);
+	AlignLine(PrepIfStmt.Place.EndLine);
+	Result.Add("#EndIf;");
 EndProcedure // VisitPrepIfStmt()
 
 Procedure VisitPrepElsIfStmt(PrepElsIfStmt)
-	Result.Add("#ElsIf "); LastLine = PrepElsIfStmt.Cond.Place.Line;
+	Result.Add("#ElsIf ");
 	VisitExpr(PrepElsIfStmt.Cond);
-	Result.Add(" Then"); Result.Add(Chars.LF);
+	Result.Add(" Then");
 	VisitStatements(PrepElsIfStmt.Then);
 EndProcedure // VisitPrepElsIfStmt()
 
 Procedure VisitWhileStmt(WhileStmt)
 	Result.Add("While ");
 	VisitExpr(WhileStmt.Cond);
-	Result.Add(" Do"); Comment(WhileStmt); Result.Add(Chars.LF);
+	Result.Add(" Do");
     VisitStatements(WhileStmt.Body);
-	Result.Add("EndDo;"); Result.Add(Chars.LF);
+	AlignLine(WhileStmt.Place.EndLine);
+	Result.Add("EndDo;");
 EndProcedure // VisitWhileStmt()
 
 Procedure VisitPrepRegionStmt(PrepRegionStmt)
@@ -468,9 +454,10 @@ Procedure VisitForStmt(ForStmt)
 	VisitExpr(ForStmt.From);
 	Result.Add(" To ");
 	VisitExpr(ForStmt.To);
-	Result.Add(" Do"); Comment(ForStmt); Result.Add(Chars.LF);
+	Result.Add(" Do");
 	VisitStatements(ForStmt.Body);
-	Result.Add("EndDo;"); Result.Add(Chars.LF);
+	AlignLine(ForStmt.Place.EndLine);
+	Result.Add("EndDo;");
 EndProcedure // VisitForStmt()
 
 Procedure VisitForEachStmt(ForEachStmt)
@@ -478,25 +465,27 @@ Procedure VisitForEachStmt(ForEachStmt)
 	VisitDesigExpr(ForEachStmt.Desig);
 	Result.Add(" In ");
 	VisitExpr(ForEachStmt.In);
-	Result.Add(" Do"); Comment(ForEachStmt); Result.Add(Chars.LF);
+	Result.Add(" Do");
 	VisitStatements(ForEachStmt.Body);
-	Result.Add("EndDo;"); Result.Add(Chars.LF);
+	AlignLine(ForEachStmt.Place.EndLine);
+	Result.Add("EndDo;");
 EndProcedure // VisitForEachStmt()
 
 Procedure VisitTryStmt(TryStmt)
-	Result.Add("Try"); Comment(TryStmt); Result.Add(Chars.LF);
+	Result.Add("Try");
 	VisitStatements(TryStmt.Try);
-	Result.Add("Except"); Result.Add(Chars.LF);
+	Result.Add("Except");
 	VisitStatements(TryStmt.Except);
-	Result.Add("EndTry;"); Result.Add(Chars.LF);
+	AlignLine(TryStmt.Place.EndLine);
+	Result.Add("EndTry;");
 EndProcedure // VisitTryStmt()
 
 Procedure VisitGotoStmt(GotoStmt)
-	Result.Add(StrTemplate("Goto ~%1%2%3", GotoStmt.Label, ";", Chars.LF));
+	Result.Add(StrTemplate("Goto ~%1%2", GotoStmt.Label, ";"));
 EndProcedure // VisitGotoStmt()
 
 Procedure VisitLabelStmt(LabelStmt)
-	Result.Add(StrTemplate("~%1:%2", LabelStmt.Label, Chars.LF));
+	Result.Add(StrTemplate("~%1:", LabelStmt.Label));
 EndProcedure // VisitLabelStmt()
 
 #EndRegion // VisitStmt
@@ -509,15 +498,15 @@ Procedure Indent()
 	EndDo;
 EndProcedure // Indent()
 
-Procedure Comment(Node)
-	If Node = Undefined Then
-		Return;
-	EndIf;
-	Comment = Comments[Node.Place.Line];
-	If Comment <> Undefined Then
-		Result.Add(" //" + Comment);
-	EndIf;
-EndProcedure // Comment()
+Procedure AlignLine(NewLine)
+	For LastLine = LastLine To NewLine - 1 Do
+		Comment = Comments[LastLine];
+		If Comment <> Undefined Then
+			Result.Add(" //" + Comment);
+		EndIf;
+		Result.Add(Chars.LF); Indent();	
+	EndDo;
+EndProcedure // AlignLine()
 
 Procedure VisitVarList(VarList)
 	Var Buffer, Object;
@@ -582,14 +571,8 @@ Procedure VisitSelectList(SelectList)
 			Result.Add("(");
 			Indent = Indent + 1; // >>
 			VisitExprList(SelectExpr.Value);
-			Indent = Indent - 1;
-			If LastLine > SelectExpr.Place.Line Then
-				If LastComment <> Undefined Then
-					Result.Add(" //" + LastComment);
-					LastComment = Undefined;
-				EndIf;
-				Result.Add(Chars.LF); Indent();
-			EndIf;
+			Indent = Indent - 1; // <<
+			AlignLine(SelectExpr.Place.EndLine);
 			Result.Add(")");
 		Else
 			Raise "Unknown selector kind";

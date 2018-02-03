@@ -119,7 +119,7 @@ EndFunction // FillTree()
 Function FillNode(Row, Node)
 	Var Place;
 	If Node.Property("Place", Place) And Place <> Undefined Then
-		Row.Line = Place.Line;
+		Row.Line = Place.BegLine;
 		Row.Pos = Place.Pos;
 		Row.Len = Place.Len;
 	EndIf;

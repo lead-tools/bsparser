@@ -30,9 +30,10 @@ Function Result() Export
 		"<h2 id='#Other'>#Other</h2>
 		|<h3 id='Place'>Place</h3>
 		|<ul>
-		|	<li><strong>Line</strong>: number</li>
 		|	<li><strong>Pos</strong>: number</li>
 		|	<li><strong>Len</strong>: number</li>
+		|	<li><strong>BegLine</strong>: number</li>
+		|	<li><strong>EndLine</strong>: number</li>
 		|</ul>
 		|</body>
 		|</html>"
@@ -102,12 +103,12 @@ Procedure VisitNewExpr(NewExpr, Stack, Counters) Export
 	If Region = "AbstractSyntaxTree" Then
 
 		If NewExpr.Name = "Structure" Then
-			Tag = Comments[NewExpr.Place.Line];
+			Tag = Comments[NewExpr.Place.BegLine];
 			If Tag <> Undefined And StrFind(Tag, "@Node") Then
 
 				DescriptionList = New ValueList;
 
-				DescriptionLine = NewExpr.Place.Line - 1;
+				DescriptionLine = NewExpr.Place.BegLine - 1;
 				Description = Comments[DescriptionLine];
 				While Description <> Undefined Do
 					DescriptionList.Insert(0, Description);
@@ -150,7 +151,7 @@ Procedure VisitNewExpr(NewExpr, Stack, Counters) Export
 					If Right(FieldName, 1) = "," Then
 						FieldName = Left(FieldName, StrLen(FieldName) - 1);
 					EndIf;
-					TypeList = ParseTypes(Comments[Field.Place.Line]);
+					TypeList = ParseTypes(Comments[Field.Place.BegLine]);
 					Result.Add(StrTemplate(
 						"		<li><strong>%1</strong>: %2%3</li>" "",
 						FieldName,

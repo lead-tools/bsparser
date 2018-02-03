@@ -950,6 +950,7 @@ Function Parser(Source) Export
 		"Source,"    // string
 		"Len,"       // number
 		"Line,"      // number
+		"EndLine,"   // number
 		"Pos,"       // number
 		"BegPos,"    // number
 		"EndPos,"    // number
@@ -972,6 +973,7 @@ Function Parser(Source) Export
 	Parser.Source = Source;
 	Parser.Pos = 0;
 	Parser.Line = 1;
+	Parser.EndLine = 1;
 	Parser.BegPos = 0;
 	Parser.EndPos = 0;
 	Parser.Methods = New Structure;
@@ -995,7 +997,7 @@ Function Next(Parser) Export
 
 	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
 
-	Parser.EndPos = Pos;
+	Parser.EndPos = Pos; Parser.EndLine = Parser.Line;
 
 	If Right(Parser.Lit, 1) = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 
@@ -2180,10 +2182,11 @@ Function Place(Parser, Pos = Undefined, Line = Undefined)
 			Line = Parser.Line;
 		EndIf;
 		Place = New Structure(
-			"Line," // number
-			"Pos,"  // number
-			"Len"   // number
-		, Line, Pos, Len);
+			"Pos,"     // number
+			"Len,"     // number
+			"BegLine," // number
+			"EndLine"  // number
+		, Pos, Len, Line, Parser.EndLine);
 		If Debug Then
 			Place.Insert("Str", Mid(Parser.Source, Pos, Len));
 		EndIf;
