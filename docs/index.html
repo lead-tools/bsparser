@@ -278,12 +278,15 @@
 	<i> Пример:</i><br>
  <pre>
  // выражения "Новый" заключены в скобки <...>
- // в этом варианте поле "Constr" хранит узел типа DesigExpr
+ // в этом варианте поле "Name" хранит имя типа "Массив",
+ // а поле "Args" хранит массив из одного выражения
  Параметры = <Новый Массив(1)>;
  Параметры[0] = 10;
- // в этом варианте поле "Constr" хранит массив из двух выражений
+ // в этом варианте поле "Name" равно Неопределено,
+ // а поле "Args" хранит массив из двух выражений
  Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NewExpr</li>
-		<li><strong>Constr</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
+		<li><strong>Name</strong>: undefined, string</li>
+		<li><strong>Args</strong>: array (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='TernaryExpr'>TernaryExpr<a class='permalink' href='#TernaryExpr'>¶</a></h3>

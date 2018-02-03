@@ -593,22 +593,25 @@ Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 	, Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Constr, Place = Undefined)
+Function NewExpr(Name, Args, Place = Undefined)
 	// Хранит выражение "Новый".
 	// Пример:
 	// <pre>
 	// // выражения "Новый" заключены в скобки <...>
-	// // в этом варианте поле "Constr" хранит узел типа DesigExpr
+	// // в этом варианте поле "Name" хранит имя типа "Массив",
+	// // а поле "Args" хранит массив из одного выражения
 	// Параметры = <Новый Массив(1)>;
 	// Параметры[0] = 10;
-	// // в этом варианте поле "Constr" хранит массив из двух выражений
+	// // в этом варианте поле "Name" равно Неопределено,
+	// // а поле "Args" хранит массив из двух выражений
 	// Массив = <Новый (Тип("Массив"), Параметры)>;
 	// </pre>
 	Return New Structure( // @Node
-		"Type,"   // string (one of Nodes)
-		"Constr," // structure (DesigExpr) or array (one of #Expressions)
-		"Place"   // undefined, structure (Place)
-	, Nodes.NewExpr, Constr, Place);
+		"Type," // string (one of Nodes)
+		"Name," // undefined, string
+		"Args," // array (one of #Expressions)
+		"Place" // undefined, structure (Place)
+	, Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
@@ -1382,23 +1385,27 @@ Function ParseStringExpr(Parser)
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr(Parser)
-	Var Tok, Constr, Pos, Line;
+	Var Tok, Name, Args, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Tok = Next(Parser);
+	If Tok = Tokens.Ident Then
+		Name = Parser.Lit;
+		Args = EmptyArray;
+		Tok = Next(Parser);
+	EndIf;
 	If Tok = Tokens.Lparen Then
 		Tok = Next(Parser);
-		If Tok = Tokens.Rparen Then
-			Constr = EmptyArray;
-		Else
-			Constr = ParseArguments(Parser);
+		If Tok <> Tokens.Rparen Then
+			Args = ParseArguments(Parser);
+			Expect(Parser, Tokens.Rparen);
 		EndIf;
-		Expect(Parser, Tokens.Rparen);
 		Next(Parser);
-	Else
-		Constr = ParseDesigExpr(Parser);
 	EndIf;
-	Return NewExpr(Constr, Place(Parser, Pos, Line));
+	If Name = Undefined And Args = Undefined Then
+		Error(Parser, "Expected constructor", Parser.EndPos, True);
+	EndIf;
+	Return NewExpr(Name, Args, Place(Parser, Pos, Line));
 EndFunction // ParseNewExpr()
 
 Function ParseDesigExpr(Parser, Val AllowNewVar = False, NewVar = Undefined)
@@ -1861,7 +1868,7 @@ Function ParsePrepUseDecl(Parser)
 	Line = Parser.Line;
 	Next(Parser);
 	If Line <> Parser.Line Then
-		Error(Parser, "Expected string or identifier", Pos, True);
+		Error(Parser, "Expected string or identifier", Parser.EndPos, True);
 	EndIf;
 	If Parser.Tok = Tokens.Number Then
 		Path = Parser.Lit;
@@ -1873,7 +1880,7 @@ Function ParsePrepUseDecl(Parser)
 		Or Parser.Tok = Tokens.String Then
 		Path = Parser.Lit;
 	Else
-		Error(Parser, "Expected string or identifier", Pos, True);
+		Error(Parser, "Expected string or identifier", Parser.EndPos, True);
 	EndIf;
 	Next(Parser);
 	Return PrepUseDecl(Path, Place(Parser, Pos, Line));
@@ -2592,13 +2599,9 @@ Procedure VisitNewExpr(Visitor, NewExpr)
 		Hook.VisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	PushInfo(Visitor, NewExpr);
-	If TypeOf(NewExpr.Constr) = Type("Structure") Then
-		VisitDesigExpr(Visitor, NewExpr.Constr);
-	Else
-		For Each Expr In NewExpr.Constr Do
-			VisitExpr(Visitor, Expr);
-		EndDo;
-	EndIf;
+	For Each Expr In NewExpr.Args Do
+		VisitExpr(Visitor, Expr);
+	EndDo;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitNewExpr Do
 		Hook.AfterVisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);

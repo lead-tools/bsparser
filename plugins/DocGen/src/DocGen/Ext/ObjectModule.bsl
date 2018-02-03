@@ -74,7 +74,7 @@ Function Interface() Export
 	Interface = New Array;
 	Interface.Add("VisitModule");
 	Interface.Add("VisitPrepRegionDecl");
-	Interface.Add("VisitDesigExpr");
+	Interface.Add("VisitNewExpr");
 	Return Interface;
 EndFunction // Interface()
 
@@ -97,81 +97,76 @@ Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Counters) Export
 	EndIf;
 EndProcedure // VisitPrepRegionDecl()
 
-Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
+Procedure VisitNewExpr(NewExpr, Stack, Counters) Export
 
 	If Region = "AbstractSyntaxTree" Then
 
-		If DesigExpr.Call Then
+		If NewExpr.Name = "Structure" Then
+			Tag = Comments[NewExpr.Place.Line];
+			If Tag <> Undefined And StrFind(Tag, "@Node") Then
 
-			If DesigExpr.Object.Name = "Structure" Then
-				Tag = Comments[DesigExpr.Place.Line];
-				If Tag <> Undefined And StrFind(Tag, "@Node") Then
-					
-					DescriptionList = New ValueList;
-					
-					DescriptionLine = DesigExpr.Place.Line - 1;
+				DescriptionList = New ValueList;
+
+				DescriptionLine = NewExpr.Place.Line - 1;
+				Description = Comments[DescriptionLine];
+				While Description <> Undefined Do
+					DescriptionList.Insert(0, Description);
+					DescriptionLine = DescriptionLine - 1;
 					Description = Comments[DescriptionLine];
-					While Description <> Undefined Do
-						DescriptionList.Insert(0, Description);
-						DescriptionLine = DescriptionLine - 1;
-						Description = Comments[DescriptionLine];
-					EndDo;  
-					
-					CallExpr = DesigExpr.Select[0];
-					NodeFields = CallExpr.Value[0].List;
-					NodeName = CallExpr.Value[1].Select[0].Value;
+				EndDo;
 
+				NodeFields = NewExpr.Args[0].List;
+				NodeName = NewExpr.Args[1].Select[0].Value;
+
+				Result.Add(StrTemplate(
+					"	<h3 id='%1'>%1<a class='permalink' href='#%1'>¶</a></h3>
+					|	<ul>" "",
+					NodeName
+				));
+
+				DescriptionListCount = DescriptionList.Count();
+				Index = 0;
+				While Index < DescriptionListCount Do
+					Item = DescriptionList[Index];
+					If TrimAll(Item.Value) = "<pre>" Then
+						Buffer = New Array;
+						While TrimAll(Item.Value) <> "</pre>" Do
+							Buffer.Add(Item.Value);
+							Index = Index + 1;
+							Item = DescriptionList[Index];
+						EndDo;
+						Result.Add(StrConcat(Buffer, Chars.LF));
+						Result.Add("</pre>");
+					Else
+						Result.Add(StrTemplate("	<i>%1</i><br>" "", Item.Value));
+					EndIf;
+					Index = Index + 1;
+				EndDo;
+
+				Result.Add("	<p>");
+
+				For Each Field In NodeFields Do
+					FieldName = TrimAll(Field.Value);
+					If Right(FieldName, 1) = "," Then
+						FieldName = Left(FieldName, StrLen(FieldName) - 1);
+					EndIf;
+					TypeList = ParseTypes(Comments[Field.Place.Line]);
 					Result.Add(StrTemplate(
-						"	<h3 id='%1'>%1<a class='permalink' href='#%1'>¶</a></h3>
-						|	<ul>" "",
-						NodeName
+						"		<li><strong>%1</strong>: %2%3</li>" "",
+						FieldName,
+						GenerateTypeLinks(TypeList),
+						?(FieldName = "Type", " = Nodes." + NodeName, "")
 					));
-					
-					DescriptionListCount = DescriptionList.Count();
-					Index = 0;
-					While Index < DescriptionListCount Do
-						Item = DescriptionList[Index]; 
-						If TrimAll(Item.Value) = "<pre>" Then
-							Buffer = New Array;
-							While TrimAll(Item.Value) <> "</pre>" Do
-								Buffer.Add(Item.Value);
-								Index = Index + 1;
-								Item = DescriptionList[Index];
-							EndDo;
-							Result.Add(StrConcat(Buffer, Chars.LF));
-							Result.Add("</pre>");
-						Else
-							Result.Add(StrTemplate("	<i>%1</i><br>" "", Item.Value));
-						EndIf; 
-						Index = Index + 1;
-					EndDo;
-					
-					Result.Add("	<p>");
-					
-					For Each Field In NodeFields Do
-						FieldName = TrimAll(Field.Value);
-						If Right(FieldName, 1) = "," Then
-							FieldName = Left(FieldName, StrLen(FieldName) - 1);
-						EndIf;
-						TypeList = ParseTypes(Comments[Field.Place.Line]);
-						Result.Add(StrTemplate(
-							"		<li><strong>%1</strong>: %2%3</li>" "",
-							FieldName,
-							GenerateTypeLinks(TypeList),
-							?(FieldName = "Type", " = Nodes." + NodeName, "")
-						));
-					EndDo;
+				EndDo;
 
-					Result.Add("	</ul>" "");
+				Result.Add("	</ul>" "");
 
-				EndIf;
 			EndIf;
-
 		EndIf;
 
 	EndIf;
 
-EndProcedure // VisitDesigExpr()
+EndProcedure // VisitNewExpr()
 
 Function GenerateTypeLinks(TypeList)
 	Var Buffer;
@@ -231,9 +226,9 @@ Function ParseTypes(Types)
 		List.Add(New Structure("Ident, Child", Ident, Child));
 		If Mid(Types, Pos, 1) <> "," Then
 			Break;
-		EndIf; 
+		EndIf;
 		Pos = Pos + 1;
-	EndDo; 
+	EndDo;
 	Return List;
 EndFunction // ParseTypes()
 

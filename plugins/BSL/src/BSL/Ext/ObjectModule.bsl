@@ -109,7 +109,7 @@ Procedure VisitProcDecl(ProcDecl)
 	Object = ProcDecl.Object;
 	If Object.Directive <> Undefined Then
 		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
-	EndIf; 
+	EndIf;
 	Result.Add("Procedure ");
 	Result.Add(Object.Name);
 	VisitParams(Object.Params);
@@ -128,7 +128,7 @@ Procedure VisitFuncDecl(FuncDecl)
 	Object = FuncDecl.Object;
 	If Object.Directive <> Undefined Then
 		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
-	EndIf;	
+	EndIf;
 	Result.Add("Function ");
 	Result.Add(Object.Name);
 	VisitParams(Object.Params);
@@ -260,19 +260,21 @@ Procedure VisitBinaryExpr(BinaryExpr)
 EndProcedure // VisitBinaryExpr()
 
 Procedure VisitNewExpr(NewExpr)
-    If TypeOf(NewExpr.Constr) = Type("Structure") Then
-		Result.Add("New ");
-		VisitDesigExpr(NewExpr.Constr);
+    If NewExpr.Name <> Undefined Then
+		Result.Add("New " + NewExpr.Name);
     Else
-		Result.Add("New (");
+		Result.Add("New ");
+	EndIf;
+	If NewExpr.Args.Count() > 0 Then
+		Result.Add("(");
 		Indent = Indent + 1; // >>
-		VisitExprList(NewExpr.Constr);
+		VisitExprList(NewExpr.Args);
 		Indent = Indent - 1; // <<
 		If LastLine > NewExpr.Place.Line Then
 			Result.Add(Chars.LF); Indent();
 		EndIf;
 		Result.Add(")");
-    EndIf;
+	EndIf;
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(TernaryExpr)
@@ -311,7 +313,7 @@ Procedure VisitStringExpr(StringExpr)
 		EndDo;
 	Else
 		VisitExpr(StringExpr.List[0]);
-	EndIf; 
+	EndIf;
 EndProcedure // VisitStringExpr()
 
 #EndRegion // VisitExpr
@@ -520,7 +522,7 @@ EndProcedure // Comment()
 Procedure VisitVarList(VarList)
 	Var Buffer, Object;
 	Buffer = New Array;
-	For Each Object In VarList Do 
+	For Each Object In VarList Do
 		If Object.Property("Export") And Object.Export Then
 			Buffer.Add(Object.Name + " Export");
 		Else
