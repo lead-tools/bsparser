@@ -1130,6 +1130,10 @@ Function Next(Parser) Export
 
 			ElsIf Prev = "&" Then
 
+				If AlphaDigitMap[Mid(Source, Pos, 1)] <> Alpha Then
+					Error(Parser, "Expected directive", Pos, True);
+				EndIf;
+
 				// scan ident
 				Beg = Pos; Pos = Pos + 1;
 				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
@@ -1148,6 +1152,10 @@ Function Next(Parser) Export
 					If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
 					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
 				EndDo;
+
+				If AlphaDigitMap[Mid(Source, Pos, 1)] <> Alpha Then
+					Error(Parser, "Expected preprocessor instruction", Pos, True);
+				EndIf;
 
 				// scan ident
 				Beg = Pos; Pos = Pos + 1;
