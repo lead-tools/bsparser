@@ -7,6 +7,7 @@ Var Nodes;            // enum
 Var SelectKinds;      // enum
 Var Directives;       // enum
 Var PrepInstructions; // enum
+Var PrepSymbols;      // enum
 Var BasicLitNoString; // array (one of Tokens)
 Var RelOperators;     // array (one of Tokens)
 Var AddOperators;     // array (one of Tokens)
@@ -135,6 +136,7 @@ Procedure InitEnums()
 	SelectKinds = SelectKinds();
 	Directives = Directives();
 	PrepInstructions = PrepInstructions();
+	PrepSymbols = PrepSymbols();
 EndProcedure // InitEnums()
 
 #EndRegion // Init
@@ -193,7 +195,7 @@ EndFunction // Tokens()
 
 Function Nodes() Export
 	Return Enum(New Structure,
-		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param,
+		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param, PrepSymbol,
 		|VarModListDecl, VarLocListDecl, ProcDecl, FuncDecl, PrepIfDecl, PrepElsIfDecl, PrepRegionDecl,
 		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, CallStmt, IfStmt, ElsIfStmt,
@@ -230,6 +232,22 @@ Function PrepInstructions() Export
 		"Use.Использовать" // onescript
 	);
 EndFunction // PrepInstructions()
+
+Function PrepSymbols() Export
+	Return Enum(New Structure,
+		"Client.Клиент,"
+		"AtClient.НаКлиенте,"
+		"AtServer.НаСервере,"
+		"MobileAppClient.МобильноеПриложениеКлиент,"
+		"MobileAppServer.МобильноеПриложениеСервер,"
+		"ThickClientOrdinaryApplication.ТолстыйКлиентУправляемоеПриложение,"
+		"ThickClientManagedApplication.ТолстыйКлиентУправляемоеПриложение,"
+		"Server.Сервер,"
+		"ExternalConnection.ВнешнееСоединение,"
+		"ThinClient.ТонкийКлиент,"
+		"WebClient.ВебКлиент"
+	);
+EndFunction // PrepSymbols()
 
 Function Enum(Structure, Keys)
 	Var Items, Item, ItemList, Value;
@@ -340,6 +358,16 @@ Function Param(Name, ByVal, Value = Undefined)
 		"Value"  // undefined, structure (UnaryExpr, BasicLitExpr)
 	, Nodes.Param, Name, ByVal, Value);
 EndFunction // Param()
+
+Function PrepSymbol(Name)
+	// Узел хранит информацию о символе препроцессора.
+	// Является объектом глобальной области видимости.
+	// Используется только в выражениях препроцессора.
+	Return New Structure( // @Node
+		"Type," // string (one of Nodes)
+		"Name"  // string
+	, Nodes.PrepSymbol, Name);
+EndFunction // PrepSymbol()
 
 #EndRegion // Scope
 
@@ -1563,6 +1591,61 @@ Function ParseParenExpr(Parser)
 	Return ParenExpr(Expr, Place(Parser, Pos, Line));
 EndFunction // ParseParenExpr()
 
+Function ParsePrepExpression(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.BegPos;
+	Line = Parser.Line;
+	Expr = ParsePrepAndExpr(Parser);
+	While Parser.Tok = Tokens.Or Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParsePrepAndExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParsePrepExpression()
+
+Function ParsePrepAndExpr(Parser)
+	Var Expr, Operator, Pos, Line;
+	Pos = Parser.BegPos;
+	Line = Parser.Line;
+	Expr = ParsePrepNotExpr(Parser);
+	While Parser.Tok = Tokens.And Do
+		Operator = Parser.Tok;
+		Next(Parser);
+		Expr = BinaryExpr(Expr, Operator, ParsePrepNotExpr(Parser), Place(Parser, Pos, Line));
+	EndDo;
+	Return Expr;
+EndFunction // ParsePrepAndExpr()
+
+Function ParsePrepNotExpr(Parser)
+	Var Expr, Pos, Line;
+	Pos = Parser.BegPos;
+	Line = Parser.Line;
+	If Parser.Tok = Tokens.Not Then
+		Next(Parser);
+		Expr = NotExpr(ParsePrepOperand(Parser), Place(Parser, Pos, Line));
+	Else
+		Expr = ParsePrepOperand(Parser);
+	EndIf;
+	Return Expr;
+EndFunction // ParsePrepNotExpr()
+
+Function ParsePrepOperand(Parser)
+	Var Operand, Object;
+	If Parser.Tok = Tokens.Ident Then
+		If PrepSymbols.Property(Parser.Lit) Then
+			Object = PrepSymbol(Parser.Lit);
+		Else
+			Object = Unknown(Parser.Lit);
+		EndIf;
+		Operand = DesigExpr(Object, EmptyArray, False, Place(Parser));
+		Next(Parser);
+	Else
+		Error(Parser, "Expected operand",, True);
+	EndIf;
+	Return Operand;
+EndFunction // ParsePrepOperand()
+
 #EndRegion // ParseExpr
 
 #Region ParseDecl
@@ -1821,7 +1904,7 @@ Function ParsePrepIfDecl(Parser)
 	BegPos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
-	Cond = ParseExpression(Parser); // todo: only logic operators
+	Cond = ParsePrepExpression(Parser);
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
 	ThenPart = ParseModDecls(Parser);
@@ -1832,7 +1915,7 @@ Function ParsePrepIfDecl(Parser)
 			Pos = Parser.BegPos;
 			Line = Parser.Line;
 			Next(Parser);
-			ElsIfCond = ParseExpression(Parser);
+			ElsIfCond = ParsePrepExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseModDecls(Parser);
@@ -2123,7 +2206,7 @@ Function ParsePrepIfStmt(Parser)
 	Var Tok, Cond, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
 	Next(Parser);
-	Cond = ParseExpression(Parser); // todo: only logic operators
+	Cond = ParsePrepExpression(Parser);
 	Expect(Parser, Tokens.Then);
 	Next(Parser);
 	ThenPart = ParseStatements(Parser);
@@ -2134,7 +2217,7 @@ Function ParsePrepIfStmt(Parser)
 			Pos = Parser.BegPos;
 			Line = Parser.Line;
 			Next(Parser);
-			ElsIfCond = ParseExpression(Parser);
+			ElsIfCond = ParsePrepExpression(Parser);
 			Expect(Parser, Tokens.Then);
 			Next(Parser);
 			ElsIfThen = ParseStatements(Parser);
