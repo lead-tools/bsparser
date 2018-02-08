@@ -2694,7 +2694,9 @@ Procedure VisitNewExpr(Visitor, NewExpr)
 	EndDo;
 	PushInfo(Visitor, NewExpr);
 	For Each Expr In NewExpr.Args Do
-		VisitExpr(Visitor, Expr);
+		If Expr <> Undefined Then
+			VisitExpr(Visitor, Expr);
+		EndIf;
 	EndDo;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitNewExpr Do
