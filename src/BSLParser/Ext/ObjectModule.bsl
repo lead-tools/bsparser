@@ -1528,19 +1528,6 @@ Function ParseSelectExpr(Parser)
 	Return SelectExpr;
 EndFunction // ParseSelectExpr()
 
-Function ParseExprList(Parser, HeadExpr = Undefined)
-	Var ExprList;
-	If HeadExpr = Undefined Then
-		HeadExpr = ParseExpression(Parser);
-	EndIf;
-	ExprList = New Array;
-	ExprList.Add(HeadExpr);
-	While Parser.Tok = Tokens.Comma And InitOfExpression.Find(Next(Parser)) <> Undefined Do
-		ExprList.Add(ParseExpression(Parser));
-	EndDo;
-	Return ExprList;
-EndFunction // ParseExprList()
-
 Function ParseArguments(Parser)
 	Var ExprList, ExpectExpression;
 	ExprList = New Array;
