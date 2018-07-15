@@ -240,7 +240,7 @@ Function PrepSymbols() Export
 		"AtServer.НаСервере,"
 		"MobileAppClient.МобильноеПриложениеКлиент,"
 		"MobileAppServer.МобильноеПриложениеСервер,"
-		"ThickClientOrdinaryApplication.ТолстыйКлиентУправляемоеПриложение,"
+		"ThickClientOrdinaryApplication.ТолстыйКлиентОбычноеПриложение,"
 		"ThickClientManagedApplication.ТолстыйКлиентУправляемоеПриложение,"
 		"Server.Сервер,"
 		"ExternalConnection.ВнешнееСоединение,"
