@@ -2587,7 +2587,7 @@ EndProcedure // VisitPrepRegionDecl()
 
 Procedure VisitExpr(Visitor, Expr)
 	Var Type, Hook;
-	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
+	For Each Hook In Visitor.Hooks.VisitExpr Do
 		Hook.VisitExpr(Expr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	Type = Expr.Type;
@@ -2610,7 +2610,7 @@ Procedure VisitExpr(Visitor, Expr)
 	ElsIf Type = Nodes.StringExpr Then
 		VisitStringExpr(Visitor, Expr);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitBasicLitExpr Do
+	For Each Hook In Visitor.Hooks.AfterVisitExpr Do
 		Hook.AfterVisitExpr(Expr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitExpr()
