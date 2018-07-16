@@ -31,7 +31,8 @@ Var Location Export; // boolean
 #Region Init
 
 Procedure Init()
-
+	Var Letters, Index, Char;
+	
 	Verbose = False;
 	Debug = False;
 	Location = True;
@@ -522,7 +523,7 @@ Function PrepUseDecl(Path, Place = Undefined)
 	  "Type," // string (one of Nodes)
 	  "Path," // string
 	  "Place" // undefined, structure (Place)
-	, Nodes.PrepUseDecl, Path);
+	, Nodes.PrepUseDecl, Path, Place);
 EndFunction // PrepUseDecl()
 
 #EndRegion // Declarations
@@ -1529,10 +1530,9 @@ Function ParseSelectExpr(Parser)
 EndFunction // ParseSelectExpr()
 
 Function ParseArguments(Parser)
-	Var ExprList, ExpectExpression;
+	Var ExprList;
 	ExprList = New Array;
-	ExpectExpression = True;
-	While ExpectExpression Do
+	While True Do
 		If InitOfExpression.Find(Parser.Tok) <> Undefined Then
 			ExprList.Add(ParseExpression(Parser));
 		Else
@@ -1541,7 +1541,7 @@ Function ParseArguments(Parser)
 		If Parser.Tok = Tokens.Comma Then
 			Next(Parser);
 		Else
-			ExpectExpression = False;
+			Break;
 		EndIf;
 	EndDo;
 	Return ExprList;
@@ -1749,7 +1749,7 @@ Function ParseVarListDecl(Parser)
 EndFunction // ParseVarListDecl()
 
 Function ParseVarLoc(Parser)
-	Var Name, Object, Exported, Pos;
+	Var Name, Object, Pos;
 	Pos = Parser.BegPos;
 	Expect(Parser, Tokens.Ident);
 	Name = Parser.Lit;
@@ -1928,7 +1928,7 @@ Function ParsePrepIfDecl(Parser)
 EndFunction // ParsePrepIfDecl()
 
 Function ParsePrepRegionDecl(Parser)
-	Var Name, Decls, Statements, Region, Pos, Line;
+	Var Name, Decls, Statements, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
 	Next(Parser);
@@ -2039,16 +2039,14 @@ Function ParseStmt(Parser)
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt(Parser)
-	Var Tok, Expr;
-	Next(Parser);
-	If InitOfExpression.Find(Parser.Tok) <> Undefined Then
+	Var Expr;
+	If InitOfExpression.Find(Next(Parser)) <> Undefined Then
 		Expr = ParseExpression(Parser);
 	EndIf;
 	Return RaiseStmt(Expr);
 EndFunction // ParseRaiseStmt()
 
 Function ParseExecuteStmt(Parser)
-	Var Expr;
 	Next(Parser);
 	Return ExecuteStmt(ParseExpression(Parser));
 EndFunction // ParseExecuteStmt()
@@ -2154,7 +2152,7 @@ Function ParseForStmt(Parser)
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt(Parser)
-	Var DesigExpr, Left, Right, Collection, Statements, VarPos, NewVar;
+	Var DesigExpr, Collection, Statements, VarPos, NewVar;
 	Next(Parser);
 	Expect(Parser, Tokens.Ident);
 	VarPos = Parser.BegPos;
@@ -2330,7 +2328,7 @@ EndProcedure // Error()
 #Region Visitor
 
 Function Visitor(Hooks) Export
-	Var Visitor;
+	Var Visitor, Counters, Item;
 
 	Visitor = New Structure( // @Class
 		"Hooks,"    // structure as map[string] (array)
@@ -2351,19 +2349,22 @@ Function Visitor(Hooks) Export
 EndFunction // Visitor()
 
 Procedure PushInfo(Visitor, Parent)
+	Var NodeType;
 	Visitor.Stack = New FixedStructure("Outer, Parent", Visitor.Stack, Parent);
 	NodeType = Parent.Type;
 	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] + 1;
 EndProcedure // PushInfo()
 
 Procedure PopInfo(Visitor)
+	Var NodeType;
 	NodeType = Visitor.Stack.Parent.Type;
 	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] - 1;
 	Visitor.Stack = Visitor.Stack.Outer;
 EndProcedure // PopInfo()
 
 Function Hooks() Export
-
+	Var Hooks, Item;
+	
 	Hooks = New Structure(
 		"VisitModule,         AfterVisitModule,"
 		"VisitDeclarations,   AfterVisitDeclarations,"
@@ -2531,7 +2532,7 @@ Procedure VisitFuncDecl(Visitor, FuncDecl)
 EndProcedure // VisitFuncDecl()
 
 Procedure VisitPrepIfDecl(Visitor, PrepIfDecl)
-	Var Hook;
+	Var Hook, PrepElsIfDecl;
 	For Each Hook In Visitor.Hooks.VisitPrepIfDecl Do
 		Hook.VisitPrepIfDecl(PrepIfDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
@@ -2567,7 +2568,7 @@ Procedure VisitPrepElsIfDecl(Visitor, PrepElsIfDecl)
 EndProcedure // VisitPrepElsIfDecl()
 
 Procedure VisitPrepRegionDecl(Visitor, PrepRegionDecl)
-	Var Hook, Decl, Stmt;
+	Var Hook;
 	For Each Hook In Visitor.Hooks.VisitPrepRegionDecl Do
 		Hook.VisitPrepRegionDecl(PrepRegionDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
