@@ -2,7 +2,7 @@
 // Генератор технической документации по парсеру
 
 Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions;
-Var Region, SubRegion;
+Var Region, SubRegion, RegionLevel;
 Var Comments;
 Var Result;
 
@@ -23,6 +23,7 @@ Procedure Init(BSLParser) Export
 		|</head>
 		|<body>" ""
 	);
+	RegionLevel = 0;
 EndProcedure // Init()
 
 Function Result() Export
@@ -74,7 +75,7 @@ Function Interface() Export
 	Var Interface;
 	Interface = New Array;
 	Interface.Add("VisitModule");
-	Interface.Add("VisitPrepRegionDecl");
+	Interface.Add("VisitPrepInst");
 	Interface.Add("VisitNewExpr");
 	Return Interface;
 EndFunction // Interface()
@@ -83,20 +84,30 @@ Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;
 EndProcedure // VisitModule
 
-Procedure VisitPrepRegionDecl(PrepRegionDecl, Stack, Counters) Export
-	If Counters.PrepRegionDecl = 0 Then
-		Region = PrepRegionDecl.Name;
-		SubRegion = "";
-		If Region = "AbstractSyntaxTree" Then
-			Result.Add("	<h1>Abstract syntax tree</h1>" "");
+Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
+	If PrepInst.Type = Nodes.PrepRegionInst Then
+		If RegionLevel = 0 Then
+			Region = PrepInst.Name;
+			SubRegion = "";
+			If Region = "AbstractSyntaxTree" Then
+				Result.Add("	<h1>Abstract syntax tree</h1>" "");
+			EndIf;
+		ElsIf RegionLevel = 1 Then
+			SubRegion = PrepInst.Name;
+			If Region = "AbstractSyntaxTree" Then
+				Result.Add(StrTemplate("	<h2 id='#%1'>#%1</h2>" "", SubRegion));
+			EndIf;
 		EndIf;
-	ElsIf Counters.PrepRegionDecl = 1 Then
-		SubRegion = PrepRegionDecl.Name;
-		If Region = "AbstractSyntaxTree" Then
-			Result.Add(StrTemplate("	<h2 id='#%1'>#%1</h2>" "", SubRegion));
+		RegionLevel = RegionLevel + 1;
+	Elsif PrepInst.Type = Nodes.PrepEndRegionInst Then
+		RegionLevel = RegionLevel - 1;
+		If RegionLevel = 0 Then
+			Region = "";
+		ElsIf RegionLevel = 1 Then
+			SubRegion = "";
 		EndIf;
-	EndIf;
-EndProcedure // VisitPrepRegionDecl()
+	EndIf; 
+EndProcedure // VisitPrepInst()
 
 Procedure VisitNewExpr(NewExpr, Stack, Counters) Export
 

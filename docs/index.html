@@ -76,14 +76,6 @@
 		<li><strong>ByVal</strong>: boolean</li>
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 	</ul>
-	<h3 id='PrepSymbol'>PrepSymbol<a class='permalink' href='#PrepSymbol'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о символе препроцессора.</i><br>
-	<i> Является объектом глобальной области видимости.</i><br>
-	<i> Используется только в выражениях препроцессора.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepSymbol</li>
-		<li><strong>Name</strong>: string</li>
-	</ul>
 	<h2 id='#Declarations'>#Declarations</h2>
 	<h3 id='VarModListDecl'>VarModListDecl<a class='permalink' href='#VarModListDecl'>¶</a></h3>
 	<ul>
@@ -141,68 +133,6 @@
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepIfDecl'>PrepIfDecl<a class='permalink' href='#PrepIfDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
-	<i> Пример:</i><br>
- <pre>
- #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит объявления в этом блоке
- #ИначеЕсли Клиент Тогда
-     // поле-массив "ElsIf" хранит последовательность блоков #ИначеЕсли
- #Иначе
-     // поле "Else" хранит объявления в этом блоке
- #КонецЕсли</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfDecl</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfDecl'>PrepElsIfDecl</a>)</li>
-		<li><strong>Else</strong>: undefined, array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepElsIfDecl'>PrepElsIfDecl<a class='permalink' href='#PrepElsIfDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию о ветке #ИначеЕсли в инструкции препроцессора #Если,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
-	<i> Пример:</i><br>
- <pre>
- ...
- #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит объявления в этом блоке
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfDecl</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepRegionDecl'>PrepRegionDecl<a class='permalink' href='#PrepRegionDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
-	<i> Пример:</i><br>
- <pre>
- #Область Интерфейс   // поле "Name" хранит имя области
-     Перем П1;        // поле "Decls" хранит объявления переменных,
-     Процедура Тест() // процедур и функций.
-         ...
-     КонецПроцедуры
-     П1 = 2;          // поле "Body" хранит операторы тела модуля.
- #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionDecl</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepUseDecl'>PrepUseDecl<a class='permalink' href='#PrepUseDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
-	<i> Это нестандартная инструкция из OneScript</i><br>
-	<i> Пример:</i><br>
- <pre>
- #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseDecl</li>
-		<li><strong>Path</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
@@ -432,39 +362,6 @@
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepIfStmt'>PrepIfStmt<a class='permalink' href='#PrepIfStmt'>¶</a></h3>
-	<ul>
-	<i> Хранит инструкцию препроцессора "#Если",</i><br>
-	<i> которая находится внутри процедуры или функции.</i><br>
-	<i> Пример:</i><br>
- <pre>
- #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит операторы в этом блоке
- #ИначеЕсли Клиент Тогда
-     // поле-массив "ElsIf" хранит последовательность блоков ИначеЕсли
- #Иначе
-     // поле "Else" хранит операторы в этом блоке
- #КонецЕсли</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfStmt</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>ElsIf</strong>: undefined, array (<a href='#PrepElsIfStmt'>PrepElsIfStmt</a>)</li>
-		<li><strong>Else</strong>: undefined, array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepElsIfStmt'>PrepElsIfStmt<a class='permalink' href='#PrepElsIfStmt'>¶</a></h3>
-	<ul>
-	<i> Хранит блок "#ИначеЕсли" инструкции препроцессора "#Если",</i><br>
-	<i> которая находится внутри процедуры или функции.</i><br>
-	<i> Пример:</i><br>
- <pre>
- ...
- #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит операторы в этом блоке
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfStmt</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
 	<h3 id='WhileStmt'>WhileStmt<a class='permalink' href='#WhileStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Пока".</i><br>
@@ -474,19 +371,6 @@
      // поле "Body" хранит операторы в этом блоке
  КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.WhileStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='PrepRegionStmt'>PrepRegionStmt<a class='permalink' href='#PrepRegionStmt'>¶</a></h3>
-	<ul>
-	<i> Хранит инструкцию препроцессора "Область",</i><br>
-	<i> которая находится внутри процедуры или функции.</i><br>
- <pre>
- #Область ТекстЗапроса   // поле "Name" хранит имя области
- Запрос.Текст =          // поле "Body" хранит операторы внутри области.
-     "ВЫБРАТЬ * ИЗ Таблица";
- #КонецОбласти</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionStmt</li>
-		<li><strong>Name</strong>: string</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -547,6 +431,116 @@
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h2 id='#Preprocessor'>#Preprocessor</h2>
+	<h3 id='PrepIfInst'>PrepIfInst<a class='permalink' href='#PrepIfInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ ...
+ #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfInst</li>
+		<li><strong>Cond</strong>: structure (one of <a href='##Preprocessor'>#Preprocessor</a>)</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepElsIfInst'>PrepElsIfInst<a class='permalink' href='#PrepElsIfInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #ИначеЕсли</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ ...
+ #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfInst</li>
+		<li><strong>Cond</strong>: structure (one of <a href='##Preprocessor'>#Preprocessor</a>)</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #Иначе</i><br>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #КонецЕсли</i><br>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepRegionInst'>PrepRegionInst<a class='permalink' href='#PrepRegionInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ ...
+ #Область Интерфейс   // поле "Name" хранит имя области
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionInst</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepEndRegionInst'>PrepEndRegionInst<a class='permalink' href='#PrepEndRegionInst'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #КонецОбласти,</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ ...
+ #КонецОбласти
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndRegionInst</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepUseDecl'>PrepUseDecl<a class='permalink' href='#PrepUseDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
+	<i> которая находится непосредственно в модуле.</i><br>
+	<i> Это нестандартная инструкция из OneScript</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseDecl</li>
+		<li><strong>Path</strong>: string</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepBinaryExpr'>PrepBinaryExpr<a class='permalink' href='#PrepBinaryExpr'>¶</a></h3>
+	<ul>
+	<i> Хранит бинарное выражение препроцессора.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // бинарные выражения заключены в скобки <...>
+ // поле "Operator" равно одному из допустимых операторов:
+ // - логических (кроме "Не")
+ // - реляционных
+ // - арифметических
+ // поля "Left" и "Right" содержат операнды-выражения
+ Если <Не Отмена И Продолжить> Тогда
+     Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
+ КонецЕсли;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepBinaryExpr</li>
+		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
+		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepNotExpr'>PrepNotExpr<a class='permalink' href='#PrepNotExpr'>¶</a></h3>
+	<ul>
+	<i> Хранит выражение препроцессора, к которому применено логическое отрицание "Не".</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // выражение-отрицание заключено в скобки <...>
+ НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepNotExpr</li>
+		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='PrepSymExpr'>PrepSymExpr<a class='permalink' href='#PrepSymExpr'>¶</a></h3>
+	<ul>
+	<i> Узел хранит информацию о символе препроцессора.</i><br>
+	<i> Поле Exist = True если такой символ существует.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // символ заключен в скобки <...>
+ #Если <Сервер> Тогда</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepSymExpr</li>
+		<li><strong>Symbol</strong>: string (one of <a href='#PrepSymbols'>PrepSymbols</a>)</li>
+		<li><strong>Exist</strong>: boolean</li>
+		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
 <h2 id='#Other'>#Other</h2>
 <h3 id='Place'>Place</h3>
 <ul>
@@ -585,14 +579,10 @@
 <li>"<a href='#VarMod'>VarMod</a>"</li>
 <li>"<a href='#VarLoc'>VarLoc</a>"</li>
 <li>"<a href='#Param'>Param</a>"</li>
-<li>"<a href='#PrepSymbol'>PrepSymbol</a>"</li>
 <li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
 <li>"<a href='#VarLocListDecl'>VarLocListDecl</a>"</li>
 <li>"<a href='#ProcDecl'>ProcDecl</a>"</li>
 <li>"<a href='#FuncDecl'>FuncDecl</a>"</li>
-<li>"<a href='#PrepIfDecl'>PrepIfDecl</a>"</li>
-<li>"<a href='#PrepElsIfDecl'>PrepElsIfDecl</a>"</li>
-<li>"<a href='#PrepRegionDecl'>PrepRegionDecl</a>"</li>
 <li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
 <li>"<a href='#SelectExpr'>SelectExpr</a>"</li>
 <li>"<a href='#DesigExpr'>DesigExpr</a>"</li>
@@ -609,19 +599,25 @@
 <li>"<a href='#ContinueStmt'>ContinueStmt</a>"</li>
 <li>"<a href='#RaiseStmt'>RaiseStmt</a>"</li>
 <li>"<a href='#ExecuteStmt'>ExecuteStmt</a>"</li>
-<li>"<a href='#CallStmt'>CallStmt</a>"</li>
-<li>"<a href='#IfStmt'>IfStmt</a>"</li>
-<li>"<a href='#ElsIfStmt'>ElsIfStmt</a>"</li>
-<li>"<a href='#PrepIfStmt'>PrepIfStmt</a>"</li>
-<li>"<a href='#PrepElsIfStmt'>PrepElsIfStmt</a>"</li>
 <li>"<a href='#WhileStmt'>WhileStmt</a>"</li>
-<li>"<a href='#PrepRegionStmt'>PrepRegionStmt</a>"</li>
 <li>"<a href='#ForStmt'>ForStmt</a>"</li>
 <li>"<a href='#ForEachStmt'>ForEachStmt</a>"</li>
 <li>"<a href='#TryStmt'>TryStmt</a>"</li>
 <li>"<a href='#GotoStmt'>GotoStmt</a>"</li>
 <li>"<a href='#LabelStmt'>LabelStmt</a>"</li>
-<li>"<a href='#PrepUseDecl'>PrepUseDecl</a>"</li>
+<li>"<a href='#CallStmt'>CallStmt</a>"</li>
+<li>"<a href='#IfStmt'>IfStmt</a>"</li>
+<li>"<a href='#ElsIfStmt'>ElsIfStmt</a>"</li>
+<li>"<a href='#PrepIfInst'>PrepIfInst</a>"</li>
+<li>"<a href='#PrepElsIfInst'>PrepElsIfInst</a>"</li>
+<li>"<a href='#PrepElseInst'>PrepElseInst</a>"</li>
+<li>"<a href='#PrepEndIfInst'>PrepEndIfInst</a>"</li>
+<li>"<a href='#PrepRegionInst'>PrepRegionInst</a>"</li>
+<li>"<a href='#PrepEndRegionInst'>PrepEndRegionInst</a>"</li>
+<li>"<a href='#PrepBinaryExpr'>PrepBinaryExpr</a>"</li>
+<li>"<a href='#PrepNotExpr'>PrepNotExpr</a>"</li>
+<li>"<a href='#PrepSymExpr'>PrepSymExpr</a>"</li>
+<li>"<a href='#PrepUseInst'>PrepUseInst</a>"</li>
 </ul>
 <h3 id='Tokens'>Tokens</h3>
 <ul><li>"If"</li>
