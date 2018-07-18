@@ -32,7 +32,7 @@ Var Location Export; // boolean
 
 Procedure Init()
 	Var Letters, Index, Char;
-	
+
 	Verbose = False;
 	Debug = False;
 	Location = True;
@@ -197,10 +197,10 @@ EndFunction // Tokens()
 Function Nodes() Export
 	Return Enum(New Structure,
 		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param,
-		|VarModListDecl, VarLocListDecl, ProcDecl, FuncDecl,
+		|VarModDecl, VarLocDecl, ProcDecl, FuncDecl,
 		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr,
 		|NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
-		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, 
+		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt,
 		|ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
 		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepUseInst"
@@ -367,7 +367,7 @@ EndFunction // Param()
 
 #Region Declarations
 
-Function VarModListDecl(Directive, VarList, Place = Undefined)
+Function VarModDecl(Directive, VarList, Place = Undefined)
 	// Хранит информацию об инструкции объявления переменных уровня модуля.
 	// Пример:
 	// <pre>
@@ -379,10 +379,10 @@ Function VarModListDecl(Directive, VarList, Place = Undefined)
 		"Directive," // string (one of Directives)
 		"List,"      // array (VarMod)
 		"Place"      // undefined, structure (Place)
-	, Nodes.VarModListDecl, Directive, VarList, Place);
-EndFunction // VarModListDecl()
+	, Nodes.VarModDecl, Directive, VarList, Place);
+EndFunction // VarModDecl()
 
-Function VarLocListDecl(VarList, Place = Undefined)
+Function VarLocDecl(VarList, Place = Undefined)
 	// Хранит информацию об инструкции объявления локальных переменных.
 	// Пример:
 	// <pre>
@@ -392,8 +392,8 @@ Function VarLocListDecl(VarList, Place = Undefined)
 		"Type,"  // string (one of Nodes)
 		"List,"  // array (VarLoc)
 		"Place"  // undefined, structure (Place)
-	, Nodes.VarLocListDecl, VarList, Place);
-EndFunction // VarLocListDecl()
+	, Nodes.VarLocDecl, VarList, Place);
+EndFunction // VarLocDecl()
 
 Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	// Хранит информацию об инструкции объявления процедуры.
@@ -1620,7 +1620,7 @@ Function ParseModDecls(Parser)
 		ElsIf Tok = Tokens._Region Then
 			Inst = ParsePrepRegionInst(Parser);
 			Next(Parser);
-			Inst.Place = Place(Parser, Pos, Line); 
+			Inst.Place = Place(Parser, Pos, Line);
 			Decls.Add(Inst);
 		ElsIf Tok = Tokens._EndRegion Then
 			Next(Parser);
@@ -1637,7 +1637,7 @@ Function ParseModDecls(Parser)
 			Decls.Add(Inst);
 		ElsIf Tok = Tokens._Else Then
 			Next(Parser);
-			Decls.Add(PrepElseInst(Place(Parser, Pos, Line)));			
+			Decls.Add(PrepElseInst(Place(Parser, Pos, Line)));
 		ElsIf Tok = Tokens._EndIf Then
 			Next(Parser);
 			Decls.Add(PrepEndIfInst(Place(Parser, Pos, Line)));
@@ -1667,7 +1667,7 @@ Function ParseModVarListDecl(Parser)
 		Next(Parser);
 		VarList.Add(ParseVarMod(Parser));
 	EndDo;
-	Decl = VarModListDecl(Parser.Directive, VarList, Place(Parser, Pos, Line));
+	Decl = VarModDecl(Parser.Directive, VarList, Place(Parser, Pos, Line));
 	Expect(Parser, Tokens.Semicolon);
 	Next(Parser);
 	While Parser.Tok = Tokens.Semicolon Do
@@ -1721,7 +1721,7 @@ Function ParseVarListDecl(Parser)
 		Next(Parser);
 		VarList.Add(ParseVarLoc(Parser));
 	EndDo;
-	Return VarLocListDecl(VarList, Place(Parser, Pos, Line));
+	Return VarLocDecl(VarList, Place(Parser, Pos, Line));
 EndFunction // ParseVarListDecl()
 
 Function ParseVarLoc(Parser)
@@ -2344,14 +2344,14 @@ EndProcedure // PopInfo()
 
 Function Hooks() Export
 	Var Hooks, Item;
-	
+
 	Hooks = New Structure(
 		"VisitModule,         AfterVisitModule,"
 		"VisitDeclarations,   AfterVisitDeclarations,"
 		"VisitStatements,     AfterVisitStatements,"
 		"VisitDecl,           AfterVisitDecl,"
-		"VisitVarModListDecl, AfterVisitVarModListDecl,"
-		"VisitVarLocListDecl, AfterVisitVarLocListDecl,"
+		"VisitVarModDecl,     AfterVisitVarModDecl,"
+		"VisitVarLocDecl,     AfterVisitVarLocDecl,"
 		"VisitProcDecl,       AfterVisitProcDecl,"
 		"VisitFuncDecl,       AfterVisitFuncDecl,"
 		"VisitExpr,           AfterVisitExpr,"
@@ -2442,10 +2442,10 @@ Procedure VisitDecl(Visitor, Decl)
 		Hook.VisitDecl(Decl, Visitor.Stack, Visitor.Counters);
 	EndDo;
 	Type = Decl.Type;
-	If Type = Nodes.VarModListDecl Then
-		VisitVarModListDecl(Visitor, Decl);
-	ElsIf Type = Nodes.VarLocListDecl Then
-		VisitVarLocListDecl(Visitor, Decl);
+	If Type = Nodes.VarModDecl Then
+		VisitVarModDecl(Visitor, Decl);
+	ElsIf Type = Nodes.VarLocDecl Then
+		VisitVarLocDecl(Visitor, Decl);
 	ElsIf Type = Nodes.ProcDecl Then
 		VisitProcDecl(Visitor, Decl);
 	ElsIf Type = Nodes.FuncDecl Then
@@ -2464,25 +2464,25 @@ Procedure VisitDecl(Visitor, Decl)
 	EndDo;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarModListDecl(Visitor, VarModListDecl)
+Procedure VisitVarModDecl(Visitor, VarModDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitVarModListDecl Do
-		Hook.VisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.VisitVarModDecl Do
+		Hook.VisitVarModDecl(VarModDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitVarModListDecl Do
-		Hook.AfterVisitVarModListDecl(VarModListDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.AfterVisitVarModDecl Do
+		Hook.AfterVisitVarModDecl(VarModDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
-EndProcedure // VisitVarModListDecl()
+EndProcedure // VisitVarModDecl()
 
-Procedure VisitVarLocListDecl(Visitor, VarLocListDecl)
+Procedure VisitVarLocDecl(Visitor, VarLocDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitVarLocListDecl Do
-		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.VisitVarLocDecl Do
+		Hook.VisitVarLocDecl(VarLocDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitVarLocListDecl Do
-		Hook.AfterVisitVarLocListDecl(VarLocListDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.AfterVisitVarLocDecl Do
+		Hook.AfterVisitVarLocDecl(VarLocDecl, Visitor.Stack, Visitor.Counters);
 	EndDo;
-EndProcedure // VisitVarLocListDecl()
+EndProcedure // VisitVarLocDecl()
 
 Procedure VisitProcDecl(Visitor, ProcDecl)
 	Var Hook;
@@ -3011,7 +3011,7 @@ Procedure VisitPrepInst(Visitor, PrepInst)
 	PushInfo(Visitor, PrepInst);
 	If PrepInst.Property("Cond") Then
 		VisitPrepExpr(Visitor, PrepInst.Cond);
-	EndIf; 
+	EndIf;
 	PopInfo(Visitor);
 	For Each Hook In Visitor.Hooks.AfterVisitPrepInst Do
 		Hook.AfterVisitPrepInst(PrepInst, Visitor.Stack, Visitor.Counters);

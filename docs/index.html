@@ -77,23 +77,23 @@
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
 	</ul>
 	<h2 id='#Declarations'>#Declarations</h2>
-	<h3 id='VarModListDecl'>VarModListDecl<a class='permalink' href='#VarModListDecl'>¶</a></h3>
+	<h3 id='VarModDecl'>VarModDecl<a class='permalink' href='#VarModDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления переменных уровня модуля.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте            // поле "Directive"
- Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModListDecl</li>
+ Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModDecl</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>List</strong>: array (<a href='#VarMod'>VarMod</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='VarLocListDecl'>VarLocListDecl<a class='permalink' href='#VarLocListDecl'>¶</a></h3>
+	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления локальных переменных.</i><br>
 	<i> Пример:</i><br>
  <pre>
- Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocListDecl</li>
+ Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
 		<li><strong>List</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -574,8 +574,8 @@
 <li>"<a href='#VarMod'>VarMod</a>"</li>
 <li>"<a href='#VarLoc'>VarLoc</a>"</li>
 <li>"<a href='#Param'>Param</a>"</li>
-<li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
-<li>"<a href='#VarLocListDecl'>VarLocListDecl</a>"</li>
+<li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
+<li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>
 <li>"<a href='#ProcDecl'>ProcDecl</a>"</li>
 <li>"<a href='#FuncDecl'>FuncDecl</a>"</li>
 <li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
