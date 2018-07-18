@@ -825,7 +825,7 @@ EndFunction // LabelStmt()
 
 #EndRegion // Statements
 
-#Region Preprocessor
+#Region PrepInst
 
 // Inst
 
@@ -839,7 +839,7 @@ Function PrepIfInst(Cond, Place = Undefined)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Cond,"  // structure (one of #Preprocessor)
+		"Cond,"  // structure (one of #PrepExpr)
 		"Place"  // undefined, structure (Place)
 	, Nodes.PrepIfInst, Cond, Place);
 EndFunction // PrepIfInst()
@@ -854,7 +854,7 @@ Function PrepElsIfInst(Cond, Place = Undefined)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Cond,"  // structure (one of #Preprocessor)
+		"Cond,"  // structure (one of #PrepExpr)
 		"Place"  // undefined, structure (Place)
 	, Nodes.PrepElsIfInst, Cond, Place);
 EndFunction // PrepElsIfInst()
@@ -877,7 +877,6 @@ EndFunction // PrepEndIfInst()
 
 Function PrepRegionInst(Name, Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #Обрасть,
-	// которая находится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// ...
@@ -893,7 +892,6 @@ EndFunction // PrepRegionInst()
 
 Function PrepEndRegionInst(Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #КонецОбласти,
-	// которая находится непосредственно в модуле.
 	// Пример:
 	// <pre>
 	// ...
@@ -908,7 +906,6 @@ EndFunction // PrepEndRegionInst()
 
 Function PrepUseInst(Path, Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #Использовать,
-	// которая находится непосредственно в модуле.
 	// Это нестандартная инструкция из OneScript
 	// Пример:
 	// <pre>
@@ -921,6 +918,10 @@ Function PrepUseInst(Path, Place = Undefined)
 	, Nodes.PrepUseDecl, Path, Place);
 EndFunction // PrepUseInst()
 
+#EndRegion // PrepInst
+
+#Region PrepExpr
+
 // Expr
 
 Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
@@ -928,20 +929,16 @@ Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
 	// Пример:
 	// <pre>
 	// // бинарные выражения заключены в скобки <...>
-	// // поле "Operator" равно одному из допустимых операторов:
-	// // - логических (кроме "Не")
-	// // - реляционных
-	// // - арифметических
-	// // поля "Left" и "Right" содержат операнды-выражения
-	// Если <Не Отмена И Продолжить> Тогда
-	//     Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
-	// КонецЕсли;
+	// // поле "Operator" равно либо Tokens.Or либо Tokens.And:
+	// // поля "Left" и "Right" содержат операнды-выражения препроцессора
+	// #Если <Сервер Или ВнешнееСоединение> Тогда
+	// ...
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"     // string (one of Nodes)
-		"Left,"     // structure (one of #Expressions)
+		"Left,"     // structure (one of #PrepExpr)
 		"Operator," // string (one of Tokens)
-		"Right,"    // structure (one of #Expressions)
+		"Right,"    // structure (one of #PrepExpr)
 		"Place"     // undefined, structure (Place)
 	, Nodes.PrepBinaryExpr, Left, Operator, Right, Place);
 EndFunction // PrepBinaryExpr()
@@ -951,11 +948,12 @@ Function PrepNotExpr(Expr, Place = Undefined)
 	// Пример:
 	// <pre>
 	// // выражение-отрицание заключено в скобки <...>
-	// НеРавны = <Не Сумма1 = Сумма2>;
+	// #Если <Не ВебКлиент> Тогда
+	// ...
 	// </pre>
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Expr," // structure (one of #Expressions)
+		"Expr," // structure (one of #PrepExpr)
 		"Place" // undefined, structure (Place)
 	, Nodes.PrepNotExpr, Expr, Place);
 EndFunction // PrepNotExpr()
@@ -976,7 +974,7 @@ Function PrepSymExpr(Symbol, Exist, Place = Undefined)
 	, Nodes.PrepSymExpr, Symbol, Exist, Place);
 EndFunction // PrepSymExpr()
 
-#EndRegion // Preprocessor
+#EndRegion // PrepExpr
 
 #EndRegion // AbstractSyntaxTree
 

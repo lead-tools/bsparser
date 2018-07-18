@@ -431,7 +431,7 @@
 		<li><strong>Label</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h2 id='#Preprocessor'>#Preprocessor</h2>
+	<h2 id='#PrepInst'>#PrepInst</h2>
 	<h3 id='PrepIfInst'>PrepIfInst<a class='permalink' href='#PrepIfInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
@@ -440,7 +440,7 @@
  ...
  #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfInst</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Preprocessor'>#Preprocessor</a>)</li>
+		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepElsIfInst'>PrepElsIfInst<a class='permalink' href='#PrepElsIfInst'>¶</a></h3>
@@ -451,7 +451,7 @@
  ...
  #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfInst</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Preprocessor'>#Preprocessor</a>)</li>
+		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
@@ -469,7 +469,6 @@
 	<h3 id='PrepRegionInst'>PrepRegionInst<a class='permalink' href='#PrepRegionInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
@@ -481,7 +480,6 @@
 	<h3 id='PrepEndRegionInst'>PrepEndRegionInst<a class='permalink' href='#PrepEndRegionInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #КонецОбласти,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
@@ -492,7 +490,6 @@
 	<h3 id='PrepUseDecl'>PrepUseDecl<a class='permalink' href='#PrepUseDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
-	<i> которая находится непосредственно в модуле.</i><br>
 	<i> Это нестандартная инструкция из OneScript</i><br>
 	<i> Пример:</i><br>
  <pre>
@@ -500,23 +497,20 @@
 		<li><strong>Path</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h2 id='#PrepExpr'>#PrepExpr</h2>
 	<h3 id='PrepBinaryExpr'>PrepBinaryExpr<a class='permalink' href='#PrepBinaryExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит бинарное выражение препроцессора.</i><br>
 	<i> Пример:</i><br>
  <pre>
  // бинарные выражения заключены в скобки <...>
- // поле "Operator" равно одному из допустимых операторов:
- // - логических (кроме "Не")
- // - реляционных
- // - арифметических
- // поля "Left" и "Right" содержат операнды-выражения
- Если <Не Отмена И Продолжить> Тогда
-     Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
- КонецЕсли;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepBinaryExpr</li>
-		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+ // поле "Operator" равно либо Tokens.Or либо Tokens.And:
+ // поля "Left" и "Right" содержат операнды-выражения препроцессора
+ #Если <Сервер Или ВнешнееСоединение> Тогда
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepBinaryExpr</li>
+		<li><strong>Left</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
-		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Right</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepNotExpr'>PrepNotExpr<a class='permalink' href='#PrepNotExpr'>¶</a></h3>
@@ -525,8 +519,9 @@
 	<i> Пример:</i><br>
  <pre>
  // выражение-отрицание заключено в скобки <...>
- НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepNotExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+ #Если <Не ВебКлиент> Тогда
+ ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepNotExpr</li>
+		<li><strong>Expr</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepSymExpr'>PrepSymExpr<a class='permalink' href='#PrepSymExpr'>¶</a></h3>
