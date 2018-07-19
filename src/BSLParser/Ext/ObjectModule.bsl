@@ -2961,8 +2961,8 @@ Procedure VisitPrepExpr(Visitor, PrepExpr)
 	ElsIf Type = Nodes.PrepNotExpr Then
 		VisitPrepNotExpr(Visitor, PrepExpr);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitVisitPrepExpr Do
-		Hook.AfterVisitVisitPrepExpr(PrepExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.AfterVisitPrepExpr Do
+		Hook.AfterVisitPrepExpr(PrepExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepExpr()
 
