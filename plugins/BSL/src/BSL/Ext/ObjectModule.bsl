@@ -70,37 +70,39 @@ Procedure VisitDecl(Decl)
     Var Type;
 	AlignLine(Decl.Place.BegLine);
 	Type = Decl.Type;
-    If Type = Nodes.VarModListDecl Then
-        VisitVarModListDecl(Decl);
-    ElsIf Type = Nodes.VarLocListDecl Then
-        VisitVarLocListDecl(Decl);
+    If Type = Nodes.VarModDecl Then
+        VisitVarModDecl(Decl);
+    ElsIf Type = Nodes.VarLocDecl Then
+        VisitVarLocDecl(Decl);
     ElsIf Type = Nodes.ProcDecl Then
         VisitProcDecl(Decl);
     ElsIf Type = Nodes.FuncDecl Then
         VisitFuncDecl(Decl);
-    ElsIf Type = Nodes.PrepIfDecl Then
-        VisitPrepIfDecl(Decl);
-    ElsIf Type = Nodes.PrepElsIfDecl Then
-        VisitPrepElsIfDecl(Decl);
-    ElsIf Type = Nodes.PrepRegionDecl Then
-        VisitPrepRegionDecl(Decl);
+	ElsIf Type = Nodes.PrepRegionInst
+		Or Type = Nodes.PrepEndRegionInst
+		Or Type = Nodes.PrepIfInst
+		Or Type = Nodes.PrepElsIfInst
+		Or Type = Nodes.PrepElseInst
+		Or Type = Nodes.PrepEndIfInst
+		Or Type = Nodes.PrepUseInst Then
+		VisitPrepInst(Decl);
     EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarModListDecl(VarModListDecl)
-	If VarModListDecl.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", VarModListDecl.Directive, Chars.LF));
+Procedure VisitVarModDecl(VarModDecl)
+	If VarModDecl.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", VarModDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Var ");
-	VisitVarList(VarModListDecl.List);
+	VisitVarList(VarModDecl.List);
 	Result.Add(";");
-EndProcedure // VisitVarModListDecl()
+EndProcedure // VisitVarModDecl()
 
-Procedure VisitVarLocListDecl(VarLocListDecl)
+Procedure VisitVarLocDecl(VarLocDecl)
 	Result.Add("Var ");
-	VisitVarList(VarLocListDecl.List);
+	VisitVarList(VarLocDecl.List);
 	Result.Add(";");
-EndProcedure // VisitVarLocListDecl()
+EndProcedure // VisitVarLocDecl()
 
 Procedure VisitProcDecl(ProcDecl)
 	Var Object;
@@ -137,44 +139,6 @@ Procedure VisitFuncDecl(FuncDecl)
 	AlignLine(FuncDecl.Place.EndLine);
 	Result.Add("EndFunction");
 EndProcedure // VisitFuncDecl()
-
-Procedure VisitPrepIfDecl(PrepIfDecl)
-	Result.Add("#If ");
-	VisitExpr(PrepIfDecl.Cond);
-	Result.Add(" Then");
-	Indent = Indent - 1; // <<
-	VisitDeclarations(PrepIfDecl.Then);
-    If PrepIfDecl.ElsIf <> Undefined Then
-		For Each PrepElsIfDecl In PrepIfDecl.ElsIf Do
-            VisitPrepElsIfDecl(PrepElsIfDecl);
-        EndDo;
-    EndIf;
-    If PrepIfDecl.Else <> Undefined Then
-		Result.Add("#Else");
-		VisitDeclarations(PrepIfDecl.Else);
-	EndIf;
-	Indent = Indent + 1; // >>
-	AlignLine(PrepIfDecl.Place.EndLine);
-	Result.Add("#EndIf;");
-EndProcedure // VisitPrepIfDecl()
-
-Procedure VisitPrepElsIfDecl(PrepElsIfDecl)
-	Result.Add("#ElsIf ");
-	VisitExpr(PrepElsIfDecl.Cond);
-	Result.Add(" Then");
-	VisitDeclarations(PrepElsIfDecl.Then);
-EndProcedure // VisitPrepElsIfDecl()
-
-Procedure VisitPrepRegionDecl(PrepRegionDecl)
-	Result.Add("#Region ");
-	Result.Add(PrepRegionDecl.Name);
-	Indent = Indent - 1; // <<
-	VisitDeclarations(PrepRegionDecl.Decls);
-    VisitStatements(PrepRegionDecl.Body);
-	Indent = Indent + 1; // >>
-	AlignLine(PrepRegionDecl.Place.EndLine);
-	Result.Add("#EndRegion");
-EndProcedure // VisitPrepRegionDecl()
 
 #EndRegion // VisitDecl
 
@@ -321,12 +285,8 @@ Procedure VisitStmt(Stmt)
         VisitCallStmt(Stmt);
     ElsIf Type = Nodes.IfStmt Then
         VisitIfStmt(Stmt);
-    ElsIf Type = Nodes.PrepIfStmt Then
-        VisitPrepIfStmt(Stmt);
     ElsIf Type = Nodes.WhileStmt Then
         VisitWhileStmt(Stmt);
-    ElsIf Type = Nodes.PrepRegionStmt Then
-        VisitPrepRegionStmt(Stmt);
     ElsIf Type = Nodes.ForStmt Then
         VisitForStmt(Stmt);
     ElsIf Type = Nodes.ForEachStmt Then
@@ -337,6 +297,13 @@ Procedure VisitStmt(Stmt)
         VisitGotoStmt(Stmt);
     ElsIf Type = Nodes.LabelStmt Then
         VisitLabelStmt(Stmt);
+	ElsIf Type = Nodes.PrepRegionInst
+		Or Type = Nodes.PrepEndRegionInst
+		Or Type = Nodes.PrepIfInst
+		Or Type = Nodes.PrepElsIfInst
+		Or Type = Nodes.PrepElseInst
+		Or Type = Nodes.PrepEndIfInst Then
+		VisitPrepInst(Stmt);
     EndIf;
 EndProcedure // VisitStmt()
 
@@ -395,7 +362,7 @@ Procedure VisitIfStmt(IfStmt)
     EndIf;
     If IfStmt.Else <> Undefined Then
 		AlignLine(LastLine + 1);
-		Result.Add("Else");
+		Result.Add("Else ");
 		VisitStatements(IfStmt.Else);
 	EndIf;
 	AlignLine(IfStmt.Place.EndLine);
@@ -409,31 +376,6 @@ Procedure VisitElsIfStmt(ElsIfStmt)
     VisitStatements(ElsIfStmt.Then);
 EndProcedure // VisitElsIfStmt()
 
-Procedure VisitPrepIfStmt(PrepIfStmt)
-	Result.Add("#If ");
-	VisitExpr(PrepIfStmt.Cond);
-	Result.Add(" Then");
-	VisitStatements(PrepIfStmt.Then);
-    If PrepIfStmt.ElsIf <> Undefined Then
-        For Each PrepElsIfStmt In PrepIfStmt.ElsIf Do
-            VisitPrepElsIfStmt(PrepElsIfStmt);
-        EndDo;
-    EndIf;
-    If PrepIfStmt.Else <> Undefined Then
-		Result.Add("#Else");
-		VisitStatements(PrepIfStmt.Else);
-	EndIf;
-	AlignLine(PrepIfStmt.Place.EndLine);
-	Result.Add("#EndIf;");
-EndProcedure // VisitPrepIfStmt()
-
-Procedure VisitPrepElsIfStmt(PrepElsIfStmt)
-	Result.Add("#ElsIf ");
-	VisitExpr(PrepElsIfStmt.Cond);
-	Result.Add(" Then");
-	VisitStatements(PrepElsIfStmt.Then);
-EndProcedure // VisitPrepElsIfStmt()
-
 Procedure VisitWhileStmt(WhileStmt)
 	Result.Add("While ");
 	VisitExpr(WhileStmt.Cond);
@@ -442,10 +384,6 @@ Procedure VisitWhileStmt(WhileStmt)
 	AlignLine(WhileStmt.Place.EndLine);
 	Result.Add("EndDo;");
 EndProcedure // VisitWhileStmt()
-
-Procedure VisitPrepRegionStmt(PrepRegionStmt)
-    VisitStatements(PrepRegionStmt.Body);
-EndProcedure // VisitPrepRegionStmt()
 
 Procedure VisitForStmt(ForStmt)
 	Result.Add("For ");
@@ -489,6 +427,64 @@ Procedure VisitLabelStmt(LabelStmt)
 EndProcedure // VisitLabelStmt()
 
 #EndRegion // VisitStmt
+
+#Region VisitPrep
+
+Procedure VisitPrepExpr(PrepExpr)
+	Var Type;
+	AlignLine(PrepExpr.Place.BegLine);
+	Type = PrepExpr.Type;
+	If Type = Nodes.PrepSymExpr Then
+		VisitPrepSymExpr(PrepExpr);
+	ElsIf Type = Nodes.PrepBinaryExpr Then
+		VisitPrepBinaryExpr(PrepExpr);
+	ElsIf Type = Nodes.PrepNotExpr Then
+		VisitPrepNotExpr(PrepExpr);
+	EndIf;
+EndProcedure // VisitPrepExpr()
+
+Procedure VisitPrepSymExpr(PrepSymExpr)
+	Result.Add(PrepSymExpr.Symbol);
+EndProcedure // VisitPrepSymExpr()
+
+Procedure VisitPrepBinaryExpr(PrepBinaryExpr)
+	VisitPrepExpr(PrepBinaryExpr.Left);
+	Result.Add(StrTemplate(" %1 ", Operators[PrepBinaryExpr.Operator]));
+	VisitPrepExpr(PrepBinaryExpr.Right);
+EndProcedure // VisitPrepBinaryExpr()
+
+Procedure VisitPrepNotExpr(PrepNotExpr)
+	Result.Add("Not ");
+	VisitPrepExpr(PrepNotExpr.Expr);
+EndProcedure // VisitPrepNotExpr()
+
+Procedure VisitPrepInst(PrepInst)
+	Var Type;
+	Type = PrepInst.Type;
+	If Type = Nodes.PrepRegionInst Then
+		Result.Add("#Region ");
+		Result.Add(PrepInst.Name);
+	ElsIf Type = Nodes.PrepEndRegionInst Then
+		Result.Add("#EndRegion");
+	ElsIf Type = Nodes.PrepIfInst Then
+		Result.Add("#If ");
+		VisitPrepExpr(PrepInst.Cond);
+		Result.Add(" Then");
+	ElsIf Type = Nodes.PrepElsIfInst Then
+		Result.Add("#ElsIf ");
+		VisitPrepExpr(PrepInst.Cond);
+		Result.Add(" Then");
+	ElsIf Type = Nodes.PrepElseInst Then
+		Result.Add("#Else");
+	ElsIf Type = Nodes.PrepEndIfInst Then
+		Result.Add("#EndIf");
+	ElsIf Type = Nodes.PrepUseInst Then	
+		Result.Add("#Use ");
+		Result.Add(PrepInst.Path);
+	EndIf;
+EndProcedure // VisitPrepInst()
+
+#EndRegion // VisitPrep
 
 #Region Aux
 
