@@ -2966,13 +2966,13 @@ Procedure VisitPrepExpr(Visitor, PrepExpr)
 	EndDo;
 EndProcedure // VisitPrepExpr()
 
-Procedure VisitPrepSymExpr(Visitor, PrepNotExpr)
+Procedure VisitPrepSymExpr(Visitor, PrepSymExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepNotExpr Do
-		Hook.VisitPrepNotExpr(PrepNotExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.VisitPrepSymExpr Do
+		Hook.VisitPrepSymExpr(PrepSymExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitPrepNotExpr Do
-		Hook.AfterVisitPrepNotExpr(PrepNotExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor.Hooks.AfterVisitPrepSymExpr Do
+		Hook.AfterVisitPrepSymExpr(PrepSymExpr, Visitor.Stack, Visitor.Counters);
 	EndDo;
 EndProcedure // VisitPrepSymExpr()
 
