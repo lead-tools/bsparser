@@ -870,7 +870,7 @@ Function PrepEndIfInst(Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Place"  // undefined, structure (Place)
-	, Nodes.PrepElseInst, Place);
+	, Nodes.PrepEndIfInst, Place);
 EndFunction // PrepEndIfInst()
 
 Function PrepRegionInst(Name, Place = Undefined)
@@ -913,7 +913,7 @@ Function PrepUseInst(Path, Place = Undefined)
 	  "Type," // string (one of Nodes)
 	  "Path," // string
 	  "Place" // undefined, structure (Place)
-	, Nodes.PrepUseDecl, Path, Place);
+	, Nodes.PrepUseInst, Path, Place);
 EndFunction // PrepUseInst()
 
 #EndRegion // PrepInst
