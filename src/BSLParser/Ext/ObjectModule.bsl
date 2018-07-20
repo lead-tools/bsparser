@@ -1880,8 +1880,12 @@ Function ParseStatements(Parser)
 	If Stmt <> Undefined Then
 		Statements.Add(Stmt);
 	EndIf;
-	While Parser.Tok = Tokens.Semicolon Do
-		Next(Parser);
+	While True Do
+		If Parser.Tok = Tokens.Semicolon Then
+			Next(Parser);
+		ElsIf Not Left(Parser.Tok, 1) = "_" Then
+			Break;		
+		EndIf; 
 		Stmt = ParseStmt(Parser);
 		If Stmt <> Undefined Then
 			Statements.Add(Stmt);
