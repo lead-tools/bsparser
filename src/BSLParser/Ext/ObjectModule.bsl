@@ -827,8 +827,6 @@ EndFunction // LabelStmt()
 
 #Region PrepInst
 
-// Inst
-
 Function PrepIfInst(Cond, Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #Если,
 	// Пример:
@@ -921,8 +919,6 @@ EndFunction // PrepUseInst()
 #EndRegion // PrepInst
 
 #Region PrepExpr
-
-// Expr
 
 Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
 	// Хранит бинарное выражение препроцессора.
@@ -1610,7 +1606,7 @@ Function ParseModDecls(Parser)
 		Pos = Parser.BegPos;
 		Line = Parser.Line;
 		If Tok = Tokens.Var And Parser.AllowVar Then
-			Decls.Add(ParseModVarListDecl(Parser));
+			Decls.Add(ParseVarModDecl(Parser));
 		ElsIf Tok = Tokens.Function Then
 			Decls.Add(ParseFuncDecl(Parser));
 			Parser.AllowVar = False;
@@ -1656,7 +1652,7 @@ Function ParseModDecls(Parser)
 	Return Decls;
 EndFunction // ParseModDecls()
 
-Function ParseModVarListDecl(Parser)
+Function ParseVarModDecl(Parser)
 	Var VarList, Decl, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
@@ -1674,7 +1670,7 @@ Function ParseModVarListDecl(Parser)
 		Next(Parser);
 	EndDo;
 	Return Decl;
-EndFunction // ParseModVarListDecl()
+EndFunction // ParseVarModDecl()
 
 Function ParseVarMod(Parser)
 	Var Name, Object, Exported, Pos;
@@ -1703,14 +1699,14 @@ Function ParseVarDecls(Parser)
 	Decls = New Array;
 	Tok = Parser.Tok;
 	While Tok = Tokens.Var Do
-		Decls.Add(ParseVarListDecl(Parser));
+		Decls.Add(ParseVarLocDecl(Parser));
 		Expect(Parser, Tokens.Semicolon);
 		Tok = Next(Parser);
 	EndDo;
 	Return Decls;
 EndFunction // ParseVarDecls()
 
-Function ParseVarListDecl(Parser)
+Function ParseVarLocDecl(Parser)
 	Var VarList, Pos, Line;
 	Pos = Parser.BegPos;
 	Line = Parser.Line;
@@ -1722,7 +1718,7 @@ Function ParseVarListDecl(Parser)
 		VarList.Add(ParseVarLoc(Parser));
 	EndDo;
 	Return VarLocDecl(VarList, Place(Parser, Pos, Line));
-EndFunction // ParseVarListDecl()
+EndFunction // ParseVarLocDecl()
 
 Function ParseVarLoc(Parser)
 	Var Name, Object, Pos;
