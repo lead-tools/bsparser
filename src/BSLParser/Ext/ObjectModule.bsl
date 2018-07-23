@@ -44,7 +44,6 @@ Var Parser_Val;       // number, string, date, boolean, undefined, null
 Var Parser_Scope;     // structure (Scope)
 Var Parser_Vars;      // structure as map[string] (VarMod, VarLoc)
 Var Parser_Methods;   // structure as map[string] (Func, Proc)
-Var Parser_Module;    // structure (Module)
 Var Parser_Unknown;   // structure as map[string] (Unknown)
 Var Parser_IsFunc;    // boolean
 Var Parser_AllowVar;  // boolean
@@ -1027,7 +1026,9 @@ Function Parser(Source) Export
 
 	Parser_Len = StrLen(Source);
 	Parser_Lit = "";
-
+	
+	Parser_Char = Undefined;
+	
 	OpenScope();
 
 	Return Undefined;
@@ -1264,7 +1265,7 @@ Function CloseScope()
 EndFunction // CloseScope()
 
 Function ParseModule() Export
-	Var Decls, Auto, VarObj, Item, Statements;
+	Var Decls, Auto, VarObj, Item, Statements, Module;
 	Next();
 	Decls = ParseModDecls();
 	Statements = ParseStatements();
@@ -1272,14 +1273,22 @@ Function ParseModule() Export
 	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
 	EndDo;
-	Parser_Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
+	Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
 	If Verbose Then
 		For Each Item In Parser_Unknown Do
 			Message(StrTemplate("Undeclared method `%1`", Item.Key));
 		EndDo;
 	EndIf;
 	Expect(Tokens.Eof);
-	Return Parser_Module;
+	Parser_Unknown = Undefined;
+	Parser_Methods = Undefined;
+	Parser_Directive = Undefined;
+	Parser_Interface = Undefined;
+	Parser_Comments = Undefined;
+	Parser_Scope = Undefined;
+	Parser_Vars = Undefined;
+	Parser_Source = Undefined;
+	Return Module;
 EndFunction // ParseModule()
 
 #Region ParseExpr
