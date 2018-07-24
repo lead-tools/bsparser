@@ -28,6 +28,39 @@ Var Location Export; // boolean
 
 #EndRegion // Settings
 
+#Region ParserState
+
+Var Parser_Source;    // string
+Var Parser_Len;       // number
+Var Parser_Line;      // number
+Var Parser_EndLine;   // number
+Var Parser_Pos;       // number
+Var Parser_BegPos;    // number
+Var Parser_EndPos;    // number
+Var Parser_Char;      // string
+Var Parser_Tok;       // string (one of Tokens)
+Var Parser_Lit;       // string
+Var Parser_Val;       // number, string, date, boolean, undefined, null
+Var Parser_Scope;     // structure (Scope)
+Var Parser_Vars;      // structure as map[string] (VarMod, VarLoc)
+Var Parser_Methods;   // structure as map[string] (Func, Proc)
+Var Parser_Unknown;   // structure as map[string] (Unknown)
+Var Parser_IsFunc;    // boolean
+Var Parser_AllowVar;  // boolean
+Var Parser_Directive; // string (one of Directives)
+Var Parser_Interface; // array (Func, Proc)
+Var Parser_Comments;  // map[number] (string)
+
+#EndRegion // ParserState
+
+#Region VisitorState
+
+Var Visitor_Hooks;    // structure as map[string] (array)
+Var Visitor_Stack;    // structure
+Var Visitor_Counters; // structure as map[string] (number)
+
+#EndRegion // VisitorState
+
 #Region Init
 
 Procedure Init()
@@ -977,219 +1010,194 @@ EndFunction // PrepSymExpr()
 #Region Parser
 
 Function Parser(Source) Export
-	Var Parser;
 
-	Parser = New Structure( // @Class
-		"Source,"    // string
-		"Len,"       // number
-		"Line,"      // number
-		"EndLine,"   // number
-		"Pos,"       // number
-		"BegPos,"    // number
-		"EndPos,"    // number
-		"Char,"      // string
-		"Tok,"       // string (one of Tokens)
-		"Lit,"       // string
-		"Val,"       // number, string, date, boolean, undefined, null
-		"Scope,"     // structure (Scope)
-		"Vars,"      // structure as map[string] (VarMod, VarLoc)
-		"Methods,"   // structure as map[string] (Func, Proc)
-		"Module,"    // structure (Module)
-		"Unknown,"   // structure as map[string] (Unknown)
-		"IsFunc,"    // boolean
-		"AllowVar,"  // boolean
-		"Directive," // string (one of Directives)
-		"Interface," // array (Func, Proc)
-		"Comments"   // map[number] (string)
-	);
+	Parser_Source = Source;
+	Parser_Pos = 0;
+	Parser_Line = 1;
+	Parser_EndLine = 1;
+	Parser_BegPos = 0;
+	Parser_EndPos = 0;
+	Parser_Methods = New Structure;
+	Parser_Unknown = New Structure;
+	Parser_IsFunc = False;
+	Parser_AllowVar = True;
+	Parser_Interface = New Array;
+	Parser_Comments = New Map;
 
-	Parser.Source = Source;
-	Parser.Pos = 0;
-	Parser.Line = 1;
-	Parser.EndLine = 1;
-	Parser.BegPos = 0;
-	Parser.EndPos = 0;
-	Parser.Methods = New Structure;
-	Parser.Unknown = New Structure;
-	Parser.IsFunc = False;
-	Parser.AllowVar = True;
-	Parser.Interface = New Array;
-	Parser.Comments = New Map;
+	Parser_Len = StrLen(Source);
+	Parser_Lit = "";
+	
+	Parser_Char = Undefined;
+	
+	OpenScope();
 
-	Parser.Len = StrLen(Source);
-	Parser.Lit = "";
-
-	OpenScope(Parser);
-
-	Return Parser;
+	Return Undefined;
 
 EndFunction // Parser()
 
-Function Next(Parser) Export
-	Var Tok, Lit, Pos, Char, Source, Beg, Prev, Comment;
+Function Next() Export
+	Var Beg, Prev, Comment;
 
-	Source = Parser.Source; Char = Parser.Char; Pos = Parser.Pos;
+	Parser_EndPos = Parser_Pos; Parser_EndLine = Parser_Line;
 
-	Parser.EndPos = Pos; Parser.EndLine = Parser.Line;
-
-	If Right(Parser.Lit, 1) = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
+	If Right(Parser_Lit, 1) = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
 
 	While True Do
 
 		Comment = False;
 
 		// skip space
-		While IsBlankString(Char) And Char <> "" Do
-			If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+		While IsBlankString(Parser_Char) And Parser_Char <> "" Do
+			If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+			Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 		EndDo;
 
-		Parser.BegPos = Pos;
+		Parser_BegPos = Parser_Pos;
 
-		Tok = TokenMap[Char];
-		If Tok = Alpha Then
+		Parser_Tok = TokenMap[Parser_Char];
+		If Parser_Tok = Alpha Then
 
 			// scan ident
-			Beg = Pos; Pos = Pos + 1;
-			While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-			Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+			Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
+			While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do Parser_Pos = Parser_Pos + 1 EndDo;
+			Parser_Char = Mid(Parser_Source, Parser_Pos, 1); Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 
 			// lookup
-			If Not Keywords.Property(Lit, Tok) Then Tok = Tokens.Ident EndIf;
+			If Not Keywords.Property(Parser_Lit, Parser_Tok) Then Parser_Tok = Tokens.Ident EndIf;
 
-		ElsIf Tok = Tokens.String Then
+		ElsIf Parser_Tok = Tokens.String Then
 
-			Beg = Pos;
-			Char = """"; // cheat code
-			While Char = """" Do
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-				While Char <> """" And Char <> Chars.LF And Char <> "" Do Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndDo;
-				If Char <> "" Then Pos = Pos + 1; Char = Mid(Source, Pos, 1) EndIf;
+			Beg = Parser_Pos;
+			Parser_Char = """"; // cheat code
+			While Parser_Char = """" Do
+				Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+				While Parser_Char <> """" And Parser_Char <> Chars.LF And Parser_Char <> "" Do Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndDo;
+				If Parser_Char <> "" Then Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndIf;
 			EndDo;
-			Lit = Mid(Source, Beg, Pos - Beg);
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 
-			Tok = StringToken(Lit);
+			Parser_Tok = StringToken(Parser_Lit);
 
-		ElsIf Tok = Digit Then
+		ElsIf Parser_Tok = Digit Then
 
-			Beg = Pos; Pos = Pos + 1;
-			While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
-			Char = Mid(Source, Pos, 1);
-			If Char = "." Then
-				Pos = Pos + 1;
-				While AlphaDigitMap[Mid(Source, Pos, 1)] = Digit Do Pos = Pos + 1 EndDo;
-				Char = Mid(Source, Pos, 1);
+			Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
+			While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Digit Do Parser_Pos = Parser_Pos + 1 EndDo;
+			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+			If Parser_Char = "." Then
+				Parser_Pos = Parser_Pos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Digit Do Parser_Pos = Parser_Pos + 1 EndDo;
+				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 			EndIf;
-			Lit = Mid(Source, Beg, Pos - Beg);
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 
-			Tok = Tokens.Number;
+			Parser_Tok = Tokens.Number;
 
-		ElsIf Tok = Tokens.DateTime Then
+		ElsIf Parser_Tok = Tokens.DateTime Then
 
-			Pos = Pos + 1; Beg = Pos;
-			Pos = StrFind(Source, "'",, Pos);
-			If Pos = 0 Then
-				Char = ""
+			Parser_Pos = Parser_Pos + 1; Beg = Parser_Pos;
+			Parser_Pos = StrFind(Parser_Source, "'",, Parser_Pos);
+			If Parser_Pos = 0 Then
+				Parser_Char = ""
 			Else
-				Lit = Mid(Source, Beg, Pos - Beg);
-				Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+				Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 			EndIf;
 
-		ElsIf Tok = Undefined Then
+		ElsIf Parser_Tok = Undefined Then
 
-			Prev = Char;
-			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			Prev = Parser_Char;
+			Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 
 			If Prev = "/" Then
 
-				If Char = "/" Then
+				If Parser_Char = "/" Then
 					// scan comment
-					Beg = Pos + 1; Pos = StrFind(Source, Chars.LF,, Beg);
-					Parser.Comments[Parser.Line] = Mid(Source, Beg, Pos - Beg);
-					If Pos = 0 Then Char = "" Else Char = Mid(Source, Pos, 1) EndIf;
+					Beg = Parser_Pos + 1; Parser_Pos = StrFind(Parser_Source, Chars.LF,, Beg);
+					Parser_Comments[Parser_Line] = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+					If Parser_Pos = 0 Then Parser_Char = "" Else Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndIf;
 					Comment = True;
 				Else
-					Tok = Tokens.Div;
+					Parser_Tok = Tokens.Div;
 				EndIf;
 
 			ElsIf Prev = "<" Then
 
-				If Char = ">" Then
-					Tok = Tokens.Neq;
-					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
-				ElsIf Char = "=" Then
-					Tok = Tokens.Leq;
-					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				If Parser_Char = ">" Then
+					Parser_Tok = Tokens.Neq;
+					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+				ElsIf Parser_Char = "=" Then
+					Parser_Tok = Tokens.Leq;
+					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				Else
-					Tok = Tokens.Lss;
+					Parser_Tok = Tokens.Lss;
 				EndIf;
 
 			ElsIf Prev = ">" Then
 
-				If Char = "=" Then
-					Tok = Tokens.Geq;
-					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				If Parser_Char = "=" Then
+					Parser_Tok = Tokens.Geq;
+					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				Else
-					Tok = Tokens.Gtr;
+					Parser_Tok = Tokens.Gtr;
 				EndIf;
 
 			ElsIf Prev = "&" Then
 
-				If AlphaDigitMap[Mid(Source, Pos, 1)] <> Alpha Then
-					Error(Parser, "Expected directive", Pos, True);
+				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Alpha Then
+					Error("Expected directive", Parser_Pos, True);
 				EndIf;
 
 				// scan ident
-				Beg = Pos; Pos = Pos + 1;
-				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+				Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do Parser_Pos = Parser_Pos + 1 EndDo;
+				Parser_Char = Mid(Parser_Source, Parser_Pos, 1); Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 
-				If Not Directives.Property(Lit) Then
-					Error(Parser, StrTemplate("Unknown directive: '%1'", Lit));
+				If Not Directives.Property(Parser_Lit) Then
+					Error(StrTemplate("Unknown directive: '%1'", Parser_Lit));
 				EndIf;
 
-				Tok = Tokens.Directive;
+				Parser_Tok = Tokens.Directive;
 
 			ElsIf Prev = "#" Then
 
 				// skip space
-				While IsBlankString(Char) And Char <> "" Do
-					If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
+					If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				EndDo;
 
-				If AlphaDigitMap[Mid(Source, Pos, 1)] <> Alpha Then
-					Error(Parser, "Expected preprocessor instruction", Pos, True);
+				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Alpha Then
+					Error("Expected preprocessor instruction", Parser_Pos, True);
 				EndIf;
 
 				// scan ident
-				Beg = Pos; Pos = Pos + 1;
-				While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-				Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+				Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do Parser_Pos = Parser_Pos + 1 EndDo;
+				Parser_Char = Mid(Parser_Source, Parser_Pos, 1); Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 
 				// match token
-				If PrepInstructions.Property(Lit, Tok) Then Tok = "_" + Tok;
-				Else Error(Parser, StrTemplate("Unknown preprocessor instruction: '%1'", Lit));
+				If PrepInstructions.Property(Parser_Lit, Parser_Tok) Then Parser_Tok = "_" + Parser_Tok;
+				Else Error(StrTemplate("Unknown preprocessor instruction: '%1'", Parser_Lit));
 				EndIf;
 
 			ElsIf Prev = "~" Then
 
 				// skip space
-				While IsBlankString(Char) And Char <> "" Do
-					If Char = Chars.LF Then Parser.Line = Parser.Line + 1 EndIf;
-					Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
+					If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				EndDo;
 
-				If AlphaDigitMap[Mid(Source, Pos, 1)] = Undefined Then
-					Lit = "";
+				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Undefined Then
+					Parser_Lit = "";
 				Else
 					// scan ident
-					Beg = Pos; Pos = Pos + 1;
-					While AlphaDigitMap[Mid(Source, Pos, 1)] <> Undefined Do Pos = Pos + 1 EndDo;
-					Char = Mid(Source, Pos, 1); Lit = Mid(Source, Beg, Pos - Beg);
+					Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
+					While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do Parser_Pos = Parser_Pos + 1 EndDo;
+					Parser_Char = Mid(Parser_Source, Parser_Pos, 1); Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 				EndIf;
 
-				Tok = Tokens.Label;
+				Parser_Tok = Tokens.Label;
 
 			Else
 
@@ -1199,7 +1207,7 @@ Function Next(Parser) Export
 
 		Else
 
-			Pos = Pos + 1; Char = Mid(Source, Pos, 1);
+			Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 
 		EndIf;
 
@@ -1209,31 +1217,29 @@ Function Next(Parser) Export
 
 	EndDo;
 
-	Parser.Char = Char; Parser.Pos = Pos; Parser.Tok = Tok; Parser.Lit = Lit;
-
-	If Tok = Tokens.Number Then
-		Parser.Val = Number(Lit);
-	ElsIf Tok = Tokens.True Then
-		Parser.Val = True;
-	ElsIf Tok = Tokens.False Then
-		Parser.Val = False;
-	ElsIf Tok = Tokens.DateTime Then
-		Parser.Val = AsDate(Lit);
-	ElsIf Left(Tok, 6) = Tokens.String Then
-		Parser.Val = Mid(Lit, 2, StrLen(Lit) - 2);
-	ElsIf Tok = Tokens.Null Then
-		Parser.Val = Null;
+	If Parser_Tok = Tokens.Number Then
+		Parser_Val = Number(Parser_Lit);
+	ElsIf Parser_Tok = Tokens.True Then
+		Parser_Val = True;
+	ElsIf Parser_Tok = Tokens.False Then
+		Parser_Val = False;
+	ElsIf Parser_Tok = Tokens.DateTime Then
+		Parser_Val = AsDate(Parser_Lit);
+	ElsIf Left(Parser_Tok, 6) = Tokens.String Then
+		Parser_Val = Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2);
+	ElsIf Parser_Tok = Tokens.Null Then
+		Parser_Val = Null;
 	Else
-		Parser.Val = Undefined;
+		Parser_Val = Undefined;
 	EndIf;
 
-	Return Tok;
+	Return Parser_Tok;
 
 EndFunction // Next()
 
-Function FindObject(Parser, Name)
+Function FindObject(Name)
 	Var Scope, Object;
-	Scope = Parser.Scope;
+	Scope = Parser_Scope;
 	Scope.Objects.Property(Name, Object);
 	While Object = Undefined And Scope.Outer <> Undefined Do
 		Scope = Scope.Outer;
@@ -1242,245 +1248,254 @@ Function FindObject(Parser, Name)
 	Return Object;
 EndFunction // FindObject()
 
-Function OpenScope(Parser)
+Function OpenScope()
 	Var Scope;
-	Scope = Scope(Parser.Scope);
-	Parser.Scope = Scope;
-	Parser.Vars = Scope.Objects;
+	Scope = Scope(Parser_Scope);
+	Parser_Scope = Scope;
+	Parser_Vars = Scope.Objects;
 	Return Scope;
 EndFunction // OpenScope()
 
-Function CloseScope(Parser)
+Function CloseScope()
 	Var Scope;
-	Scope = Parser.Scope.Outer;
-	Parser.Scope = Scope;
-	Parser.Vars = Scope.Objects;
+	Scope = Parser_Scope.Outer;
+	Parser_Scope = Scope;
+	Parser_Vars = Scope.Objects;
 	Return Scope;
 EndFunction // CloseScope()
 
-Procedure ParseModule(Parser) Export
-	Var Decls, Auto, VarObj, Item, Statements;
-	Next(Parser);
-	Decls = ParseModDecls(Parser);
-	Statements = ParseStatements(Parser);
+Function ParseModule() Export
+	Var Decls, Auto, VarObj, Item, Statements, Module;
+	Next();
+	Decls = ParseModDecls();
+	Statements = ParseStatements();
 	Auto = New Array;
-	For Each VarObj In Parser.Scope.Auto Do
+	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
 	EndDo;
-	Parser.Module = Module(Decls, Auto, Statements, Parser.Interface, Parser.Comments);
+	Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
 	If Verbose Then
-		For Each Item In Parser.Unknown Do
+		For Each Item In Parser_Unknown Do
 			Message(StrTemplate("Undeclared method `%1`", Item.Key));
 		EndDo;
 	EndIf;
-	Expect(Parser, Tokens.Eof);
-EndProcedure // ParseModule()
+	Expect(Tokens.Eof);
+	Parser_Unknown = Undefined;
+	Parser_Methods = Undefined;
+	Parser_Directive = Undefined;
+	Parser_Interface = Undefined;
+	Parser_Comments = Undefined;
+	Parser_Scope = Undefined;
+	Parser_Vars = Undefined;
+	Parser_Source = Undefined;
+	Return Module;
+EndFunction // ParseModule()
 
 #Region ParseExpr
 
-Function ParseExpression(Parser)
+Function ParseExpression()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParseAndExpr(Parser);
-	While Parser.Tok = Tokens.Or Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParseAndExpr();
+	While Parser_Tok = Tokens.Or Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseExpression()
 
-Function ParseAndExpr(Parser)
+Function ParseAndExpr()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParseNotExpr(Parser);
-	While Parser.Tok = Tokens.And Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParseNotExpr();
+	While Parser_Tok = Tokens.And Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
 
-Function ParseNotExpr(Parser)
+Function ParseNotExpr()
 	Var Expr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	If Parser.Tok = Tokens.Not Then
-		Next(Parser);
-		Expr = NotExpr(ParseRelExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	If Parser_Tok = Tokens.Not Then
+		Next();
+		Expr = NotExpr(ParseRelExpr(), Place(Pos, Line));
 	Else
-		Expr = ParseRelExpr(Parser);
+		Expr = ParseRelExpr();
 	EndIf;
 	Return Expr;
 EndFunction // ParseNotExpr()
 
-Function ParseRelExpr(Parser)
+Function ParseRelExpr()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParseAddExpr(Parser);
-	While RelOperators.Find(Parser.Tok) <> Undefined Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParseAddExpr();
+	While RelOperators.Find(Parser_Tok) <> Undefined Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseRelExpr()
 
-Function ParseAddExpr(Parser)
+Function ParseAddExpr()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParseMulExpr(Parser);
-	While AddOperators.Find(Parser.Tok) <> Undefined Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParseMulExpr();
+	While AddOperators.Find(Parser_Tok) <> Undefined Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAddExpr()
 
-Function ParseMulExpr(Parser)
+Function ParseMulExpr()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParseUnaryExpr(Parser);
-	While MulOperators.Find(Parser.Tok) <> Undefined Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParseUnaryExpr();
+	While MulOperators.Find(Parser_Tok) <> Undefined Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParseMulExpr()
 
-Function ParseUnaryExpr(Parser)
+Function ParseUnaryExpr()
 	Var Operator, Expr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Operator = Parser.Tok;
-	If AddOperators.Find(Parser.Tok) <> Undefined Then
-		Next(Parser);
-		Expr = UnaryExpr(Operator, ParseOperand(Parser), Place(Parser, Pos, Line));
-	ElsIf Parser.Tok = Tokens.Eof Then
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Operator = Parser_Tok;
+	If AddOperators.Find(Parser_Tok) <> Undefined Then
+		Next();
+		Expr = UnaryExpr(Operator, ParseOperand(), Place(Pos, Line));
+	ElsIf Parser_Tok = Tokens.Eof Then
 		Expr = Undefined;
 	Else
-		Expr = ParseOperand(Parser);
+		Expr = ParseOperand();
 	EndIf;
 	Return Expr;
 EndFunction // ParseUnaryExpr()
 
-Function ParseOperand(Parser)
+Function ParseOperand()
 	Var Tok, Operand;
-	Tok = Parser.Tok;
+	Tok = Parser_Tok;
 	If Tok = Tokens.String Or Tok = Tokens.StringBeg Then
-		Operand = ParseStringExpr(Parser);
+		Operand = ParseStringExpr();
 	ElsIf BasicLitNoString.Find(Tok) <> Undefined Then
-		Operand = BasicLitExpr(Tok, Parser.Val, Place(Parser));
-		Next(Parser);
+		Operand = BasicLitExpr(Tok, Parser_Val, Place());
+		Next();
 	ElsIf Tok = Tokens.Ident Then
-		Operand = ParseDesigExpr(Parser);
+		Operand = ParseDesigExpr();
 	ElsIf Tok = Tokens.Lparen Then
-		Operand = ParseParenExpr(Parser);
+		Operand = ParseParenExpr();
 	ElsIf Tok = Tokens.New Then
-		Operand = ParseNewExpr(Parser);
+		Operand = ParseNewExpr();
 	ElsIf Tok = Tokens.Ternary Then
-		Operand = ParseTernaryExpr(Parser);
+		Operand = ParseTernaryExpr();
 	Else
-		Error(Parser, "Expected operand",, True);
+		Error("Expected operand",, True);
 	EndIf;
 	Return Operand;
 EndFunction // ParseOperand()
 
-Function ParseStringExpr(Parser)
+Function ParseStringExpr()
 	Var Tok, ExprList, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Tok = Parser.Tok;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Tok = Parser_Tok;
 	ExprList = New Array;
 	While True Do
 		If Tok = Tokens.String Then
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
-			Tok = Next(Parser);
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			Tok = Next();
 			While Tok = Tokens.String Do
-				ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
-				Tok = Next(Parser);
+				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+				Tok = Next();
 			EndDo;
 		ElsIf Tok = Tokens.StringBeg Then
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
-			Tok = Next(Parser);
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			Tok = Next();
 			While Tok = Tokens.StringMid Do
-				ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
-				Tok = Next(Parser);
+				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+				Tok = Next();
 			EndDo;
 			If Tok <> Tokens.StringEnd Then
-				Error(Parser, "Expected """,, True);
+				Error("Expected """,, True);
 			EndIf;
-			ExprList.Add(BasicLitExpr(Tok, Parser.Val, Place(Parser)));
-			Tok = Next(Parser);
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			Tok = Next();
 		Else
 			Break;
 		EndIf;
 	EndDo;
-	Return StringExpr(ExprList, Place(Parser, Pos, Line));
+	Return StringExpr(ExprList, Place(Pos, Line));
 EndFunction // ParseStringExpr()
 
-Function ParseNewExpr(Parser)
+Function ParseNewExpr()
 	Var Tok, Name, Args, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Tok = Next(Parser);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Tok = Next();
 	If Tok = Tokens.Ident Then
-		Name = Parser.Lit;
+		Name = Parser_Lit;
 		Args = EmptyArray;
-		Tok = Next(Parser);
+		Tok = Next();
 	EndIf;
 	If Tok = Tokens.Lparen Then
-		Tok = Next(Parser);
+		Tok = Next();
 		If Tok <> Tokens.Rparen Then
-			Args = ParseArguments(Parser);
-			Expect(Parser, Tokens.Rparen);
+			Args = ParseArguments();
+			Expect(Tokens.Rparen);
 		EndIf;
-		Next(Parser);
+		Next();
 	EndIf;
 	If Name = Undefined And Args = Undefined Then
-		Error(Parser, "Expected constructor", Parser.EndPos, True);
+		Error("Expected constructor", Parser_EndPos, True);
 	EndIf;
-	Return NewExpr(Name, Args, Place(Parser, Pos, Line));
+	Return NewExpr(Name, Args, Place(Pos, Line));
 EndFunction // ParseNewExpr()
 
-Function ParseDesigExpr(Parser, Val AllowNewVar = False, NewVar = Undefined)
+Function ParseDesigExpr(Val AllowNewVar = False, NewVar = Undefined)
 	Var Name, SelectExpr, Object, List, Kind, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Name = Parser.Lit;
-	Next(Parser);
-	SelectExpr = ParseSelectExpr(Parser);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Name = Parser_Lit;
+	Next();
+	SelectExpr = ParseSelectExpr();
 	If SelectExpr = Undefined Then
-		Object = FindObject(Parser, Name);
+		Object = FindObject(Name);
 		List = EmptyArray;
 	Else
 		AllowNewVar = False;
 		Kind = SelectExpr.Kind;
 		If Kind = "Call" Then
-			If Not Parser.Methods.Property(Name, Object) Then
-				If Not Parser.Unknown.Property(Name, Object) Then
+			If Not Parser_Methods.Property(Name, Object) Then
+				If Not Parser_Unknown.Property(Name, Object) Then
 					Object = Unknown(Name);
-					Parser.Unknown.Insert(Name, Object);
+					Parser_Unknown.Insert(Name, Object);
 				EndIf;
 			EndIf;
 		Else
-			Object = FindObject(Parser, Name);
+			Object = FindObject(Name);
 		EndIf;
 		List = New Array;
 		List.Add(SelectExpr);
-		SelectExpr = ParseSelectExpr(Parser);
+		SelectExpr = ParseSelectExpr();
 		While SelectExpr <> Undefined Do
 			Kind = SelectExpr.Kind;
 			List.Add(SelectExpr);
-			SelectExpr = ParseSelectExpr(Parser);
+			SelectExpr = ParseSelectExpr();
 		EndDo;
 	EndIf;
 	If Object = Undefined Then
@@ -1490,60 +1505,60 @@ Function ParseDesigExpr(Parser, Val AllowNewVar = False, NewVar = Undefined)
 		Else
 			Object = Unknown(Name);
 			If Verbose Then
-				Error(Parser, StrTemplate("Undeclared identifier `%1`", Name), Pos);
+				Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf;
-	Return DesigExpr(Object, List, Kind = SelectKinds.Call, Place(Parser, Pos, Line));
+	Return DesigExpr(Object, List, Kind = SelectKinds.Call, Place(Pos, Line));
 EndFunction // ParseDesigExpr()
 
-Function ParseSelectExpr(Parser)
+Function ParseSelectExpr()
 	Var Tok, Value, SelectExpr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Tok = Parser.Tok;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Tok = Parser_Tok;
 	If Tok = Tokens.Period Then
-		Next(Parser);
-		If Not Keywords.Property(Parser.Lit) Then
-			Expect(Parser, Tokens.Ident);
+		Next();
+		If Not Keywords.Property(Parser_Lit) Then
+			Expect(Tokens.Ident);
 		EndIf;
-		Value = Parser.Lit;
-		Next(Parser);
-		SelectExpr = SelectExpr(SelectKinds.Ident, Value, Place(Parser, Pos, Line));
+		Value = Parser_Lit;
+		Next();
+		SelectExpr = SelectExpr(SelectKinds.Ident, Value, Place(Pos, Line));
 	ElsIf Tok = Tokens.Lbrack Then
-		Tok = Next(Parser);
+		Tok = Next();
 		If Tok = Tokens.Rbrack Then
-			Error(Parser, "Expected expression", Pos, True);
+			Error("Expected expression", Pos, True);
 		EndIf;
-		Value = ParseExpression(Parser);
-		Expect(Parser, Tokens.Rbrack);
-		Next(Parser);
-		SelectExpr = SelectExpr(SelectKinds.Index, Value, Place(Parser, Pos, Line));
+		Value = ParseExpression();
+		Expect(Tokens.Rbrack);
+		Next();
+		SelectExpr = SelectExpr(SelectKinds.Index, Value, Place(Pos, Line));
 	ElsIf Tok = Tokens.Lparen Then
-		Tok = Next(Parser);
+		Tok = Next();
 		If Tok = Tokens.Rparen Then
 			Value = EmptyArray;
 		Else
-			Value = ParseArguments(Parser);
+			Value = ParseArguments();
 		EndIf;
-		Expect(Parser, Tokens.Rparen);
-		Next(Parser);
-		SelectExpr = SelectExpr(SelectKinds.Call, Value, Place(Parser, Pos, Line));
+		Expect(Tokens.Rparen);
+		Next();
+		SelectExpr = SelectExpr(SelectKinds.Call, Value, Place(Pos, Line));
 	EndIf;
 	Return SelectExpr;
 EndFunction // ParseSelectExpr()
 
-Function ParseArguments(Parser)
+Function ParseArguments()
 	Var ExprList;
 	ExprList = New Array;
 	While True Do
-		If InitOfExpression.Find(Parser.Tok) <> Undefined Then
-			ExprList.Add(ParseExpression(Parser));
+		If InitOfExpression.Find(Parser_Tok) <> Undefined Then
+			ExprList.Add(ParseExpression());
 		Else
 			ExprList.Add(Undefined);
 		EndIf;
-		If Parser.Tok = Tokens.Comma Then
-			Next(Parser);
+		If Parser_Tok = Tokens.Comma Then
+			Next();
 		Else
 			Break;
 		EndIf;
@@ -1551,317 +1566,317 @@ Function ParseArguments(Parser)
 	Return ExprList;
 EndFunction // ParseArguments()
 
-Function ParseTernaryExpr(Parser)
+Function ParseTernaryExpr()
 	Var Cond, ThenPart, ElsePart, SelectList, SelectExpr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
-	Expect(Parser, Tokens.Lparen);
-	Next(Parser);
-	Cond = ParseExpression(Parser);
-	Expect(Parser, Tokens.Comma);
-	Next(Parser);
-	ThenPart = ParseExpression(Parser);
-	Expect(Parser, Tokens.Comma);
-	Next(Parser);
-	ElsePart = ParseExpression(Parser);
-	Expect(Parser, Tokens.Rparen);
-	If Next(Parser) = Tokens.Period Then
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
+	Expect(Tokens.Lparen);
+	Next();
+	Cond = ParseExpression();
+	Expect(Tokens.Comma);
+	Next();
+	ThenPart = ParseExpression();
+	Expect(Tokens.Comma);
+	Next();
+	ElsePart = ParseExpression();
+	Expect(Tokens.Rparen);
+	If Next() = Tokens.Period Then
 		SelectList = New Array;
-		SelectExpr = ParseSelectExpr(Parser);
+		SelectExpr = ParseSelectExpr();
 		While SelectExpr <> Undefined Do
 			SelectList.Add(SelectExpr);
-			SelectExpr = ParseSelectExpr(Parser);
+			SelectExpr = ParseSelectExpr();
 		EndDo;
 	Else
 		SelectList = EmptyArray;
 	EndIf;
-	Return TernaryExpr(Cond, ThenPart, ElsePart, SelectList, Place(Parser, Pos, Line));
+	Return TernaryExpr(Cond, ThenPart, ElsePart, SelectList, Place(Pos, Line));
 EndFunction // ParseTernaryExpr()
 
-Function ParseParenExpr(Parser)
+Function ParseParenExpr()
 	Var Expr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
-	Expr = ParseExpression(Parser);
-	Expect(Parser, Tokens.Rparen);
-	Next(Parser);
-	Return ParenExpr(Expr, Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
+	Expr = ParseExpression();
+	Expect(Tokens.Rparen);
+	Next();
+	Return ParenExpr(Expr, Place(Pos, Line));
 EndFunction // ParseParenExpr()
 
 #EndRegion // ParseExpr
 
 #Region ParseDecl
 
-Function ParseModDecls(Parser)
+Function ParseModDecls()
 	Var Tok, Decls, Inst;
-	Tok = Parser.Tok;
+	Tok = Parser_Tok;
 	Decls = New Array;
 	While Tok = Tokens.Directive Do
-		Parser.Directive = Parser.Lit;
-		Tok = Next(Parser);
+		Parser_Directive = Directives[Parser_Lit];
+		Tok = Next();
 	EndDo;
 	While True Do
-		Pos = Parser.BegPos;
-		Line = Parser.Line;
-		If Tok = Tokens.Var And Parser.AllowVar Then
-			Decls.Add(ParseVarModDecl(Parser));
+		Pos = Parser_BegPos;
+		Line = Parser_Line;
+		If Tok = Tokens.Var And Parser_AllowVar Then
+			Decls.Add(ParseVarModDecl());
 		ElsIf Tok = Tokens.Function Then
-			Decls.Add(ParseFuncDecl(Parser));
-			Parser.AllowVar = False;
+			Decls.Add(ParseFuncDecl());
+			Parser_AllowVar = False;
 		ElsIf Tok = Tokens.Procedure Then
-			Decls.Add(ParseProcDecl(Parser));
-			Parser.AllowVar = False;
+			Decls.Add(ParseProcDecl());
+			Parser_AllowVar = False;
 		ElsIf Tok = Tokens._Region Then
-			Inst = ParsePrepRegionInst(Parser);
-			Next(Parser);
-			Inst.Place = Place(Parser, Pos, Line);
+			Inst = ParsePrepRegionInst();
+			Next();
+			Inst.Place = Place(Pos, Line);
 			Decls.Add(Inst);
 		ElsIf Tok = Tokens._EndRegion Then
-			Next(Parser);
-			Decls.Add(PrepEndRegionInst(Place(Parser, Pos, Line)));
+			Next();
+			Decls.Add(PrepEndRegionInst(Place(Pos, Line)));
 		ElsIf Tok = Tokens._If Then
-			Inst = ParsePrepIfInst(Parser);
-			Next(Parser);
-			Inst.Place = Place(Parser, Pos, Line);
+			Inst = ParsePrepIfInst();
+			Next();
+			Inst.Place = Place(Pos, Line);
 			Decls.Add(Inst);
 		ElsIf Tok = Tokens._ElsIf Then
-			Inst = ParsePrepElsIfInst(Parser);
-			Next(Parser);
-			Inst.Place = Place(Parser, Pos, Line);
+			Inst = ParsePrepElsIfInst();
+			Next();
+			Inst.Place = Place(Pos, Line);
 			Decls.Add(Inst);
 		ElsIf Tok = Tokens._Else Then
-			Next(Parser);
-			Decls.Add(PrepElseInst(Place(Parser, Pos, Line)));
+			Next();
+			Decls.Add(PrepElseInst(Place(Pos, Line)));
 		ElsIf Tok = Tokens._EndIf Then
-			Next(Parser);
-			Decls.Add(PrepEndIfInst(Place(Parser, Pos, Line)));
+			Next();
+			Decls.Add(PrepEndIfInst(Place(Pos, Line)));
 		ElsIf Tok = Tokens._Use Then
-			Decls.Add(ParsePrepUseInst(Parser));
+			Decls.Add(ParsePrepUseInst());
 		Else
 			Break;
 		EndIf;
-		Tok = Parser.Tok;
-		Parser.Directive = Undefined;
+		Tok = Parser_Tok;
+		Parser_Directive = Undefined;
 		While Tok = Tokens.Directive Do
-			Parser.Directive = Parser.Lit;
-			Tok = Next(Parser);
+			Parser_Directive = Directives[Parser_Lit];
+			Tok = Next();
 		EndDo;
 	EndDo;
 	Return Decls;
 EndFunction // ParseModDecls()
 
-Function ParseVarModDecl(Parser)
+Function ParseVarModDecl()
 	Var VarList, Decl, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
 	VarList = New Array;
-	VarList.Add(ParseVarMod(Parser));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		VarList.Add(ParseVarMod(Parser));
+	VarList.Add(ParseVarMod());
+	While Parser_Tok = Tokens.Comma Do
+		Next();
+		VarList.Add(ParseVarMod());
 	EndDo;
-	Decl = VarModDecl(Parser.Directive, VarList, Place(Parser, Pos, Line));
-	Expect(Parser, Tokens.Semicolon);
-	Next(Parser);
-	While Parser.Tok = Tokens.Semicolon Do
-		Next(Parser);
+	Decl = VarModDecl(Parser_Directive, VarList, Place(Pos, Line));
+	Expect(Tokens.Semicolon);
+	Next();
+	While Parser_Tok = Tokens.Semicolon Do
+		Next();
 	EndDo;
 	Return Decl;
 EndFunction // ParseVarModDecl()
 
-Function ParseVarMod(Parser)
+Function ParseVarMod()
 	Var Name, Object, Exported, Pos;
-	Pos = Parser.BegPos;
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	If Next(Parser) = Tokens.Export Then
+	Pos = Parser_BegPos;
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
+	If Next() = Tokens.Export Then
 		Exported = True;
-		Next(Parser);
+		Next();
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarMod(Name, Parser.Directive, Exported);
+	Object = VarMod(Name, Parser_Directive, Exported);
 	If Exported Then
-		Parser.Interface.Add(Object);
+		Parser_Interface.Add(Object);
 	EndIf;
-	If Parser.Vars.Property(Name) Then
-		Error(Parser, "Identifier already declared", Pos, True);
+	If Parser_Vars.Property(Name) Then
+		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser.Vars.Insert(Name, Object);
+	Parser_Vars.Insert(Name, Object);
 	Return Object;
 EndFunction // ParseVarMod()
 
-Function ParseVarDecls(Parser)
+Function ParseVarDecls()
 	Var Tok, Decls;
 	Decls = New Array;
-	Tok = Parser.Tok;
+	Tok = Parser_Tok;
 	While Tok = Tokens.Var Do
-		Decls.Add(ParseVarLocDecl(Parser));
-		Expect(Parser, Tokens.Semicolon);
-		Tok = Next(Parser);
+		Decls.Add(ParseVarLocDecl());
+		Expect(Tokens.Semicolon);
+		Tok = Next();
 	EndDo;
 	Return Decls;
 EndFunction // ParseVarDecls()
 
-Function ParseVarLocDecl(Parser)
+Function ParseVarLocDecl()
 	Var VarList, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
 	VarList = New Array;
-	VarList.Add(ParseVarLoc(Parser));
-	While Parser.Tok = Tokens.Comma Do
-		Next(Parser);
-		VarList.Add(ParseVarLoc(Parser));
+	VarList.Add(ParseVarLoc());
+	While Parser_Tok = Tokens.Comma Do
+		Next();
+		VarList.Add(ParseVarLoc());
 	EndDo;
-	Return VarLocDecl(VarList, Place(Parser, Pos, Line));
+	Return VarLocDecl(VarList, Place(Pos, Line));
 EndFunction // ParseVarLocDecl()
 
-Function ParseVarLoc(Parser)
+Function ParseVarLoc()
 	Var Name, Object, Pos;
-	Pos = Parser.BegPos;
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
+	Pos = Parser_BegPos;
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
 	Object = VarLoc(Name);
-	If Parser.Vars.Property(Name) Then
-		Error(Parser, "Identifier already declared", Pos, True);
+	If Parser_Vars.Property(Name) Then
+		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser.Vars.Insert(Name, Object);
-	Next(Parser);
+	Parser_Vars.Insert(Name, Object);
+	Next();
 	Return Object;
 EndFunction // ParseVarLoc()
 
-Function ParseFuncDecl(Parser)
+Function ParseFuncDecl()
 	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	Exported = False;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	Next(Parser);
-	OpenScope(Parser);
-	ParamList = ParseParamList(Parser);
-	If Parser.Tok = Tokens.Export Then
+	Next();
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
+	Next();
+	OpenScope();
+	ParamList = ParseParamList();
+	If Parser_Tok = Tokens.Export Then
 		Exported = True;
-		Next(Parser);
+		Next();
 	EndIf;
-	If Parser.Unknown.Property(Name, Object) Then
+	If Parser_Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Func;
-		Object.Insert("Directive", Parser.Directive);
+		Object.Insert("Directive", Parser_Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
-		Parser.Unknown.Delete(Name);
+		Parser_Unknown.Delete(Name);
 	Else
-		Object = Func(Name, Parser.Directive, ParamList, Exported);
+		Object = Func(Name, Parser_Directive, ParamList, Exported);
 	EndIf;
-	If Parser.Methods.Property(Name) Then
-		Error(Parser, "Method already declared", Pos, True);
+	If Parser_Methods.Property(Name) Then
+		Error("Method already declared", Pos, True);
 	EndIf;
-	Parser.Methods.Insert(Name, Object);
+	Parser_Methods.Insert(Name, Object);
 	If Exported Then
-		Parser.Interface.Add(Object);
+		Parser_Interface.Add(Object);
 	EndIf;
-	Decls = ParseVarDecls(Parser);
-	Parser.IsFunc = True;
-	Statements = ParseStatements(Parser);
-	Parser.IsFunc = False;
-	Expect(Parser, Tokens.EndFunction);
+	Decls = ParseVarDecls();
+	Parser_IsFunc = True;
+	Statements = ParseStatements();
+	Parser_IsFunc = False;
+	Expect(Tokens.EndFunction);
 	Auto = New Array;
-	For Each VarObj In Parser.Scope.Auto Do
+	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
 	EndDo;
-	CloseScope(Parser);
-	Next(Parser);
-	Return FuncDecl(Object, Decls, Auto, Statements, Place(Parser, Pos, Line));
+	CloseScope();
+	Next();
+	Return FuncDecl(Object, Decls, Auto, Statements, Place(Pos, Line));
 EndFunction // ParseFuncDecl()
 
-Function ParseProcDecl(Parser)
+Function ParseProcDecl()
 	Var Object, Name, Decls, ParamList, Exported, Auto, VarObj, Statements, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	Exported = False;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	Next(Parser);
-	OpenScope(Parser);
-	ParamList = ParseParamList(Parser);
-	If Parser.Tok = Tokens.Export Then
+	Next();
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
+	Next();
+	OpenScope();
+	ParamList = ParseParamList();
+	If Parser_Tok = Tokens.Export Then
 		Exported = True;
-		Next(Parser);
+		Next();
 	EndIf;
-	If Parser.Unknown.Property(Name, Object) Then
+	If Parser_Unknown.Property(Name, Object) Then
 		Object.Type = Nodes.Proc;
-		Object.Insert("Directive", Parser.Directive);
+		Object.Insert("Directive", Parser_Directive);
 		Object.Insert("Params", ParamList);
 		Object.Insert("Export", Exported);
-		Parser.Unknown.Delete(Name);
+		Parser_Unknown.Delete(Name);
 	Else
-		Object = Proc(Name, Parser.Directive, ParamList, Exported);
+		Object = Proc(Name, Parser_Directive, ParamList, Exported);
 	EndIf;
-	If Parser.Methods.Property(Name) Then
-		Error(Parser, "Method already declared", Pos, True);
+	If Parser_Methods.Property(Name) Then
+		Error("Method already declared", Pos, True);
 	EndIf;
-	Parser.Methods.Insert(Name, Object);
+	Parser_Methods.Insert(Name, Object);
 	If Exported Then
-		Parser.Interface.Add(Object);
+		Parser_Interface.Add(Object);
 	EndIf;
-	Decls = ParseVarDecls(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndProcedure);
+	Decls = ParseVarDecls();
+	Statements = ParseStatements();
+	Expect(Tokens.EndProcedure);
 	Auto = New Array;
-	For Each VarObj In Parser.Scope.Auto Do
+	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
 	EndDo;
-	CloseScope(Parser);
-	Next(Parser);
-	Return ProcDecl(Object, Decls, Auto, Statements, Place(Parser, Pos, Line));
+	CloseScope();
+	Next();
+	Return ProcDecl(Object, Decls, Auto, Statements, Place(Pos, Line));
 EndFunction // ParseProcDecl()
 
-Function ParseParamList(Parser)
+Function ParseParamList()
 	Var ParamList;
-	Expect(Parser, Tokens.Lparen);
-	Next(Parser);
-	If Parser.Tok = Tokens.Rparen Then
+	Expect(Tokens.Lparen);
+	Next();
+	If Parser_Tok = Tokens.Rparen Then
 		ParamList = EmptyArray;
 	Else
 		ParamList = New Array;
-		ParamList.Add(ParseParameter(Parser));
-		While Parser.Tok = Tokens.Comma Do
-			Next(Parser);
-			ParamList.Add(ParseParameter(Parser));
+		ParamList.Add(ParseParameter());
+		While Parser_Tok = Tokens.Comma Do
+			Next();
+			ParamList.Add(ParseParameter());
 		EndDo;
 	EndIf;
-	Expect(Parser, Tokens.Rparen);
-	Next(Parser);
+	Expect(Tokens.Rparen);
+	Next();
 	Return ParamList;
 EndFunction // ParseParamList()
 
-Function ParseParameter(Parser)
+Function ParseParameter()
 	Var Name, Object, ByVal, Pos;
-	Pos = Parser.BegPos;
-	If Parser.Tok = Tokens.Val Then
+	Pos = Parser_BegPos;
+	If Parser_Tok = Tokens.Val Then
 		ByVal = True;
-		Next(Parser);
+		Next();
 	Else
 		ByVal = False;
 	EndIf;
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	If Next(Parser) = Tokens.Eql Then
-		Next(Parser);
-		Object = Param(Name, ByVal, ParseUnaryExpr(Parser));
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
+	If Next() = Tokens.Eql Then
+		Next();
+		Object = Param(Name, ByVal, ParseUnaryExpr());
 	Else
 		Object = Param(Name, ByVal);
 	EndIf;
-	If Parser.Vars.Property(Name) Then
-		Error(Parser, "Identifier already declared", Pos, True);
+	If Parser_Vars.Property(Name) Then
+		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser.Vars.Insert(Name, Object);
+	Parser_Vars.Insert(Name, Object);
 	Return Object;
 EndFunction // ParseParameter()
 
@@ -1869,20 +1884,20 @@ EndFunction // ParseParameter()
 
 #Region ParseStmt
 
-Function ParseStatements(Parser)
+Function ParseStatements()
 	Var Statements, Stmt;
 	Statements = New Array;
-	Stmt = ParseStmt(Parser);
+	Stmt = ParseStmt();
 	If Stmt <> Undefined Then
 		Statements.Add(Stmt);
 	EndIf;
 	While True Do
-		If Parser.Tok = Tokens.Semicolon Then
-			Next(Parser);
-		ElsIf Not Left(Parser.Tok, 1) = "_" Then
+		If Parser_Tok = Tokens.Semicolon Then
+			Next();
+		ElsIf Left(Parser_Tok, 1) <> "_" Then
 			Break;		
 		EndIf; 
-		Stmt = ParseStmt(Parser);
+		Stmt = ParseStmt();
 		If Stmt <> Undefined Then
 			Statements.Add(Stmt);
 		EndIf;
@@ -1890,223 +1905,223 @@ Function ParseStatements(Parser)
 	Return Statements;
 EndFunction // ParseStatements()
 
-Function ParseStmt(Parser)
+Function ParseStmt()
 	Var Tok, Stmt, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Tok = Parser.Tok;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Tok = Parser_Tok;
 	If Tok = Tokens.Ident Then
-		Stmt = ParseAssignOrCallStmt(Parser);
+		Stmt = ParseAssignOrCallStmt();
 	ElsIf Tok = Tokens.If Then
-		Stmt = ParseIfStmt(Parser);
+		Stmt = ParseIfStmt();
 	ElsIf Tok = Tokens.Try Then
-		Stmt = ParseTryStmt(Parser);
+		Stmt = ParseTryStmt();
 	ElsIf Tok = Tokens.While Then
-		Stmt = ParseWhileStmt(Parser);
+		Stmt = ParseWhileStmt();
 	ElsIf Tok = Tokens.For Then
-		If Next(Parser) = Tokens.Each Then
-			Stmt = ParseForEachStmt(Parser);
+		If Next() = Tokens.Each Then
+			Stmt = ParseForEachStmt();
 		Else
-			Stmt = ParseForStmt(Parser);
+			Stmt = ParseForStmt();
 		EndIf;
 	ElsIf Tok = Tokens.Return Then
-		Stmt = ParseReturnStmt(Parser);
+		Stmt = ParseReturnStmt();
 	ElsIf Tok = Tokens.Break Then
-		Next(Parser);
+		Next();
 		Stmt = BreakStmt();
 	ElsIf Tok = Tokens.Continue Then
-		Next(Parser);
+		Next();
 		Stmt = ContinueStmt();
 	ElsIf Tok = Tokens.Raise Then
-		Stmt = ParseRaiseStmt(Parser);
+		Stmt = ParseRaiseStmt();
 	ElsIf Tok = Tokens.Execute Then
-		Stmt = ParseExecuteStmt(Parser);
+		Stmt = ParseExecuteStmt();
 	ElsIf Tok = Tokens.Goto Then
-		Stmt = ParseGotoStmt(Parser);
+		Stmt = ParseGotoStmt();
 	ElsIf Tok = Tokens.Label Then
-		Stmt = LabelStmt(Parser.Lit);
-		Next(Parser);
-		Expect(Parser, Tokens.Colon);
-		Parser.Tok = Tokens.Semicolon; // cheat code
+		Stmt = LabelStmt(Parser_Lit);
+		Next();
+		Expect(Tokens.Colon);
+		Parser_Tok = Tokens.Semicolon; // cheat code
 	ElsIf Tok = Tokens._Region Then
-		Stmt = ParsePrepRegionInst(Parser);
+		Stmt = ParsePrepRegionInst();
 	ElsIf Tok = Tokens._EndRegion Then
 		Stmt = PrepEndRegionInst();
-		Parser.Tok = Tokens.Semicolon; // cheat code
+		Parser_Tok = Tokens.Semicolon; // cheat code
 	ElsIf Tok = Tokens._If Then
-		Stmt = ParsePrepIfInst(Parser);
+		Stmt = ParsePrepIfInst();
 	ElsIf Tok = Tokens._ElsIf Then
-		Stmt = ParsePrepElsIfInst(Parser);
+		Stmt = ParsePrepElsIfInst();
 	ElsIf Tok = Tokens._Else Then
 		Stmt = PrepElseInst();
-		Parser.Tok = Tokens.Semicolon; // cheat code
+		Parser_Tok = Tokens.Semicolon; // cheat code
 	ElsIf Tok = Tokens._EndIf Then
 		Stmt = PrepEndIfInst();
-		Parser.Tok = Tokens.Semicolon; // cheat code
+		Parser_Tok = Tokens.Semicolon; // cheat code
 	ElsIf Tok = Tokens.Semicolon Then
 		// NOP
 	EndIf;
 	If Stmt <> Undefined Then
-		Stmt.Place = Place(Parser, Pos, Line);
+		Stmt.Place = Place(Pos, Line);
 	EndIf;
 	Return Stmt;
 EndFunction // ParseStmt()
 
-Function ParseRaiseStmt(Parser)
+Function ParseRaiseStmt()
 	Var Expr;
-	If InitOfExpression.Find(Next(Parser)) <> Undefined Then
-		Expr = ParseExpression(Parser);
+	If InitOfExpression.Find(Next()) <> Undefined Then
+		Expr = ParseExpression();
 	EndIf;
 	Return RaiseStmt(Expr);
 EndFunction // ParseRaiseStmt()
 
-Function ParseExecuteStmt(Parser)
-	Next(Parser);
-	Return ExecuteStmt(ParseExpression(Parser));
+Function ParseExecuteStmt()
+	Next();
+	Return ExecuteStmt(ParseExpression());
 EndFunction // ParseExecuteStmt()
 
-Function ParseAssignOrCallStmt(Parser)
+Function ParseAssignOrCallStmt()
 	Var Left, Right, Stmt, NewVar;
-	Left = ParseDesigExpr(Parser, True, NewVar);
+	Left = ParseDesigExpr(True, NewVar);
 	If Left.Call Then
 		Stmt = CallStmt(Left);
 	Else
-		Expect(Parser, Tokens.Eql);
-		Next(Parser);
-		Right = ParseExpression(Parser);
+		Expect(Tokens.Eql);
+		Next();
+		Right = ParseExpression();
 		If NewVar <> Undefined Then
-			Parser.Vars.Insert(NewVar.Name, NewVar);
-			Parser.Scope.Auto.Add(NewVar);
+			Parser_Vars.Insert(NewVar.Name, NewVar);
+			Parser_Scope.Auto.Add(NewVar);
 		EndIf;
 		Stmt = AssignStmt(Left, Right);
 	EndIf;
 	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
 
-Function ParseIfStmt(Parser)
+Function ParseIfStmt()
 	Var Tok, Cond, ThenPart, ElsePart;
 	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
-	Next(Parser);
-	Cond = ParseExpression(Parser);
-	Expect(Parser, Tokens.Then);
-	Next(Parser);
-	ThenPart = ParseStatements(Parser);
-	Tok = Parser.Tok;
+	Next();
+	Cond = ParseExpression();
+	Expect(Tokens.Then);
+	Next();
+	ThenPart = ParseStatements();
+	Tok = Parser_Tok;
 	If Tok = Tokens.ElsIf Then
 		ElsIfPart = New Array;
 		While Tok = Tokens.ElsIf Do
-			Pos = Parser.BegPos;
-			Line = Parser.Line;
-			Next(Parser);
-			ElsIfCond = ParseExpression(Parser);
-			Expect(Parser, Tokens.Then);
-			Next(Parser);
-			ElsIfThen = ParseStatements(Parser);
-			ElsIfPart.Add(ElsIfStmt(ElsIfCond, ElsIfThen, Place(Parser, Pos, Line)));
-			Tok = Parser.Tok;
+			Pos = Parser_BegPos;
+			Line = Parser_Line;
+			Next();
+			ElsIfCond = ParseExpression();
+			Expect(Tokens.Then);
+			Next();
+			ElsIfThen = ParseStatements();
+			ElsIfPart.Add(ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Line)));
+			Tok = Parser_Tok;
 		EndDo;
 	EndIf;
 	If Tok = Tokens.Else Then
-		Next(Parser);
-		ElsePart = ParseStatements(Parser);
+		Next();
+		ElsePart = ParseStatements();
 	EndIf;
-	Expect(Parser, Tokens.EndIf);
-	Next(Parser);
+	Expect(Tokens.EndIf);
+	Next();
 	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
 EndFunction // ParseIfStmt()
 
-Function ParseTryStmt(Parser)
+Function ParseTryStmt()
 	Var TryPart, ExceptPart;
-	Next(Parser);
-	TryPart = ParseStatements(Parser);
-	Expect(Parser, Tokens.Except);
-	Next(Parser);
-	ExceptPart = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndTry);
-	Next(Parser);
+	Next();
+	TryPart = ParseStatements();
+	Expect(Tokens.Except);
+	Next();
+	ExceptPart = ParseStatements();
+	Expect(Tokens.EndTry);
+	Next();
 	Return TryStmt(TryPart, ExceptPart);
 EndFunction // ParseTryStmt()
 
-Function ParseWhileStmt(Parser)
+Function ParseWhileStmt()
 	Var Cond, Statements;
-	Next(Parser);
-	Cond = ParseExpression(Parser);
-	Expect(Parser, Tokens.Do);
-	Next(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
-	Next(Parser);
+	Next();
+	Cond = ParseExpression();
+	Expect(Tokens.Do);
+	Next();
+	Statements = ParseStatements();
+	Expect(Tokens.EndDo);
+	Next();
 	Return WhileStmt(Cond, Statements);
 EndFunction // ParseWhileStmt()
 
-Function ParseForStmt(Parser)
+Function ParseForStmt()
 	Var DesigExpr, From, Until, Statements, VarPos, NewVar;
-	Expect(Parser, Tokens.Ident);
-	VarPos = Parser.BegPos;
-	DesigExpr = ParseDesigExpr(Parser, True, NewVar);
+	Expect(Tokens.Ident);
+	VarPos = Parser_BegPos;
+	DesigExpr = ParseDesigExpr(True, NewVar);
 	If DesigExpr.Call Then
-		Error(Parser, "Expected variable", VarPos, True);
+		Error("Expected variable", VarPos, True);
 	EndIf;
-	Expect(Parser, Tokens.Eql);
-	Next(Parser);
-	From = ParseExpression(Parser);
-	Expect(Parser, Tokens.To);
-	Next(Parser);
-	Until = ParseExpression(Parser);
+	Expect(Tokens.Eql);
+	Next();
+	From = ParseExpression();
+	Expect(Tokens.To);
+	Next();
+	Until = ParseExpression();
 	If NewVar <> Undefined Then
-		Parser.Vars.Insert(NewVar.Name, NewVar);
-		Parser.Scope.Auto.Add(NewVar);
+		Parser_Vars.Insert(NewVar.Name, NewVar);
+		Parser_Scope.Auto.Add(NewVar);
 	EndIf;
-	Expect(Parser, Tokens.Do);
-	Next(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
-	Next(Parser);
+	Expect(Tokens.Do);
+	Next();
+	Statements = ParseStatements();
+	Expect(Tokens.EndDo);
+	Next();
 	Return ForStmt(DesigExpr, From, Until, Statements);
 EndFunction // ParseForStmt()
 
-Function ParseForEachStmt(Parser)
+Function ParseForEachStmt()
 	Var DesigExpr, Collection, Statements, VarPos, NewVar;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	VarPos = Parser.BegPos;
-	DesigExpr = ParseDesigExpr(Parser, True, NewVar);
+	Next();
+	Expect(Tokens.Ident);
+	VarPos = Parser_BegPos;
+	DesigExpr = ParseDesigExpr(True, NewVar);
 	If DesigExpr.Call Then
-		Error(Parser, "Expected variable", VarPos, True);
+		Error("Expected variable", VarPos, True);
 	EndIf;
-	Expect(Parser, Tokens.In);
-	Next(Parser);
-	Collection = ParseExpression(Parser);
+	Expect(Tokens.In);
+	Next();
+	Collection = ParseExpression();
 	If NewVar <> Undefined Then
-		Parser.Vars.Insert(NewVar.Name, NewVar);
-		Parser.Scope.Auto.Add(NewVar);
+		Parser_Vars.Insert(NewVar.Name, NewVar);
+		Parser_Scope.Auto.Add(NewVar);
 	EndIf;
-	Expect(Parser, Tokens.Do);
-	Next(Parser);
-	Statements = ParseStatements(Parser);
-	Expect(Parser, Tokens.EndDo);
-	Next(Parser);
+	Expect(Tokens.Do);
+	Next();
+	Statements = ParseStatements();
+	Expect(Tokens.EndDo);
+	Next();
 	Return ForEachStmt(DesigExpr, Collection, Statements);
 EndFunction // ParseForEachStmt()
 
-Function ParseGotoStmt(Parser)
+Function ParseGotoStmt()
 	Var Label;
-	Next(Parser);
-	Expect(Parser, Tokens.Label);
-	Label = Parser.Lit;
-	Next(Parser);
+	Next();
+	Expect(Tokens.Label);
+	Label = Parser_Lit;
+	Next();
 	Return GotoStmt(Label);
 EndFunction // ParseGotoStmt()
 
-Function ParseReturnStmt(Parser)
+Function ParseReturnStmt()
 	Var Expr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
-	If Parser.IsFunc Then
-		Expr = ParseExpression(Parser);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
+	If Parser_IsFunc Then
+		Expr = ParseExpression();
 	EndIf;
-	Return ReturnStmt(Expr, Place(Parser, Pos, Line));
+	Return ReturnStmt(Expr, Place(Pos, Line));
 EndFunction // ParseReturnStmt()
 
 #EndRegion // ParseStmt
@@ -2115,107 +2130,107 @@ EndFunction // ParseReturnStmt()
 
 // Expr
 
-Function ParsePrepExpression(Parser)
+Function ParsePrepExpression()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParsePrepAndExpr(Parser);
-	While Parser.Tok = Tokens.Or Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepAndExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParsePrepAndExpr();
+	While Parser_Tok = Tokens.Or Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepAndExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParsePrepExpression()
 
-Function ParsePrepAndExpr(Parser)
+Function ParsePrepAndExpr()
 	Var Expr, Operator, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Expr = ParsePrepNotExpr(Parser);
-	While Parser.Tok = Tokens.And Do
-		Operator = Parser.Tok;
-		Next(Parser);
-		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepNotExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Expr = ParsePrepNotExpr();
+	While Parser_Tok = Tokens.And Do
+		Operator = Parser_Tok;
+		Next();
+		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepNotExpr(), Place(Pos, Line));
 	EndDo;
 	Return Expr;
 EndFunction // ParsePrepAndExpr()
 
-Function ParsePrepNotExpr(Parser)
+Function ParsePrepNotExpr()
 	Var Expr, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	If Parser.Tok = Tokens.Not Then
-		Next(Parser);
-		Expr = PrepNotExpr(ParsePrepSymExpr(Parser), Place(Parser, Pos, Line));
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	If Parser_Tok = Tokens.Not Then
+		Next();
+		Expr = PrepNotExpr(ParsePrepSymExpr(), Place(Pos, Line));
 	Else
-		Expr = ParsePrepSymExpr(Parser);
+		Expr = ParsePrepSymExpr();
 	EndIf;
 	Return Expr;
 EndFunction // ParsePrepNotExpr()
 
-Function ParsePrepSymExpr(Parser)
+Function ParsePrepSymExpr()
 	Var Operand, SymbolExist;
-	If Parser.Tok = Tokens.Ident Then
-		SymbolExist = PrepSymbols.Property(Parser.Lit);
-		Operand = PrepSymExpr(Parser.Lit, SymbolExist, Place(Parser));
-		Next(Parser);
+	If Parser_Tok = Tokens.Ident Then
+		SymbolExist = PrepSymbols.Property(Parser_Lit);
+		Operand = PrepSymExpr(Parser_Lit, SymbolExist, Place());
+		Next();
 	Else
-		Error(Parser, "Expected preprocessor symbol",, True);
+		Error("Expected preprocessor symbol",, True);
 	EndIf;
 	Return Operand;
 EndFunction // ParsePrepSymExpr()
 
 // Inst
 
-Function ParsePrepUseInst(Parser)
+Function ParsePrepUseInst()
 	Var Path, Pos, Line;
-	Pos = Parser.BegPos;
-	Line = Parser.Line;
-	Next(Parser);
-	If Line <> Parser.Line Then
-		Error(Parser, "Expected string or identifier", Parser.EndPos, True);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Next();
+	If Line <> Parser_Line Then
+		Error("Expected string or identifier", Parser_EndPos, True);
 	EndIf;
-	If Parser.Tok = Tokens.Number Then
-		Path = Parser.Lit;
-		If AlphaDigitMap[Parser.Char] = Alpha Then // can be a keyword
-			Next(Parser);
-			Path = Path + Parser.Lit;
+	If Parser_Tok = Tokens.Number Then
+		Path = Parser_Lit;
+		If AlphaDigitMap[Parser_Char] = Alpha Then // can be a keyword
+			Next();
+			Path = Path + Parser_Lit;
 		EndIf;
-	ElsIf Parser.Tok = Tokens.Ident
-		Or Parser.Tok = Tokens.String Then
-		Path = Parser.Lit;
+	ElsIf Parser_Tok = Tokens.Ident
+		Or Parser_Tok = Tokens.String Then
+		Path = Parser_Lit;
 	Else
-		Error(Parser, "Expected string or identifier", Parser.EndPos, True);
+		Error("Expected string or identifier", Parser_EndPos, True);
 	EndIf;
-	Next(Parser);
-	Return PrepUseInst(Path, Place(Parser, Pos, Line));
+	Next();
+	Return PrepUseInst(Path, Place(Pos, Line));
 EndFunction // ParsePrepUseInst()
 
-Function ParsePrepIfInst(Parser)
+Function ParsePrepIfInst()
 	Var Cond;
-	Next(Parser);
-	Cond = ParsePrepExpression(Parser);
-	Expect(Parser, Tokens.Then);
-	Parser.Tok = Tokens.Semicolon; // cheat code
+	Next();
+	Cond = ParsePrepExpression();
+	Expect(Tokens.Then);
+	Parser_Tok = Tokens.Semicolon; // cheat code
 	Return PrepIfInst(Cond);
 EndFunction // ParsePrepIfInst()
 
-Function ParsePrepElsIfInst(Parser)
+Function ParsePrepElsIfInst()
 	Var Cond;
-	Next(Parser);
-	Cond = ParsePrepExpression(Parser);
-	Expect(Parser, Tokens.Then);
-	Parser.Tok = Tokens.Semicolon; // cheat code
+	Next();
+	Cond = ParsePrepExpression();
+	Expect(Tokens.Then);
+	Parser_Tok = Tokens.Semicolon; // cheat code
 	Return PrepElsIfInst(Cond);
 EndFunction // ParsePrepElsIfInst()
 
-Function ParsePrepRegionInst(Parser)
+Function ParsePrepRegionInst()
 	Var Name;
-	Next(Parser);
-	Expect(Parser, Tokens.Ident);
-	Name = Parser.Lit;
-	Parser.Tok = Tokens.Semicolon; // cheat code
+	Next();
+	Expect(Tokens.Ident);
+	Name = Parser_Lit;
+	Parser_Tok = Tokens.Semicolon; // cheat code
 	Return PrepRegionInst(Name);
 EndFunction // ParsePrepRegionInst()
 
@@ -2225,27 +2240,29 @@ EndFunction // ParsePrepRegionInst()
 
 #Region Auxiliary
 
-Function Place(Parser, Pos = Undefined, Line = Undefined)
+Function Place(Pos = Undefined, Line = Undefined)
 	Var Place, Len;
 	If Location Then
 		If Pos = Undefined Then
-			Len = StrLen(Parser.Lit);
-			Pos = Parser.Pos - Len;
+			Len = StrLen(Parser_Lit);
+			Pos = Parser_Pos - Len;
 		Else
-			Len = Parser.EndPos - Pos;
+			Len = Parser_EndPos - Pos;
 		EndIf;
 		If Line = Undefined Then
-			Line = Parser.Line;
+			Line = Parser_Line;
 		EndIf;
 		Place = New Structure(
 			"Pos,"     // number
 			"Len,"     // number
 			"BegLine," // number
 			"EndLine"  // number
-		, Pos, Len, Line, Parser.EndLine);
+		, Pos, Len, Line, Parser_EndLine);
 		If Debug Then
-			Place.Insert("Str", Mid(Parser.Source, Pos, Len));
+			Place.Insert("Str", Mid(Parser_Source, Pos, Len));
 		EndIf;
+	Else
+		Place = Line;
 	EndIf;
 	Return Place;
 EndFunction // Place()
@@ -2262,9 +2279,9 @@ Function AsDate(DateLit)
 	Return Date(StrConcat(List));
 EndFunction // AsDate()
 
-Procedure Expect(Parser, Tok)
-	If Parser.Tok <> Tok Then
-		Error(Parser, "Expected " + Tok,, True);
+Procedure Expect(Tok)
+	If Parser_Tok <> Tok Then
+		Error("Expected " + Tok,, True);
 	EndIf;
 EndProcedure // Expect()
 
@@ -2286,14 +2303,14 @@ Function StringToken(Lit)
 	Return Tok;
 EndFunction // StringToken()
 
-Procedure Error(Parser, Note, Pos = Undefined, Stop = False)
+Procedure Error(Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
 	If Pos = Undefined Then
-		Pos = Min(Parser.Pos - StrLen(Parser.Lit), Parser.Len);
+		Pos = Min(Parser_Pos - StrLen(Parser_Lit), Parser_Len);
 	EndIf;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		StrOccurrenceCount(Mid(Parser.Source, 1, Pos), Chars.LF) + 1,
-		Pos - ?(Pos = 0, 0, StrFind(Parser.Source, Chars.LF, SearchDirection.FromEnd, Pos)),
+		StrOccurrenceCount(Mid(Parser_Source, 1, Pos), Chars.LF) + 1,
+		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars.LF, SearchDirection.FromEnd, Pos)),
 		Note
 	);
 	If Stop Then
@@ -2308,38 +2325,32 @@ EndProcedure // Error()
 #Region Visitor
 
 Function Visitor(Hooks) Export
-	Var Visitor, Counters, Item;
+	Var Counters, Item;
 
-	Visitor = New Structure( // @Class
-		"Hooks,"    // structure as map[string] (array)
-		"Stack,"    // structure
-		"Counters"  // structure as map[string] (number)
-	);
-
-	Visitor.Hooks = Hooks;
-	Visitor.Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
+	Visitor_Hooks = Hooks;
+	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 
 	Counters = New Structure;
-	Visitor.Counters = Counters;
+	Visitor_Counters = Counters;
 	For Each Item In Nodes Do
 		Counters.Insert(Item.Key, 0);
 	EndDo;
 
-	Return Visitor;
+	Return Undefined;
 EndFunction // Visitor()
 
-Procedure PushInfo(Visitor, Parent)
+Procedure PushInfo(Parent)
 	Var NodeType;
-	Visitor.Stack = New FixedStructure("Outer, Parent", Visitor.Stack, Parent);
+	Visitor_Stack = New FixedStructure("Outer, Parent", Visitor_Stack, Parent);
 	NodeType = Parent.Type;
-	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] + 1;
+	Visitor_Counters[NodeType] = Visitor_Counters[NodeType] + 1;
 EndProcedure // PushInfo()
 
-Procedure PopInfo(Visitor)
+Procedure PopInfo()
 	Var NodeType;
-	NodeType = Visitor.Stack.Parent.Type;
-	Visitor.Counters[NodeType] = Visitor.Counters[NodeType] - 1;
-	Visitor.Stack = Visitor.Stack.Outer;
+	NodeType = Visitor_Stack.Parent.Type;
+	Visitor_Counters[NodeType] = Visitor_Counters[NodeType] - 1;
+	Visitor_Stack = Visitor_Stack.Outer;
 EndProcedure // PopInfo()
 
 Function Hooks() Export
@@ -2394,62 +2405,62 @@ Function Hooks() Export
 
 EndFunction // Hooks()
 
-Procedure VisitModule(Visitor, Module) Export
+Procedure VisitModule(Module) Export
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitModule Do
-		Hook.VisitModule(Module, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitModule Do
+		Hook.VisitModule(Module, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, Module);
-	VisitDeclarations(Visitor, Module.Decls);
-	VisitStatements(Visitor, Module.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitModule Do
-		Hook.AfterVisitModule(Module, Visitor.Stack, Visitor.Counters);
+	PushInfo(Module);
+	VisitDeclarations(Module.Decls);
+	VisitStatements(Module.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitModule Do
+		Hook.AfterVisitModule(Module, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitModule()
 
-Procedure VisitDeclarations(Visitor, Declarations)
+Procedure VisitDeclarations(Declarations)
 	Var Decl, Hook;
-	For Each Hook In Visitor.Hooks.VisitDeclarations Do
-		Hook.VisitDeclarations(Declarations, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitDeclarations Do
+		Hook.VisitDeclarations(Declarations, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	For Each Decl In Declarations Do
-		VisitDecl(Visitor, Decl);
+		VisitDecl(Decl);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitDeclarations Do
-		Hook.AfterVisitDeclarations(Declarations, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitDeclarations Do
+		Hook.AfterVisitDeclarations(Declarations, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitDeclarations()
 
-Procedure VisitStatements(Visitor, Statements)
+Procedure VisitStatements(Statements)
 	Var Stmt, Hook;
-	For Each Hook In Visitor.Hooks.VisitStatements Do
-		Hook.VisitStatements(Statements, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitStatements Do
+		Hook.VisitStatements(Statements, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	For Each Stmt In Statements Do
-		VisitStmt(Visitor, Stmt);
+		VisitStmt(Stmt);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitStatements Do
-		Hook.AfterVisitStatements(Statements, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitStatements Do
+		Hook.AfterVisitStatements(Statements, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitStatements()
 
 #Region VisitDecl
 
-Procedure VisitDecl(Visitor, Decl)
+Procedure VisitDecl(Decl)
 	Var Type, Hook;
-	For Each Hook In Visitor.Hooks.VisitDecl Do
-		Hook.VisitDecl(Decl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitDecl Do
+		Hook.VisitDecl(Decl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	Type = Decl.Type;
 	If Type = Nodes.VarModDecl Then
-		VisitVarModDecl(Visitor, Decl);
+		VisitVarModDecl(Decl);
 	ElsIf Type = Nodes.VarLocDecl Then
-		VisitVarLocDecl(Visitor, Decl);
+		VisitVarLocDecl(Decl);
 	ElsIf Type = Nodes.ProcDecl Then
-		VisitProcDecl(Visitor, Decl);
+		VisitProcDecl(Decl);
 	ElsIf Type = Nodes.FuncDecl Then
-		VisitFuncDecl(Visitor, Decl);
+		VisitFuncDecl(Decl);
 	ElsIf Type = Nodes.PrepRegionInst
 		Or Type = Nodes.PrepEndRegionInst
 		Or Type = Nodes.PrepIfInst
@@ -2457,58 +2468,58 @@ Procedure VisitDecl(Visitor, Decl)
 		Or Type = Nodes.PrepElseInst
 		Or Type = Nodes.PrepEndIfInst
 		Or Type = Nodes.PrepUseInst Then
-		VisitPrepInst(Visitor, Decl);
+		VisitPrepInst(Decl);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitDecl Do
-		Hook.AfterVisitDecl(Decl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitDecl Do
+		Hook.AfterVisitDecl(Decl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarModDecl(Visitor, VarModDecl)
+Procedure VisitVarModDecl(VarModDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitVarModDecl Do
-		Hook.VisitVarModDecl(VarModDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitVarModDecl Do
+		Hook.VisitVarModDecl(VarModDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitVarModDecl Do
-		Hook.AfterVisitVarModDecl(VarModDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitVarModDecl Do
+		Hook.AfterVisitVarModDecl(VarModDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitVarModDecl()
 
-Procedure VisitVarLocDecl(Visitor, VarLocDecl)
+Procedure VisitVarLocDecl(VarLocDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitVarLocDecl Do
-		Hook.VisitVarLocDecl(VarLocDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitVarLocDecl Do
+		Hook.VisitVarLocDecl(VarLocDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitVarLocDecl Do
-		Hook.AfterVisitVarLocDecl(VarLocDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitVarLocDecl Do
+		Hook.AfterVisitVarLocDecl(VarLocDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitVarLocDecl()
 
-Procedure VisitProcDecl(Visitor, ProcDecl)
+Procedure VisitProcDecl(ProcDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitProcDecl Do
-		Hook.VisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitProcDecl Do
+		Hook.VisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ProcDecl);
-	VisitDeclarations(Visitor, ProcDecl.Decls);
-	VisitStatements(Visitor, ProcDecl.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitProcDecl Do
-		Hook.AfterVisitProcDecl(ProcDecl, Visitor.Stack, Visitor.Counters);
+	PushInfo(ProcDecl);
+	VisitDeclarations(ProcDecl.Decls);
+	VisitStatements(ProcDecl.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitProcDecl Do
+		Hook.AfterVisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitProcDecl()
 
-Procedure VisitFuncDecl(Visitor, FuncDecl)
+Procedure VisitFuncDecl(FuncDecl)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitFuncDecl Do
-		Hook.VisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitFuncDecl Do
+		Hook.VisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, FuncDecl);
-	VisitDeclarations(Visitor, FuncDecl.Decls);
-	VisitStatements(Visitor, FuncDecl.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitFuncDecl Do
-		Hook.AfterVisitFuncDecl(FuncDecl, Visitor.Stack, Visitor.Counters);
+	PushInfo(FuncDecl);
+	VisitDeclarations(FuncDecl.Decls);
+	VisitStatements(FuncDecl.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitFuncDecl Do
+		Hook.AfterVisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitFuncDecl()
 
@@ -2516,175 +2527,175 @@ EndProcedure // VisitFuncDecl()
 
 #Region VisitExpr
 
-Procedure VisitExpr(Visitor, Expr)
+Procedure VisitExpr(Expr)
 	Var Type, Hook;
-	For Each Hook In Visitor.Hooks.VisitExpr Do
-		Hook.VisitExpr(Expr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitExpr Do
+		Hook.VisitExpr(Expr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	Type = Expr.Type;
 	If Type = Nodes.BasicLitExpr Then
-		VisitBasicLitExpr(Visitor, Expr);
+		VisitBasicLitExpr(Expr);
 	ElsIf Type = Nodes.DesigExpr Then
-		VisitDesigExpr(Visitor, Expr);
+		VisitDesigExpr(Expr);
 	ElsIf Type = Nodes.UnaryExpr Then
-		VisitUnaryExpr(Visitor, Expr);
+		VisitUnaryExpr(Expr);
 	ElsIf Type = Nodes.BinaryExpr Then
-		VisitBinaryExpr(Visitor, Expr);
+		VisitBinaryExpr(Expr);
 	ElsIf Type = Nodes.NewExpr Then
-		VisitNewExpr(Visitor, Expr);
+		VisitNewExpr(Expr);
 	ElsIf Type = Nodes.TernaryExpr Then
-		VisitTernaryExpr(Visitor, Expr);
+		VisitTernaryExpr(Expr);
 	ElsIf Type = Nodes.ParenExpr Then
-		VisitParenExpr(Visitor, Expr);
+		VisitParenExpr(Expr);
 	ElsIf Type = Nodes.NotExpr Then
-		VisitNotExpr(Visitor, Expr);
+		VisitNotExpr(Expr);
 	ElsIf Type = Nodes.StringExpr Then
-		VisitStringExpr(Visitor, Expr);
+		VisitStringExpr(Expr);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitExpr Do
-		Hook.AfterVisitExpr(Expr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitExpr Do
+		Hook.AfterVisitExpr(Expr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitExpr()
 
-Procedure VisitBasicLitExpr(Visitor, BasicLitExpr)
+Procedure VisitBasicLitExpr(BasicLitExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitBasicLitExpr Do
-		Hook.VisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitBasicLitExpr Do
+		Hook.VisitBasicLitExpr(BasicLitExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitBasicLitExpr Do
-		Hook.AfterVisitBasicLitExpr(BasicLitExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitBasicLitExpr Do
+		Hook.AfterVisitBasicLitExpr(BasicLitExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitBasicLitExpr()
 
-Procedure VisitDesigExpr(Visitor, DesigExpr)
+Procedure VisitDesigExpr(DesigExpr)
 	Var SelectExpr, Expr, Hook;
-	For Each Hook In Visitor.Hooks.VisitDesigExpr Do
-		Hook.VisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitDesigExpr Do
+		Hook.VisitDesigExpr(DesigExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, DesigExpr);
+	PushInfo(DesigExpr);
 	For Each SelectExpr In DesigExpr.Select Do
 		If SelectExpr.Kind = SelectKinds.Index Then
-			VisitExpr(Visitor, SelectExpr.Value);
+			VisitExpr(SelectExpr.Value);
 		ElsIf SelectExpr.Kind = SelectKinds.Call Then
 			For Each Expr In SelectExpr.Value Do
 				If Expr <> Undefined Then
-					VisitExpr(Visitor, Expr);
+					VisitExpr(Expr);
 				EndIf;
 			EndDo;
 		EndIf;
 	EndDo;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitDesigExpr Do
-		Hook.AfterVisitDesigExpr(DesigExpr, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitDesigExpr Do
+		Hook.AfterVisitDesigExpr(DesigExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitDesigExpr()
 
-Procedure VisitUnaryExpr(Visitor, UnaryExpr)
+Procedure VisitUnaryExpr(UnaryExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitUnaryExpr Do
-		Hook.VisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitUnaryExpr Do
+		Hook.VisitUnaryExpr(UnaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, UnaryExpr);
-	VisitExpr(Visitor, UnaryExpr.Operand);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitUnaryExpr Do
-		Hook.AfterVisitUnaryExpr(UnaryExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(UnaryExpr);
+	VisitExpr(UnaryExpr.Operand);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitUnaryExpr Do
+		Hook.AfterVisitUnaryExpr(UnaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitUnaryExpr()
 
-Procedure VisitBinaryExpr(Visitor, BinaryExpr)
+Procedure VisitBinaryExpr(BinaryExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitBinaryExpr Do
-		Hook.VisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitBinaryExpr Do
+		Hook.VisitBinaryExpr(BinaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, BinaryExpr);
-	VisitExpr(Visitor, BinaryExpr.Left);
-	VisitExpr(Visitor, BinaryExpr.Right);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitBinaryExpr Do
-		Hook.AfterVisitBinaryExpr(BinaryExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(BinaryExpr);
+	VisitExpr(BinaryExpr.Left);
+	VisitExpr(BinaryExpr.Right);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitBinaryExpr Do
+		Hook.AfterVisitBinaryExpr(BinaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitBinaryExpr()
 
-Procedure VisitNewExpr(Visitor, NewExpr)
+Procedure VisitNewExpr(NewExpr)
 	Var Expr, Hook;
-	For Each Hook In Visitor.Hooks.VisitNewExpr Do
-		Hook.VisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitNewExpr Do
+		Hook.VisitNewExpr(NewExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, NewExpr);
+	PushInfo(NewExpr);
 	For Each Expr In NewExpr.Args Do
 		If Expr <> Undefined Then
-			VisitExpr(Visitor, Expr);
+			VisitExpr(Expr);
 		EndIf;
 	EndDo;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitNewExpr Do
-		Hook.AfterVisitNewExpr(NewExpr, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitNewExpr Do
+		Hook.AfterVisitNewExpr(NewExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitNewExpr()
 
-Procedure VisitTernaryExpr(Visitor, TernaryExpr)
+Procedure VisitTernaryExpr(TernaryExpr)
 	Var SelectExpr, Expr, Hook;
-	For Each Hook In Visitor.Hooks.VisitTernaryExpr Do
-		Hook.VisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitTernaryExpr Do
+		Hook.VisitTernaryExpr(TernaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, TernaryExpr);
-	VisitExpr(Visitor, TernaryExpr.Cond);
-	VisitExpr(Visitor, TernaryExpr.Then);
-	VisitExpr(Visitor, TernaryExpr.Else);
+	PushInfo(TernaryExpr);
+	VisitExpr(TernaryExpr.Cond);
+	VisitExpr(TernaryExpr.Then);
+	VisitExpr(TernaryExpr.Else);
 	For Each SelectExpr In TernaryExpr.Select Do
 		If SelectExpr.Kind <> SelectKinds.Ident Then
 			For Each Expr In SelectExpr.Value Do
 				If Expr <> Undefined Then
-					VisitExpr(Visitor, Expr);
+					VisitExpr(Expr);
 				EndIf;
 			EndDo;
 		EndIf;
 	EndDo;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitTernaryExpr Do
-		Hook.AfterVisitTernaryExpr(TernaryExpr, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitTernaryExpr Do
+		Hook.AfterVisitTernaryExpr(TernaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitTernaryExpr()
 
-Procedure VisitParenExpr(Visitor, ParenExpr)
+Procedure VisitParenExpr(ParenExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitParenExpr Do
-		Hook.VisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitParenExpr Do
+		Hook.VisitParenExpr(ParenExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ParenExpr);
-	VisitExpr(Visitor, ParenExpr.Expr);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitParenExpr Do
-		Hook.AfterVisitParenExpr(ParenExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(ParenExpr);
+	VisitExpr(ParenExpr.Expr);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitParenExpr Do
+		Hook.AfterVisitParenExpr(ParenExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitParenExpr()
 
-Procedure VisitNotExpr(Visitor, NotExpr)
+Procedure VisitNotExpr(NotExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitNotExpr Do
-		Hook.VisitNotExpr(NotExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitNotExpr Do
+		Hook.VisitNotExpr(NotExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, NotExpr);
-	VisitExpr(Visitor, NotExpr.Expr);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitNotExpr Do
-		Hook.AfterVisitNotExpr(NotExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(NotExpr);
+	VisitExpr(NotExpr.Expr);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitNotExpr Do
+		Hook.AfterVisitNotExpr(NotExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitNotExpr()
 
-Procedure VisitStringExpr(Visitor, StringExpr)
+Procedure VisitStringExpr(StringExpr)
 	Var Expr, Hook;
-	For Each Hook In Visitor.Hooks.VisitStringExpr Do
-		Hook.VisitStringExpr(StringExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitStringExpr Do
+		Hook.VisitStringExpr(StringExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, StringExpr);
+	PushInfo(StringExpr);
 	For Each Expr In StringExpr.List Do
-		VisitBasicLitExpr(Visitor, Expr);
+		VisitBasicLitExpr(Expr);
 	EndDo;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitStringExpr Do
-		Hook.AfterVisitStringExpr(StringExpr, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitStringExpr Do
+		Hook.AfterVisitStringExpr(StringExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitStringExpr()
 
@@ -2692,255 +2703,255 @@ EndProcedure // VisitStringExpr()
 
 #Region VisitStmt
 
-Procedure VisitStmt(Visitor, Stmt)
+Procedure VisitStmt(Stmt)
 	Var Type, Hook;
-	For Each Hook In Visitor.Hooks.VisitStmt Do
-		Hook.VisitStmt(Stmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitStmt Do
+		Hook.VisitStmt(Stmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	Type = Stmt.Type;
 	If Type = Nodes.AssignStmt Then
-		VisitAssignStmt(Visitor, Stmt);
+		VisitAssignStmt(Stmt);
 	ElsIf Type = Nodes.ReturnStmt Then
-		VisitReturnStmt(Visitor, Stmt);
+		VisitReturnStmt(Stmt);
 	ElsIf Type = Nodes.BreakStmt Then
-		VisitBreakStmt(Visitor, Stmt);
+		VisitBreakStmt(Stmt);
 	ElsIf Type = Nodes.ContinueStmt Then
-		VisitContinueStmt(Visitor, Stmt);
+		VisitContinueStmt(Stmt);
 	ElsIf Type = Nodes.RaiseStmt Then
-		VisitRaiseStmt(Visitor, Stmt);
+		VisitRaiseStmt(Stmt);
 	ElsIf Type = Nodes.ExecuteStmt Then
-		VisitExecuteStmt(Visitor, Stmt);
+		VisitExecuteStmt(Stmt);
 	ElsIf Type = Nodes.CallStmt Then
-		VisitCallStmt(Visitor, Stmt);
+		VisitCallStmt(Stmt);
 	ElsIf Type = Nodes.IfStmt Then
-		VisitIfStmt(Visitor, Stmt);
+		VisitIfStmt(Stmt);
 	ElsIf Type = Nodes.WhileStmt Then
-		VisitWhileStmt(Visitor, Stmt);
+		VisitWhileStmt(Stmt);
 	ElsIf Type = Nodes.ForStmt Then
-		VisitForStmt(Visitor, Stmt);
+		VisitForStmt(Stmt);
 	ElsIf Type = Nodes.ForEachStmt Then
-		VisitForEachStmt(Visitor, Stmt);
+		VisitForEachStmt(Stmt);
 	ElsIf Type = Nodes.TryStmt Then
-		VisitTryStmt(Visitor, Stmt);
+		VisitTryStmt(Stmt);
 	ElsIf Type = Nodes.GotoStmt Then
-		VisitGotoStmt(Visitor, Stmt);
+		VisitGotoStmt(Stmt);
 	ElsIf Type = Nodes.LabelStmt Then
-		VisitLabelStmt(Visitor, Stmt);
+		VisitLabelStmt(Stmt);
 	ElsIf Type = Nodes.PrepRegionInst
 		Or Type = Nodes.PrepEndRegionInst
 		Or Type = Nodes.PrepIfInst
 		Or Type = Nodes.PrepElsIfInst
 		Or Type = Nodes.PrepElseInst
 		Or Type = Nodes.PrepEndIfInst Then
-		VisitPrepInst(Visitor, Stmt);
+		VisitPrepInst(Stmt);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitStmt Do
-		Hook.AfterVisitStmt(Stmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitStmt Do
+		Hook.AfterVisitStmt(Stmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitStmt()
 
-Procedure VisitAssignStmt(Visitor, AssignStmt)
+Procedure VisitAssignStmt(AssignStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitAssignStmt Do
-		Hook.VisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitAssignStmt Do
+		Hook.VisitAssignStmt(AssignStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, AssignStmt);
-	VisitDesigExpr(Visitor, AssignStmt.Left);
-	VisitExpr(Visitor, AssignStmt.Right);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitAssignStmt Do
-		Hook.AfterVisitAssignStmt(AssignStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(AssignStmt);
+	VisitDesigExpr(AssignStmt.Left);
+	VisitExpr(AssignStmt.Right);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitAssignStmt Do
+		Hook.AfterVisitAssignStmt(AssignStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitAssignStmt()
 
-Procedure VisitReturnStmt(Visitor, ReturnStmt)
+Procedure VisitReturnStmt(ReturnStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitReturnStmt Do
-		Hook.VisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitReturnStmt Do
+		Hook.VisitReturnStmt(ReturnStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ReturnStmt);
+	PushInfo(ReturnStmt);
 	If ReturnStmt.Expr <> Undefined Then
-		VisitExpr(Visitor, ReturnStmt.Expr);
+		VisitExpr(ReturnStmt.Expr);
 	EndIf;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitReturnStmt Do
-		Hook.AfterVisitReturnStmt(ReturnStmt, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitReturnStmt Do
+		Hook.AfterVisitReturnStmt(ReturnStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitReturnStmt()
 
-Procedure VisitBreakStmt(Visitor, BreakStmt)
+Procedure VisitBreakStmt(BreakStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitBreakStmt Do
-		Hook.VisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitBreakStmt Do
+		Hook.VisitBreakStmt(BreakStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitBreakStmt Do
-		Hook.AfterVisitBreakStmt(BreakStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitBreakStmt Do
+		Hook.AfterVisitBreakStmt(BreakStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitBreakStmt()
 
-Procedure VisitContinueStmt(Visitor, ContinueStmt)
+Procedure VisitContinueStmt(ContinueStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitContinueStmt Do
-		Hook.VisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitContinueStmt Do
+		Hook.VisitContinueStmt(ContinueStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitContinueStmt Do
-		Hook.AfterVisitContinueStmt(ContinueStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitContinueStmt Do
+		Hook.AfterVisitContinueStmt(ContinueStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitContinueStmt()
 
-Procedure VisitRaiseStmt(Visitor, RaiseStmt)
+Procedure VisitRaiseStmt(RaiseStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitRaiseStmt Do
-		Hook.VisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitRaiseStmt Do
+		Hook.VisitRaiseStmt(RaiseStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, RaiseStmt);
+	PushInfo(RaiseStmt);
 	If RaiseStmt.Expr <> Undefined Then
-		VisitExpr(Visitor, RaiseStmt.Expr);
+		VisitExpr(RaiseStmt.Expr);
 	EndIf;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitRaiseStmt Do
-		Hook.AfterVisitRaiseStmt(RaiseStmt, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitRaiseStmt Do
+		Hook.AfterVisitRaiseStmt(RaiseStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitRaiseStmt()
 
-Procedure VisitExecuteStmt(Visitor, ExecuteStmt)
+Procedure VisitExecuteStmt(ExecuteStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitExecuteStmt Do
-		Hook.VisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitExecuteStmt Do
+		Hook.VisitExecuteStmt(ExecuteStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ExecuteStmt);
-	VisitExpr(Visitor, ExecuteStmt.Expr);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitExecuteStmt Do
-		Hook.AfterVisitExecuteStmt(ExecuteStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(ExecuteStmt);
+	VisitExpr(ExecuteStmt.Expr);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitExecuteStmt Do
+		Hook.AfterVisitExecuteStmt(ExecuteStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitExecuteStmt()
 
-Procedure VisitCallStmt(Visitor, CallStmt)
+Procedure VisitCallStmt(CallStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitCallStmt Do
-		Hook.VisitCallStmt(CallStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitCallStmt Do
+		Hook.VisitCallStmt(CallStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, CallStmt);
-	VisitDesigExpr(Visitor, CallStmt.Desig);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitCallStmt Do
-		Hook.AfterVisitCallStmt(CallStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(CallStmt);
+	VisitDesigExpr(CallStmt.Desig);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitCallStmt Do
+		Hook.AfterVisitCallStmt(CallStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitCallStmt()
 
-Procedure VisitIfStmt(Visitor, IfStmt)
+Procedure VisitIfStmt(IfStmt)
 	Var ElsIfStmt, Hook;
-	For Each Hook In Visitor.Hooks.VisitIfStmt Do
-		Hook.VisitIfStmt(IfStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitIfStmt Do
+		Hook.VisitIfStmt(IfStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, IfStmt);
-	VisitExpr(Visitor, IfStmt.Cond);
-	VisitStatements(Visitor, IfStmt.Then);
+	PushInfo(IfStmt);
+	VisitExpr(IfStmt.Cond);
+	VisitStatements(IfStmt.Then);
 	If IfStmt.ElsIf <> Undefined Then
 		For Each ElsIfStmt In IfStmt.ElsIf Do
-			VisitElsIfStmt(Visitor, ElsIfStmt);
+			VisitElsIfStmt(ElsIfStmt);
 		EndDo;
 	EndIf;
 	If IfStmt.Else <> Undefined Then
-		VisitStatements(Visitor, IfStmt.Else);
+		VisitStatements(IfStmt.Else);
 	EndIf;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitIfStmt Do
-		Hook.AfterVisitIfStmt(IfStmt, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitIfStmt Do
+		Hook.AfterVisitIfStmt(IfStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitIfStmt()
 
-Procedure VisitElsIfStmt(Visitor, ElsIfStmt)
+Procedure VisitElsIfStmt(ElsIfStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitElsIfStmt Do
-		Hook.VisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitElsIfStmt Do
+		Hook.VisitElsIfStmt(ElsIfStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ElsIfStmt);
-	VisitExpr(Visitor, ElsIfStmt.Cond);
-	VisitStatements(Visitor, ElsIfStmt.Then);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitElsIfStmt Do
-		Hook.AfterVisitElsIfStmt(ElsIfStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(ElsIfStmt);
+	VisitExpr(ElsIfStmt.Cond);
+	VisitStatements(ElsIfStmt.Then);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitElsIfStmt Do
+		Hook.AfterVisitElsIfStmt(ElsIfStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitElsIfStmt()
 
-Procedure VisitWhileStmt(Visitor, WhileStmt)
+Procedure VisitWhileStmt(WhileStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitWhileStmt Do
-		Hook.VisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitWhileStmt Do
+		Hook.VisitWhileStmt(WhileStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, WhileStmt);
-	VisitExpr(Visitor, WhileStmt.Cond);
-	VisitStatements(Visitor, WhileStmt.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitWhileStmt Do
-		Hook.AfterVisitWhileStmt(WhileStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(WhileStmt);
+	VisitExpr(WhileStmt.Cond);
+	VisitStatements(WhileStmt.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitWhileStmt Do
+		Hook.AfterVisitWhileStmt(WhileStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitWhileStmt()
 
-Procedure VisitForStmt(Visitor, ForStmt)
+Procedure VisitForStmt(ForStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitForStmt Do
-		Hook.VisitForStmt(ForStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitForStmt Do
+		Hook.VisitForStmt(ForStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ForStmt);
-	VisitDesigExpr(Visitor, ForStmt.Desig);
-	VisitExpr(Visitor, ForStmt.From);
-	VisitExpr(Visitor, ForStmt.To);
-	VisitStatements(Visitor, ForStmt.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitForStmt Do
-		Hook.AfterVisitForStmt(ForStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(ForStmt);
+	VisitDesigExpr(ForStmt.Desig);
+	VisitExpr(ForStmt.From);
+	VisitExpr(ForStmt.To);
+	VisitStatements(ForStmt.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitForStmt Do
+		Hook.AfterVisitForStmt(ForStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitForStmt()
 
-Procedure VisitForEachStmt(Visitor, ForEachStmt)
+Procedure VisitForEachStmt(ForEachStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitForEachStmt Do
-		Hook.VisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitForEachStmt Do
+		Hook.VisitForEachStmt(ForEachStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, ForEachStmt);
-	VisitDesigExpr(Visitor, ForEachStmt.Desig);
-	VisitExpr(Visitor, ForEachStmt.In);
-	VisitStatements(Visitor, ForEachStmt.Body);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitForEachStmt Do
-		Hook.AfterVisitForEachStmt(ForEachStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(ForEachStmt);
+	VisitDesigExpr(ForEachStmt.Desig);
+	VisitExpr(ForEachStmt.In);
+	VisitStatements(ForEachStmt.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitForEachStmt Do
+		Hook.AfterVisitForEachStmt(ForEachStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitForEachStmt()
 
-Procedure VisitTryStmt(Visitor, TryStmt)
+Procedure VisitTryStmt(TryStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitTryStmt Do
-		Hook.VisitTryStmt(TryStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitTryStmt Do
+		Hook.VisitTryStmt(TryStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, TryStmt);
-	VisitStatements(Visitor, TryStmt.Try);
-	VisitStatements(Visitor, TryStmt.Except);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitTryStmt Do
-		Hook.AfterVisitTryStmt(TryStmt, Visitor.Stack, Visitor.Counters);
+	PushInfo(TryStmt);
+	VisitStatements(TryStmt.Try);
+	VisitStatements(TryStmt.Except);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitTryStmt Do
+		Hook.AfterVisitTryStmt(TryStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitTryStmt()
 
-Procedure VisitGotoStmt(Visitor, GotoStmt)
+Procedure VisitGotoStmt(GotoStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitGotoStmt Do
-		Hook.VisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitGotoStmt Do
+		Hook.VisitGotoStmt(GotoStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitGotoStmt Do
-		Hook.AfterVisitGotoStmt(GotoStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitGotoStmt Do
+		Hook.AfterVisitGotoStmt(GotoStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitGotoStmt()
 
-Procedure VisitLabelStmt(Visitor, LabelStmt)
+Procedure VisitLabelStmt(LabelStmt)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitLabelStmt Do
-		Hook.VisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitLabelStmt Do
+		Hook.VisitLabelStmt(LabelStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitLabelStmt Do
-		Hook.AfterVisitLabelStmt(LabelStmt, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitLabelStmt Do
+		Hook.AfterVisitLabelStmt(LabelStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitLabelStmt()
 
@@ -2948,73 +2959,73 @@ EndProcedure // VisitLabelStmt()
 
 #Region VisitPrep
 
-Procedure VisitPrepExpr(Visitor, PrepExpr)
+Procedure VisitPrepExpr(PrepExpr)
 	Var Type, Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepExpr Do
-		Hook.VisitPrepExpr(PrepExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitPrepExpr Do
+		Hook.VisitPrepExpr(PrepExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	Type = PrepExpr.Type;
 	If Type = Nodes.PrepSymExpr Then
-		VisitPrepSymExpr(Visitor, PrepExpr);
+		VisitPrepSymExpr(PrepExpr);
 	ElsIf Type = Nodes.PrepBinaryExpr Then
-		VisitPrepBinaryExpr(Visitor, PrepExpr);
+		VisitPrepBinaryExpr(PrepExpr);
 	ElsIf Type = Nodes.PrepNotExpr Then
-		VisitPrepNotExpr(Visitor, PrepExpr);
+		VisitPrepNotExpr(PrepExpr);
 	EndIf;
-	For Each Hook In Visitor.Hooks.AfterVisitPrepExpr Do
-		Hook.AfterVisitPrepExpr(PrepExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitPrepExpr Do
+		Hook.AfterVisitPrepExpr(PrepExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepExpr()
 
-Procedure VisitPrepSymExpr(Visitor, PrepSymExpr)
+Procedure VisitPrepSymExpr(PrepSymExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepSymExpr Do
-		Hook.VisitPrepSymExpr(PrepSymExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitPrepSymExpr Do
+		Hook.VisitPrepSymExpr(PrepSymExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	For Each Hook In Visitor.Hooks.AfterVisitPrepSymExpr Do
-		Hook.AfterVisitPrepSymExpr(PrepSymExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitPrepSymExpr Do
+		Hook.AfterVisitPrepSymExpr(PrepSymExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepSymExpr()
 
-Procedure VisitPrepBinaryExpr(Visitor, PrepBinaryExpr)
+Procedure VisitPrepBinaryExpr(PrepBinaryExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepBinaryExpr Do
-		Hook.VisitPrepBinaryExpr(PrepBinaryExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitPrepBinaryExpr Do
+		Hook.VisitPrepBinaryExpr(PrepBinaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, PrepBinaryExpr);
-	VisitPrepExpr(Visitor, PrepBinaryExpr.Left);
-	VisitPrepExpr(Visitor, PrepBinaryExpr.Right);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitPrepBinaryExpr Do
-		Hook.AfterVisitPrepBinaryExpr(PrepBinaryExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(PrepBinaryExpr);
+	VisitPrepExpr(PrepBinaryExpr.Left);
+	VisitPrepExpr(PrepBinaryExpr.Right);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitPrepBinaryExpr Do
+		Hook.AfterVisitPrepBinaryExpr(PrepBinaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepBinaryExpr()
 
-Procedure VisitPrepNotExpr(Visitor, PrepNotExpr)
+Procedure VisitPrepNotExpr(PrepNotExpr)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepNotExpr Do
-		Hook.VisitPrepNotExpr(PrepNotExpr, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitPrepNotExpr Do
+		Hook.VisitPrepNotExpr(PrepNotExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, PrepNotExpr);
-	VisitPrepExpr(Visitor, PrepNotExpr.Expr);
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitPrepNotExpr Do
-		Hook.AfterVisitPrepNotExpr(PrepNotExpr, Visitor.Stack, Visitor.Counters);
+	PushInfo(PrepNotExpr);
+	VisitPrepExpr(PrepNotExpr.Expr);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitPrepNotExpr Do
+		Hook.AfterVisitPrepNotExpr(PrepNotExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepNotExpr()
 
-Procedure VisitPrepInst(Visitor, PrepInst)
+Procedure VisitPrepInst(PrepInst)
 	Var Hook;
-	For Each Hook In Visitor.Hooks.VisitPrepInst Do
-		Hook.VisitPrepInst(PrepInst, Visitor.Stack, Visitor.Counters);
+	For Each Hook In Visitor_Hooks.VisitPrepInst Do
+		Hook.VisitPrepInst(PrepInst, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(Visitor, PrepInst);
+	PushInfo(PrepInst);
 	If PrepInst.Property("Cond") Then
-		VisitPrepExpr(Visitor, PrepInst.Cond);
+		VisitPrepExpr(PrepInst.Cond);
 	EndIf;
-	PopInfo(Visitor);
-	For Each Hook In Visitor.Hooks.AfterVisitPrepInst Do
-		Hook.AfterVisitPrepInst(PrepInst, Visitor.Stack, Visitor.Counters);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitPrepInst Do
+		Hook.AfterVisitPrepInst(PrepInst, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepInst()
 

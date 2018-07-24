@@ -61,24 +61,7 @@
 										<v8:content>Lexems</v8:content>
 									</v8:item>
 								</Presentation>
-								<Value xsi:type="xs:string">Lexems</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>en</v8:lang>
-										<v8:content>AST (Tree)</v8:content>
-									</v8:item>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
-										<v8:content>AST (Tree)</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">Tree</Value>
+								<Value xsi:type="xs:string">NULL</Value>
 							</xr:Value>
 						</xr:Item>
 						<xr:Item>
@@ -96,6 +79,23 @@
 									</v8:item>
 								</Presentation>
 								<Value xsi:type="xs:string">AST</Value>
+							</xr:Value>
+						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation>
+									<v8:item>
+										<v8:lang>en</v8:lang>
+										<v8:content>AST (Tree)</v8:content>
+									</v8:item>
+									<v8:item>
+										<v8:lang>ru</v8:lang>
+										<v8:content>AST (Tree)</v8:content>
+									</v8:item>
+								</Presentation>
+								<Value xsi:type="xs:string">Tree</Value>
 							</xr:Value>
 						</xr:Item>
 						<xr:Item>

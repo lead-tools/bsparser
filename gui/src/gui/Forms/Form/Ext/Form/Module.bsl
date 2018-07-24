@@ -41,49 +41,42 @@ Procedure TranslateAtServer()
 
 	Start = CurrentUniversalDateInMilliseconds();
 
-	If Output = "Lexems" Then
+	If Output = "NULL" Then
 
-		Eof = BSLParser.Tokens().Eof;
-
-		Parser = BSLParser.Parser(Source.GetText());
-		Lexems = New Array;
-		While BSLParser.Next(Parser) <> Eof Do
-			Lexems.Add(StrTemplate("%1: %2 -- `%3`", Parser.Line, Parser.Tok, Parser.Lit));
-		EndDo;
-		
-		Result.SetText(StrConcat(Lexems, Chars.LF));
+		BSLParser.Parser(Source.GetText());
+		BSLParser.ParseModule();
 		
 	ElsIf Output = "AST" Then
 
-		Parser = BSLParser.Parser(Source.GetText());
-		BSLParser.ParseModule(Parser);
+		BSLParser.Parser(Source.GetText());
+		Parser_Module = BSLParser.ParseModule();
 		JSONWriter = New JSONWriter;
 		JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
 		If ShowComments Then
 			Comments = New Map;
-			For Each Item In Parser.Module.Comments Do
+			For Each Item In Parser_Module.Comments Do
 				Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
 			EndDo;
-			Parser.Module.Comments = Comments;
+			Parser_Module.Comments = Comments;
 		Else
-			Parser.Module.Delete("Comments");
+			Parser_Module.Delete("Comments");
 		EndIf;
-		WriteJSON(JSONWriter, Parser.Module,, "ConvertJSON", ThisObject);
+		WriteJSON(JSONWriter, Parser_Module,, "ConvertJSON", ThisObject);
 		Result.SetText(JSONWriter.Close());
 		
 	ElsIf Output = "Tree" Then
 
 		Parser = BSLParser.Parser(Source.GetText());
-		BSLParser.ParseModule(Parser);
-		FillTree(Parser.Module);
+		Parser_Module = BSLParser.ParseModule();
+		FillTree(Parser_Module);
 		
 	ElsIf Output = "Plugin" Then
 
 		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
 		PluginProcessor.Init(BSLParser);
-		Parser = BSLParser.Parser(Source.GetText());
+		BSLParser.Parser(Source.GetText());
 		BSLParser.Location = True;
-		BSLParser.ParseModule(Parser);
+		Parser_Module = BSLParser.ParseModule();
 		Hooks = BSLParser.Hooks();
 		List = Undefined;
 		For Each MethodName In PluginProcessor.Interface() Do
@@ -92,7 +85,7 @@ Procedure TranslateAtServer()
 			EndIf; 
 		EndDo; 
 		Visitor = BSLParser.Visitor(Hooks);
-		BSLParser.VisitModule(Visitor, Parser.Module);
+		BSLParser.VisitModule(Parser_Module);
 		Result.SetText(PluginProcessor.Result());
 		
 	EndIf;
