@@ -1614,7 +1614,7 @@ Function ParseModDecls()
 	Tok = Parser_Tok;
 	Decls = New Array;
 	While Tok = Tokens.Directive Do
-		Parser_Directive = Parser_Lit;
+		Parser_Directive = Directives[Parser_Lit];
 		Tok = Next();
 	EndDo;
 	While True Do
@@ -1660,7 +1660,7 @@ Function ParseModDecls()
 		Tok = Parser_Tok;
 		Parser_Directive = Undefined;
 		While Tok = Tokens.Directive Do
-			Parser_Directive = Parser_Lit;
+			Parser_Directive = Directives[Parser_Lit];
 			Tok = Next();
 		EndDo;
 	EndDo;
@@ -2261,6 +2261,8 @@ Function Place(Pos = Undefined, Line = Undefined)
 		If Debug Then
 			Place.Insert("Str", Mid(Parser_Source, Pos, Len));
 		EndIf;
+	Else
+		Place = Line;
 	EndIf;
 	Return Place;
 EndFunction // Place()
