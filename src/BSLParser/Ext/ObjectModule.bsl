@@ -17,6 +17,7 @@ Var EmptyArray;       // array
 Var TokenMap;         // map[string] (string)
 Var AlphaDigitMap;    // map[string] (string)
 Var Alpha, Digit;     // string
+Var Chars_LF;         // string
 
 #EndRegion // Constants
 
@@ -115,7 +116,9 @@ Procedure Init()
 	InitOfExpression.Add(Tokens.Null);
 
 	EmptyArray = New Array;
-
+	
+	Chars_LF = Chars.LF;
+	
 	Alpha = "Alpha";
 	Digit = "Digit";
 
@@ -411,7 +414,7 @@ Function VarModDecl(Directive, VarList, Place = Undefined)
 		"Type,"      // string (one of Nodes)
 		"Directive," // string (one of Directives)
 		"List,"      // array (VarMod)
-		"Place"      // undefined, structure (Place)
+		"Place"      // number, structure (Place)
 	, Nodes.VarModDecl, Directive, VarList, Place);
 EndFunction // VarModDecl()
 
@@ -424,7 +427,7 @@ Function VarLocDecl(VarList, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"List,"  // array (VarLoc)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.VarLocDecl, VarList, Place);
 EndFunction // VarLocDecl()
 
@@ -447,7 +450,7 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 		"Decls,"  // array (one of #Declarations)
 		"Auto,"   // array (VarLoc)
 		"Body,"   // array (one of #Statements)
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.ProcDecl, Object, Decls, Auto, Body, Place);
 EndFunction // ProcDecl()
 
@@ -470,7 +473,7 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 		"Decls,"  // array (one of #Declarations)
 		"Auto,"   // array (VarLoc)
 		"Body,"   // array (one of #Statements)
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.FuncDecl, Object, Decls, Auto, Body, Place);
 EndFunction // FuncDecl()
 
@@ -484,7 +487,7 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of Tokens)
 		"Value," // undefined, string, number, boolean, date, null
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.BasicLitExpr, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
@@ -505,7 +508,7 @@ Function SelectExpr(Kind, Value, Place = Undefined)
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of SelectKinds)
 		"Value," // string, structure (one of #Expressions), array (undefined, one of #Expressions)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.SelectExpr, Kind, Value, Place);
 EndFunction // SelectExpr()
 
@@ -524,7 +527,7 @@ Function DesigExpr(Object, Select, Call, Place = Undefined)
 		"Object," // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
 		"Select," // array (SelectExpr)
 		"Call,"   // boolean
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.DesigExpr, Object, Select, Call, Place);
 EndFunction // DesigExpr()
 
@@ -543,7 +546,7 @@ Function UnaryExpr(Operator, Operand, Place = Undefined)
 		"Type,"     // string (one of Nodes)
 		"Operator," // string (one of Tokens)
 		"Operand,"  // structure (one of #Expressions)
-		"Place"     // undefined, structure (Place)
+		"Place"     // number, structure (Place)
 	, Nodes.UnaryExpr, Operator, Operand, Place);
 EndFunction // UnaryExpr()
 
@@ -566,7 +569,7 @@ Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 		"Left,"     // structure (one of #Expressions)
 		"Operator," // string (one of Tokens)
 		"Right,"    // structure (one of #Expressions)
-		"Place"     // undefined, structure (Place)
+		"Place"     // number, structure (Place)
 	, Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
@@ -587,7 +590,7 @@ Function NewExpr(Name, Args, Place = Undefined)
 		"Type," // string (one of Nodes)
 		"Name," // undefined, string
 		"Args," // array (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
@@ -606,7 +609,7 @@ Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
 		"Then,"   // structure (one of #Expressions)
 		"Else,"   // structure (one of #Expressions)
 		"Select," // array (SelectExpr)
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.TernaryExpr, Cond, ThenPart, ElsePart, Select, Place);
 EndFunction // TernaryExpr()
 
@@ -620,7 +623,7 @@ Function ParenExpr(Expr, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.ParenExpr, Expr, Place);
 EndFunction // ParenExpr()
 
@@ -634,7 +637,7 @@ Function NotExpr(Expr, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.NotExpr, Expr, Place);
 EndFunction // NotExpr()
 
@@ -654,7 +657,7 @@ Function StringExpr(ExprList, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"List," // array (BasicLitExpr)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.StringExpr, ExprList, Place);
 EndFunction // StringExpr()
 
@@ -668,7 +671,7 @@ Function AssignStmt(Left, Right, Place = Undefined)
 		"Type,"  // string (one of Nodes)
 		"Left,"  // structure (DesigExpr)
 		"Right," // structure (one of #Expressions)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.AssignStmt, Left, Right, Place);
 EndFunction // AssignStmt()
 
@@ -678,7 +681,7 @@ Function ReturnStmt(Expr = Undefined, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.ReturnStmt, Expr, Place);
 EndFunction // ReturnStmt()
 
@@ -686,7 +689,7 @@ Function BreakStmt(Place = Undefined)
 	// Хранит оператор "Прервать".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.BreakStmt, Place);
 EndFunction // BreakStmt()
 
@@ -694,7 +697,7 @@ Function ContinueStmt(Place = Undefined)
 	// Хранит оператор "Продолжить".
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.ContinueStmt, Place);
 EndFunction // ContinueStmt()
 
@@ -704,7 +707,7 @@ Function RaiseStmt(Expr = Undefined, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // undefined, structure (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.RaiseStmt, Expr, Place);
 EndFunction // RaiseStmt()
 
@@ -713,7 +716,7 @@ Function ExecuteStmt(Expr, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #Expressions)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.ExecuteStmt, Expr, Place);
 EndFunction // ExecuteStmt()
 
@@ -722,7 +725,7 @@ Function CallStmt(DesigExpr, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Desig," // structure (DesigExpr)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.CallStmt, DesigExpr, Place);
 EndFunction // CallStmt()
 
@@ -746,7 +749,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 		"Then,"  // array (one of #Statements)
 		"ElsIf," // undefined, array (ElsIfStmt)
 		"Else,"  // undefined, array (one of #Statements)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.IfStmt, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
@@ -763,7 +766,7 @@ Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
 		"Then," // array (one of #Statements)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.ElsIfStmt, Cond, ThenPart, Place);
 EndFunction // ElsIfStmt()
 
@@ -779,7 +782,7 @@ Function WhileStmt(Cond, Statements, Place = Undefined)
 		"Type," // string (one of Nodes)
 		"Cond," // structure (one of #Expressions)
 		"Body," // array (one of #Statements)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.WhileStmt, Cond, Statements, Place);
 EndFunction // WhileStmt()
 
@@ -798,7 +801,7 @@ Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
 		"From,"  // structure (one of #Expressions)
 		"To,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.ForStmt, DesigExpr, From, Until, Statements, Place);
 EndFunction // ForStmt()
 
@@ -816,7 +819,7 @@ Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
 		"Desig," // structure (DesigExpr)
 		"In,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.ForEachStmt, DesigExpr, Collection, Statements, Place);
 EndFunction // ForEachStmt()
 
@@ -834,7 +837,7 @@ Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 		"Type,"   // string (one of Nodes)
 		"Try,"    // array (one of #Statements)
 		"Except," // array (one of #Statements)
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.TryStmt, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
 
@@ -843,7 +846,7 @@ Function GotoStmt(Label, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.GotoStmt, Label, Place);
 EndFunction // GotoStmt()
 
@@ -852,7 +855,7 @@ Function LabelStmt(Label, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.LabelStmt, Label, Place);
 EndFunction // LabelStmt()
 
@@ -871,7 +874,7 @@ Function PrepIfInst(Cond, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #PrepExpr)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepIfInst, Cond, Place);
 EndFunction // PrepIfInst()
 
@@ -886,7 +889,7 @@ Function PrepElsIfInst(Cond, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #PrepExpr)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepElsIfInst, Cond, Place);
 EndFunction // PrepElsIfInst()
 
@@ -894,7 +897,7 @@ Function PrepElseInst(Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #Иначе
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepElseInst, Place);
 EndFunction // PrepElseInst()
 
@@ -902,7 +905,7 @@ Function PrepEndIfInst(Place = Undefined)
 	// Хранит информацию об инструкции препроцессора #КонецЕсли
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepEndIfInst, Place);
 EndFunction // PrepEndIfInst()
 
@@ -917,7 +920,7 @@ Function PrepRegionInst(Name, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepRegionInst, Name, Place);
 EndFunction // PrepRegionInst()
 
@@ -931,7 +934,7 @@ Function PrepEndRegionInst(Place = Undefined)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place"  // undefined, structure (Place)
+		"Place"  // number, structure (Place)
 	, Nodes.PrepEndRegionInst, Place);
 EndFunction // PrepEndRegionInst()
 
@@ -945,7 +948,7 @@ Function PrepUseInst(Path, Place = Undefined)
 	Return New Structure( // @Node @OneScript
 	  "Type," // string (one of Nodes)
 	  "Path," // string
-	  "Place" // undefined, structure (Place)
+	  "Place" // number, structure (Place)
 	, Nodes.PrepUseInst, Path, Place);
 EndFunction // PrepUseInst()
 
@@ -968,7 +971,7 @@ Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
 		"Left,"     // structure (one of #PrepExpr)
 		"Operator," // string (one of Tokens)
 		"Right,"    // structure (one of #PrepExpr)
-		"Place"     // undefined, structure (Place)
+		"Place"     // number, structure (Place)
 	, Nodes.PrepBinaryExpr, Left, Operator, Right, Place);
 EndFunction // PrepBinaryExpr()
 
@@ -983,7 +986,7 @@ Function PrepNotExpr(Expr, Place = Undefined)
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Expr," // structure (one of #PrepExpr)
-		"Place" // undefined, structure (Place)
+		"Place" // number, structure (Place)
 	, Nodes.PrepNotExpr, Expr, Place);
 EndFunction // PrepNotExpr()
 
@@ -999,7 +1002,7 @@ Function PrepSymExpr(Symbol, Exist, Place = Undefined)
 		"Type,"   // string (one of Nodes)
 		"Symbol," // string (one of PrepSymbols)
 		"Exist,"  // boolean
-		"Place"   // undefined, structure (Place)
+		"Place"   // number, structure (Place)
 	, Nodes.PrepSymExpr, Symbol, Exist, Place);
 EndFunction // PrepSymExpr()
 
@@ -1009,38 +1012,12 @@ EndFunction // PrepSymExpr()
 
 #Region Parser
 
-Function Parser(Source) Export
-
-	Parser_Source = Source;
-	Parser_Pos = 0;
-	Parser_Line = 1;
-	Parser_EndLine = 1;
-	Parser_BegPos = 0;
-	Parser_EndPos = 0;
-	Parser_Methods = New Structure;
-	Parser_Unknown = New Structure;
-	Parser_IsFunc = False;
-	Parser_AllowVar = True;
-	Parser_Interface = New Array;
-	Parser_Comments = New Map;
-
-	Parser_Len = StrLen(Source);
-	Parser_Lit = "";
-	
-	Parser_Char = Undefined;
-	
-	OpenScope();
-
-	Return Undefined;
-
-EndFunction // Parser()
-
-Function Next() Export
+Function Next()
 	Var Beg, Prev, Comment;
 
 	Parser_EndPos = Parser_Pos; Parser_EndLine = Parser_Line;
 
-	If Right(Parser_Lit, 1) = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+	If Right(Parser_Lit, 1) = Chars_LF Then Parser_Line = Parser_Line + 1 EndIf;
 
 	While True Do
 
@@ -1048,7 +1025,7 @@ Function Next() Export
 
 		// skip space
 		While IsBlankString(Parser_Char) And Parser_Char <> "" Do
-			If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+			If Parser_Char = Chars_LF Then Parser_Line = Parser_Line + 1 EndIf;
 			Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 		EndDo;
 
@@ -1071,7 +1048,7 @@ Function Next() Export
 			Parser_Char = """"; // cheat code
 			While Parser_Char = """" Do
 				Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
-				While Parser_Char <> """" And Parser_Char <> Chars.LF And Parser_Char <> "" Do Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndDo;
+				While Parser_Char <> """" And Parser_Char <> Chars_LF And Parser_Char <> "" Do Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndDo;
 				If Parser_Char <> "" Then Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndIf;
 			EndDo;
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
@@ -1112,7 +1089,7 @@ Function Next() Export
 
 				If Parser_Char = "/" Then
 					// scan comment
-					Beg = Parser_Pos + 1; Parser_Pos = StrFind(Parser_Source, Chars.LF,, Beg);
+					Beg = Parser_Pos + 1; Parser_Pos = StrFind(Parser_Source, Chars_LF,, Beg);
 					Parser_Comments[Parser_Line] = Mid(Parser_Source, Beg, Parser_Pos - Beg);
 					If Parser_Pos = 0 Then Parser_Char = "" Else Parser_Char = Mid(Parser_Source, Parser_Pos, 1) EndIf;
 					Comment = True;
@@ -1162,7 +1139,7 @@ Function Next() Export
 
 				// skip space
 				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
-					If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+					If Parser_Char = Chars_LF Then Parser_Line = Parser_Line + 1 EndIf;
 					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				EndDo;
 
@@ -1184,7 +1161,7 @@ Function Next() Export
 
 				// skip space
 				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
-					If Parser_Char = Chars.LF Then Parser_Line = Parser_Line + 1 EndIf;
+					If Parser_Char = Chars_LF Then Parser_Line = Parser_Line + 1 EndIf;
 					Parser_Pos = Parser_Pos + 1; Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
 				EndDo;
 
@@ -1264,8 +1241,24 @@ Function CloseScope()
 	Return Scope;
 EndFunction // CloseScope()
 
-Function ParseModule() Export
-	Var Decls, Auto, VarObj, Item, Statements, Module;
+Function ParseModule(Source) Export
+	Var Decls, Auto, VarObj, Item, Statements, Module;	
+	Parser_Source = Source;
+	Parser_Pos = 0;
+	Parser_Line = 1;
+	Parser_EndLine = 1;
+	Parser_BegPos = 0;
+	Parser_EndPos = 0;
+	Parser_Methods = New Structure;
+	Parser_Unknown = New Structure;
+	Parser_IsFunc = False;
+	Parser_AllowVar = True;
+	Parser_Interface = New Array;
+	Parser_Comments = New Map;
+	Parser_Len = StrLen(Source);
+	Parser_Lit = "";	
+	Parser_Char = Undefined;
+	OpenScope();
 	Next();
 	Decls = ParseModDecls();
 	Statements = ParseStatements();
@@ -2309,8 +2302,8 @@ Procedure Error(Note, Pos = Undefined, Stop = False)
 		Pos = Min(Parser_Pos - StrLen(Parser_Lit), Parser_Len);
 	EndIf;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		StrOccurrenceCount(Mid(Parser_Source, 1, Pos), Chars.LF) + 1,
-		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars.LF, SearchDirection.FromEnd, Pos)),
+		StrOccurrenceCount(Mid(Parser_Source, 1, Pos), Chars_LF) + 1,
+		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
 		Note
 	);
 	If Stop Then
@@ -2324,20 +2317,24 @@ EndProcedure // Error()
 
 #Region Visitor
 
-Function Visitor(Hooks) Export
-	Var Counters, Item;
-
-	Visitor_Hooks = Hooks;
-	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
-
-	Counters = New Structure;
-	Visitor_Counters = Counters;
-	For Each Item In Nodes Do
-		Counters.Insert(Item.Key, 0);
-	EndDo;
-
-	Return Undefined;
-EndFunction // Visitor()
+Procedure HookUp(Val Plugins) Export
+	Var Plugin, List;
+	If TypeOf(Plugins) <> Type("Array") Then
+		Plugin = Plugins;
+		Plugins = New Array;
+		Plugins.Add(Plugin);
+	EndIf; 
+	Visitor_Hooks = Hooks();
+	For Each Plugin In Plugins Do
+		Plugin.Init(ThisObject);
+		List = Undefined;
+		For Each MethodName In Plugin.Interface() Do
+			If Visitor_Hooks.Property(MethodName, List) Then
+				List.Add(Plugin);
+			EndIf; 
+		EndDo; 
+	EndDo; 	
+EndProcedure // HookUp()
 
 Procedure PushInfo(Parent)
 	Var NodeType;
@@ -2353,7 +2350,7 @@ Procedure PopInfo()
 	Visitor_Stack = Visitor_Stack.Outer;
 EndProcedure // PopInfo()
 
-Function Hooks() Export
+Function Hooks()
 	Var Hooks, Item;
 
 	Hooks = New Structure(
@@ -2407,6 +2404,11 @@ EndFunction // Hooks()
 
 Procedure VisitModule(Module) Export
 	Var Hook;
+	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
+	Visitor_Counters = New Structure;
+	For Each Item In Nodes Do
+		Visitor_Counters.Insert(Item.Key, 0);
+	EndDo;
 	For Each Hook In Visitor_Hooks.VisitModule Do
 		Hook.VisitModule(Module, Visitor_Stack, Visitor_Counters);
 	EndDo;

@@ -43,13 +43,11 @@ Procedure TranslateAtServer()
 
 	If Output = "NULL" Then
 
-		BSLParser.Parser(Source.GetText());
-		BSLParser.ParseModule();
+		BSLParser.ParseModule(Source.GetText());
 		
 	ElsIf Output = "AST" Then
 
-		BSLParser.Parser(Source.GetText());
-		Parser_Module = BSLParser.ParseModule();
+		Parser_Module = BSLParser.ParseModule(Source.GetText());
 		JSONWriter = New JSONWriter;
 		JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
 		If ShowComments Then
@@ -66,25 +64,14 @@ Procedure TranslateAtServer()
 		
 	ElsIf Output = "Tree" Then
 
-		Parser = BSLParser.Parser(Source.GetText());
-		Parser_Module = BSLParser.ParseModule();
+		Parser_Module = BSLParser.ParseModule(Source.GetText());
 		FillTree(Parser_Module);
 		
 	ElsIf Output = "Plugin" Then
 
 		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
-		PluginProcessor.Init(BSLParser);
-		BSLParser.Parser(Source.GetText());
-		BSLParser.Location = True;
-		Parser_Module = BSLParser.ParseModule();
-		Hooks = BSLParser.Hooks();
-		List = Undefined;
-		For Each MethodName In PluginProcessor.Interface() Do
-			If Hooks.Property(MethodName, List) Then
-				List.Add(PluginProcessor);
-			EndIf; 
-		EndDo; 
-		Visitor = BSLParser.Visitor(Hooks);
+		Parser_Module = BSLParser.ParseModule(Source.GetText());
+		BSLParser.HookUp(PluginProcessor);
 		BSLParser.VisitModule(Parser_Module);
 		Result.SetText(PluginProcessor.Result());
 		
@@ -111,7 +98,7 @@ EndFunction // FillTree()
 &AtServer
 Function FillNode(Row, Node)
 	Var Place;
-	If Node.Property("Place", Place) And Place <> Undefined Then
+	If Node.Property("Place", Place) And TypeOf(Place) = Type("Structure") Then
 		Row.Line = Place.BegLine;
 		Row.Pos = Place.Pos;
 		Row.Len = Place.Len;
@@ -216,7 +203,7 @@ Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
 		PluginPath = Result[0];
 	EndIf;
 
-EndProcedure // ChoosePathHandle()
+EndProcedure // ChoosePathNotifyChoice()
 
 &AtClient
 Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
@@ -225,6 +212,6 @@ Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
 		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
 		CurrentItem = Items.Source;
 	EndIf; 
-EndProcedure
+EndProcedure // TreeSelection()
 
 
