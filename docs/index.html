@@ -460,10 +460,10 @@
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
+	<h3 id='PrepEndIfInst'>PrepEndIfInst<a class='permalink' href='#PrepEndIfInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #КонецЕсли</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndIfInst</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepRegionInst'>PrepRegionInst<a class='permalink' href='#PrepRegionInst'>¶</a></h3>
@@ -487,13 +487,13 @@
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndRegionInst</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='PrepUseDecl'>PrepUseDecl<a class='permalink' href='#PrepUseDecl'>¶</a></h3>
+	<h3 id='PrepUseInst'>PrepUseInst<a class='permalink' href='#PrepUseInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Использовать,</i><br>
 	<i> Это нестандартная инструкция из OneScript</i><br>
 	<i> Пример:</i><br>
  <pre>
- #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseDecl</li>
+ #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseInst</li>
 		<li><strong>Path</strong>: string</li>
 		<li><strong>Place</strong>: undefined, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
