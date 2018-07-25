@@ -21,7 +21,89 @@ Procedure Init(BSLParser) Export
 		|<title>BSL-Parser</title>
 		|<link rel='stylesheet' type='text/css' href='ast.css'>
 		|</head>
-		|<body>" ""
+		|<body>
+		|<header>
+		|<h1>BSL-Parser</h1>
+		|</header>
+		|<h1>Examples of using the parser</h1>
+		|<pre>
+		|
+		|// 1C:Enterprise 8.3.11
+		|
+		|BSLParser = ExternalDataProcessors.Create(BSLParserPath, False);
+		|Plugins = New Array;
+		|
+		|Plugin1 = ExternalDataProcessors.Create(PluginPath1, False);
+		|Plugins.Add(Plugin1);
+		|
+		|Plugin2 = ExternalDataProcessors.Create(PluginPath2, False);
+		|Plugins.Add(Plugin2);
+		|
+		|Module = BSLParser.ParseModule(Source.GetText());
+		|BSLParser.HookUp(Plugins);
+		|BSLParser.VisitModule(Module);
+		|
+		|Message(Plugin1.Result());
+		|Message(Plugin2.Result());
+		|
+		|// OneScript
+		|
+		|AttachScript(""..\src\BSLParser\Ext\ObjectModule.bsl"", ""BSLParser"");
+		|AttachScript(""..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl"", ""PluginTestVars"");
+		|
+		|TextReader = New TextReader(""..\src\BSLParser\Ext\ObjectModule.bsl"");
+		|Source = TextReader.Read();
+		|
+		|BSLParser = New BSLParser;
+		|BSLParser.Location = False;
+		|Module = BSLParser.ParseModule(Source);
+		|
+		|PluginTestVars = New PluginTestVars;
+		|BSLParser.HookUp(PluginTestVars);
+		|BSLParser.VisitModule(Module);
+		|
+		|Message(PluginTestVars.Result());
+		|</pre>
+		|<h1>Plugin Template</h1>
+		|<pre>
+		|Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions, PrepSymbols;
+		|Var Result;
+		|
+		|Procedure Init(BSLParser) Export
+		|	Tokens = BSLParser.Tokens();
+		|	Nodes = BSLParser.Nodes();
+		|	SelectKinds = BSLParser.SelectKinds();
+		|	Directives = BSLParser.Directives();
+		|	PrepInstructions = BSLParser.PrepInstructions();
+		|	PrepSymbols = BSLParser.PrepSymbols();
+		|	Result = New Array;
+		|EndProcedure // Init()
+		|
+		|Function Result() Export
+		|	// ...
+		|	Return StrConcat(Result);
+		|EndFunction // Refult()
+		|
+		|Function Interface() Export
+		|	Var Interface;
+		|	Interface = New Array;
+		|	// Interface.Add(""VisitAssignStmt"");
+		|	// Interface.Add(""AfterVisitAssignStmt"");
+		|	...
+		|	Return Interface;
+		|EndFunction // Interface()
+		|
+		|#Region Hooks
+		|
+		|// Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
+		|// EndProcedure // VisitAssignStmt()
+		|
+		|// Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
+		|// EndProcedure // AfterVisitAssignStmt()
+		|
+		|#EndRegion // Hooks
+		|</pre>"
+		""
 	);
 	RegionLevel = 0;
 EndProcedure // Init()
