@@ -6,8 +6,8 @@ TextReader = New TextReader("..\src\BSLParser\Ext\ObjectModule.bsl");
 Source = TextReader.Read();
 
 BSLParser = New BSLParser;
-Parser = BSLParser.Parser(Source);
-BSLParser.ParseModule(Parser);
+BSLParser.Parser(Source);
+Module = BSLParser.ParseModule();
 
 PluginDocGen = New PluginDocGen;
 PluginDocGen.Init(BSLParser);
@@ -18,8 +18,8 @@ For Each MethodName In PluginDocGen.Interface() Do
 		List.Add(PluginDocGen);
 	EndIf;
 EndDo;
-Visitor = BSLParser.Visitor(Hooks);
-BSLParser.VisitModule(Visitor, Parser.Module);
+BSLParser.Visitor(Hooks);
+BSLParser.VisitModule(Module);
 
 TextWriter = New TextWriter("..\docs\index.html");
 TextWriter.Write(PluginDocGen.Result());
