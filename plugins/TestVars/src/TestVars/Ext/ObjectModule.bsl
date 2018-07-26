@@ -6,7 +6,6 @@
 // - к параметру-ссылке нет обращений
 //
 // примечания:
-// В текущей реализации для простоты анализа присваивания внутри циклов считаются чтением.
 // Анализ в целом выполняется поверхностно и возможны ложные срабатывания.
 
 // todo: проверять два присваивания одной переменной подряд
@@ -15,12 +14,15 @@ Var Nodes;
 Var Result;
 
 Var Vars, Params;
+Var IsWhileStmtCond, CondVarsList;
 
 Procedure Init(BSLParser) Export
 	Nodes = BSLParser.Nodes();
 	Result = New Array;
 	Vars = New Map;
 	Params = New Map;
+	IsWhileStmtCond = False;
+	CondVarsList = New Array;
 EndProcedure // Init() 
 
 Function Result() Export
@@ -30,31 +32,50 @@ EndFunction // Result()
 Function Interface() Export
 	Var Interface;
 	Interface = New Array;
-	Interface.Add("VisitAssignStmt");
+	Interface.Add("AfterVisitAssignStmt");
 	Interface.Add("VisitDesigExpr");
 	Interface.Add("VisitFuncDecl");
 	Interface.Add("VisitProcDecl");
 	Interface.Add("AfterVisitFuncDecl");
 	Interface.Add("AfterVisitProcDecl");
+	Interface.Add("VisitWhileStmt");
+	Interface.Add("AfterVisitWhileStmt");
+	Interface.Add("VisitStatements");
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
+Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
+	IsWhileStmtCond = True;
+	CondVarsList.Clear();
+EndProcedure // VisitWhileStmt() 
+
+Procedure VisitStatements(Statements, Stack, Counters) Export
+	IsWhileStmtCond = False;	
+EndProcedure // VisitStatements()
+
+Procedure AfterVisitWhileStmt(WhileStmt, Stack, Counters) Export
+	For Each Object In CondVarsList Do
+		If Vars[Object] <> Undefined Then
+			Vars[Object] = "Get";
+		ElsIf Params[Object] <> Undefined Then
+			Params[Object] = "Get";	
+		EndIf;
+	EndDo;
+EndProcedure // AfterVisitWhileStmt()
+
+Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 	Var Object, Operation;
-	Operation = "Set";
-	If AssignStmt.Left.Select.Count() > 0 
-		Or Counters.WhileStmt > 0
-		Or Counters.ForEachStmt > 0
-		Or Counters.ForStmt > 0 Then
-		Operation = "Get";
-	EndIf; 
-	Object = AssignStmt.Left.Object;
+	Operation = "Set"; 
+	If AssignStmt.Left.Select.Count() > 0 Then
+		Return;
+	EndIf;
+	Object = AssignStmt.Left.Object; 
 	If Vars[Object] <> Undefined Then
 		Vars[Object] = Operation;
 	ElsIf Params[Object] <> Undefined Then
 		Params[Object] = Operation;
 	EndIf; 
-EndProcedure // VisitAssignStmt()
+EndProcedure // AfterVisitAssignStmt()
 
 Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 	Var Object;
@@ -67,6 +88,9 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 		Vars[Object] = "Get";
 	ElsIf Params[Object] <> Undefined Then
 		Params[Object] = "Get";	
+	EndIf;
+	If IsWhileStmtCond Then
+		CondVarsList.Add(Object);
 	EndIf; 
 EndProcedure // VisitDesigExpr()
 
