@@ -68,7 +68,9 @@ Procedure TranslateAtServer()
 		FillTree(Parser_Module);
 		
 	ElsIf Output = "Plugin" Then
-
+		
+		BSLParser.Location = True;
+		
 		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
 		Parser_Module = BSLParser.ParseModule(Source.GetText());
 		BSLParser.HookUp(PluginProcessor);

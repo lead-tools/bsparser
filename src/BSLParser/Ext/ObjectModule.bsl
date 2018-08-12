@@ -1567,7 +1567,7 @@ Function ParseSelectExpr()
 	Tok = Parser_Tok;
 	If Tok = Tokens.Period Then
 		Next();
-		If Not Keywords.Property(Parser_Lit) Then
+		If AlphaDigitMap[Left(Parser_Lit, 1)] <> Alpha Or Not Keywords.Property(Parser_Lit) Then
 			Expect(Tokens.Ident);
 		EndIf;
 		Value = Parser_Lit;
