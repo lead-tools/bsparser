@@ -206,6 +206,7 @@ EndProcedure // VisitUnaryExpr()
 
 Procedure VisitBinaryExpr(BinaryExpr)
 	VisitExpr(BinaryExpr.Left);
+	AlignLine(BinaryExpr.Right.Place.BegLine);
 	Result.Add(StrTemplate(" %1 ", Operators[BinaryExpr.Operator]));
     VisitExpr(BinaryExpr.Right);
 EndProcedure // VisitBinaryExpr()
@@ -478,7 +479,7 @@ Procedure VisitPrepInst(PrepInst)
 		Result.Add("#Else");
 	ElsIf Type = Nodes.PrepEndIfInst Then
 		Result.Add("#EndIf");
-	ElsIf Type = Nodes.PrepUseInst Then	
+	ElsIf Type = Nodes.PrepUseInst Then
 		Result.Add("#Use ");
 		Result.Add(PrepInst.Path);
 	EndIf;
@@ -500,7 +501,7 @@ Procedure AlignLine(NewLine)
 		If Comment <> Undefined Then
 			Result.Add(" //" + Comment);
 		EndIf;
-		Result.Add(Chars.LF); Indent();	
+		Result.Add(Chars.LF); Indent();
 	EndDo;
 EndProcedure // AlignLine()
 
