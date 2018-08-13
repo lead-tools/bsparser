@@ -237,7 +237,7 @@ Function Nodes() Export
 		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr,
 		|NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt,
-		|ForStmt, ForEachStmt, TryStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt,
+		|ForStmt, ForEachStmt, TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
 		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepUseInst"
 	);
@@ -748,10 +748,19 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 		"Cond,"  // structure (one of #Expressions)
 		"Then,"  // array (one of #Statements)
 		"ElsIf," // undefined, array (ElsIfStmt)
-		"Else,"  // undefined, array (one of #Statements)
+		"Else,"  // undefined, structure (ElseStmt)
 		"Place", // number, structure (Place)
 		Nodes.IfStmt, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
+
+Function ElseStmt(Body, Place = Undefined)
+	// Хранит блок "Иначе"
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Body,"  // array (one of #Statements)
+		"Place", // number, structure (Place)
+		Nodes.ElseStmt, Body, Place);
+EndFunction // ElseStmt()
 
 Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 	// Хранит блок "ИначеЕсли" оператора "Если".
@@ -836,10 +845,19 @@ Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"   // string (one of Nodes)
 		"Try,"    // array (one of #Statements)
-		"Except," // array (one of #Statements)
+		"Except," // structure (ExceptStmt)
 		"Place",  // number, structure (Place)
 		Nodes.TryStmt, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
+
+Function ExceptStmt(Body, Place = Undefined)
+	// Хранит блок "Исключение"
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Body,"  // array (one of #Statements)
+		"Place", // number, structure (Place)
+		Nodes.ExceptStmt, Body, Place);
+EndFunction // ExceptStmt()
 
 Function GotoStmt(Label, Place = Undefined)
 	// Хранит оператор "Перейти"
@@ -2070,8 +2088,10 @@ Function ParseIfStmt()
 		EndDo;
 	EndIf;
 	If Tok = Tokens.Else Then
+		Pos = Parser_BegPos;
+		Line = Parser_Line;
 		Next();
-		ElsePart = ParseStatements();
+		ElsePart = ElseStmt(ParseStatements(), Place(Pos, Line));
 	EndIf;
 	Expect(Tokens.EndIf);
 	Next();
@@ -2079,12 +2099,14 @@ Function ParseIfStmt()
 EndFunction // ParseIfStmt()
 
 Function ParseTryStmt()
-	Var TryPart, ExceptPart;
+	Var TryPart, ExceptPart, Pos, Line;
 	Next();
 	TryPart = ParseStatements();
 	Expect(Tokens.Except);
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	Next();
-	ExceptPart = ParseStatements();
+	ExceptPart = ExceptStmt(ParseStatements(), Place(Pos, Line));
 	Expect(Tokens.EndTry);
 	Next();
 	Return TryStmt(TryPart, ExceptPart);
@@ -2437,10 +2459,12 @@ Function Hooks()
 		"VisitCallStmt,       AfterVisitCallStmt,"
 		"VisitIfStmt,         AfterVisitIfStmt,"
 		"VisitElsIfStmt,      AfterVisitElsIfStmt,"
+		"VisitElseStmt,       AfterVisitElseStmt,"
 		"VisitWhileStmt,      AfterVisitWhileStmt,"
 		"VisitForStmt,        AfterVisitForStmt,"
 		"VisitForEachStmt,    AfterVisitForEachStmt,"
 		"VisitTryStmt,        AfterVisitTryStmt,"
+		"VisitExceptStmt,     AfterVisitExceptStmt,"
 		"VisitGotoStmt,       AfterVisitGotoStmt,"
 		"VisitLabelStmt,      AfterVisitLabelStmt,"
 		"VisitPrepInst,       AfterVisitPrepInst,"
@@ -2911,7 +2935,7 @@ Procedure VisitIfStmt(IfStmt)
 		EndDo;
 	EndIf;
 	If IfStmt.Else <> Undefined Then
-		VisitStatements(IfStmt.Else);
+		VisitElseStmt(IfStmt.Else);
 	EndIf;
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitIfStmt Do
@@ -2932,6 +2956,19 @@ Procedure VisitElsIfStmt(ElsIfStmt)
 		Hook.AfterVisitElsIfStmt(ElsIfStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitElsIfStmt()
+
+Procedure VisitElseStmt(ElseStmt)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitElseStmt Do
+		Hook.VisitElseStmt(ElseStmt, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(ElseStmt);
+	VisitStatements(ElseStmt.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitElseStmt Do
+		Hook.AfterVisitElseStmt(ElseStmt, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitElseStmt()
 
 Procedure VisitWhileStmt(WhileStmt)
 	Var Hook;
@@ -2985,12 +3022,25 @@ Procedure VisitTryStmt(TryStmt)
 	EndDo;
 	PushInfo(TryStmt);
 	VisitStatements(TryStmt.Try);
-	VisitStatements(TryStmt.Except);
+	VisitExceptStmt(TryStmt.Except);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitTryStmt Do
 		Hook.AfterVisitTryStmt(TryStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitTryStmt()
+
+Procedure VisitExceptStmt(ExceptStmt)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitExceptStmt Do
+		Hook.VisitExceptStmt(ExceptStmt, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(ExceptStmt);
+	VisitStatements(ExceptStmt.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitExceptStmt Do
+		Hook.AfterVisitExceptStmt(ExceptStmt, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitExceptStmt()
 
 Procedure VisitGotoStmt(GotoStmt)
 	Var Hook;

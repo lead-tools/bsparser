@@ -427,7 +427,14 @@ EndFunction // Interface()
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#ElsIfStmt'>ElsIfStmt</a>)</li>
-		<li><strong>Else</strong>: undefined, array (one of <a href='##Statements'>#Statements</a>)</li>
+		<li><strong>Else</strong>: undefined, structure (<a href='#ElseStmt'>ElseStmt</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='ElseStmt'>ElseStmt<a class='permalink' href='#ElseStmt'>¶</a></h3>
+	<ul>
+	<i> Хранит блок "Иначе"</i><br>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElseStmt</li>
+		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ElsIfStmt'>ElsIfStmt<a class='permalink' href='#ElsIfStmt'>¶</a></h3>
@@ -495,7 +502,14 @@ EndFunction // Interface()
      // поле "Except" хранит операторы в этом блоке
  КонецПопытки</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TryStmt</li>
 		<li><strong>Try</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Except</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
+		<li><strong>Except</strong>: structure (<a href='#ExceptStmt'>ExceptStmt</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='ExceptStmt'>ExceptStmt<a class='permalink' href='#ExceptStmt'>¶</a></h3>
+	<ul>
+	<i> Хранит блок "Исключение"</i><br>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExceptStmt</li>
+		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='GotoStmt'>GotoStmt<a class='permalink' href='#GotoStmt'>¶</a></h3>
@@ -679,11 +693,13 @@ EndFunction // Interface()
 <li>"<a href='#ForStmt'>ForStmt</a>"</li>
 <li>"<a href='#ForEachStmt'>ForEachStmt</a>"</li>
 <li>"<a href='#TryStmt'>TryStmt</a>"</li>
+<li>"<a href='#ExceptStmt'>ExceptStmt</a>"</li>
 <li>"<a href='#GotoStmt'>GotoStmt</a>"</li>
 <li>"<a href='#LabelStmt'>LabelStmt</a>"</li>
 <li>"<a href='#CallStmt'>CallStmt</a>"</li>
 <li>"<a href='#IfStmt'>IfStmt</a>"</li>
 <li>"<a href='#ElsIfStmt'>ElsIfStmt</a>"</li>
+<li>"<a href='#ElseStmt'>ElseStmt</a>"</li>
 <li>"<a href='#PrepIfInst'>PrepIfInst</a>"</li>
 <li>"<a href='#PrepElsIfInst'>PrepElsIfInst</a>"</li>
 <li>"<a href='#PrepElseInst'>PrepElseInst</a>"</li>

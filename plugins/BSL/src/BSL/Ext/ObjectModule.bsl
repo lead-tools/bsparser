@@ -353,7 +353,7 @@ EndProcedure // VisitCallStmt()
 Procedure VisitIfStmt(IfStmt)
 	Result.Add("If ");
 	VisitExpr(IfStmt.Cond);
-	Result.Add(" Then");
+	Result.Add(" Then ");
     VisitStatements(IfStmt.Then);
     If IfStmt.ElsIf <> Undefined Then
         For Each ElsIfStmt In IfStmt.ElsIf Do
@@ -362,9 +362,8 @@ Procedure VisitIfStmt(IfStmt)
         EndDo;
     EndIf;
     If IfStmt.Else <> Undefined Then
-		AlignLine(LastLine + 1);
-		Result.Add("Else ");
-		VisitStatements(IfStmt.Else);
+		AlignLine(IfStmt.Else.Place.BegLine);
+		VisitElseStmt(IfStmt.Else);
 	EndIf;
 	AlignLine(IfStmt.Place.EndLine);
 	Result.Add("EndIf;");
@@ -373,9 +372,14 @@ EndProcedure // VisitIfStmt()
 Procedure VisitElsIfStmt(ElsIfStmt)
 	Result.Add("ElsIf ");
 	VisitExpr(ElsIfStmt.Cond);
-	Result.Add(" Then");
+	Result.Add(" Then ");
     VisitStatements(ElsIfStmt.Then);
 EndProcedure // VisitElsIfStmt()
+
+Procedure VisitElseStmt(ElseStmt)
+	Result.Add("Else ");
+    VisitStatements(ElseStmt.Body);
+EndProcedure // VisitElseStmt()
 
 Procedure VisitWhileStmt(WhileStmt)
 	Result.Add("While ");
@@ -393,7 +397,7 @@ Procedure VisitForStmt(ForStmt)
 	VisitExpr(ForStmt.From);
 	Result.Add(" To ");
 	VisitExpr(ForStmt.To);
-	Result.Add(" Do");
+	Result.Add(" Do ");
 	VisitStatements(ForStmt.Body);
 	AlignLine(ForStmt.Place.EndLine);
 	Result.Add("EndDo;");
@@ -404,20 +408,25 @@ Procedure VisitForEachStmt(ForEachStmt)
 	VisitDesigExpr(ForEachStmt.Desig);
 	Result.Add(" In ");
 	VisitExpr(ForEachStmt.In);
-	Result.Add(" Do");
+	Result.Add(" Do ");
 	VisitStatements(ForEachStmt.Body);
 	AlignLine(ForEachStmt.Place.EndLine);
 	Result.Add("EndDo;");
 EndProcedure // VisitForEachStmt()
 
 Procedure VisitTryStmt(TryStmt)
-	Result.Add("Try");
-	VisitStatements(TryStmt.Try);
-	Result.Add("Except");
-	VisitStatements(TryStmt.Except);
+	Result.Add("Try ");
+	VisitStatements(TryStmt.Try);;
+	AlignLine(TryStmt.Except.Place.BegLine);
+	VisitExceptStmt(TryStmt.Except);
 	AlignLine(TryStmt.Place.EndLine);
 	Result.Add("EndTry;");
 EndProcedure // VisitTryStmt()
+
+Procedure VisitExceptStmt(ExceptStmt)
+	Result.Add("Except ");
+    VisitStatements(ExceptStmt.Body);
+EndProcedure // VisitExceptStmt()
 
 Procedure VisitGotoStmt(GotoStmt)
 	Result.Add(StrTemplate("Goto ~%1%2", GotoStmt.Label, ";"));
