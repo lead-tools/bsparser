@@ -56,6 +56,7 @@ Var Parser_Comments;  // map[number] (string)
 
 #Region VisitorState
 
+Var Visitor_Plugins;  // array (DataProcessorObject)
 Var Visitor_Hooks;    // structure as map[string] (array)
 Var Visitor_Stack;    // structure
 Var Visitor_Counters; // structure as map[string] (number)
@@ -2346,7 +2347,11 @@ Function AsDate(DateLit)
 			List.Add(Char);
 		EndIf;
 	EndDo;
-	Return Date(StrConcat(List));
+	DateString = StrConcat(List);
+	If DateString = "00000000" Then
+		Return '00010101';
+	EndIf; 
+	Return Date(DateString);
 EndFunction // AsDate()
 
 Procedure Expect(Tok)
@@ -2401,9 +2406,9 @@ Procedure HookUp(Val Plugins) Export
 		Plugins = New Array;
 		Plugins.Add(Plugin);
 	EndIf;
+	Visitor_Plugins = Plugins;
 	Visitor_Hooks = Hooks();
 	For Each Plugin In Plugins Do
-		Plugin.Init(ThisObject);
 		List = Undefined;
 		For Each MethodName In Plugin.Interface() Do
 			If Visitor_Hooks.Property(MethodName, List) Then
@@ -2482,7 +2487,10 @@ Function Hooks()
 EndFunction // Hooks()
 
 Procedure VisitModule(Module) Export
-	Var Hook;
+	Var Plugin, Hook;
+	For Each Plugin In Visitor_Plugins Do
+		Plugin.Init(ThisObject);
+	EndDo; 
 	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 	Visitor_Counters = New Structure;
 	For Each Item In Nodes Do
