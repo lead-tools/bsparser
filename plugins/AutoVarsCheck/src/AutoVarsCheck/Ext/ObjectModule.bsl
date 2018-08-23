@@ -1,5 +1,5 @@
 ﻿
-// Простая проверка на наличие авто-переменных в процедурах и функциях.
+// Простая проверка на наличие авто-переменных в методах.
 // Возможны ложные срабатывания, т.к. не учитывается контекст выполнения.
 
 Var Nodes;
@@ -17,27 +17,16 @@ EndFunction // Result()
 Function Interface() Export
 	Var Interface;
 	Interface = New Array;
-	Interface.Add("VisitFuncDecl");
-	Interface.Add("VisitProcDecl");
+	Interface.Add("VisitMethodDecl");
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
+Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var Item;
-	If FuncDecl.Auto.Count() > 0 Then
-		Result.Add(StrTemplate("Функция `%1()` содержит авто-переменные:", FuncDecl.Object.Name));
-		For Each Item In FuncDecl.Auto Do
+	If MethodDecl.Auto.Count() > 0 Then
+		Result.Add(StrTemplate("Метод `%1()` содержит авто-переменные:", MethodDecl.Sign.Name));
+		For Each Item In MethodDecl.Auto Do
 			Result.Add(Chars.Tab + Item.Name);
 		EndDo; 
 	EndIf; 
-EndProcedure // VisitFuncDecl()
-
-Procedure VisitProcDecl(ProcDecl, Stack, Counters) Export
-	Var Item;
-	If ProcDecl.Auto.Count() > 0 Then
-		Result.Add(StrTemplate("Процедура `%1()` содержит авто-переменные:", ProcDecl.Object.Name));
-		For Each Item In ProcDecl.Auto Do
-			Result.Add(Chars.Tab + Item.Name);
-		EndDo; 
-	EndIf;
-EndProcedure // VisitProcDecl()
+EndProcedure // VisitMethodDecl()

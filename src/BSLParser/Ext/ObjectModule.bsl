@@ -1688,7 +1688,7 @@ EndFunction // ParseParenExpr()
 #Region ParseDecl
 
 Function ParseModDecls()
-	Var Tok, Decls, Inst;
+	Var Tok, Decls, Inst, Pos, Line;
 	Tok = Parser_Tok;
 	Decls = New Array;
 	While Tok = Tokens.Directive Do
@@ -2318,7 +2318,7 @@ Function Place(Pos = Undefined, Line = Undefined)
 EndFunction // Place()
 
 Function AsDate(DateLit)
-	Var List, Char, Num;
+	Var List, Char, Num, DateString;
 	List = New Array;
 	For Num = 1 To StrLen(DateLit) Do
 		Char = Mid(DateLit, Num, 1);
@@ -2381,7 +2381,7 @@ EndProcedure // Error()
 #Region Visitor
 
 Procedure HookUp(Val Plugins) Export
-	Var Plugin, List;
+	Var Plugin, List, MethodName;
 	If TypeOf(Plugins) <> Type("Array") Then
 		Plugin = Plugins;
 		Plugins = New Array;
@@ -2473,7 +2473,7 @@ Function Hooks()
 EndFunction // Hooks()
 
 Procedure VisitModule(Module) Export
-	Var Plugin, Hook;
+	Var Plugin, Hook, Item;
 	For Each Plugin In Visitor_Plugins Do
 		Plugin.Init(ThisObject);
 	EndDo; 
@@ -2549,7 +2549,7 @@ Procedure VisitDecl(Decl)
 EndProcedure // VisitDecl()
 
 Procedure VisitVarModListDecl(VarModListDecl)
-	Var Hook;
+	Var Hook, VarModDecl;
 	For Each Hook In Visitor_Hooks.VisitVarModListDecl Do
 		Hook.VisitVarModListDecl(VarModListDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
@@ -2574,7 +2574,7 @@ Procedure VisitVarModDecl(VarModDecl)
 EndProcedure // VisitVarModDecl()
 
 Procedure VisitVarLocListDecl(VarLocListDecl)
-	Var Hook;
+	Var Hook, VarLocDecl;
 	For Each Hook In Visitor_Hooks.VisitVarLocListDecl Do
 		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
@@ -2599,7 +2599,7 @@ Procedure VisitVarLocDecl(VarLocDecl)
 EndProcedure // VisitVarLocDecl()
 
 Procedure VisitParamListDecl(ParamListDecl)
-	Var Hook;
+	Var Hook, ParamDecl;
 	For Each Hook In Visitor_Hooks.VisitParamListDecl Do
 		Hook.VisitParamListDecl(ParamListDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
@@ -2624,7 +2624,7 @@ Procedure VisitParamDecl(ParamDecl)
 EndProcedure // VisitParamDecl()
 
 Procedure VisitMethodDecl(MethodDecl)
-	Var Hook;
+	Var Hook, VarLocListDecl;
 	For Each Hook In Visitor_Hooks.VisitMethodDecl Do
 		Hook.VisitMethodDecl(MethodDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
