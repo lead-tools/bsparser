@@ -147,7 +147,7 @@ EndFunction // Interface()
 	<i> Пример:</i><br>
 	<i> Объявления переменных заключены в скобки <...></i><br>
  <pre>
- Перем <П1>, <П2>; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
+ Перем <П1>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -175,6 +175,14 @@ EndFunction // Interface()
 	</ul>
 	<h3 id='MethodDecl'>MethodDecl<a class='permalink' href='#MethodDecl'>¶</a></h3>
 	<ul>
+	<i> Хранит информацию об объявлении метода.</i><br>
+	<i> Сигнатура метода хранится в поле Sign.</i><br>
+	<i> &НаКлиенте</i><br>
+	<i> Функция Тест() Экспорт</i><br>
+	<i>     Перем П1;    // поле "Vars" хранит объявления переменных.</i><br>
+	<i>     П1 = 2;      // операторы собираются в поле Body</i><br>
+	<i>     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".</i><br>
+	<i> КонецФункции</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
 		<li><strong>Sign</strong>: structure (<a href='#ProcDecl'>ProcDecl</a>, <a href='#FuncDecl'>FuncDecl</a>)</li>
 		<li><strong>Vars</strong>: array (<a href='#VarLocListDecl'>VarLocListDecl</a>)</li>
@@ -184,17 +192,11 @@ EndFunction // Interface()
 	</ul>
 	<h3 id='ProcDecl'>ProcDecl<a class='permalink' href='#ProcDecl'>¶</a></h3>
 	<ul>
-	<i> Хранит информацию об инструкции объявления процедуры.</i><br>
-	<i> Директива и признак экспорта хранятся в поле-узле "Object",</i><br>
-	<i> который является объектом области видимости представляющим эту процедуру.</i><br>
+	<i> Хранит информацию о сигнатуре объявления процедуры.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Процедура Тест() Экспорт
-     Перем П1;    // поле "Decls" хранит объявления переменных.
-     П1 = 2;      
-     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
- КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcDecl</li>
+ Процедура Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcDecl</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
@@ -203,17 +205,11 @@ EndFunction // Interface()
 	</ul>
 	<h3 id='FuncDecl'>FuncDecl<a class='permalink' href='#FuncDecl'>¶</a></h3>
 	<ul>
-	<i> Хранит информацию об инструкции объявления функции.</i><br>
-	<i> Директива и признак экспорта хранятся в поле-узле "Object",</i><br>
-	<i> который является объектом области видимости представляющим эту функцию.</i><br>
+	<i> Хранит информацию о сигнатуре объявления функции.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Функция Тест() Экспорт
-     Перем П1;    // поле "Decls" хранит объявления переменных.
-     П1 = 2;      
-     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
- КонецФункции</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncDecl</li>
+ Функция Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncDecl</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>

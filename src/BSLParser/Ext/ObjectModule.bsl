@@ -393,7 +393,7 @@ Function VarLocDecl(Name, Place = Undefined)
 	// Пример:
 	// Объявления переменных заключены в скобки <...>
 	// <pre>
-	// Перем <П1>, <П2>; // поле "List"
+	// Перем <П1>, <П2>;
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -433,6 +433,14 @@ Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
 EndFunction // ParamDecl()
 
 Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
+	// Хранит информацию об объявлении метода.
+	// Сигнатура метода хранится в поле Sign.
+	// &НаКлиенте
+	// Функция Тест() Экспорт
+	//     Перем П1;    // поле "Vars" хранит объявления переменных.
+	//     П1 = 2;      // операторы собираются в поле Body
+	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
+	// КонецФункции
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcDecl, FuncDecl)
@@ -444,17 +452,11 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
 EndFunction // MethodDecl()
 
 Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
-	// Хранит информацию об инструкции объявления процедуры.
-	// Директива и признак экспорта хранятся в поле-узле "Object",
-	// который является объектом области видимости представляющим эту процедуру.
+	// Хранит информацию о сигнатуре объявления процедуры.
 	// Пример:
 	// <pre>
 	// &НаКлиенте
-	// Процедура Тест() Экспорт
-	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;      
-	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
-	// КонецПроцедуры
+	// Процедура Тест(П1, П2) Экспорт
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
@@ -467,17 +469,11 @@ Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
 EndFunction // ProcDecl()
 
 Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
-	// Хранит информацию об инструкции объявления функции.
-	// Директива и признак экспорта хранятся в поле-узле "Object",
-	// который является объектом области видимости представляющим эту функцию.
+	// Хранит информацию о сигнатуре объявления функции.
 	// Пример:
 	// <pre>
 	// &НаКлиенте
-	// Функция Тест() Экспорт
-	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;      
-	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
-	// КонецФункции
+	// Функция Тест(П1, П2) Экспорт
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
