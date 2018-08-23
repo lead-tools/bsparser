@@ -70,14 +70,12 @@ Procedure VisitDecl(Decl)
     Var Type;
 	AlignLine(Decl.Place.BegLine);
 	Type = Decl.Type;
-    If Type = Nodes.VarModDecl Then
-        VisitVarModDecl(Decl);
-    ElsIf Type = Nodes.VarLocDecl Then
-        VisitVarLocDecl(Decl);
-    ElsIf Type = Nodes.ProcDecl Then
-        VisitProcDecl(Decl);
-    ElsIf Type = Nodes.FuncDecl Then
-        VisitFuncDecl(Decl);
+    If Type = Nodes.VarModListDecl Then
+        VisitVarModListDecl(Decl);
+    ElsIf Type = Nodes.VarLocListDecl Then
+        VisitVarLocListDecl(Decl);
+    ElsIf Type = Nodes.MethodDecl Then
+        VisitMethodDecl(Decl);
 	ElsIf Type = Nodes.PrepRegionInst
 		Or Type = Nodes.PrepEndRegionInst
 		Or Type = Nodes.PrepIfInst
@@ -89,55 +87,59 @@ Procedure VisitDecl(Decl)
     EndIf;
 EndProcedure // VisitDecl()
 
-Procedure VisitVarModDecl(VarModDecl)
-	If VarModDecl.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", VarModDecl.Directive, Chars.LF));
+Procedure VisitVarModListDecl(VarModListDecl)
+	If VarModListDecl.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", VarModListDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Var ");
-	VisitVarList(VarModDecl.List);
+	VisitVarDeclList(VarModListDecl.List);
 	Result.Add(";");
-EndProcedure // VisitVarModDecl()
+EndProcedure // VisitVarModListDecl()
 
-Procedure VisitVarLocDecl(VarLocDecl)
+Procedure VisitVarLocListDecl(VarLocListDecl)
 	Result.Add("Var ");
-	VisitVarList(VarLocDecl.List);
+	VisitVarDeclList(VarLocListDecl.List);
 	Result.Add(";");
-EndProcedure // VisitVarLocDecl()
+EndProcedure // VisitVarLocListDecl()
+
+Procedure VisitMethodDecl(MethodDecl)
+	If MethodDecl.Sign.Type = Nodes.FuncDecl Then
+		VisitFuncDecl(MethodDecl.Sign);
+		VisitDeclarations(MethodDecl.Vars);
+   		VisitStatements(MethodDecl.Body);
+		AlignLine(MethodDecl.Place.EndLine);
+		Result.Add("EndFunction");
+	Else
+		VisitProcDecl(MethodDecl.Sign);
+		VisitDeclarations(MethodDecl.Vars);
+    	VisitStatements(MethodDecl.Body);
+		AlignLine(MethodDecl.Place.EndLine);
+		Result.Add("EndProcedure");
+	EndIf;	
+EndProcedure // VisitMethodDecl() 
 
 Procedure VisitProcDecl(ProcDecl)
-	Var Object;
-	Object = ProcDecl.Object;
-	If Object.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
+	If ProcDecl.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", ProcDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Procedure ");
-	Result.Add(Object.Name);
-	VisitParams(Object.Params);
-	If Object.Export Then
+	Result.Add(ProcDecl.Name);
+	VisitParamListDecl(ProcDecl.Params);
+	If ProcDecl.Export Then
 		Result.Add(" Export");
 	EndIf;
-	VisitDeclarations(ProcDecl.Decls);
-    VisitStatements(ProcDecl.Body);
-	AlignLine(ProcDecl.Place.EndLine);
-	Result.Add("EndProcedure");
 EndProcedure // VisitProcDecl()
 
 Procedure VisitFuncDecl(FuncDecl)
-	Var Object;
-	Object = FuncDecl.Object;
-	If Object.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", Object.Directive, Chars.LF));
+	If FuncDecl.Directive <> Undefined Then
+		Result.Add(StrTemplate("&%1%2", FuncDecl.Directive, Chars.LF));
 	EndIf;
 	Result.Add("Function ");
-	Result.Add(Object.Name);
-	VisitParams(Object.Params);
-	If Object.Export Then
+	Result.Add(FuncDecl.Name);
+	VisitParamListDecl(FuncDecl.Params);
+	If FuncDecl.Export Then
 		Result.Add(" Export");
 	EndIf;
-	VisitDeclarations(FuncDecl.Decls);
-    VisitStatements(FuncDecl.Body);
-	AlignLine(FuncDecl.Place.EndLine);
-	Result.Add("EndFunction");
 EndProcedure // VisitFuncDecl()
 
 #EndRegion // VisitDecl
@@ -182,7 +184,7 @@ Procedure VisitBasicLitExpr(BasicLitExpr)
 	ElsIf BasicLitKind = Tokens.Number Then
 		Result.Add(Format(BasicLitExpr.Value, "NZ=0; NG="));
 	ElsIf BasicLitKind = Tokens.DateTime Then
-		Result.Add(Format(BasicLitExpr.Value, "DF='""''yyyyMMdd'''"));
+		Result.Add(StrTemplate("'%1'", Format(BasicLitExpr.Value, "DF=yyyyMMdd; DE=00010101")));
 	ElsIf BasicLitKind = Tokens.True Or BasicLitKind = Tokens.False Then
 		Result.Add(Format(BasicLitExpr.Value, "BF=False; BT=True"));
 	ElsIf BasicLitKind = Tokens.Undefined Then
@@ -514,33 +516,33 @@ Procedure AlignLine(NewLine)
 	EndDo;
 EndProcedure // AlignLine()
 
-Procedure VisitVarList(VarList)
-	Var Buffer, Object;
+Procedure VisitVarDeclList(VisitVarDeclList)
+	Var Buffer, VarDecl;
 	Buffer = New Array;
-	For Each Object In VarList Do
-		If Object.Property("Export") And Object.Export Then
-			Buffer.Add(Object.Name + " Export");
+	For Each VarDecl In VisitVarDeclList Do
+		If VarDecl.Property("Export") And VarDecl.Export Then
+			Buffer.Add(VarDecl.Name + " Export");
 		Else
-			Buffer.Add(Object.Name);
+			Buffer.Add(VarDecl.Name);
 		EndIf;
 	EndDo;
 	If Buffer.Count() > 0 Then
 		Result.Add(StrConcat(Buffer, ", "));
 	EndIf;
-EndProcedure // VisitVarList()
+EndProcedure // VisitVarDeclList()
 
-Procedure VisitParams(ParamList)
-	Var Object;
+Procedure VisitParamListDecl(ParamListDecl)
+	Var ParamDecl;
 	Result.Add("(");
-	If ParamList.Count() > 0 Then
-		For Each Object In ParamList Do
-			If Object.ByVal Then
+	If ParamListDecl.List.Count() > 0 Then
+		For Each ParamDecl In ParamListDecl.List Do
+			If ParamDecl.ByVal Then
 				Result.Add("Val ");
 			EndIf;
-			Result.Add(Object.Name);
-			If Object.Value <> Undefined Then
+			Result.Add(ParamDecl.Name);
+			If ParamDecl.Value <> Undefined Then
 				Result.Add(" = ");
-				VisitExpr(Object.Value);
+				VisitExpr(ParamDecl.Value);
 			EndIf;
 			Result.Add(", ");
 		EndDo;
@@ -548,7 +550,7 @@ Procedure VisitParams(ParamList)
 	Else
 		Result.Add(")");
 	EndIf;
-EndProcedure // VisitParams()
+EndProcedure // VisitParamListDecl()
 
 Procedure VisitExprList(ExprList)
 	If ExprList.Count() > 0 Then

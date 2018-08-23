@@ -436,11 +436,11 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcDecl, FuncDecl)
-		"Vars,"  // array (VarLocListDecl)
+		"Vars,"  // array (VarLocListDecl) 
 		"Auto,"  // array (Object)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
+		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);	
 EndFunction // MethodDecl()
 
 Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
@@ -452,7 +452,7 @@ Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
 	// &НаКлиенте
 	// Процедура Тест() Экспорт
 	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;
+	//     П1 = 2;      
 	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецПроцедуры
 	// </pre>
@@ -475,7 +475,7 @@ Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
 	// &НаКлиенте
 	// Функция Тест() Экспорт
 	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;
+	//     П1 = 2;      
 	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецФункции
 	// </pre>
@@ -1850,7 +1850,7 @@ Function ParseMethodDecl()
 		Sign = FuncDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
 	Else
 	    Sign = ProcDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
-	EndIf;
+	EndIf; 
 	If Parser_Unknown.Property(Name, Object) Then
 		Parser_Unknown.Delete(Name);
 		Object.Decl = Sign;
@@ -1870,7 +1870,7 @@ Function ParseMethodDecl()
 		Expect(Tokens.EndFunction);
 	Else
 	    Expect(Tokens.EndProcedure);
-	EndIf;
+	EndIf; 
 	Auto = New Array;
 	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
@@ -2331,7 +2331,7 @@ Function AsDate(DateLit)
 		Or DateString = "000000000000"
 		Or DateString = "00000000000000" Then
 		Return '00010101';
-	EndIf;
+	EndIf; 
 	Return Date(DateString);
 EndFunction // AsDate()
 
@@ -2421,8 +2421,13 @@ Function Hooks()
 		"VisitDeclarations,   AfterVisitDeclarations,"
 		"VisitStatements,     AfterVisitStatements,"
 		"VisitDecl,           AfterVisitDecl,"
+		"VisitVarModListDecl, AfterVisitVarModListDecl,"
 		"VisitVarModDecl,     AfterVisitVarModDecl,"
+		"VisitVarLocListDecl, AfterVisitVarLocListDecl,"
 		"VisitVarLocDecl,     AfterVisitVarLocDecl,"
+		"VisitParamListDecl,  AfterVisitParamListDecl,"
+		"VisitParamDecl,      AfterVisitParamDecl,"
+		"VisitMethodDecl,     AfterVisitMethodDecl,"
 		"VisitProcDecl,       AfterVisitProcDecl,"
 		"VisitFuncDecl,       AfterVisitFuncDecl,"
 		"VisitExpr,           AfterVisitExpr,"
@@ -2471,7 +2476,7 @@ Procedure VisitModule(Module) Export
 	Var Plugin, Hook;
 	For Each Plugin In Visitor_Plugins Do
 		Plugin.Init(ThisObject);
-	EndDo;
+	EndDo; 
 	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 	Visitor_Counters = New Structure;
 	For Each Item In Nodes Do
@@ -2527,10 +2532,8 @@ Procedure VisitDecl(Decl)
 		VisitVarModDecl(Decl);
 	ElsIf Type = Nodes.VarLocDecl Then
 		VisitVarLocDecl(Decl);
-	ElsIf Type = Nodes.ProcDecl Then
-		VisitProcDecl(Decl);
-	ElsIf Type = Nodes.FuncDecl Then
-		VisitFuncDecl(Decl);
+	ElsIf Type = Nodes.MethodDecl Then
+		VisitMethodDecl(Decl);
 	ElsIf Type = Nodes.PrepRegionInst
 		Or Type = Nodes.PrepEndRegionInst
 		Or Type = Nodes.PrepIfInst
@@ -2545,6 +2548,21 @@ Procedure VisitDecl(Decl)
 	EndDo;
 EndProcedure // VisitDecl()
 
+Procedure VisitVarModListDecl(VarModListDecl)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitVarModListDecl Do
+		Hook.VisitVarModListDecl(VarModListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(VarModListDecl);
+	For Each VarModDecl In VarModListDecl.List Do
+		VisitVarModDecl(VarModDecl);
+	EndDo;
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitVarModListDecl Do
+		Hook.AfterVisitVarModListDecl(VarModListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitVarModListDecl()
+
 Procedure VisitVarModDecl(VarModDecl)
 	Var Hook;
 	For Each Hook In Visitor_Hooks.VisitVarModDecl Do
@@ -2554,6 +2572,21 @@ Procedure VisitVarModDecl(VarModDecl)
 		Hook.AfterVisitVarModDecl(VarModDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitVarModDecl()
+
+Procedure VisitVarLocListDecl(VarLocListDecl)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitVarLocListDecl Do
+		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(VarLocListDecl);
+	For Each VarLocDecl In VarLocListDecl.List Do
+		VisitVarLocDecl(VarLocDecl);
+	EndDo;
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitVarLocListDecl Do
+		Hook.AfterVisitVarLocListDecl(VarLocListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitVarLocListDecl()
 
 Procedure VisitVarLocDecl(VarLocDecl)
 	Var Hook;
@@ -2565,14 +2598,59 @@ Procedure VisitVarLocDecl(VarLocDecl)
 	EndDo;
 EndProcedure // VisitVarLocDecl()
 
+Procedure VisitParamListDecl(ParamListDecl)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitParamListDecl Do
+		Hook.VisitParamListDecl(ParamListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(ParamListDecl);
+	For Each ParamDecl In ParamListDecl.List Do
+		VisitParamDecl(ParamDecl);
+	EndDo;
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitParamListDecl Do
+		Hook.AfterVisitParamListDecl(ParamListDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitParamListDecl()
+
+Procedure VisitParamDecl(ParamDecl)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitParamDecl Do
+		Hook.VisitParamDecl(ParamDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	For Each Hook In Visitor_Hooks.AfterVisitParamDecl Do
+		Hook.AfterVisitParamDecl(ParamDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitParamDecl()
+
+Procedure VisitMethodDecl(MethodDecl)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitMethodDecl Do
+		Hook.VisitMethodDecl(MethodDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(MethodDecl);
+	If MethodDecl.Sign.Type = Nodes.FuncDecl Then
+		VisitFuncDecl(MethodDecl.Sign);
+	Else
+		VisitProcDecl(MethodDecl.Sign);
+	EndIf; 
+	For Each VarLocListDecl In MethodDecl.Vars Do
+		VisitVarLocListDecl(VarLocListDecl);
+	EndDo; 
+	VisitStatements(MethodDecl.Body);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitMethodDecl Do
+		Hook.AfterVisitMethodDecl(MethodDecl, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitMethodDecl()
+
 Procedure VisitProcDecl(ProcDecl)
 	Var Hook;
 	For Each Hook In Visitor_Hooks.VisitProcDecl Do
 		Hook.VisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(ProcDecl);
-	VisitDeclarations(ProcDecl.Decls);
-	VisitStatements(ProcDecl.Body);
+	VisitParamListDecl(ProcDecl.Params);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitProcDecl Do
 		Hook.AfterVisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
@@ -2585,8 +2663,7 @@ Procedure VisitFuncDecl(FuncDecl)
 		Hook.VisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(FuncDecl);
-	VisitDeclarations(FuncDecl.Decls);
-	VisitStatements(FuncDecl.Body);
+	VisitParamListDecl(FuncDecl.Params);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitFuncDecl Do
 		Hook.AfterVisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
