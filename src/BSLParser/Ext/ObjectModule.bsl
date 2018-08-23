@@ -233,12 +233,11 @@ EndFunction // Tokens()
 
 Function Nodes() Export
 	Return Enum(New Structure,
-		"Module, Unknown, Func, Proc, VarMod, VarLoc, Param,
-		|VarModDecl, VarLocDecl, ProcDecl, FuncDecl,
-		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr,
-		|NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
-		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt,
-		|ForStmt, ForEachStmt, TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
+		"Module, Object,
+		|VarModDecl, VarModListDecl, VarLocDecl, VarLocListDecl, ParamDecl, ParamListDecl, MethodDecl, ProcDecl, FuncDecl,
+		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
+		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
+		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
 		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepUseInst"
 	);
@@ -330,81 +329,21 @@ Function Scope(Outer)
 		Outer, New Structure, New Array);
 EndFunction // Scope()
 
-Function Unknown(Name)
-	// Узел хранит информацию об идентификаторе, для которого не удалось
-	// обнаружить объект (переменную, метод) в определенной области видимости.
-	// Является объектом области видимости.
+Function Object(Name, Decl = Undefined)
+	// Узел хранит информацию об объекте области видимости.
+	// Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Name", // string
-		Nodes.Unknown, Name);
-EndFunction // Unknown()
-
-Function Func(Name, Directive, Params, Exported)
-	// Узел хранит информацию о функции.
-	// Является объектом области видимости.
-	Return New Structure( // @Node
-		"Type,"      // string (one of Nodes)
-		"Name,"      // string
-		"Directive," // string (one of Directives)
-		"Params,"    // array (Param)
-		"Export",    // boolean
-		Nodes.Func, Name, Directive, Params, Exported);
-EndFunction // Func()
-
-Function Proc(Name, Directive, Params, Exported)
-	// Узел хранит информацию о процедуре.
-	// Является объектом области видимости.
-	Return New Structure( // @Node
-		"Type,"      // string (one of Nodes)
-		"Name,"      // string
-		"Directive," // string (one of Directives)
-		"Params,"    // array (Param)
-		"Export",    // boolean
-		Nodes.Proc, Name, Directive, Params, Exported);
-EndFunction // Proc()
-
-Function VarMod(Name, Directive, Exported)
-	// Узел хранит информацию о переменной уровня модуля.
-	// Является объектом области видимости.
-	Return New Structure( // @Node
-		"Type,"      // string (one of Nodes)
-		"Name,"      // string
-		"Directive," // string (one of Directives)
-		"Export",    // boolean
-		Nodes.VarMod, Name, Directive, Exported);
-EndFunction // VarMod()
-
-Function VarLoc(Name, Auto = False)
-	// Узел хранит информацию о локальной переменной.
-	// Является объектом области видимости.
-	// Поле "Auto" равно истине если это авто-переменная.
-	Return New Structure( // @Node
-		"Type," // string (one of Nodes)
-		"Name," // string
-		"Auto", // boolean
-		Nodes.VarLoc, Name, Auto);
-EndFunction // VarLoc()
-
-Function Param(Name, ByVal, Value = Undefined)
-	// Узел хранит информацию о параметре функции или процедуры.
-	// Является объектом области видимости.
-	// Поле "ByVal" равно истине если параметр передается по значению.
-	// Поле "Value" хранит значение параметра по умолчанию.
-	// Если оно равно Неопределено, то значение не задано.
-	Return New Structure( // @Node
-		"Type,"  // string (one of Nodes)
 		"Name,"  // string
-		"ByVal," // boolean
-		"Value", // undefined, structure (UnaryExpr, BasicLitExpr)
-		Nodes.Param, Name, ByVal, Value);
-EndFunction // Param()
+		"Decl", // undefined, structure (one of #Declarations)
+		Nodes.Object, Name, Decl);
+EndFunction // Object()
 
 #EndRegion // Scope
 
 #Region Declarations
 
-Function VarModDecl(Directive, VarList, Place = Undefined)
+Function VarModListDecl(Directive, VarList, Place = Undefined)
 	// Хранит информацию об инструкции объявления переменных уровня модуля.
 	// Пример:
 	// <pre>
@@ -414,12 +353,29 @@ Function VarModDecl(Directive, VarList, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Directive," // string (one of Directives)
-		"List,"      // array (VarMod)
+		"List,"      // array (VarModDecl)
 		"Place",     // number, structure (Place)
-		Nodes.VarModDecl, Directive, VarList, Place);
+		Nodes.VarModListDecl, Directive, VarList, Place);
+EndFunction // VarModListDecl()
+
+Function VarModDecl(Name, Directive, Exported, Place = Undefined)
+	// Хранит информацию об объявлении переменной уровня модуля.
+	// Пример:
+	// Объявления переменных заключены в скобки <...>
+	// <pre>
+	// &НаКлиенте
+	// Перем <П1 Экспорт>, <П2>;
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"      // string (one of Nodes)
+		"Name,"      // string
+		"Directive," // string (one of Directives)
+		"Export,"    // boolean
+		"Place",     // number, structure (Place)
+		Nodes.VarModDecl, Name, Directive, Exported, Place);
 EndFunction // VarModDecl()
 
-Function VarLocDecl(VarList, Place = Undefined)
+Function VarLocListDecl(VarList, Place = Undefined)
 	// Хранит информацию об инструкции объявления локальных переменных.
 	// Пример:
 	// <pre>
@@ -427,12 +383,67 @@ Function VarLocDecl(VarList, Place = Undefined)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"List,"  // array (VarLoc)
+		"List,"  // array (VarLocDecl)
 		"Place", // number, structure (Place)
-		Nodes.VarLocDecl, VarList, Place);
+		Nodes.VarLocListDecl, VarList, Place);
+EndFunction // VarLocListDecl()
+
+Function VarLocDecl(Name, Place = Undefined)
+	// Хранит информацию об объявлении локальной переменной.
+	// Пример:
+	// Объявления переменных заключены в скобки <...>
+	// <pre>
+	// Перем <П1>, <П2>; // поле "List"
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Name,"  // string
+		"Place", // number, structure (Place)
+		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
 
-Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
+Function ParamListDecl(ParamList, Place = Undefined)
+	// Хранит информацию о параметрах метода.
+	// Параметры заключены в скобки <...>
+	// Пример:
+	// <pre>
+	// Процедура<(П1, Знач П2 = Неопределено)>
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"List,"  // array (ParamDecl)
+		"Place", // number, structure (Place)
+		Nodes.ParamListDecl, ParamList, Place);
+EndFunction // ParamListDecl()
+
+Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
+	// Хранит информацию об объявлении параметра.
+	// Пример:
+	// Объявления параметров заключены в скобки <...>
+	// <pre>
+	// Процедура(<П1>, <Знач П2 = Неопределено>)
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Name,"  // string
+		"ByVal," // boolean
+		"Value," // undefined, structure (UnaryExpr, BasicLitExpr)
+		"Place", // number, structure (Place)
+		Nodes.ParamDecl, Name, ByVal, Value, Place);
+EndFunction // ParamDecl()
+
+Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Sign,"  // structure (ProcDecl, FuncDecl)
+		"Vars,"  // array (VarLocListDecl)
+		"Auto,"  // array (Object)
+		"Body,"  // array (one of #Statements)
+		"Place", // number, structure (Place)
+		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
+EndFunction // MethodDecl()
+
+Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
 	// Хранит информацию об инструкции объявления процедуры.
 	// Директива и признак экспорта хранятся в поле-узле "Object",
 	// который является объектом области видимости представляющим эту процедуру.
@@ -441,21 +452,21 @@ Function ProcDecl(Object, Decls, Auto, Body, Place = Undefined)
 	// &НаКлиенте
 	// Процедура Тест() Экспорт
 	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;      // поле "Body" хранит операторы.
+	//     П1 = 2;
 	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецПроцедуры
 	// </pre>
 	Return New Structure( // @Node
-		"Type,"   // string (one of Nodes)
-		"Object," // structure (Proc)
-		"Decls,"  // array (one of #Declarations)
-		"Auto,"   // array (VarLoc)
-		"Body,"   // array (one of #Statements)
-		"Place",  // number, structure (Place)
-		Nodes.ProcDecl, Object, Decls, Auto, Body, Place);
+		"Type,"      // string (one of Nodes)
+		"Name,"      // string
+		"Directive," // string (one of Directives)
+		"Params,"    // array (ParamDecl)
+		"Export,"    // boolean
+		"Place",     // number, structure (Place)
+		Nodes.ProcDecl, Name, Directive, Params, Exported, Place);
 EndFunction // ProcDecl()
 
-Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
+Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
 	// Хранит информацию об инструкции объявления функции.
 	// Директива и признак экспорта хранятся в поле-узле "Object",
 	// который является объектом области видимости представляющим эту функцию.
@@ -464,18 +475,18 @@ Function FuncDecl(Object, Decls, Auto, Body, Place = Undefined)
 	// &НаКлиенте
 	// Функция Тест() Экспорт
 	//     Перем П1;    // поле "Decls" хранит объявления переменных.
-	//     П1 = 2;      // поле "Body" хранит операторы.
+	//     П1 = 2;
 	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецФункции
 	// </pre>
 	Return New Structure( // @Node
-		"Type,"   // string (one of Nodes)
-		"Object," // structure (Func)
-		"Decls,"  // array (one of #Declarations)
-		"Auto,"   // array (VarLoc)
-		"Body,"   // array (one of #Statements)
-		"Place",  // number, structure (Place)
-		Nodes.FuncDecl, Object, Decls, Auto, Body, Place);
+		"Type,"      // string (one of Nodes)
+		"Name,"      // string
+		"Directive," // string (one of Directives)
+		"Params,"    // array (ParamDecl)
+		"Export,"    // boolean
+		"Place",     // number, structure (Place)
+		Nodes.FuncDecl, Name, Directive, Params, Exported, Place);
 EndFunction // FuncDecl()
 
 #EndRegion // Declarations
@@ -1549,7 +1560,7 @@ Function ParseDesigExpr(Val AllowNewVar = False, NewVar = Undefined)
 		If Kind = "Call" Then
 			If Not Parser_Methods.Property(Name, Object) Then
 				If Not Parser_Unknown.Property(Name, Object) Then
-					Object = Unknown(Name);
+					Object = Object(Name);
 					Parser_Unknown.Insert(Name, Object);
 				EndIf;
 			EndIf;
@@ -1567,10 +1578,10 @@ Function ParseDesigExpr(Val AllowNewVar = False, NewVar = Undefined)
 	EndIf;
 	If Object = Undefined Then
 		If AllowNewVar Then
-			Object = VarLoc(Name, True);
+			Object = Object(Name);
 			NewVar = Object;
 		Else
-			Object = Unknown(Name);
+			Object = Object(Name);
 			If Verbose Then
 				Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
@@ -1688,12 +1699,14 @@ Function ParseModDecls()
 		Pos = Parser_BegPos;
 		Line = Parser_Line;
 		If Tok = Tokens.Var And Parser_AllowVar Then
-			Decls.Add(ParseVarModDecl());
+			Decls.Add(ParseVarModListDecl());
 		ElsIf Tok = Tokens.Function Then
-			Decls.Add(ParseFuncDecl());
+			Parser_IsFunc = True;
+			Decls.Add(ParseMethodDecl());
+			Parser_IsFunc = False;
 			Parser_AllowVar = False;
 		ElsIf Tok = Tokens.Procedure Then
-			Decls.Add(ParseProcDecl());
+			Decls.Add(ParseMethodDecl());
 			Parser_AllowVar = False;
 		ElsIf Tok = Tokens._Region Then
 			Inst = ParsePrepRegionInst();
@@ -1734,29 +1747,30 @@ Function ParseModDecls()
 	Return Decls;
 EndFunction // ParseModDecls()
 
-Function ParseVarModDecl()
+Function ParseVarModListDecl()
 	Var VarList, Decl, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Scan();
 	VarList = New Array;
-	VarList.Add(ParseVarMod());
+	VarList.Add(ParseVarModDecl());
 	While Parser_Tok = Tokens.Comma Do
 		Scan();
-		VarList.Add(ParseVarMod());
+		VarList.Add(ParseVarModDecl());
 	EndDo;
-	Decl = VarModDecl(Parser_Directive, VarList, Place(Pos, Line));
+	Decl = VarModListDecl(Parser_Directive, VarList, Place(Pos, Line));
 	Expect(Tokens.Semicolon);
 	Scan();
 	While Parser_Tok = Tokens.Semicolon Do
 		Scan();
 	EndDo;
 	Return Decl;
-EndFunction // ParseVarModDecl()
+EndFunction // ParseVarModListDecl()
 
-Function ParseVarMod()
-	Var Name, Object, Exported, Pos;
+Function ParseVarModDecl()
+	Var Name, VarModDecl, Exported, Pos, Line;
 	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
 	If Scan() = Tokens.Export Then
@@ -1765,59 +1779,60 @@ Function ParseVarMod()
 	Else
 		Exported = False;
 	EndIf;
-	Object = VarMod(Name, Parser_Directive, Exported);
+	VarModDecl = VarModDecl(Name, Parser_Directive, Exported, Place(Pos, Line));
 	If Exported Then
-		Parser_Interface.Add(Object);
+		Parser_Interface.Add(VarModDecl);
 	EndIf;
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object);
-	Return Object;
-EndFunction // ParseVarMod()
+	Parser_Vars.Insert(Name, Object(Name, VarModDecl));
+	Return VarModDecl;
+EndFunction // ParseVarModDecl()
 
-Function ParseVarDecls()
+Function ParseVarLocListDecls()
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser_Tok;
 	While Tok = Tokens.Var Do
-		Decls.Add(ParseVarLocDecl());
+		Decls.Add(ParseVarLocListDecl());
 		Expect(Tokens.Semicolon);
 		Tok = Scan();
 	EndDo;
 	Return Decls;
-EndFunction // ParseVarDecls()
+EndFunction // ParseVarLocListDecls()
 
-Function ParseVarLocDecl()
+Function ParseVarLocListDecl()
 	Var VarList, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Scan();
 	VarList = New Array;
-	VarList.Add(ParseVarLoc());
+	VarList.Add(ParseVarLocDecl());
 	While Parser_Tok = Tokens.Comma Do
 		Scan();
-		VarList.Add(ParseVarLoc());
+		VarList.Add(ParseVarLocDecl());
 	EndDo;
-	Return VarLocDecl(VarList, Place(Pos, Line));
-EndFunction // ParseVarLocDecl()
+	Return VarLocListDecl(VarList, Place(Pos, Line));
+EndFunction // ParseVarLocListDecl()
 
-Function ParseVarLoc()
-	Var Name, Object, Pos;
+Function ParseVarLocDecl()
+	Var Name, VarLocDecl, Pos, Line;
 	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
-	Object = VarLoc(Name);
+	VarLocDecl = VarLocDecl(Name, Place(Pos, Line));
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object);
+	Parser_Vars.Insert(Name, Object(Name, VarLocDecl));
 	Scan();
-	Return Object;
-EndFunction // ParseVarLoc()
+	Return VarLocDecl;
+EndFunction // ParseVarLocDecl()
 
-Function ParseFuncDecl()
-	Var Object, Name, Decls, ParamList, Exported, Statements, Auto, VarObj, Pos, Line;
+Function ParseMethodDecl()
+	Var Sign, Object, Name, Vars, ParamList, Exported, Body, Auto, VarObj, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Exported = False;
@@ -1826,19 +1841,21 @@ Function ParseFuncDecl()
 	Name = Parser_Lit;
 	Scan();
 	OpenScope();
-	ParamList = ParseParamList();
+	ParamList = ParseParamListDecl();
 	If Parser_Tok = Tokens.Export Then
 		Exported = True;
 		Scan();
 	EndIf;
-	If Parser_Unknown.Property(Name, Object) Then
-		Object.Type = Nodes.Func;
-		Object.Insert("Directive", Parser_Directive);
-		Object.Insert("Params", ParamList);
-		Object.Insert("Export", Exported);
-		Parser_Unknown.Delete(Name);
+	If Parser_IsFunc Then
+		Sign = FuncDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
 	Else
-		Object = Func(Name, Parser_Directive, ParamList, Exported);
+	    Sign = ProcDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
+	EndIf;
+	If Parser_Unknown.Property(Name, Object) Then
+		Parser_Unknown.Delete(Name);
+		Object.Decl = Sign;
+	Else
+		Object = Object(Name, Sign);
 	EndIf;
 	If Parser_Methods.Property(Name) Then
 		Error("Method already declared", Pos, True);
@@ -1847,85 +1864,47 @@ Function ParseFuncDecl()
 	If Exported Then
 		Parser_Interface.Add(Object);
 	EndIf;
-	Decls = ParseVarDecls();
-	Parser_IsFunc = True;
-	Statements = ParseStatements();
-	Parser_IsFunc = False;
-	Expect(Tokens.EndFunction);
+	Vars = ParseVarLocListDecls();
+	Body = ParseStatements();
+	If Parser_IsFunc Then
+		Expect(Tokens.EndFunction);
+	Else
+	    Expect(Tokens.EndProcedure);
+	EndIf;
 	Auto = New Array;
 	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
 	EndDo;
 	CloseScope();
 	Scan();
-	Return FuncDecl(Object, Decls, Auto, Statements, Place(Pos, Line));
-EndFunction // ParseFuncDecl()
+	Return MethodDecl(Sign, Vars, Auto, Body, Place(Pos, Line));
+EndFunction // ParseMethodDecl()
 
-Function ParseProcDecl()
-	Var Object, Name, Decls, ParamList, Exported, Auto, VarObj, Statements, Pos, Line;
+Function ParseParamListDecl()
+	Var ParamList, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
-	Exported = False;
-	Scan();
-	Expect(Tokens.Ident);
-	Name = Parser_Lit;
-	Scan();
-	OpenScope();
-	ParamList = ParseParamList();
-	If Parser_Tok = Tokens.Export Then
-		Exported = True;
-		Scan();
-	EndIf;
-	If Parser_Unknown.Property(Name, Object) Then
-		Object.Type = Nodes.Proc;
-		Object.Insert("Directive", Parser_Directive);
-		Object.Insert("Params", ParamList);
-		Object.Insert("Export", Exported);
-		Parser_Unknown.Delete(Name);
-	Else
-		Object = Proc(Name, Parser_Directive, ParamList, Exported);
-	EndIf;
-	If Parser_Methods.Property(Name) Then
-		Error("Method already declared", Pos, True);
-	EndIf;
-	Parser_Methods.Insert(Name, Object);
-	If Exported Then
-		Parser_Interface.Add(Object);
-	EndIf;
-	Decls = ParseVarDecls();
-	Statements = ParseStatements();
-	Expect(Tokens.EndProcedure);
-	Auto = New Array;
-	For Each VarObj In Parser_Scope.Auto Do
-		Auto.Add(VarObj);
-	EndDo;
-	CloseScope();
-	Scan();
-	Return ProcDecl(Object, Decls, Auto, Statements, Place(Pos, Line));
-EndFunction // ParseProcDecl()
-
-Function ParseParamList()
-	Var ParamList;
 	Expect(Tokens.Lparen);
 	Scan();
 	If Parser_Tok = Tokens.Rparen Then
 		ParamList = EmptyArray;
 	Else
 		ParamList = New Array;
-		ParamList.Add(ParseParameter());
+		ParamList.Add(ParseParamDecl());
 		While Parser_Tok = Tokens.Comma Do
 			Scan();
-			ParamList.Add(ParseParameter());
+			ParamList.Add(ParseParamDecl());
 		EndDo;
 	EndIf;
 	Expect(Tokens.Rparen);
 	Scan();
-	Return ParamList;
-EndFunction // ParseParamList()
+	Return ParamListDecl(ParamList, Place(Pos, Line));
+EndFunction // ParseParamDeclList()
 
-Function ParseParameter()
-	Var Name, Object, ByVal, Pos;
+Function ParseParamDecl()
+	Var Name, ParamDecl, ByVal, Pos, Line;
 	Pos = Parser_BegPos;
+	Line = Parser_Line;
 	If Parser_Tok = Tokens.Val Then
 		ByVal = True;
 		Scan();
@@ -1936,16 +1915,16 @@ Function ParseParameter()
 	Name = Parser_Lit;
 	If Scan() = Tokens.Eql Then
 		Scan();
-		Object = Param(Name, ByVal, ParseUnaryExpr());
+		ParamDecl = ParamDecl(Name, ByVal, ParseUnaryExpr(), Place(Pos, Line));
 	Else
-		Object = Param(Name, ByVal);
+		ParamDecl = ParamDecl(Name, ByVal,, Place(Pos, Line));
 	EndIf;
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object);
-	Return Object;
-EndFunction // ParseParameter()
+	Parser_Vars.Insert(Name, Object(Name, ParamDecl));
+	Return ParamDecl;
+EndFunction // ParseParamDecl()
 
 #EndRegion // ParseDecl
 
@@ -2352,7 +2331,7 @@ Function AsDate(DateLit)
 		Or DateString = "000000000000"
 		Or DateString = "00000000000000" Then
 		Return '00010101';
-	EndIf; 
+	EndIf;
 	Return Date(DateString);
 EndFunction // AsDate()
 
@@ -2492,7 +2471,7 @@ Procedure VisitModule(Module) Export
 	Var Plugin, Hook;
 	For Each Plugin In Visitor_Plugins Do
 		Plugin.Init(ThisObject);
-	EndDo; 
+	EndDo;
 	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 	Visitor_Counters = New Structure;
 	For Each Item In Nodes Do
