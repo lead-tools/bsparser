@@ -99,83 +99,87 @@ EndFunction // Interface()
 		<li><strong>Comments</strong>: map[number] (string)</li>
 	</ul>
 	<h2 id='#Scope'>#Scope</h2>
-	<h3 id='Unknown'>Unknown<a class='permalink' href='#Unknown'>¶</a></h3>
+	<h3 id='Object'>Object<a class='permalink' href='#Object'>¶</a></h3>
 	<ul>
-	<i> Узел хранит информацию об идентификаторе, для которого не удалось</i><br>
-	<i> обнаружить объект (переменную, метод) в определенной области видимости.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Unknown</li>
+	<i> Узел хранит информацию об объекте области видимости.</i><br>
+	<i> Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).</i><br>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Object</li>
 		<li><strong>Name</strong>: string</li>
-	</ul>
-	<h3 id='Func'>Func<a class='permalink' href='#Func'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о функции.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Func</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-	</ul>
-	<h3 id='Proc'>Proc<a class='permalink' href='#Proc'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о процедуре.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Proc</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: array (<a href='#Param'>Param</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-	</ul>
-	<h3 id='VarMod'>VarMod<a class='permalink' href='#VarMod'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о переменной уровня модуля.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarMod</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-	</ul>
-	<h3 id='VarLoc'>VarLoc<a class='permalink' href='#VarLoc'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о локальной переменной.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<i> Поле "Auto" равно истине если это авто-переменная.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLoc</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Auto</strong>: boolean</li>
-	</ul>
-	<h3 id='Param'>Param<a class='permalink' href='#Param'>¶</a></h3>
-	<ul>
-	<i> Узел хранит информацию о параметре функции или процедуры.</i><br>
-	<i> Является объектом области видимости.</i><br>
-	<i> Поле "ByVal" равно истине если параметр передается по значению.</i><br>
-	<i> Поле "Value" хранит значение параметра по умолчанию.</i><br>
-	<i> Если оно равно Неопределено, то значение не задано.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Param</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>ByVal</strong>: boolean</li>
-		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
+		<li><strong>Decl</strong>: undefined, structure (one of <a href='##Declarations'>#Declarations</a>)</li>
 	</ul>
 	<h2 id='#Declarations'>#Declarations</h2>
-	<h3 id='VarModDecl'>VarModDecl<a class='permalink' href='#VarModDecl'>¶</a></h3>
+	<h3 id='VarModListDecl'>VarModListDecl<a class='permalink' href='#VarModListDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления переменных уровня модуля.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте            // поле "Directive"
- Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModDecl</li>
+ Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModListDecl</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>List</strong>: array (<a href='#VarMod'>VarMod</a>)</li>
+		<li><strong>List</strong>: array (<a href='#VarModDecl'>VarModDecl</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
+	<h3 id='VarModDecl'>VarModDecl<a class='permalink' href='#VarModDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об объявлении переменной уровня модуля.</i><br>
+	<i> Пример:</i><br>
+	<i> Объявления переменных заключены в скобки <...></i><br>
+ <pre>
+ &НаКлиенте
+ Перем <П1 Экспорт>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModDecl</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
+		<li><strong>Export</strong>: boolean</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='VarLocListDecl'>VarLocListDecl<a class='permalink' href='#VarLocListDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления локальных переменных.</i><br>
 	<i> Пример:</i><br>
  <pre>
- Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
-		<li><strong>List</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
+ Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocListDecl</li>
+		<li><strong>List</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об объявлении локальной переменной.</i><br>
+	<i> Пример:</i><br>
+	<i> Объявления переменных заключены в скобки <...></i><br>
+ <pre>
+ Перем <П1>, <П2>; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='ParamListDecl'>ParamListDecl<a class='permalink' href='#ParamListDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию о параметрах метода.</i><br>
+	<i> Параметры заключены в скобки <...></i><br>
+	<i> Пример:</i><br>
+ <pre>
+ Процедура<(П1, Знач П2 = Неопределено)></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParamListDecl</li>
+		<li><strong>List</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='ParamDecl'>ParamDecl<a class='permalink' href='#ParamDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об объявлении параметра.</i><br>
+	<i> Пример:</i><br>
+	<i> Объявления параметров заключены в скобки <...></i><br>
+ <pre>
+ Процедура(<П1>, <Знач П2 = Неопределено>)</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParamDecl</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>ByVal</strong>: boolean</li>
+		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='MethodDecl'>MethodDecl<a class='permalink' href='#MethodDecl'>¶</a></h3>
+	<ul>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
+		<li><strong>Sign</strong>: structure (<a href='#ProcDecl'>ProcDecl</a>, <a href='#FuncDecl'>FuncDecl</a>)</li>
+		<li><strong>Vars</strong>: array (<a href='#VarLocListDecl'>VarLocListDecl</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#Object'>Object</a>)</li>
+		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ProcDecl'>ProcDecl<a class='permalink' href='#ProcDecl'>¶</a></h3>
@@ -188,13 +192,13 @@ EndFunction // Interface()
  &НаКлиенте
  Процедура Тест() Экспорт
      Перем П1;    // поле "Decls" хранит объявления переменных.
-     П1 = 2;      // поле "Body" хранит операторы.
+     П1 = 2;      
      П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
  КонецПроцедуры</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcDecl</li>
-		<li><strong>Object</strong>: structure (<a href='#Proc'>Proc</a>)</li>
-		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
+		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
+		<li><strong>Export</strong>: boolean</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='FuncDecl'>FuncDecl<a class='permalink' href='#FuncDecl'>¶</a></h3>
@@ -207,13 +211,13 @@ EndFunction // Interface()
  &НаКлиенте
  Функция Тест() Экспорт
      Перем П1;    // поле "Decls" хранит объявления переменных.
-     П1 = 2;      // поле "Body" хранит операторы.
+     П1 = 2;      
      П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
  КонецФункции</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncDecl</li>
-		<li><strong>Object</strong>: structure (<a href='#Func'>Func</a>)</li>
-		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
+		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
+		<li><strong>Export</strong>: boolean</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
@@ -663,14 +667,14 @@ EndFunction // Interface()
 </ul>
 <h3 id='Nodes'>Nodes</h3>
 <ul><li>"<a href='#Module'>Module</a>"</li>
-<li>"<a href='#Unknown'>Unknown</a>"</li>
-<li>"<a href='#Func'>Func</a>"</li>
-<li>"<a href='#Proc'>Proc</a>"</li>
-<li>"<a href='#VarMod'>VarMod</a>"</li>
-<li>"<a href='#VarLoc'>VarLoc</a>"</li>
-<li>"<a href='#Param'>Param</a>"</li>
+<li>"<a href='#Object'>Object</a>"</li>
 <li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
+<li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
 <li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>
+<li>"<a href='#VarLocListDecl'>VarLocListDecl</a>"</li>
+<li>"<a href='#ParamDecl'>ParamDecl</a>"</li>
+<li>"<a href='#ParamListDecl'>ParamListDecl</a>"</li>
+<li>"<a href='#MethodDecl'>MethodDecl</a>"</li>
 <li>"<a href='#ProcDecl'>ProcDecl</a>"</li>
 <li>"<a href='#FuncDecl'>FuncDecl</a>"</li>
 <li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>

@@ -20,8 +20,8 @@ Function Interface() Export
 	Var Interface;
 	Interface = New Array;
 	Interface.Add("VisitAssignStmt");
-	Interface.Add("VisitFuncDecl");
-	Interface.Add("AfterVisitFuncDecl");
+	Interface.Add("VisitMethodDecl");
+	Interface.Add("AfterVisitMethodDecl");
 	Return Interface;
 EndFunction // Interface() 
 
@@ -29,11 +29,11 @@ Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
 	AssignCount = AssignCount + 1;
 EndProcedure // VisitAssignStmt()
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
+Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	AssignCount = 0;
-EndProcedure // VisitFuncDecl()
+EndProcedure // VisitMethodDecl()
 
-Procedure AfterVisitFuncDecl(FuncDecl, Stack, Counters) Export
-	Result.Add(StrTemplate("Функция `%1()` содержит %2 присваиваний", FuncDecl.Object.Name, AssignCount));
-EndProcedure // AfterVisitFuncDecl()
+Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
+	Result.Add(StrTemplate("Метод `%1()` содержит %2 присваиваний", MethodDecl.Sign.Name, AssignCount));
+EndProcedure // AfterVisitMethodDecl()
 

@@ -31,40 +31,38 @@ Function Interface() Export
 	Interface = New Array;
 	Interface.Add("AfterVisitAssignStmt");
 	Interface.Add("VisitDesigExpr");
-	Interface.Add("VisitFuncDecl");
-	Interface.Add("VisitProcDecl");
-	Interface.Add("AfterVisitFuncDecl");
-	Interface.Add("AfterVisitProcDecl");
+	Interface.Add("VisitMethodDecl");
+	Interface.Add("AfterVisitMethodDecl");
 	Return Interface;
 EndFunction // Interface() 
 
 Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
-	Var Object, Operation; 
+	Var Decl, Operation; 
 	If AssignStmt.Left.Select.Count() > 0 Then
 		Return;
 	EndIf;
-	Object = AssignStmt.Left.Object; 
-	Operation = Vars[Object];
+	Decl = AssignStmt.Left.Object.Decl; 
+	Operation = Vars[Decl];
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
-			Vars[Object] = "Get";
+			Vars[Decl] = "Get";
 		Else
-			Vars[Object] = "Set";
+			Vars[Decl] = "Set";
 		EndIf;
 		Return;
 	EndIf; 	
-	Operation = Params[Object];	
+	Operation = Params[Decl];	
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
-			Params[Object] = "Get";
+			Params[Decl] = "Get";
 		Else
-			Params[Object] = "Set";
+			Params[Decl] = "Set";
 		EndIf; 
 	EndIf; 
 EndProcedure // AfterVisitAssignStmt()
 
 Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
-	Var Object, Operation;
+	Var Decl, Operation;
 	If DesigExpr.Select.Count() = 0
 		And Stack.Parent.Type = Nodes.AssignStmt
 		And Stack.Parent.Left = DesigExpr Then
@@ -75,56 +73,46 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 	Else
 		Operation = "Get";
 	EndIf; 
-	Object = DesigExpr.Object;
-	If Vars[Object] <> Undefined Then
-		Vars[Object] = Operation;
-	ElsIf Params[Object] <> Undefined Then
-		Params[Object] = Operation;	
+	Decl = DesigExpr.Object.Decl;
+	If Vars[Decl] <> Undefined Then
+		Vars[Decl] = Operation;
+	ElsIf Params[Decl] <> Undefined Then
+		Params[Decl] = Operation;	
 	EndIf; 
 EndProcedure // VisitDesigExpr()
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
-	VisitMethodDecl(FuncDecl, Stack, Counters);
-EndProcedure // VisitFuncDecl()
-
-Procedure VisitProcDecl(ProcDecl, Stack, Counters) Export
-	VisitMethodDecl(ProcDecl, Stack, Counters);
-EndProcedure // VisitProcDecl()
-
-Procedure AfterVisitFuncDecl(FuncDecl, Stack, Counters) Export
-	AfterVisitMethodDecl(FuncDecl, Stack, Counters, "Функция");
-EndProcedure // AfterVisitFuncDecl()
-
-Procedure AfterVisitProcDecl(FuncDecl, Stack, Counters) Export
-	AfterVisitMethodDecl(FuncDecl, Stack, Counters, "Процедура");
-EndProcedure // AfterVisitProcDecl()
-
-Procedure VisitMethodDecl(MethodDecl, Stack, Counters)
+Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Vars = New Map;
 	Params = New Map;		
-	For Each Param In MethodDecl.Object.Params Do
+	For Each Param In MethodDecl.Sign.Params.List Do
 		Params[Param] = "Get";
 		//Params[Param] = "Nil"; <- чтобы чекать все параметры (в формах адъ)
 	EndDo;
-	For Each VarLocListDecl In MethodDecl.Decls Do
-		For Each VarLoc In VarLocListDecl.List Do
-			Vars[VarLoc] = "Set";
+	For Each VarLocListDecl In MethodDecl.Vars Do
+		For Each VarLocDecl In VarLocListDecl.List Do
+			Vars[VarLocDecl] = "Set";
 		EndDo;  
 	EndDo;
-	For Each VarLoc In MethodDecl.Auto Do
-		Vars[VarLoc] = "Set";
+	For Each VarLocDecl In MethodDecl.Auto Do
+		Vars[VarLocDecl] = "Set";
 	EndDo;
 EndProcedure // VisitMethodDecl()
 
-Procedure AfterVisitMethodDecl(FuncDecl, Stack, Counters, Method)
+Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
+	Var Method;
+	If MethodDecl.Sign.Type = Nodes.FuncDecl Then
+		Method = "Функция";
+	Else
+		Method = "Процедура";
+	EndIf; 
 	For Each Item In Vars Do
 		If Not StrStartsWith(Item.Value, "Get") Then
-			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемую переменную `%3`", Method, FuncDecl.Object.Name, Item.Key.Name));
+			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемую переменную `%3`", Method, MethodDecl.Sign.Name, Item.Key.Name));
 		EndIf; 
 	EndDo;
 	For Each Item In Params Do
 		If Item.Value = "Nil" Or Item.Value = "Set" And Item.Key.ByVal Then
-			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемый параметр `%3`", Method, FuncDecl.Object.Name, Item.Key.Name));
+			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемый параметр `%3`", Method, MethodDecl.Sign.Name, Item.Key.Name));
 		EndIf; 
 	EndDo;
 EndProcedure // AfterVisitMethodDecl()
