@@ -462,7 +462,7 @@ Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
 		"Directive," // string (one of Directives)
-		"Params,"    // array (ParamDecl)
+		"Params,"    // structure (ParamListDecl)
 		"Export,"    // boolean
 		"Place",     // number, structure (Place)
 		Nodes.ProcDecl, Name, Directive, Params, Exported, Place);
@@ -479,7 +479,7 @@ Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
 		"Directive," // string (one of Directives)
-		"Params,"    // array (ParamDecl)
+		"Params,"    // structure (ParamListDecl)
 		"Export,"    // boolean
 		"Place",     // number, structure (Place)
 		Nodes.FuncDecl, Name, Directive, Params, Exported, Place);
