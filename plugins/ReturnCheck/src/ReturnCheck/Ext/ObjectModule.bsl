@@ -23,14 +23,17 @@ EndFunction // Result()
 Function Interface() Export
 	Var Interface;
 	Interface = New Array;
-	Interface.Add("VisitFuncDecl");
+	Interface.Add("VisitMethodDecl");
 	Return Interface;
 EndFunction // Interface() 
 
-Procedure VisitFuncDecl(FuncDecl, Stack, Counters) Export
+Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var StmtCount;
-	StmtCount = FuncDecl.Body.Count();
-	If StmtCount = 0 Or FuncDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
-		Result.Add(StrTemplate("Последней инструкцией функции `%1()` должен быть `Возврат`" "", FuncDecl.Object.Name));
+	If MethodDecl.Sign.Type <> Nodes.FuncDecl Then
+		Return;
+	EndIf; 
+	StmtCount = MethodDecl.Body.Count();
+	If StmtCount = 0 Or MethodDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
+		Result.Add(StrTemplate("Последней инструкцией функции `%1()` должен быть `Возврат`" "", MethodDecl.Sign.Name));
 	EndIf;
-EndProcedure // VisitFuncDecl()
+EndProcedure // VisitMethodDecl()
