@@ -93,9 +93,9 @@ EndFunction // Interface()
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#VarLoc'>VarLoc</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#Object'>Object</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Interface</strong>: array (<a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>)</li>
+		<li><strong>Interface</strong>: array (<a href='#Object'>Object</a>)</li>
 		<li><strong>Comments</strong>: map[number] (string)</li>
 	</ul>
 	<h2 id='#Scope'>#Scope</h2>
@@ -132,15 +132,6 @@ EndFunction // Interface()
 		<li><strong>Export</strong>: boolean</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='VarLocListDecl'>VarLocListDecl<a class='permalink' href='#VarLocListDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию об инструкции объявления локальных переменных.</i><br>
-	<i> Пример:</i><br>
- <pre>
- Перем П1, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocListDecl</li>
-		<li><strong>List</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
 	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении локальной переменной.</i><br>
@@ -149,16 +140,6 @@ EndFunction // Interface()
  <pre>
  Перем <П1>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
 		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='ParamListDecl'>ParamListDecl<a class='permalink' href='#ParamListDecl'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию о параметрах метода.</i><br>
-	<i> Параметры заключены в скобки <...></i><br>
-	<i> Пример:</i><br>
- <pre>
- Процедура<(П1, Знач П2 = Неопределено)></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParamListDecl</li>
-		<li><strong>List</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ParamDecl'>ParamDecl<a class='permalink' href='#ParamDecl'>¶</a></h3>
@@ -184,35 +165,35 @@ EndFunction // Interface()
 	<i>     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".</i><br>
 	<i> КонецФункции</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
-		<li><strong>Sign</strong>: structure (<a href='#ProcDecl'>ProcDecl</a>, <a href='#FuncDecl'>FuncDecl</a>)</li>
-		<li><strong>Vars</strong>: array (<a href='#VarLocListDecl'>VarLocListDecl</a>)</li>
+		<li><strong>Sign</strong>: structure (<a href='#ProcSign'>ProcSign</a>, <a href='#FuncSign'>FuncSign</a>)</li>
+		<li><strong>Vars</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#Object'>Object</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='ProcDecl'>ProcDecl<a class='permalink' href='#ProcDecl'>¶</a></h3>
+	<h3 id='ProcSign'>ProcSign<a class='permalink' href='#ProcSign'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о сигнатуре объявления процедуры.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Процедура Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcDecl</li>
+ Процедура Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcSign</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: structure (<a href='#ParamListDecl'>ParamListDecl</a>)</li>
+		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='FuncDecl'>FuncDecl<a class='permalink' href='#FuncDecl'>¶</a></h3>
+	<h3 id='FuncSign'>FuncSign<a class='permalink' href='#FuncSign'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о сигнатуре объявления функции.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Функция Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncDecl</li>
+ Функция Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncSign</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: structure (<a href='#ParamListDecl'>ParamListDecl</a>)</li>
+		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -667,12 +648,10 @@ EndFunction // Interface()
 <li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
 <li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
 <li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>
-<li>"<a href='#VarLocListDecl'>VarLocListDecl</a>"</li>
 <li>"<a href='#ParamDecl'>ParamDecl</a>"</li>
-<li>"<a href='#ParamListDecl'>ParamListDecl</a>"</li>
 <li>"<a href='#MethodDecl'>MethodDecl</a>"</li>
-<li>"<a href='#ProcDecl'>ProcDecl</a>"</li>
-<li>"<a href='#FuncDecl'>FuncDecl</a>"</li>
+<li>"<a href='#ProcSign'>ProcSign</a>"</li>
+<li>"<a href='#FuncSign'>FuncSign</a>"</li>
 <li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
 <li>"<a href='#SelectExpr'>SelectExpr</a>"</li>
 <li>"<a href='#DesigExpr'>DesigExpr</a>"</li>

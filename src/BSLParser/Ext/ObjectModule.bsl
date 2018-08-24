@@ -234,7 +234,7 @@ EndFunction // Tokens()
 Function Nodes() Export
 	Return Enum(New Structure,
 		"Module, Object,
-		|VarModDecl, VarModListDecl, VarLocDecl, VarLocListDecl, ParamDecl, ParamListDecl, MethodDecl, ProcDecl, FuncDecl,
+		|VarModDecl, VarModListDecl, VarLocDecl, ParamDecl, MethodDecl, ProcSign, FuncSign,
 		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
 		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
@@ -312,9 +312,9 @@ Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Decls,"     // array (one of #Declarations)
-		"Auto,"      // array (VarLoc)
+		"Auto,"      // array (Object)
 		"Body,"      // array (one of #Statements)
-		"Interface," // array (Func, Proc)
+		"Interface," // array (Object)
 		"Comments",  // map[number] (string)
 		Nodes.Module, Decls, Auto, Statements, Interface, Comments);
 EndFunction // Module()
@@ -375,19 +375,6 @@ Function VarModDecl(Name, Directive, Exported, Place = Undefined)
 		Nodes.VarModDecl, Name, Directive, Exported, Place);
 EndFunction // VarModDecl()
 
-Function VarLocListDecl(VarList, Place = Undefined)
-	// Хранит информацию об инструкции объявления локальных переменных.
-	// Пример:
-	// <pre>
-	// Перем П1, П2; // поле "List"
-	// </pre>
-	Return New Structure( // @Node
-		"Type,"  // string (one of Nodes)
-		"List,"  // array (VarLocDecl)
-		"Place", // number, structure (Place)
-		Nodes.VarLocListDecl, VarList, Place);
-EndFunction // VarLocListDecl()
-
 Function VarLocDecl(Name, Place = Undefined)
 	// Хранит информацию об объявлении локальной переменной.
 	// Пример:
@@ -401,20 +388,6 @@ Function VarLocDecl(Name, Place = Undefined)
 		"Place", // number, structure (Place)
 		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
-
-Function ParamListDecl(ParamList, Place = Undefined)
-	// Хранит информацию о параметрах метода.
-	// Параметры заключены в скобки <...>
-	// Пример:
-	// <pre>
-	// Процедура<(П1, Знач П2 = Неопределено)>
-	// </pre>
-	Return New Structure( // @Node
-		"Type,"  // string (one of Nodes)
-		"List,"  // array (ParamDecl)
-		"Place", // number, structure (Place)
-		Nodes.ParamListDecl, ParamList, Place);
-EndFunction // ParamListDecl()
 
 Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
 	// Хранит информацию об объявлении параметра.
@@ -443,15 +416,15 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
 	// КонецФункции
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Sign,"  // structure (ProcDecl, FuncDecl)
-		"Vars,"  // array (VarLocListDecl) 
+		"Sign,"  // structure (ProcSign, FuncSign)
+		"Vars,"  // array (VarLocDecl) 
 		"Auto,"  // array (Object)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
 		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);	
 EndFunction // MethodDecl()
 
-Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
+Function ProcSign(Name, Directive, Params, Exported, Place = Undefined)
 	// Хранит информацию о сигнатуре объявления процедуры.
 	// Пример:
 	// <pre>
@@ -462,13 +435,13 @@ Function ProcDecl(Name, Directive, Params, Exported, Place = Undefined)
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
 		"Directive," // string (one of Directives)
-		"Params,"    // structure (ParamListDecl)
+		"Params,"    // array (ParamDecl)
 		"Export,"    // boolean
 		"Place",     // number, structure (Place)
-		Nodes.ProcDecl, Name, Directive, Params, Exported, Place);
-EndFunction // ProcDecl()
+		Nodes.ProcSign, Name, Directive, Params, Exported, Place);
+EndFunction // ProcSign()
 
-Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
+Function FuncSign(Name, Directive, Params, Exported, Place = Undefined)
 	// Хранит информацию о сигнатуре объявления функции.
 	// Пример:
 	// <pre>
@@ -479,11 +452,11 @@ Function FuncDecl(Name, Directive, Params, Exported, Place = Undefined)
 		"Type,"      // string (one of Nodes)
 		"Name,"      // string
 		"Directive," // string (one of Directives)
-		"Params,"    // structure (ParamListDecl)
+		"Params,"    // array (ParamDecl)
 		"Export,"    // boolean
 		"Place",     // number, structure (Place)
-		Nodes.FuncDecl, Name, Directive, Params, Exported, Place);
-EndFunction // FuncDecl()
+		Nodes.FuncSign, Name, Directive, Params, Exported, Place);
+EndFunction // FuncSign()
 
 #EndRegion // Declarations
 
@@ -1786,31 +1759,22 @@ Function ParseVarModDecl()
 	Return VarModDecl;
 EndFunction // ParseVarModDecl()
 
-Function ParseVarLocListDecls()
+Function ParseVars()
 	Var Tok, Decls;
 	Decls = New Array;
 	Tok = Parser_Tok;
 	While Tok = Tokens.Var Do
-		Decls.Add(ParseVarLocListDecl());
+		Scan();
+		Decls.Add(ParseVarLocDecl());
+		While Parser_Tok = Tokens.Comma Do
+			Scan();
+			Decls.Add(ParseVarLocDecl());
+		EndDo;
 		Expect(Tokens.Semicolon);
 		Tok = Scan();
 	EndDo;
 	Return Decls;
-EndFunction // ParseVarLocListDecls()
-
-Function ParseVarLocListDecl()
-	Var VarList, Pos, Line;
-	Pos = Parser_BegPos;
-	Line = Parser_Line;
-	Scan();
-	VarList = New Array;
-	VarList.Add(ParseVarLocDecl());
-	While Parser_Tok = Tokens.Comma Do
-		Scan();
-		VarList.Add(ParseVarLocDecl());
-	EndDo;
-	Return VarLocListDecl(VarList, Place(Pos, Line));
-EndFunction // ParseVarLocListDecl()
+EndFunction // ParseVars()
 
 Function ParseVarLocDecl()
 	Var Name, VarLocDecl, Pos;
@@ -1827,7 +1791,7 @@ Function ParseVarLocDecl()
 EndFunction // ParseVarLocDecl()
 
 Function ParseMethodDecl()
-	Var Sign, Object, Name, Vars, ParamList, Exported, Body, Auto, VarObj, Pos, Line;
+	Var Sign, Object, Name, Vars, Params, Exported, Body, Auto, VarObj, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Exported = False;
@@ -1836,15 +1800,15 @@ Function ParseMethodDecl()
 	Name = Parser_Lit;
 	Scan();
 	OpenScope();
-	ParamList = ParseParamListDecl();
+	Params = ParseParams();
 	If Parser_Tok = Tokens.Export Then
 		Exported = True;
 		Scan();
 	EndIf;
 	If Parser_IsFunc Then
-		Sign = FuncDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
+		Sign = FuncSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	Else
-	    Sign = ProcDecl(Name, Parser_Directive, ParamList, Exported, Place(Pos, Line));
+	    Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	EndIf; 
 	If Parser_Unknown.Property(Name, Object) Then
 		Parser_Unknown.Delete(Name);
@@ -1859,7 +1823,7 @@ Function ParseMethodDecl()
 	If Exported Then
 		Parser_Interface.Add(Object);
 	EndIf;
-	Vars = ParseVarLocListDecls();
+	Vars = ParseVars();
 	Body = ParseStatements();
 	If Parser_IsFunc Then
 		Expect(Tokens.EndFunction);
@@ -1875,26 +1839,24 @@ Function ParseMethodDecl()
 	Return MethodDecl(Sign, Vars, Auto, Body, Place(Pos, Line));
 EndFunction // ParseMethodDecl()
 
-Function ParseParamListDecl()
-	Var ParamList, Pos, Line;
-	Pos = Parser_BegPos;
-	Line = Parser_Line;
+Function ParseParams()
+	Var Params;
 	Expect(Tokens.Lparen);
 	Scan();
 	If Parser_Tok = Tokens.Rparen Then
-		ParamList = EmptyArray;
+		Params = EmptyArray;
 	Else
-		ParamList = New Array;
-		ParamList.Add(ParseParamDecl());
+		Params = New Array;
+		Params.Add(ParseParamDecl());
 		While Parser_Tok = Tokens.Comma Do
 			Scan();
-			ParamList.Add(ParseParamDecl());
+			Params.Add(ParseParamDecl());
 		EndDo;
 	EndIf;
 	Expect(Tokens.Rparen);
 	Scan();
-	Return ParamListDecl(ParamList, Place(Pos, Line));
-EndFunction // ParseParamDeclList()
+	Return Params;
+EndFunction // ParseParams()
 
 Function ParseParamDecl()
 	Var Name, ParamDecl, ByVal, Pos, Line;
@@ -2418,13 +2380,10 @@ Function Hooks()
 		"VisitDecl,           AfterVisitDecl,"
 		"VisitVarModListDecl, AfterVisitVarModListDecl,"
 		"VisitVarModDecl,     AfterVisitVarModDecl,"
-		"VisitVarLocListDecl, AfterVisitVarLocListDecl,"
 		"VisitVarLocDecl,     AfterVisitVarLocDecl,"
-		"VisitParamListDecl,  AfterVisitParamListDecl,"
 		"VisitParamDecl,      AfterVisitParamDecl,"
 		"VisitMethodDecl,     AfterVisitMethodDecl,"
-		"VisitProcDecl,       AfterVisitProcDecl,"
-		"VisitFuncDecl,       AfterVisitFuncDecl,"
+		"VisitSignature,      AfterVisitSignature,"
 		"VisitExpr,           AfterVisitExpr,"
 		"VisitBasicLitExpr,   AfterVisitBasicLitExpr,"
 		"VisitDesigExpr,      AfterVisitDesigExpr,"
@@ -2568,21 +2527,6 @@ Procedure VisitVarModDecl(VarModDecl)
 	EndDo;
 EndProcedure // VisitVarModDecl()
 
-Procedure VisitVarLocListDecl(VarLocListDecl)
-	Var Hook, VarLocDecl;
-	For Each Hook In Visitor_Hooks.VisitVarLocListDecl Do
-		Hook.VisitVarLocListDecl(VarLocListDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-	PushInfo(VarLocListDecl);
-	For Each VarLocDecl In VarLocListDecl.List Do
-		VisitVarLocDecl(VarLocDecl);
-	EndDo;
-	PopInfo();
-	For Each Hook In Visitor_Hooks.AfterVisitVarLocListDecl Do
-		Hook.AfterVisitVarLocListDecl(VarLocListDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-EndProcedure // VisitVarLocListDecl()
-
 Procedure VisitVarLocDecl(VarLocDecl)
 	Var Hook;
 	For Each Hook In Visitor_Hooks.VisitVarLocDecl Do
@@ -2592,21 +2536,6 @@ Procedure VisitVarLocDecl(VarLocDecl)
 		Hook.AfterVisitVarLocDecl(VarLocDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitVarLocDecl()
-
-Procedure VisitParamListDecl(ParamListDecl)
-	Var Hook, ParamDecl;
-	For Each Hook In Visitor_Hooks.VisitParamListDecl Do
-		Hook.VisitParamListDecl(ParamListDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-	PushInfo(ParamListDecl);
-	For Each ParamDecl In ParamListDecl.List Do
-		VisitParamDecl(ParamDecl);
-	EndDo;
-	PopInfo();
-	For Each Hook In Visitor_Hooks.AfterVisitParamListDecl Do
-		Hook.AfterVisitParamListDecl(ParamListDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-EndProcedure // VisitParamListDecl()
 
 Procedure VisitParamDecl(ParamDecl)
 	Var Hook;
@@ -2619,18 +2548,14 @@ Procedure VisitParamDecl(ParamDecl)
 EndProcedure // VisitParamDecl()
 
 Procedure VisitMethodDecl(MethodDecl)
-	Var Hook, VarLocListDecl;
+	Var Hook, VarLocDecl;
 	For Each Hook In Visitor_Hooks.VisitMethodDecl Do
 		Hook.VisitMethodDecl(MethodDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(MethodDecl);
-	If MethodDecl.Sign.Type = Nodes.FuncDecl Then
-		VisitFuncDecl(MethodDecl.Sign);
-	Else
-		VisitProcDecl(MethodDecl.Sign);
-	EndIf; 
-	For Each VarLocListDecl In MethodDecl.Vars Do
-		VisitVarLocListDecl(VarLocListDecl);
+	VisitSignature(MethodDecl.Sign); 
+	For Each VarLocDecl In MethodDecl.Vars Do
+		VisitVarLocDecl(VarLocDecl);
 	EndDo; 
 	VisitStatements(MethodDecl.Body);
 	PopInfo();
@@ -2639,31 +2564,20 @@ Procedure VisitMethodDecl(MethodDecl)
 	EndDo;
 EndProcedure // VisitMethodDecl()
 
-Procedure VisitProcDecl(ProcDecl)
-	Var Hook;
-	For Each Hook In Visitor_Hooks.VisitProcDecl Do
-		Hook.VisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
+Procedure VisitSignature(Sign)
+	Var Hook, ParamDecl;
+	For Each Hook In Visitor_Hooks.VisitSignature Do
+		Hook.VisitSignature(Sign, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(ProcDecl);
-	VisitParamListDecl(ProcDecl.Params);
+	PushInfo(Sign);
+	For Each ParamDecl In Sign.Params Do
+		VisitParamDecl(ParamDecl);
+	EndDo;
 	PopInfo();
-	For Each Hook In Visitor_Hooks.AfterVisitProcDecl Do
-		Hook.AfterVisitProcDecl(ProcDecl, Visitor_Stack, Visitor_Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitSignature Do
+		Hook.AfterVisitSignature(Sign, Visitor_Stack, Visitor_Counters);
 	EndDo;
-EndProcedure // VisitProcDecl()
-
-Procedure VisitFuncDecl(FuncDecl)
-	Var Hook;
-	For Each Hook In Visitor_Hooks.VisitFuncDecl Do
-		Hook.VisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-	PushInfo(FuncDecl);
-	VisitParamListDecl(FuncDecl.Params);
-	PopInfo();
-	For Each Hook In Visitor_Hooks.AfterVisitFuncDecl Do
-		Hook.AfterVisitFuncDecl(FuncDecl, Visitor_Stack, Visitor_Counters);
-	EndDo;
-EndProcedure // VisitFuncDecl()
+EndProcedure // VisitSignature()
 
 #EndRegion // VisitDecl
 

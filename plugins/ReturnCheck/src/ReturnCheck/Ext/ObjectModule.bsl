@@ -29,7 +29,7 @@ EndFunction // Interface()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var StmtCount;
-	If MethodDecl.Sign.Type <> Nodes.FuncDecl Then
+	If MethodDecl.Sign.Type <> Nodes.FuncSign Then
 		Return;
 	EndIf; 
 	StmtCount = MethodDecl.Body.Count();

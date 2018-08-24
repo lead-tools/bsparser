@@ -37,20 +37,21 @@ Function Interface() Export
 EndFunction // Interface() 
 
 Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
-	Var Decl, Operation; 
+	Var Name, Decl, Operation; 
 	If AssignStmt.Left.Select.Count() > 0 Then
 		Return;
 	EndIf;
-	Decl = AssignStmt.Left.Object.Decl; 
-	Operation = Vars[Decl];
+	Name = AssignStmt.Left.Object.Name; 
+	Operation = Vars[Name];
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
-			Vars[Decl] = "Get";
+			Vars[Name] = "Get";
 		Else
-			Vars[Decl] = "Set";
+			Vars[Name] = "Set";
 		EndIf;
 		Return;
 	EndIf; 	
+	Decl = AssignStmt.Left.Object.Decl;
 	Operation = Params[Decl];	
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
@@ -62,7 +63,7 @@ Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 EndProcedure // AfterVisitAssignStmt()
 
 Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
-	Var Decl, Operation;
+	Var Name, Decl, Operation;
 	If DesigExpr.Select.Count() = 0
 		And Stack.Parent.Type = Nodes.AssignStmt
 		And Stack.Parent.Left = DesigExpr Then
@@ -73,9 +74,10 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 	Else
 		Operation = "Get";
 	EndIf; 
+	Name = DesigExpr.Object.Name;
 	Decl = DesigExpr.Object.Decl;
-	If Vars[Decl] <> Undefined Then
-		Vars[Decl] = Operation;
+	If Vars[Name] <> Undefined Then
+		Vars[Name] = Operation;
 	ElsIf Params[Decl] <> Undefined Then
 		Params[Decl] = Operation;	
 	EndIf; 
@@ -84,30 +86,28 @@ EndProcedure // VisitDesigExpr()
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Vars = New Map;
 	Params = New Map;		
-	For Each Param In MethodDecl.Sign.Params.List Do
+	For Each Param In MethodDecl.Sign.Params Do
 		Params[Param] = "Get";
 		//Params[Param] = "Nil"; <- чтобы чекать все параметры (в формах адъ)
 	EndDo;
-	For Each VarLocListDecl In MethodDecl.Vars Do
-		For Each VarLocDecl In VarLocListDecl.List Do
-			Vars[VarLocDecl] = "Set";
-		EndDo;  
+	For Each VarLocDecl In MethodDecl.Vars Do
+		Vars[VarLocDecl.Name] = "Set";
 	EndDo;
-	For Each VarLocDecl In MethodDecl.Auto Do
-		Vars[VarLocDecl] = "Set";
+	For Each Object In MethodDecl.Auto Do
+		Vars[Object.Name] = "Set";
 	EndDo;
 EndProcedure // VisitMethodDecl()
 
 Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var Method;
-	If MethodDecl.Sign.Type = Nodes.FuncDecl Then
+	If MethodDecl.Sign.Type = Nodes.FuncSign Then
 		Method = "Функция";
 	Else
 		Method = "Процедура";
 	EndIf; 
 	For Each Item In Vars Do
 		If Not StrStartsWith(Item.Value, "Get") Then
-			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемую переменную `%3`", Method, MethodDecl.Sign.Name, Item.Key.Name));
+			Result.Add(StrTemplate("%1 `%2()` содержит неиспользуемую переменную `%3`", Method, MethodDecl.Sign.Name, Item.Key));
 		EndIf; 
 	EndDo;
 	For Each Item In Params Do
