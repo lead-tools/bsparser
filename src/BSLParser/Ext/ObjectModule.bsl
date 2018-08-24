@@ -1813,12 +1813,11 @@ Function ParseVarLocListDecl()
 EndFunction // ParseVarLocListDecl()
 
 Function ParseVarLocDecl()
-	Var Name, VarLocDecl, Pos, Line;
+	Var Name, VarLocDecl, Pos;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
-	VarLocDecl = VarLocDecl(Name, Place(Pos, Line));
+	VarLocDecl = VarLocDecl(Name, Place());
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
