@@ -232,7 +232,7 @@ EndFunction // Tokens()
 Function Nodes() Export
 	Return Enum(New Structure,
 		"Module, Object,
-		|VarModDecl, VarModListDecl, VarLocDecl, ParamDecl, MethodDecl, ProcSign, FuncSign,
+		|VarModDecl, VarModListDecl, VarLocDecl, AutoDecl, ParamDecl, MethodDecl, ProcSign, FuncSign,
 		|BasicLitExpr, FieldExpr, IndexExpr, IdentExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
 		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
@@ -378,6 +378,27 @@ Function VarLocDecl(Name, Place = Undefined)
 		"Place", // number, structure (Place)
 		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
+
+Function AutoDecl(Place = Undefined)
+	// Хранит информацию об объявлении авто-переменной.
+	// Пример:
+	// Объявления переменных заключены в скобки <...>
+	// <pre>
+	// <Макс> = 0;
+	// Для <Индекс> = 0 По Массив.ВГраница() Цикл
+	//	<Структура> = Массив[Индекс];
+	// 	Для Каждого <Элемент> Из Структура Цикл
+	//		Если Макс < Элемент.Значение Тогда
+	// 			Макс = Элемент.Значение;
+	// 		КонецЕсли;
+	// 	КонецЦикла;
+	// КонецЦикла
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Place", // number, structure (Place)
+		Nodes.AutoDecl, Place);	
+EndFunction // AutoDecl() 
 
 Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
 	// Хранит информацию об объявлении параметра.
@@ -1522,6 +1543,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Name = Parser_Lit;
+	AutoPlace = Place();
 	Scan();
 	If Parser_Tok = Tokens.Lparen Then
 		If Scan() = Tokens.Rparen Then
@@ -1542,7 +1564,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 		Object = FindObject(Name);
 		If Object = Undefined Then
 			If AllowNewVar Then
-				Object = Object(Name);
+				Object = Object(Name, AutoDecl(AutoPlace));
 				NewVar = Object;
 			Else
 				Object = Object(Name);

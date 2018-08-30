@@ -141,6 +141,23 @@ EndFunction // Interface()
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h3 id='AutoDecl'>AutoDecl<a class='permalink' href='#AutoDecl'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об объявлении авто-переменной.</i><br>
+	<i> Пример:</i><br>
+	<i> Объявления переменных заключены в скобки <...></i><br>
+ <pre>
+ <Макс> = 0;
+ Для <Индекс> = 0 По Массив.ВГраница() Цикл
+	<Структура> = Массив[Индекс];
+ 	Для Каждого <Элемент> Из Структура Цикл
+		Если Макс < Элемент.Значение Тогда
+ 			Макс = Элемент.Значение;
+ 		КонецЕсли;
+ 	КонецЦикла;
+ КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AutoDecl</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
 	<h3 id='ParamDecl'>ParamDecl<a class='permalink' href='#ParamDecl'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении параметра.</i><br>
@@ -652,6 +669,7 @@ EndFunction // Interface()
 <li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
 <li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
 <li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>
+<li>"<a href='#AutoDecl'>AutoDecl</a>"</li>
 <li>"<a href='#ParamDecl'>ParamDecl</a>"</li>
 <li>"<a href='#MethodDecl'>MethodDecl</a>"</li>
 <li>"<a href='#ProcSign'>ProcSign</a>"</li>
