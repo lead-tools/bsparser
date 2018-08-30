@@ -6,7 +6,6 @@ Var Indent; // number
 
 Var Nodes;         // enum
 Var Tokens;        // enum
-Var SelectKinds;   // enum
 Var Operators;     // structure as map[one of Tokens](string)
 
 Var LastLine;
@@ -21,7 +20,6 @@ Procedure Init(BSLParserProcessor) Export
 
 	Nodes = BSLParserProcessor.Nodes();
 	Tokens = BSLParserProcessor.Tokens();
-	SelectKinds = BSLParserProcessor.SelectKinds();
 
 	LastLine = 1;
 
@@ -99,7 +97,8 @@ Procedure VisitMethodDecl(MethodDecl)
 			Result.Add(Chars.LF);
 			Result.Add(Chars.Tab);
 			VisitVars(MethodDecl.Vars);
-		EndIf; 
+			LastLine = MethodDecl.Sign.Place.EndLine + 1;
+		EndIf;
 		VisitStatements(MethodDecl.Body);
 		AlignLine(MethodDecl.Place.EndLine);
 		Result.Add("EndFunction");
@@ -109,12 +108,13 @@ Procedure VisitMethodDecl(MethodDecl)
 			Result.Add(Chars.LF);
 			Result.Add(Chars.Tab);
 			VisitVars(MethodDecl.Vars);
-		EndIf; 
+			LastLine = MethodDecl.Sign.Place.EndLine + 1;
+		EndIf;
     	VisitStatements(MethodDecl.Body);
 		AlignLine(MethodDecl.Place.EndLine);
 		Result.Add("EndProcedure");
-	EndIf;	
-EndProcedure // VisitMethodDecl() 
+	EndIf;
+EndProcedure // VisitMethodDecl()
 
 Procedure VisitProcSign(ProcDecl)
 	If ProcDecl.Directive <> Undefined Then
@@ -150,8 +150,8 @@ Procedure VisitExpr(Expr)
 	Type = Expr.Type;
 	If Type = Nodes.BasicLitExpr Then
         VisitBasicLitExpr(Expr);
-    ElsIf Type = Nodes.DesigExpr Then
-        VisitDesigExpr(Expr);
+    ElsIf Type = Nodes.IdentExpr Then
+        VisitIdentExpr(Expr);
     ElsIf Type = Nodes.UnaryExpr Then
         VisitUnaryExpr(Expr);
     ElsIf Type = Nodes.BinaryExpr Then
@@ -194,10 +194,18 @@ Procedure VisitBasicLitExpr(BasicLitExpr)
 	EndIf;
 EndProcedure // VisitBasicLitExpr()
 
-Procedure VisitDesigExpr(DesigExpr)
-	Result.Add(DesigExpr.Object.Name);
-	VisitSelectList(DesigExpr.Select);
-EndProcedure // VisitDesigExpr()
+Procedure VisitIdentExpr(IdentExpr)
+	Result.Add(IdentExpr.Head.Name);
+	If IdentExpr.Args <> Undefined Then
+		Result.Add("(");
+		Indent = Indent + 1; // >>
+		VisitExprList(IdentExpr.Args);
+		Indent = Indent - 1; // <<
+		AlignLine(IdentExpr.Place.EndLine);
+		Result.Add(")");
+	EndIf;
+	VisitTail(IdentExpr.Tail);
+EndProcedure // VisitIdentExpr()
 
 Procedure VisitUnaryExpr(UnaryExpr)
 	Result.Add(Operators[UnaryExpr.Operator]);
@@ -235,7 +243,7 @@ Procedure VisitTernaryExpr(TernaryExpr)
 	Result.Add(", ");
 	VisitExpr(TernaryExpr.Else);
 	Result.Add(")");
-	VisitSelectList(TernaryExpr.Select);
+	VisitTail(TernaryExpr.Tail);
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitParenExpr(ParenExpr)
@@ -309,7 +317,7 @@ Procedure VisitStmt(Stmt)
 EndProcedure // VisitStmt()
 
 Procedure VisitAssignStmt(AssignStmt)
-    VisitDesigExpr(AssignStmt.Left);
+    VisitIdentExpr(AssignStmt.Left);
 	Result.Add(" = ");
 	VisitExpr(AssignStmt.Right);
 	Result.Add(";");
@@ -346,7 +354,7 @@ Procedure VisitExecuteStmt(ExecuteStmt)
 EndProcedure // VisitExecuteStmt()
 
 Procedure VisitCallStmt(CallStmt)
-    VisitDesigExpr(CallStmt.Desig);
+    VisitIdentExpr(CallStmt.Ident);
 	Result.Add(";");
 EndProcedure // VisitCallStmt()
 
@@ -392,7 +400,7 @@ EndProcedure // VisitWhileStmt()
 
 Procedure VisitForStmt(ForStmt)
 	Result.Add("For ");
-	VisitDesigExpr(ForStmt.Desig);
+	VisitIdentExpr(ForStmt.Ident);
 	Result.Add(" = ");
 	VisitExpr(ForStmt.From);
 	Result.Add(" To ");
@@ -405,7 +413,7 @@ EndProcedure // VisitForStmt()
 
 Procedure VisitForEachStmt(ForEachStmt)
 	Result.Add("For Each ");
-	VisitDesigExpr(ForEachStmt.Desig);
+	VisitIdentExpr(ForEachStmt.Ident);
 	Result.Add(" In ");
 	VisitExpr(ForEachStmt.In);
 	Result.Add(" Do ");
@@ -566,26 +574,27 @@ Procedure VisitExprList(ExprList)
 	EndIf;
 EndProcedure // VisitExprList()
 
-Procedure VisitSelectList(SelectList)
-	For Each SelectExpr In SelectList Do
-		If SelectExpr.Kind = SelectKinds.Ident Then
+Procedure VisitTail(Tail)
+	For Each Item In Tail Do
+		If Item.Type = Nodes.FieldExpr Then
 			Result.Add(".");
-			Result.Add(SelectExpr.Value);
-		ElsIf SelectExpr.Kind = SelectKinds.Index Then
+			Result.Add(Item.Name);
+			If Item.Args <> Undefined Then
+				Result.Add("(");
+				Indent = Indent + 1; // >>
+				VisitExprList(Item.Args);
+				Indent = Indent - 1; // <<
+				AlignLine(Item.Place.EndLine);
+				Result.Add(")");
+			EndIf;
+		ElsIf Item.Type = Nodes.IndexExpr Then
 			Result.Add("[");
-			VisitExpr(SelectExpr.Value);
+			VisitExpr(Item.Expr);
 			Result.Add("]");
-		ElsIf SelectExpr.Kind = SelectKinds.Call Then
-			Result.Add("(");
-			Indent = Indent + 1; // >>
-			VisitExprList(SelectExpr.Value);
-			Indent = Indent - 1; // <<
-			AlignLine(SelectExpr.Place.EndLine);
-			Result.Add(")");
 		Else
 			Raise "Unknown selector kind";
 		EndIf;
 	EndDo;
-EndProcedure // VisitSelectList()
+EndProcedure // VisitTail()
 
 #EndRegion // Aux

@@ -1,7 +1,7 @@
 ﻿
 // Генератор технической документации по парсеру
 
-Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions;
+Var Tokens, Nodes, Directives, PrepInstructions;
 Var Region, SubRegion, RegionLevel;
 Var Comments;
 Var Result;
@@ -9,7 +9,6 @@ Var Result;
 Procedure Init(BSLParser) Export
 	Tokens = BSLParser.Tokens();
 	Nodes = BSLParser.Nodes();
-	SelectKinds = BSLParser.SelectKinds();
 	Directives = BSLParser.Directives();
 	PrepInstructions = BSLParser.PrepInstructions();
 	Result = New Array;
@@ -66,13 +65,12 @@ Procedure Init(BSLParser) Export
 		|</pre>
 		|<h1>Plugin Template</h1>
 		|<pre>
-		|Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions, PrepSymbols;
+		|Var Tokens, Nodes, Directives, PrepInstructions, PrepSymbols;
 		|Var Result;
 		|
 		|Procedure Init(BSLParser) Export
 		|	Tokens = BSLParser.Tokens();
 		|	Nodes = BSLParser.Nodes();
-		|	SelectKinds = BSLParser.SelectKinds();
 		|	Directives = BSLParser.Directives();
 		|	PrepInstructions = BSLParser.PrepInstructions();
 		|	PrepSymbols = BSLParser.PrepSymbols();
@@ -122,7 +120,6 @@ Function Result() Export
 		|</html>"
 	);
 	Result.Add("<h2 id='#Enums'>#Enums</h2>");
-	Result.Add(GenerateEnum("SelectKinds", SelectKinds));
 	Result.Add(GenerateEnum("Directives", Directives));
 	Result.Add(GenerateEnum("PrepInstructions", PrepInstructions));
 	Result.Add(GenerateEnum("Nodes", Nodes, True));
@@ -210,7 +207,7 @@ Procedure VisitNewExpr(NewExpr, Stack, Counters) Export
 				EndDo;
 
 				NodeFields = NewExpr.Args[0].List;
-				NodeName = NewExpr.Args[1].Select[0].Value;
+				NodeName = NewExpr.Args[1].Tail[0].Name;
 
 				Result.Add(StrTemplate(
 					"	<h3 id='%1'>%1<a class='permalink' href='#%1'>¶</a></h3>

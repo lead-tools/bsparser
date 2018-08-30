@@ -50,13 +50,12 @@ Message(PluginTestVars.Result());
 </pre>
 <h1>Plugin Template</h1>
 <pre>
-Var Tokens, Nodes, SelectKinds, Directives, PrepInstructions, PrepSymbols;
+Var Tokens, Nodes, Directives, PrepInstructions, PrepSymbols;
 Var Result;
 
 Procedure Init(BSLParser) Export
 	Tokens = BSLParser.Tokens();
 	Nodes = BSLParser.Nodes();
-	SelectKinds = BSLParser.SelectKinds();
 	Directives = BSLParser.Directives();
 	PrepInstructions = BSLParser.PrepInstructions();
 	PrepSymbols = BSLParser.PrepSymbols();
@@ -206,36 +205,46 @@ EndFunction // Interface()
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
-	<h3 id='SelectExpr'>SelectExpr<a class='permalink' href='#SelectExpr'>¶</a></h3>
+	<h3 id='FieldExpr'>FieldExpr<a class='permalink' href='#FieldExpr'>¶</a></h3>
 	<ul>
-	<i> Хранит информацию о селекторе.</i><br>
-	<i> Селектор может быть обращением через точку, обращением по индексу или вызовом метода.</i><br>
-	<i> Примеры:</i><br>
- <pre>
- // селекторы заключены в скобки <...>
- Значение = Объект<.Поле>  // обращение через точку; поле "Kind" = SelectKinds.Ident;
-                           // поле "Value" хранит имя поля
- Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
-                           // поле "Value" хранит индекс-выражение
- Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
-                           // поле "Value" хранит список аргументов-выражений</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.SelectExpr</li>
-		<li><strong>Kind</strong>: string (one of <a href='#SelectKinds'>SelectKinds</a>)</li>
-		<li><strong>Value</strong>: string, structure (one of <a href='##Expressions'>#Expressions</a>), array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
-	</ul>
-	<h3 id='DesigExpr'>DesigExpr<a class='permalink' href='#DesigExpr'>¶</a></h3>
-	<ul>
-	<i> Хранит информацию об указателе (идентификатор + селекторы).</i><br>
+	<i> Хранит информацию об обращении к полю объекта через точку.</i><br>
+	<i> В поле Name содержится имя поля.</i><br>
+	<i> В поле Args содержатся аргументы вызова (если это вызов).</i><br>
 	<i> Пример:</i><br>
  <pre>
- // указатель заключен в скобки <...>
- // поле "Object" будет содержать объект переменной "Запрос";
- // поле "Select" будет содержать пять селекторов;
- // поле "Call" будет равно Ложь, т.к. последний селектор не является вызовом.
- Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.DesigExpr</li>
-		<li><strong>Object</strong>: structure (<a href='#Unknown'>Unknown</a>, <a href='#Func'>Func</a>, <a href='#Proc'>Proc</a>, <a href='#VarMod'>VarMod</a>, <a href='#VarLoc'>VarLoc</a>, <a href='#Param'>Param</a>)</li>
-		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
-		<li><strong>Call</strong>: boolean</li>
+ // обращения через точку заключены в скобки <...>
+ Значение = Объект<.Поле>
+ Значение = Объект<.Добавить(П1, П2)></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FieldExpr</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='IndexExpr'>IndexExpr<a class='permalink' href='#IndexExpr'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об обращении к элементу объекта по индексу.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // обращение по индексу заключено в скобки <...>
+ Значение = Объект<[Ключ]></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IndexExpr</li>
+		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+	</ul>
+	<h3 id='IdentExpr'>IdentExpr<a class='permalink' href='#IdentExpr'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об обращении к идентификатору.</i><br>
+	<i> В поле Head содержится объект области видимости соответствующий идентификатору.</i><br>
+	<i> В поле Tail содержится последовательность обращений через точку и по индексу.</i><br>
+	<i> В поле Args содержатся аргументы вызова (если это вызов).</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // идентификатор заключен в скобки <...>
+ // поле "Head" будет содержать объект переменной "Запрос";
+ // поле "Tail" будет содержать три обращения;
+ // поле "Args" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
+ Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IdentExpr</li>
+		<li><strong>Head</strong>: structure (<a href='#Object'>Object</a>)</li>
+		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
+		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='UnaryExpr'>UnaryExpr<a class='permalink' href='#UnaryExpr'>¶</a></h3>
@@ -297,11 +306,11 @@ EndFunction // Interface()
  Значение = ?(Ложь,   // поле "Cond"
      Неопределено,    // поле "Then"
      Новый Массив     // поле "Else"
- ).Количество();      // поле "Select"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TernaryExpr</li>
+ ).Количество();      // поле "Tail"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TernaryExpr</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Select</strong>: array (<a href='#SelectExpr'>SelectExpr</a>)</li>
+		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ParenExpr'>ParenExpr<a class='permalink' href='#ParenExpr'>¶</a></h3>
@@ -345,7 +354,7 @@ EndFunction // Interface()
 	<ul>
 	<i> Хранит оператор присваивания.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AssignStmt</li>
-		<li><strong>Left</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
+		<li><strong>Left</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -388,7 +397,7 @@ EndFunction // Interface()
 	<ul>
 	<i> Хранит вызов процедуры или функции как процедуры.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.CallStmt</li>
-		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
+		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IfStmt'>IfStmt<a class='permalink' href='#IfStmt'>¶</a></h3>
@@ -448,11 +457,11 @@ EndFunction // Interface()
 	<i> Хранит оператор цикла "Для".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Для Индекс = 0      // поля "Desig" и "From" хранят переменную и выражение инициализации.
+ Для Индекс = 0      // поля "Ident" и "From" хранят переменную и выражение инициализации.
    По Длина - 1 Цикл // поле "To" хранит выражение границы
      // поле "Body" хранит операторы в этом блоке
  КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForStmt</li>
-		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
+		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>From</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>To</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
@@ -463,11 +472,11 @@ EndFunction // Interface()
 	<i> Хранит оператор цикла "Для Каждого".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Для Каждого Элемент // поле "Desig" хранит переменную.
+ Для Каждого Элемент // поле "Ident" хранит переменную.
    Из Список Цикл    // поле "In" хранит выражение коллекции.
      // поле "Body" хранит операторы в этом блоке
  КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForEachStmt</li>
-		<li><strong>Desig</strong>: structure (<a href='#DesigExpr'>DesigExpr</a>)</li>
+		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>In</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
@@ -621,12 +630,7 @@ EndFunction // Interface()
 	<li><strong>EndLine</strong>: number</li>
 </ul>
 </body>
-</html><h2 id='#Enums'>#Enums</h2><h3 id='SelectKinds'>SelectKinds</h3>
-<ul><li>"Ident"</li>
-<li>"Index"</li>
-<li>"Call"</li>
-</ul>
-<h3 id='Directives'>Directives</h3>
+</html><h2 id='#Enums'>#Enums</h2><h3 id='Directives'>Directives</h3>
 <ul><li>"AtClient"</li>
 <li>"AtServer"</li>
 <li>"AtServerNoContext"</li>
@@ -653,8 +657,9 @@ EndFunction // Interface()
 <li>"<a href='#ProcSign'>ProcSign</a>"</li>
 <li>"<a href='#FuncSign'>FuncSign</a>"</li>
 <li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
-<li>"<a href='#SelectExpr'>SelectExpr</a>"</li>
-<li>"<a href='#DesigExpr'>DesigExpr</a>"</li>
+<li>"<a href='#FieldExpr'>FieldExpr</a>"</li>
+<li>"<a href='#IndexExpr'>IndexExpr</a>"</li>
+<li>"<a href='#IdentExpr'>IdentExpr</a>"</li>
 <li>"<a href='#UnaryExpr'>UnaryExpr</a>"</li>
 <li>"<a href='#BinaryExpr'>BinaryExpr</a>"</li>
 <li>"<a href='#NewExpr'>NewExpr</a>"</li>

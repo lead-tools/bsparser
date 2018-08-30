@@ -502,8 +502,8 @@ Function IdentExpr(Object, Tail, Args, Place = Undefined)
 	// Пример:
 	// <pre>
 	// // идентификатор заключен в скобки <...>
-	// // поле "Object" будет содержать объект переменной "Запрос";
-	// // поле "Entries" будет содержать три обращения;
+	// // поле "Head" будет содержать объект переменной "Запрос";
+	// // поле "Tail" будет содержать три обращения;
 	// // поле "Args" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
 	// Возврат <Запрос.Выполнить().Выгрузить()[0]>;
 	// </pre>
@@ -1552,8 +1552,8 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 			EndIf;
 		EndIf;
 		Call = False;
-		Tail = ParseIdentTail(Call);
 	EndIf;
+	Tail = ParseIdentTail(Call);
 	Return IdentExpr(Object, Tail, Args, Place(Pos, Line));
 EndFunction // ParseIdentExpr()
 
@@ -2000,8 +2000,7 @@ Function ParseAssignOrCallStmt()
 EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt()
-	Var Tok, Cond, ThenPart, ElsePart;
-	Var ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
+	Var Tok, Cond, ThenPart, ElsePart, ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
 	Scan();
 	Cond = ParseExpression();
 	Expect(Tokens.Then);
@@ -2644,9 +2643,9 @@ Procedure VisitIdentExpr(IdentExpr)
 				EndDo;
 			EndIf;
 		ElsIf Item.Type = Nodes.IndexExpr Then
-			VisitExpr(Item.Value);
+			VisitExpr(Item.Expr);
 		Else
-			Raise "Call in violation of protocol"
+			Raise "Call in violation of protocol";
 		EndIf;
 	EndDo;
 	PopInfo();
@@ -2718,9 +2717,9 @@ Procedure VisitTernaryExpr(TernaryExpr)
 				EndDo;
 			EndIf;
 		ElsIf Item.Type = Nodes.IndexExpr Then
-			VisitExpr(Item.Value);
+			VisitExpr(Item.Expr);
 		Else
-			Raise "Call in violation of protocol"
+			Raise "Call in violation of protocol";
 		EndIf;
 	EndDo;
 	PopInfo();

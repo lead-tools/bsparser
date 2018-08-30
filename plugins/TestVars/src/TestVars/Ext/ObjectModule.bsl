@@ -30,7 +30,7 @@ Function Interface() Export
 	Var Interface;
 	Interface = New Array;
 	Interface.Add("AfterVisitAssignStmt");
-	Interface.Add("VisitDesigExpr");
+	Interface.Add("VisitIdentExpr");
 	Interface.Add("VisitMethodDecl");
 	Interface.Add("AfterVisitMethodDecl");
 	Return Interface;
@@ -38,10 +38,10 @@ EndFunction // Interface()
 
 Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 	Var Name, Decl, Operation; 
-	If AssignStmt.Left.Select.Count() > 0 Then
+	If AssignStmt.Left.Args <> Undefined Or AssignStmt.Left.Tail.Count() > 0 Then
 		Return;
 	EndIf;
-	Name = AssignStmt.Left.Object.Name; 
+	Name = AssignStmt.Left.Head.Name; 
 	Operation = Vars[Name];
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
@@ -51,7 +51,7 @@ Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 		EndIf;
 		Return;
 	EndIf; 	
-	Decl = AssignStmt.Left.Object.Decl;
+	Decl = AssignStmt.Left.Head.Decl;
 	Operation = Params[Decl];	
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
@@ -62,11 +62,11 @@ Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 	EndIf; 
 EndProcedure // AfterVisitAssignStmt()
 
-Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
+Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
 	Var Name, Decl, Operation;
-	If DesigExpr.Select.Count() = 0
+	If IdentExpr.Tail.Count() = 0
 		And Stack.Parent.Type = Nodes.AssignStmt
-		And Stack.Parent.Left = DesigExpr Then
+		And Stack.Parent.Left = IdentExpr Then
 		Return;
 	EndIf;
 	If Counters.WhileStmt + Counters.ForStmt + Counters.ForEachStmt > 0 Then
@@ -74,14 +74,14 @@ Procedure VisitDesigExpr(DesigExpr, Stack, Counters) Export
 	Else
 		Operation = "Get";
 	EndIf; 
-	Name = DesigExpr.Object.Name;
-	Decl = DesigExpr.Object.Decl;
+	Name = IdentExpr.Head.Name;
+	Decl = IdentExpr.Head.Decl;
 	If Vars[Name] <> Undefined Then
 		Vars[Name] = Operation;
 	ElsIf Params[Decl] <> Undefined Then
 		Params[Decl] = Operation;	
 	EndIf; 
-EndProcedure // VisitDesigExpr()
+EndProcedure // VisitIdentExpr()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Vars = New Map;
