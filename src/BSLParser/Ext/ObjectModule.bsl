@@ -32,9 +32,9 @@ Var Location Export; // boolean
 
 Var Parser_Source;    // string
 Var Parser_Len;       // number
-Var Parser_Line;      // number
+Var Parser_CurLine;   // number
 Var Parser_EndLine;   // number
-Var Parser_Pos;       // number
+Var Parser_CurPos;    // number
 Var Parser_BegPos;    // number
 Var Parser_EndPos;    // number
 Var Parser_Char;      // string
@@ -333,7 +333,7 @@ EndFunction // Object()
 
 #Region Declarations
 
-Function VarModListDecl(Directive, VarList, Place = Undefined)
+Function VarModListDecl(Directive, VarList, Place)
 	// Хранит информацию об инструкции объявления переменных уровня модуля.
 	// Пример:
 	// <pre>
@@ -348,7 +348,7 @@ Function VarModListDecl(Directive, VarList, Place = Undefined)
 		Nodes.VarModListDecl, Directive, VarList, Place);
 EndFunction // VarModListDecl()
 
-Function VarModDecl(Name, Directive, Exported, Place = Undefined)
+Function VarModDecl(Name, Directive, Exported, Place)
 	// Хранит информацию об объявлении переменной уровня модуля.
 	// Пример:
 	// Объявления переменных заключены в скобки <...>
@@ -365,7 +365,7 @@ Function VarModDecl(Name, Directive, Exported, Place = Undefined)
 		Nodes.VarModDecl, Name, Directive, Exported, Place);
 EndFunction // VarModDecl()
 
-Function VarLocDecl(Name, Place = Undefined)
+Function VarLocDecl(Name, Place)
 	// Хранит информацию об объявлении локальной переменной.
 	// Пример:
 	// Объявления переменных заключены в скобки <...>
@@ -379,7 +379,7 @@ Function VarLocDecl(Name, Place = Undefined)
 		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
 
-Function AutoDecl(Place = Undefined)
+Function AutoDecl(Place)
 	// Хранит информацию об объявлении авто-переменной.
 	// Пример:
 	// Объявления переменных заключены в скобки <...>
@@ -400,7 +400,7 @@ Function AutoDecl(Place = Undefined)
 		Nodes.AutoDecl, Place);	
 EndFunction // AutoDecl() 
 
-Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
+Function ParamDecl(Name, ByVal, Value = Undefined, Place)
 	// Хранит информацию об объявлении параметра.
 	// Пример:
 	// Объявления параметров заключены в скобки <...>
@@ -416,7 +416,7 @@ Function ParamDecl(Name, ByVal, Value = Undefined, Place = Undefined)
 		Nodes.ParamDecl, Name, ByVal, Value, Place);
 EndFunction // ParamDecl()
 
-Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
+Function MethodDecl(Sign, Decls, Auto, Body, Place)
 	// Хранит информацию об объявлении метода.
 	// Сигнатура метода хранится в поле Sign.
 	// &НаКлиенте
@@ -435,7 +435,7 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
 		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
 EndFunction // MethodDecl()
 
-Function ProcSign(Name, Directive, Params, Exported, Place = Undefined)
+Function ProcSign(Name, Directive, Params, Exported, Place)
 	// Хранит информацию о сигнатуре объявления процедуры.
 	// Пример:
 	// <pre>
@@ -452,7 +452,7 @@ Function ProcSign(Name, Directive, Params, Exported, Place = Undefined)
 		Nodes.ProcSign, Name, Directive, Params, Exported, Place);
 EndFunction // ProcSign()
 
-Function FuncSign(Name, Directive, Params, Exported, Place = Undefined)
+Function FuncSign(Name, Directive, Params, Exported, Place)
 	// Хранит информацию о сигнатуре объявления функции.
 	// Пример:
 	// <pre>
@@ -473,7 +473,7 @@ EndFunction // FuncSign()
 
 #Region Expressions
 
-Function BasicLitExpr(Kind, Value, Place = Undefined)
+Function BasicLitExpr(Kind, Value, Place)
 	// Хранит информацию о литерале примитивного типа.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -483,7 +483,7 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 		Nodes.BasicLitExpr, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
-Function FieldExpr(Name, Args, Place = Undefined)
+Function FieldExpr(Name, Args, Place)
 	// Хранит информацию об обращении к полю объекта через точку.
 	// В поле Name содержится имя поля.
 	// В поле Args содержатся аргументы вызова (если это вызов).
@@ -501,7 +501,7 @@ Function FieldExpr(Name, Args, Place = Undefined)
 		Nodes.FieldExpr, Name, Args, Place);
 EndFunction // FieldExpr()
 
-Function IndexExpr(Expr, Place = Undefined)
+Function IndexExpr(Expr, Place)
 	// Хранит информацию об обращении к элементу объекта по индексу.
 	// Пример:
 	// <pre>
@@ -515,7 +515,7 @@ Function IndexExpr(Expr, Place = Undefined)
 		Nodes.IndexExpr, Expr, Place);
 EndFunction // IndexExpr()
 
-Function IdentExpr(Object, Tail, Args, Place = Undefined)
+Function IdentExpr(Object, Tail, Args, Place)
 	// Хранит информацию об обращении к идентификатору.
 	// В поле Head содержится объект области видимости соответствующий идентификатору.
 	// В поле Tail содержится последовательность обращений через точку и по индексу.
@@ -537,7 +537,7 @@ Function IdentExpr(Object, Tail, Args, Place = Undefined)
 		Nodes.IdentExpr, Object, Tail, Args, Place);
 EndFunction // IdentExpr()
 
-Function UnaryExpr(Operator, Operand, Place = Undefined)
+Function UnaryExpr(Operator, Operand, Place)
 	// Хранит унарное выражение.
 	// Пример:
 	// <pre>
@@ -556,7 +556,7 @@ Function UnaryExpr(Operator, Operand, Place = Undefined)
 		Nodes.UnaryExpr, Operator, Operand, Place);
 EndFunction // UnaryExpr()
 
-Function BinaryExpr(Left, Operator, Right, Place = Undefined)
+Function BinaryExpr(Left, Operator, Right, Place)
 	// Хранит бинарное выражение.
 	// Пример:
 	// <pre>
@@ -579,7 +579,7 @@ Function BinaryExpr(Left, Operator, Right, Place = Undefined)
 		Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Name, Args, Place = Undefined)
+Function NewExpr(Name, Args, Place)
 	// Хранит выражение "Новый".
 	// Пример:
 	// <pre>
@@ -600,7 +600,7 @@ Function NewExpr(Name, Args, Place = Undefined)
 		Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
-Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place = Undefined)
+Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place)
 	// Хранит тернарное выражение "?(,,)".
 	// Пример:
 	// <pre>
@@ -619,7 +619,7 @@ Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place = Undefined)
 		Nodes.TernaryExpr, Cond, ThenPart, ElsePart, Tail, Place);
 EndFunction // TernaryExpr()
 
-Function ParenExpr(Expr, Place = Undefined)
+Function ParenExpr(Expr, Place)
 	// Хранит скобочное выражение.
 	// Пример:
 	// <pre>
@@ -633,7 +633,7 @@ Function ParenExpr(Expr, Place = Undefined)
 		Nodes.ParenExpr, Expr, Place);
 EndFunction // ParenExpr()
 
-Function NotExpr(Expr, Place = Undefined)
+Function NotExpr(Expr, Place)
 	// Хранит выражение, к которому применено логическое отрицание "Не".
 	// Пример:
 	// <pre>
@@ -647,7 +647,7 @@ Function NotExpr(Expr, Place = Undefined)
 		Nodes.NotExpr, Expr, Place);
 EndFunction // NotExpr()
 
-Function StringExpr(ExprList, Place = Undefined)
+Function StringExpr(ExprList, Place)
 	// Хранит строковое выражение.
 	// Поле "List" хранит упорядоченный список частей строки.
 	// Пример:
@@ -671,7 +671,7 @@ EndFunction // StringExpr()
 
 #Region Statements
 
-Function AssignStmt(Left, Right, Place = Undefined)
+Function AssignStmt(Left, Right, Place)
 	// Хранит оператор присваивания.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -681,7 +681,7 @@ Function AssignStmt(Left, Right, Place = Undefined)
 		Nodes.AssignStmt, Left, Right, Place);
 EndFunction // AssignStmt()
 
-Function ReturnStmt(Expr = Undefined, Place = Undefined)
+Function ReturnStmt(Expr = Undefined, Place)
 	// Хранит оператор "Возврат".
 	// Поле "Expr" равно Неопределено если это возврат из процедуры.
 	Return New Structure( // @Node
@@ -691,7 +691,7 @@ Function ReturnStmt(Expr = Undefined, Place = Undefined)
 		Nodes.ReturnStmt, Expr, Place);
 EndFunction // ReturnStmt()
 
-Function BreakStmt(Place = Undefined)
+Function BreakStmt(Place)
 	// Хранит оператор "Прервать".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -699,7 +699,7 @@ Function BreakStmt(Place = Undefined)
 		Nodes.BreakStmt, Place);
 EndFunction // BreakStmt()
 
-Function ContinueStmt(Place = Undefined)
+Function ContinueStmt(Place)
 	// Хранит оператор "Продолжить".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -707,7 +707,7 @@ Function ContinueStmt(Place = Undefined)
 		Nodes.ContinueStmt, Place);
 EndFunction // ContinueStmt()
 
-Function RaiseStmt(Expr = Undefined, Place = Undefined)
+Function RaiseStmt(Expr = Undefined, Place)
 	// Хранит оператор "ВызватьИсключение".
 	// Поле "Expr" равно Неопределено если это вариант оператора без выражения.
 	Return New Structure( // @Node
@@ -717,7 +717,7 @@ Function RaiseStmt(Expr = Undefined, Place = Undefined)
 		Nodes.RaiseStmt, Expr, Place);
 EndFunction // RaiseStmt()
 
-Function ExecuteStmt(Expr, Place = Undefined)
+Function ExecuteStmt(Expr, Place)
 	// Хранит оператор "Выполнить".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -726,7 +726,7 @@ Function ExecuteStmt(Expr, Place = Undefined)
 		Nodes.ExecuteStmt, Expr, Place);
 EndFunction // ExecuteStmt()
 
-Function CallStmt(IdentExpr, Place = Undefined)
+Function CallStmt(IdentExpr, Place)
 	// Хранит вызов процедуры или функции как процедуры.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -735,7 +735,7 @@ Function CallStmt(IdentExpr, Place = Undefined)
 		Nodes.CallStmt, IdentExpr, Place);
 EndFunction // CallStmt()
 
-Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
+Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place)
 	// Хранит оператор "Если".
 	// Пример:
 	// <pre>
@@ -759,7 +759,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 		Nodes.IfStmt, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
-Function ElseStmt(Body, Place = Undefined)
+Function ElseStmt(Body, Place)
 	// Хранит блок "Иначе"
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -768,7 +768,7 @@ Function ElseStmt(Body, Place = Undefined)
 		Nodes.ElseStmt, Body, Place);
 EndFunction // ElseStmt()
 
-Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
+Function ElsIfStmt(Cond, ThenPart, Place)
 	// Хранит блок "ИначеЕсли" оператора "Если".
 	// Пример:
 	// <pre>
@@ -785,7 +785,7 @@ Function ElsIfStmt(Cond, ThenPart, Place = Undefined)
 		Nodes.ElsIfStmt, Cond, ThenPart, Place);
 EndFunction // ElsIfStmt()
 
-Function WhileStmt(Cond, Statements, Place = Undefined)
+Function WhileStmt(Cond, Body, Place)
 	// Хранит оператор цикла "Пока".
 	// Пример:
 	// <pre>
@@ -798,10 +798,10 @@ Function WhileStmt(Cond, Statements, Place = Undefined)
 		"Cond,"  // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.WhileStmt, Cond, Statements, Place);
+		Nodes.WhileStmt, Cond, Body, Place);
 EndFunction // WhileStmt()
 
-Function ForStmt(IdentExpr, From, Until, Statements, Place = Undefined)
+Function ForStmt(IdentExpr, From, Until, Body, Place)
 	// Хранит оператор цикла "Для".
 	// Пример:
 	// <pre>
@@ -817,10 +817,10 @@ Function ForStmt(IdentExpr, From, Until, Statements, Place = Undefined)
 		"To,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.ForStmt, IdentExpr, From, Until, Statements, Place);
+		Nodes.ForStmt, IdentExpr, From, Until, Body, Place);
 EndFunction // ForStmt()
 
-Function ForEachStmt(IdentExpr, Collection, Statements, Place = Undefined)
+Function ForEachStmt(IdentExpr, Collection, Body, Place)
 	// Хранит оператор цикла "Для Каждого".
 	// Пример:
 	// <pre>
@@ -835,10 +835,10 @@ Function ForEachStmt(IdentExpr, Collection, Statements, Place = Undefined)
 		"In,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.ForEachStmt, IdentExpr, Collection, Statements, Place);
+		Nodes.ForEachStmt, IdentExpr, Collection, Body, Place);
 EndFunction // ForEachStmt()
 
-Function TryStmt(TryPart, ExceptPart, Place = Undefined)
+Function TryStmt(TryPart, ExceptPart, Place)
 	// Хранит оператор "Попытка"
 	// Пример:
 	// <pre>
@@ -856,7 +856,7 @@ Function TryStmt(TryPart, ExceptPart, Place = Undefined)
 		Nodes.TryStmt, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
 
-Function ExceptStmt(Body, Place = Undefined)
+Function ExceptStmt(Body, Place)
 	// Хранит блок "Исключение"
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -865,7 +865,7 @@ Function ExceptStmt(Body, Place = Undefined)
 		Nodes.ExceptStmt, Body, Place);
 EndFunction // ExceptStmt()
 
-Function GotoStmt(Label, Place = Undefined)
+Function GotoStmt(Label, Place)
 	// Хранит оператор "Перейти"
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -874,7 +874,7 @@ Function GotoStmt(Label, Place = Undefined)
 		Nodes.GotoStmt, Label, Place);
 EndFunction // GotoStmt()
 
-Function LabelStmt(Label, Place = Undefined)
+Function LabelStmt(Label, Place)
 	// Хранит оператор метки.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -887,7 +887,7 @@ EndFunction // LabelStmt()
 
 #Region PrepInst
 
-Function PrepIfInst(Cond, Place = Undefined)
+Function PrepIfInst(Cond, Place)
 	// Хранит информацию об инструкции препроцессора #Если,
 	// Пример:
 	// <pre>
@@ -902,7 +902,7 @@ Function PrepIfInst(Cond, Place = Undefined)
 		Nodes.PrepIfInst, Cond, Place);
 EndFunction // PrepIfInst()
 
-Function PrepElsIfInst(Cond, Place = Undefined)
+Function PrepElsIfInst(Cond, Place)
 	// Хранит информацию об инструкции препроцессора #ИначеЕсли
 	// Пример:
 	// <pre>
@@ -917,7 +917,7 @@ Function PrepElsIfInst(Cond, Place = Undefined)
 		Nodes.PrepElsIfInst, Cond, Place);
 EndFunction // PrepElsIfInst()
 
-Function PrepElseInst(Place = Undefined)
+Function PrepElseInst(Place)
 	// Хранит информацию об инструкции препроцессора #Иначе
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -925,7 +925,7 @@ Function PrepElseInst(Place = Undefined)
 		Nodes.PrepElseInst, Place);
 EndFunction // PrepElseInst()
 
-Function PrepEndIfInst(Place = Undefined)
+Function PrepEndIfInst(Place)
 	// Хранит информацию об инструкции препроцессора #КонецЕсли
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
@@ -933,7 +933,7 @@ Function PrepEndIfInst(Place = Undefined)
 		Nodes.PrepEndIfInst, Place);
 EndFunction // PrepEndIfInst()
 
-Function PrepRegionInst(Name, Place = Undefined)
+Function PrepRegionInst(Name, Place)
 	// Хранит информацию об инструкции препроцессора #Обрасть,
 	// Пример:
 	// <pre>
@@ -948,7 +948,7 @@ Function PrepRegionInst(Name, Place = Undefined)
 		Nodes.PrepRegionInst, Name, Place);
 EndFunction // PrepRegionInst()
 
-Function PrepEndRegionInst(Place = Undefined)
+Function PrepEndRegionInst(Place)
 	// Хранит информацию об инструкции препроцессора #КонецОбласти,
 	// Пример:
 	// <pre>
@@ -962,7 +962,7 @@ Function PrepEndRegionInst(Place = Undefined)
 		Nodes.PrepEndRegionInst, Place);
 EndFunction // PrepEndRegionInst()
 
-Function PrepUseInst(Path, Place = Undefined)
+Function PrepUseInst(Path, Place)
 	// Хранит информацию об инструкции препроцессора #Использовать,
 	// Это нестандартная инструкция из OneScript
 	// Пример:
@@ -980,7 +980,7 @@ EndFunction // PrepUseInst()
 
 #Region PrepExpr
 
-Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
+Function PrepBinaryExpr(Left, Operator, Right, Place)
 	// Хранит бинарное выражение препроцессора.
 	// Пример:
 	// <pre>
@@ -999,7 +999,7 @@ Function PrepBinaryExpr(Left, Operator, Right, Place = Undefined)
 		Nodes.PrepBinaryExpr, Left, Operator, Right, Place);
 EndFunction // PrepBinaryExpr()
 
-Function PrepNotExpr(Expr, Place = Undefined)
+Function PrepNotExpr(Expr, Place)
 	// Хранит выражение препроцессора, к которому применено логическое отрицание "Не".
 	// Пример:
 	// <pre>
@@ -1014,7 +1014,7 @@ Function PrepNotExpr(Expr, Place = Undefined)
 		Nodes.PrepNotExpr, Expr, Place);
 EndFunction // PrepNotExpr()
 
-Function PrepSymExpr(Symbol, Exist, Place = Undefined)
+Function PrepSymExpr(Symbol, Exist, Place)
 	// Узел хранит информацию о символе препроцессора.
 	// Поле Exist = True если такой символ существует.
 	// Пример:
@@ -1039,11 +1039,11 @@ EndFunction // PrepSymExpr()
 Function Scan()
 	Var Beg, Prev, Comment;
 
-	Parser_EndPos = Parser_Pos;
-	Parser_EndLine = Parser_Line;
+	Parser_EndPos = Parser_CurPos;
+	Parser_EndLine = Parser_CurLine;
 
 	If Right(Parser_Lit, 1) = Chars_LF Then
-		Parser_Line = Parser_Line + 1;
+		Parser_CurLine = Parser_CurLine + 1;
 	EndIf;
 
 	While True Do
@@ -1053,25 +1053,25 @@ Function Scan()
 		// skip space
 		While IsBlankString(Parser_Char) And Parser_Char <> "" Do
 			If Parser_Char = Chars_LF Then
-				Parser_Line = Parser_Line + 1;
+				Parser_CurLine = Parser_CurLine + 1;
 			EndIf;
-			Parser_Pos = Parser_Pos + 1;
-			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+			Parser_CurPos = Parser_CurPos + 1;
+			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 		EndDo;
 
-		Parser_BegPos = Parser_Pos;
+		Parser_BegPos = Parser_CurPos;
 
 		Parser_Tok = TokenMap[Parser_Char];
 		If Parser_Tok = Alpha Then
 
 			// scan ident
-			Beg = Parser_Pos;
-			Parser_Pos = Parser_Pos + 1;
-			While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do
-				Parser_Pos = Parser_Pos + 1;
+			Beg = Parser_CurPos;
+			Parser_CurPos = Parser_CurPos + 1;
+			While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Undefined Do
+				Parser_CurPos = Parser_CurPos + 1;
 			EndDo;
-			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
-			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 			// lookup
 			If Not Keywords.Property(Parser_Lit, Parser_Tok) Then
@@ -1080,73 +1080,73 @@ Function Scan()
 
 		ElsIf Parser_Tok = Tokens.String Then
 
-			Beg = Parser_Pos;
+			Beg = Parser_CurPos;
 			Parser_Char = """"; // cheat code
 			While Parser_Char = """" Do
-				Parser_Pos = Parser_Pos + 1;
-				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+				Parser_CurPos = Parser_CurPos + 1;
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				While Parser_Char <> """" And Parser_Char <> Chars_LF And Parser_Char <> "" Do
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				EndDo;
 				If Parser_Char <> "" Then
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				EndIf;
 			EndDo;
-			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 			Parser_Tok = StringToken(Parser_Lit);
 
 		ElsIf Parser_Tok = Digit Then
 
-			Beg = Parser_Pos;
-			Parser_Pos = Parser_Pos + 1;
-			While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Digit Do
-				Parser_Pos = Parser_Pos + 1;
+			Beg = Parser_CurPos;
+			Parser_CurPos = Parser_CurPos + 1;
+			While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] = Digit Do
+				Parser_CurPos = Parser_CurPos + 1;
 			EndDo;
-			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 			If Parser_Char = "." Then
-				Parser_Pos = Parser_Pos + 1;
-				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Digit Do
-					Parser_Pos = Parser_Pos + 1;
+				Parser_CurPos = Parser_CurPos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] = Digit Do
+					Parser_CurPos = Parser_CurPos + 1;
 				EndDo;
-				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 			EndIf;
-			Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 			Parser_Tok = Tokens.Number;
 
 		ElsIf Parser_Tok = Tokens.DateTime Then
 
-			Parser_Pos = Parser_Pos + 1;
-			Beg = Parser_Pos;
-			Parser_Pos = StrFind(Parser_Source, "'",, Parser_Pos);
-			If Parser_Pos = 0 Then
+			Parser_CurPos = Parser_CurPos + 1;
+			Beg = Parser_CurPos;
+			Parser_CurPos = StrFind(Parser_Source, "'",, Parser_CurPos);
+			If Parser_CurPos = 0 Then
 				Parser_Char = "";
 			Else
-				Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
-				Parser_Pos = Parser_Pos + 1;
-				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+				Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+				Parser_CurPos = Parser_CurPos + 1;
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 			EndIf;
 
 		ElsIf Parser_Tok = Undefined Then
 
 			Prev = Parser_Char;
-			Parser_Pos = Parser_Pos + 1;
-			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+			Parser_CurPos = Parser_CurPos + 1;
+			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 
 			If Prev = "/" Then
 
 				If Parser_Char = "/" Then
 					// scan comment
-					Beg = Parser_Pos + 1;
-					Parser_Pos = StrFind(Parser_Source, Chars_LF,, Beg);
-					Parser_Comments[Parser_Line] = Mid(Parser_Source, Beg, Parser_Pos - Beg);
-					If Parser_Pos = 0 Then
+					Beg = Parser_CurPos + 1;
+					Parser_CurPos = StrFind(Parser_Source, Chars_LF,, Beg);
+					Parser_Comments[Parser_CurLine] = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+					If Parser_CurPos = 0 Then
 						Parser_Char = "";
 					Else
-						Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+						Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 					EndIf;
 					Comment = True;
 				Else
@@ -1157,12 +1157,12 @@ Function Scan()
 
 				If Parser_Char = ">" Then
 					Parser_Tok = Tokens.Neq;
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				ElsIf Parser_Char = "=" Then
 					Parser_Tok = Tokens.Leq;
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				Else
 					Parser_Tok = Tokens.Lss;
 				EndIf;
@@ -1171,26 +1171,26 @@ Function Scan()
 
 				If Parser_Char = "=" Then
 					Parser_Tok = Tokens.Geq;
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				Else
 					Parser_Tok = Tokens.Gtr;
 				EndIf;
 
 			ElsIf Prev = "&" Then
 
-				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Alpha Then
-					Error("Expected directive", Parser_Pos, True);
+				If AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Alpha Then
+					Error("Expected directive", Parser_CurPos, True);
 				EndIf;
 
 				// scan ident
-				Beg = Parser_Pos;
-				Parser_Pos = Parser_Pos + 1;
-				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do
-					Parser_Pos = Parser_Pos + 1;
+				Beg = Parser_CurPos;
+				Parser_CurPos = Parser_CurPos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Undefined Do
+					Parser_CurPos = Parser_CurPos + 1;
 				EndDo;
-				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
-				Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+				Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 				If Not Directives.Property(Parser_Lit) Then
 					Error(StrTemplate("Unknown directive: '%1'", Parser_Lit));
@@ -1203,24 +1203,24 @@ Function Scan()
 				// skip space
 				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
 					If Parser_Char = Chars_LF Then
-						Parser_Line = Parser_Line + 1;
+						Parser_CurLine = Parser_CurLine + 1;
 					EndIf;
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				EndDo;
 
-				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Alpha Then
-					Error("Expected preprocessor instruction", Parser_Pos, True);
+				If AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Alpha Then
+					Error("Expected preprocessor instruction", Parser_CurPos, True);
 				EndIf;
 
 				// scan ident
-				Beg = Parser_Pos;
-				Parser_Pos = Parser_Pos + 1;
-				While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do
-					Parser_Pos = Parser_Pos + 1;
+				Beg = Parser_CurPos;
+				Parser_CurPos = Parser_CurPos + 1;
+				While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Undefined Do
+					Parser_CurPos = Parser_CurPos + 1;
 				EndDo;
-				Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
-				Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+				Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 				// match token
 				If PrepInstructions.Property(Parser_Lit, Parser_Tok) Then
@@ -1234,22 +1234,22 @@ Function Scan()
 				// skip space
 				While IsBlankString(Parser_Char) And Parser_Char <> "" Do
 					If Parser_Char = Chars_LF Then
-						Parser_Line = Parser_Line + 1;
+						Parser_CurLine = Parser_CurLine + 1;
 					EndIf;
-					Parser_Pos = Parser_Pos + 1;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				EndDo;
 
-				If AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] = Undefined Then
+				If AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] = Undefined Then
 					Parser_Lit = "";
 				Else
 					// scan ident
-					Beg = Parser_Pos; Parser_Pos = Parser_Pos + 1;
-					While AlphaDigitMap[Mid(Parser_Source, Parser_Pos, 1)] <> Undefined Do
-						Parser_Pos = Parser_Pos + 1;
+					Beg = Parser_CurPos; Parser_CurPos = Parser_CurPos + 1;
+					While AlphaDigitMap[Mid(Parser_Source, Parser_CurPos, 1)] <> Undefined Do
+						Parser_CurPos = Parser_CurPos + 1;
 					EndDo;
-					Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
-					Parser_Lit = Mid(Parser_Source, Beg, Parser_Pos - Beg);
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+					Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 				EndIf;
 
 				Parser_Tok = Tokens.Label;
@@ -1262,8 +1262,8 @@ Function Scan()
 
 		Else
 
-			Parser_Pos = Parser_Pos + 1;
-			Parser_Char = Mid(Parser_Source, Parser_Pos, 1);
+			Parser_CurPos = Parser_CurPos + 1;
+			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 
 		EndIf;
 
@@ -1323,8 +1323,8 @@ EndFunction // CloseScope()
 Function ParseModule(Source) Export
 	Var Decls, Auto, VarObj, Item, Statements, Module;
 	Parser_Source = Source;
-	Parser_Pos = 0;
-	Parser_Line = 1;
+	Parser_CurPos = 0;
+	Parser_CurLine = 1;
 	Parser_EndLine = 1;
 	Parser_BegPos = 0;
 	Parser_EndPos = 0;
@@ -1368,7 +1368,7 @@ EndFunction // ParseModule()
 Function ParseExpression()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParseAndExpr();
 	While Parser_Tok = Tokens.Or Do
 		Operator = Parser_Tok;
@@ -1381,7 +1381,7 @@ EndFunction // ParseExpression()
 Function ParseAndExpr()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParseNotExpr();
 	While Parser_Tok = Tokens.And Do
 		Operator = Parser_Tok;
@@ -1394,7 +1394,7 @@ EndFunction // ParseAndExpr()
 Function ParseNotExpr()
 	Var Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Not Then
 		Scan();
 		Expr = NotExpr(ParseRelExpr(), Place(Pos, Line));
@@ -1407,7 +1407,7 @@ EndFunction // ParseNotExpr()
 Function ParseRelExpr()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParseAddExpr();
 	While RelOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
@@ -1420,7 +1420,7 @@ EndFunction // ParseRelExpr()
 Function ParseAddExpr()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParseMulExpr();
 	While AddOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
@@ -1433,7 +1433,7 @@ EndFunction // ParseAddExpr()
 Function ParseMulExpr()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParseUnaryExpr();
 	While MulOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
@@ -1446,7 +1446,7 @@ EndFunction // ParseMulExpr()
 Function ParseUnaryExpr()
 	Var Operator, Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Operator = Parser_Tok;
 	If AddOperators.Find(Parser_Tok) <> Undefined Then
 		Scan();
@@ -1484,7 +1484,7 @@ EndFunction // ParseOperand()
 Function ParseStringExpr()
 	Var Tok, ExprList, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Tok = Parser_Tok;
 	ExprList = New Array;
 	While True Do
@@ -1517,7 +1517,7 @@ EndFunction // ParseStringExpr()
 Function ParseNewExpr()
 	Var Tok, Name, Args, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Tok = Scan();
 	If Tok = Tokens.Ident Then
 		Name = Parser_Lit;
@@ -1541,7 +1541,7 @@ EndFunction // ParseNewExpr()
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
 	Var Name, Object, Tail, Args, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Name = Parser_Lit;
 	AutoPlace = Place();
 	Scan();
@@ -1582,7 +1582,7 @@ EndFunction // ParseIdentExpr()
 Function ParseIdentTail(Call = Undefined)
 	Var Tail, Name, Args, Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Tail = New Array;
 	While True Do
 		If Parser_Tok = Tokens.Period Then
@@ -1641,7 +1641,7 @@ EndFunction // ParseArguments()
 Function ParseTernaryExpr()
 	Var Cond, ThenPart, ElsePart, Tail, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Scan();
 	Expect(Tokens.Lparen);
 	Scan();
@@ -1664,7 +1664,7 @@ EndFunction // ParseTernaryExpr()
 Function ParseParenExpr()
 	Var Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Scan();
 	Expr = ParseExpression();
 	Expect(Tokens.Rparen);
@@ -1677,60 +1677,50 @@ EndFunction // ParseParenExpr()
 #Region ParseDecl
 
 Function ParseModDecls()
-	Var Tok, Decls, Inst, Pos, Line;
-	Tok = Parser_Tok;
+	Var Decls, Inst;
 	Decls = New Array;
-	While Tok = Tokens.Directive Do
+	While Parser_Tok = Tokens.Directive Do
 		Parser_Directive = Directives[Parser_Lit];
-		Tok = Scan();
+		Parser_Tok = Scan();
 	EndDo;
 	While True Do
-		Pos = Parser_BegPos;
-		Line = Parser_Line;
-		If Tok = Tokens.Var And Parser_AllowVar Then
+		If Parser_Tok = Tokens.Var And Parser_AllowVar Then
 			Decls.Add(ParseVarModListDecl());
-		ElsIf Tok = Tokens.Function Then
+		ElsIf Parser_Tok = Tokens.Function Then
 			Parser_IsFunc = True;
 			Decls.Add(ParseMethodDecl());
 			Parser_IsFunc = False;
 			Parser_AllowVar = False;
-		ElsIf Tok = Tokens.Procedure Then
+		ElsIf Parser_Tok = Tokens.Procedure Then
 			Decls.Add(ParseMethodDecl());
 			Parser_AllowVar = False;
-		ElsIf Tok = Tokens._Region Then
-			Inst = ParsePrepRegionInst();
+		ElsIf Parser_Tok = Tokens._Region Then
+			Decls.Add(ParsePrepRegionInst());
 			Scan();
-			Inst.Place = Place(Pos, Line);
-			Decls.Add(Inst);
-		ElsIf Tok = Tokens._EndRegion Then
+		ElsIf Parser_Tok = Tokens._EndRegion Then
+			Decls.Add(ParsePrepEndRegionInst());
 			Scan();
-			Decls.Add(PrepEndRegionInst(Place(Pos, Line)));
-		ElsIf Tok = Tokens._If Then
-			Inst = ParsePrepIfInst();
+		ElsIf Parser_Tok = Tokens._If Then
+			Decls.Add(ParsePrepIfInst());
 			Scan();
-			Inst.Place = Place(Pos, Line);
-			Decls.Add(Inst);
-		ElsIf Tok = Tokens._ElsIf Then
-			Inst = ParsePrepElsIfInst();
+		ElsIf Parser_Tok = Tokens._ElsIf Then
+			Decls.Add(ParsePrepElsIfInst());
 			Scan();
-			Inst.Place = Place(Pos, Line);
-			Decls.Add(Inst);
-		ElsIf Tok = Tokens._Else Then
+		ElsIf Parser_Tok = Tokens._Else Then
+			Decls.Add(ParsePrepElseInst());
 			Scan();
-			Decls.Add(PrepElseInst(Place(Pos, Line)));
-		ElsIf Tok = Tokens._EndIf Then
+		ElsIf Parser_Tok = Tokens._EndIf Then
+			Decls.Add(ParsePrepEndIfInst());
 			Scan();
-			Decls.Add(PrepEndIfInst(Place(Pos, Line)));
-		ElsIf Tok = Tokens._Use Then
+		ElsIf Parser_Tok = Tokens._Use Then
 			Decls.Add(ParsePrepUseInst());
 		Else
 			Break;
 		EndIf;
-		Tok = Parser_Tok;
 		Parser_Directive = Undefined;
-		While Tok = Tokens.Directive Do
+		While Parser_Tok = Tokens.Directive Do
 			Parser_Directive = Directives[Parser_Lit];
-			Tok = Scan();
+			Scan();
 		EndDo;
 	EndDo;
 	Return Decls;
@@ -1739,7 +1729,7 @@ EndFunction // ParseModDecls()
 Function ParseVarModListDecl()
 	Var VarList, Decl, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Scan();
 	VarList = New Array;
 	VarList.Add(ParseVarModDecl());
@@ -1759,7 +1749,7 @@ EndFunction // ParseVarModListDecl()
 Function ParseVarModDecl()
 	Var Name, VarModDecl, Exported, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
 	If Scan() = Tokens.Export Then
@@ -1813,7 +1803,7 @@ EndFunction // ParseVarLocDecl()
 Function ParseMethodDecl()
 	Var Sign, Object, Name, Vars, Params, Exported, Body, Auto, VarObj, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Exported = False;
 	Scan();
 	Expect(Tokens.Ident);
@@ -1881,7 +1871,7 @@ EndFunction // ParseParams()
 Function ParseParamDecl()
 	Var Name, ParamDecl, ByVal, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Val Then
 		ByVal = True;
 		Scan();
@@ -1931,7 +1921,7 @@ EndFunction // ParseStatements()
 Function ParseStmt()
 	Var Tok, Stmt, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Tok = Parser_Tok;
 	If Tok = Tokens.Ident Then
 		Stmt = ParseAssignOrCallStmt();
@@ -1950,11 +1940,9 @@ Function ParseStmt()
 	ElsIf Tok = Tokens.Return Then
 		Stmt = ParseReturnStmt();
 	ElsIf Tok = Tokens.Break Then
-		Scan();
-		Stmt = BreakStmt();
+		Stmt = ParseBreakStmt();
 	ElsIf Tok = Tokens.Continue Then
-		Scan();
-		Stmt = ContinueStmt();
+		Stmt = ParseContinueStmt();
 	ElsIf Tok = Tokens.Raise Then
 		Stmt = ParseRaiseStmt();
 	ElsIf Tok = Tokens.Execute Then
@@ -1962,52 +1950,50 @@ Function ParseStmt()
 	ElsIf Tok = Tokens.Goto Then
 		Stmt = ParseGotoStmt();
 	ElsIf Tok = Tokens.Label Then
-		Stmt = LabelStmt(Parser_Lit);
-		Scan();
-		Expect(Tokens.Colon);
-		Parser_Tok = Tokens.Semicolon; // cheat code
+		Stmt = ParseLabelStmt();
 	ElsIf Tok = Tokens._Region Then
 		Stmt = ParsePrepRegionInst();
 	ElsIf Tok = Tokens._EndRegion Then
-		Stmt = PrepEndRegionInst();
-		Parser_Tok = Tokens.Semicolon; // cheat code
+		Stmt = ParsePrepEndRegionInst();
 	ElsIf Tok = Tokens._If Then
 		Stmt = ParsePrepIfInst();
 	ElsIf Tok = Tokens._ElsIf Then
 		Stmt = ParsePrepElsIfInst();
 	ElsIf Tok = Tokens._Else Then
-		Stmt = PrepElseInst();
-		Parser_Tok = Tokens.Semicolon; // cheat code
+		Stmt = ParsePrepElseInst();
 	ElsIf Tok = Tokens._EndIf Then
-		Stmt = PrepEndIfInst();
-		Parser_Tok = Tokens.Semicolon; // cheat code
+		Stmt = ParsePrepEndIfInst();
 	ElsIf Tok = Tokens.Semicolon Then
 		// NOP
-	EndIf;
-	If Stmt <> Undefined Then
-		Stmt.Place = Place(Pos, Line);
 	EndIf;
 	Return Stmt;
 EndFunction // ParseStmt()
 
 Function ParseRaiseStmt()
-	Var Expr;
+	Var Expr, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	If InitOfExpression.Find(Scan()) <> Undefined Then
 		Expr = ParseExpression();
 	EndIf;
-	Return RaiseStmt(Expr);
+	Return RaiseStmt(Expr, Place(Pos, Line));
 EndFunction // ParseRaiseStmt()
 
 Function ParseExecuteStmt()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
-	Return ExecuteStmt(ParseExpression());
+	Return ExecuteStmt(ParseExpression(), Place(Pos, Line));
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt()
-	Var Left, Call, Right, Stmt, NewVar;
+	Var Left, Call, Right, Stmt, NewVar, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Left = ParseIdentExpr(True, NewVar, Call);
 	If Call Then
-		Stmt = CallStmt(Left);
+		Stmt = CallStmt(Left, Place(Pos, Line));
 	Else
 		Expect(Tokens.Eql);
 		Scan();
@@ -2016,72 +2002,93 @@ Function ParseAssignOrCallStmt()
 			Parser_Vars.Insert(NewVar.Name, NewVar);
 			Parser_Scope.Auto.Add(NewVar);
 		EndIf;
-		Stmt = AssignStmt(Left, Right);
+		Stmt = AssignStmt(Left, Right, Place(Pos, Line));
 	EndIf;
 	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
 
 Function ParseIfStmt()
-	Var Tok, Cond, ThenPart, ElsePart, ElsIfPart, ElsIfCond, ElsIfThen, Pos, Line;
+	Var Cond, ThenPart, ElsePart, ElsIfPart, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Cond = ParseExpression();
 	Expect(Tokens.Then);
 	Scan();
 	ThenPart = ParseStatements();
-	Tok = Parser_Tok;
-	If Tok = Tokens.ElsIf Then
+	If Parser_Tok = Tokens.ElsIf Then
 		ElsIfPart = New Array;
-		While Tok = Tokens.ElsIf Do
-			Pos = Parser_BegPos;
-			Line = Parser_Line;
-			Scan();
-			ElsIfCond = ParseExpression();
-			Expect(Tokens.Then);
-			Scan();
-			ElsIfThen = ParseStatements();
-			ElsIfPart.Add(ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Line)));
-			Tok = Parser_Tok;
+		While Parser_Tok = Tokens.ElsIf Do
+			ElsIfPart.Add(ParseElsIfStmt());
 		EndDo;
 	EndIf;
-	If Tok = Tokens.Else Then
-		Pos = Parser_BegPos;
-		Line = Parser_Line;
-		Scan();
-		ElsePart = ElseStmt(ParseStatements(), Place(Pos, Line));
+	If Parser_Tok = Tokens.Else Then
+		ElsePart = ParseElseStmt();
 	EndIf;
 	Expect(Tokens.EndIf);
 	Scan();
-	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart);
+	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart, Place(Pos, Line));
 EndFunction // ParseIfStmt()
+
+Function ParseElsIfStmt()
+	Var ElsIfCond, ElsIfThen, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	ElsIfCond = ParseExpression();
+	Expect(Tokens.Then);
+	Scan();
+	ElsIfThen = ParseStatements();
+	Return ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Line));
+EndFunction // ParseElsIfStmt() 
+
+Function ParseElseStmt()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	Return ElseStmt(ParseStatements(), Place(Pos, Line));
+EndFunction // ParseElseStmt() 
 
 Function ParseTryStmt()
 	Var TryPart, ExceptPart, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	TryPart = ParseStatements();
 	Expect(Tokens.Except);
-	Pos = Parser_BegPos;
-	Line = Parser_Line;
-	Scan();
-	ExceptPart = ExceptStmt(ParseStatements(), Place(Pos, Line));
+	ExceptPart = ParseExceptStmt();
 	Expect(Tokens.EndTry);
 	Scan();
-	Return TryStmt(TryPart, ExceptPart);
+	Return TryStmt(TryPart, ExceptPart, Place(Pos, Line));
 EndFunction // ParseTryStmt()
 
+Function ParseExceptStmt()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	Return ExceptStmt(ParseStatements(), Place(Pos, Line));
+EndFunction // ParseExceptStmt() 
+
 Function ParseWhileStmt()
-	Var Cond, Statements;
+	Var Cond, Body, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Cond = ParseExpression();
 	Expect(Tokens.Do);
 	Scan();
-	Statements = ParseStatements();
+	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return WhileStmt(Cond, Statements);
+	Return WhileStmt(Cond, Body, Place(Pos, Line));
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt()
-	Var IdentExpr, Call, From, Until, Statements, VarPos, NewVar;
+	Var IdentExpr, Call, From, Until, Body, VarPos, NewVar, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Expect(Tokens.Ident);
 	VarPos = Parser_BegPos;
 	IdentExpr = ParseIdentExpr(True, NewVar, Call);
@@ -2100,14 +2107,16 @@ Function ParseForStmt()
 	EndIf;
 	Expect(Tokens.Do);
 	Scan();
-	Statements = ParseStatements();
+	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForStmt(IdentExpr, From, Until, Statements);
+	Return ForStmt(IdentExpr, From, Until, Body, Place(Pos, Line));
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt()
-	Var IdentExpr, Call, Collection, Statements, VarPos, NewVar;
+	Var IdentExpr, Call, Collection, Body, VarPos, NewVar, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Expect(Tokens.Ident);
 	VarPos = Parser_BegPos;
@@ -2124,31 +2133,58 @@ Function ParseForEachStmt()
 	EndIf;
 	Expect(Tokens.Do);
 	Scan();
-	Statements = ParseStatements();
+	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForEachStmt(IdentExpr, Collection, Statements);
+	Return ForEachStmt(IdentExpr, Collection, Body, Place(Pos, Line));
 EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt()
-	Var Label;
+	Var Label, Pos, Line;
 	Scan();
 	Expect(Tokens.Label);
 	Label = Parser_Lit;
 	Scan();
-	Return GotoStmt(Label);
+	Return GotoStmt(Label, Place(Pos, Line));
 EndFunction // ParseGotoStmt()
 
 Function ParseReturnStmt()
 	Var Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Scan();
 	If Parser_IsFunc Then
 		Expr = ParseExpression();
 	EndIf;
 	Return ReturnStmt(Expr, Place(Pos, Line));
 EndFunction // ParseReturnStmt()
+
+Function ParseBreakStmt()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	Return BreakStmt(Place(Pos, Line));
+EndFunction // ParseBreakStmt()
+
+Function ParseContinueStmt()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	Return ContinueStmt(Place(Pos, Line));
+EndFunction // ParseContinueStmt()
+
+Function ParseLabelStmt()
+	Var Pos, Line, Label;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Label = Parser_Lit;
+	Scan();
+	Expect(Tokens.Colon);
+	Parser_Tok = Tokens.Semicolon; // cheat code
+	Return LabelStmt(Label, Place(Pos, Line));
+EndFunction // ParseLabelStmt() 
 
 #EndRegion // ParseStmt
 
@@ -2159,7 +2195,7 @@ EndFunction // ParseReturnStmt()
 Function ParsePrepExpression()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParsePrepAndExpr();
 	While Parser_Tok = Tokens.Or Do
 		Operator = Parser_Tok;
@@ -2172,7 +2208,7 @@ EndFunction // ParsePrepExpression()
 Function ParsePrepAndExpr()
 	Var Expr, Operator, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Expr = ParsePrepNotExpr();
 	While Parser_Tok = Tokens.And Do
 		Operator = Parser_Tok;
@@ -2185,7 +2221,7 @@ EndFunction // ParsePrepAndExpr()
 Function ParsePrepNotExpr()
 	Var Expr, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Not Then
 		Scan();
 		Expr = PrepNotExpr(ParsePrepSymExpr(), Place(Pos, Line));
@@ -2212,9 +2248,9 @@ EndFunction // ParsePrepSymExpr()
 Function ParsePrepUseInst()
 	Var Path, Pos, Line;
 	Pos = Parser_BegPos;
-	Line = Parser_Line;
+	Line = Parser_CurLine;
 	Scan();
-	If Line <> Parser_Line Then
+	If Line <> Parser_CurLine Then
 		Error("Expected string or identifier", Parser_EndPos, True);
 	EndIf;
 	If Parser_Tok = Tokens.Number Then
@@ -2234,31 +2270,61 @@ Function ParsePrepUseInst()
 EndFunction // ParsePrepUseInst()
 
 Function ParsePrepIfInst()
-	Var Cond;
+	Var Cond, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Cond = ParsePrepExpression();
 	Expect(Tokens.Then);
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepIfInst(Cond);
+	Return PrepIfInst(Cond, Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepIfInst()
 
 Function ParsePrepElsIfInst()
-	Var Cond;
+	Var Cond, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Cond = ParsePrepExpression();
 	Expect(Tokens.Then);
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepElsIfInst(Cond);
+	Return PrepElsIfInst(Cond, Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepElsIfInst()
 
+Function ParsePrepElseInst()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Parser_Tok = Tokens.Semicolon; // cheat code
+	Return PrepElseInst(Place(Pos, Line, Parser_CurPos - Pos));
+EndFunction // ParsePrepElseInst() 
+
+Function ParsePrepEndIfInst()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Parser_Tok = Tokens.Semicolon; // cheat code
+	Return PrepEndIfInst(Place(Pos, Line, Parser_CurPos - Pos));
+EndFunction // ParsePrepEndIfInst()
+
 Function ParsePrepRegionInst()
-	Var Name;
+	Var Name, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepRegionInst(Name);
+	Return PrepRegionInst(Name, Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepRegionInst()
+
+Function ParsePrepEndRegionInst()
+	Var Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Parser_Tok = Tokens.Semicolon; // cheat code
+	Return PrepEndRegionInst(Place(Pos, Line, Parser_CurPos - Pos));
+EndFunction // ParsePrepEndRegionInst()
 
 #EndRegion // ParsePrep
 
@@ -2266,17 +2332,17 @@ EndFunction // ParsePrepRegionInst()
 
 #Region Auxiliary
 
-Function Place(Pos = Undefined, Line = Undefined)
-	Var Place, Len;
+Function Place(Pos = Undefined, Line = Undefined, Len = Undefined)
+	Var Place;
 	If Location Then
 		If Pos = Undefined Then
 			Len = StrLen(Parser_Lit);
-			Pos = Parser_Pos - Len;
-		Else
+			Pos = Parser_CurPos - Len;
+		ElsIf Len = Undefined Then
 			Len = Parser_EndPos - Pos;
 		EndIf;
 		If Line = Undefined Then
-			Line = Parser_Line;
+			Line = Parser_CurLine;
 		EndIf;
 		Place = New Structure(
 			"Pos,"     // number
@@ -2338,7 +2404,7 @@ EndFunction // StringToken()
 Procedure Error(Note, Pos = Undefined, Stop = False)
 	Var ErrorText;
 	If Pos = Undefined Then
-		Pos = Min(Parser_Pos - StrLen(Parser_Lit), Parser_Len);
+		Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
 	EndIf;
 	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
 		StrOccurrenceCount(Mid(Parser_Source, 1, Pos), Chars_LF) + 1,
