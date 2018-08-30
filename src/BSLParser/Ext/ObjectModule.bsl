@@ -4,7 +4,6 @@
 Var Keywords;         // enum
 Var Tokens;           // enum
 Var Nodes;            // enum
-Var SelectKinds;      // enum
 Var Directives;       // enum
 Var PrepInstructions; // enum
 Var PrepSymbols;      // enum
@@ -43,13 +42,13 @@ Var Parser_Tok;       // string (one of Tokens)
 Var Parser_Lit;       // string
 Var Parser_Val;       // number, string, date, boolean, undefined, null
 Var Parser_Scope;     // structure (Scope)
-Var Parser_Vars;      // structure as map[string] (VarMod, VarLoc)
-Var Parser_Methods;   // structure as map[string] (Func, Proc)
-Var Parser_Unknown;   // structure as map[string] (Unknown)
+Var Parser_Vars;      // structure as map[string] (Object)
+Var Parser_Methods;   // structure as map[string] (Object)
+Var Parser_Unknown;   // structure as map[string] (Object)
 Var Parser_IsFunc;    // boolean
 Var Parser_AllowVar;  // boolean
 Var Parser_Directive; // string (one of Directives)
-Var Parser_Interface; // array (Func, Proc)
+Var Parser_Interface; // array (Object)
 Var Parser_Comments;  // map[number] (string)
 
 #EndRegion // ParserState
@@ -171,7 +170,6 @@ Procedure InitEnums()
 	Keywords = Keywords();
 	Tokens = Tokens(Keywords);
 	Nodes = Nodes();
-	SelectKinds = SelectKinds();
 	Directives = Directives();
 	PrepInstructions = PrepInstructions();
 	PrepSymbols = PrepSymbols();
@@ -235,21 +233,13 @@ Function Nodes() Export
 	Return Enum(New Structure,
 		"Module, Object,
 		|VarModDecl, VarModListDecl, VarLocDecl, ParamDecl, MethodDecl, ProcSign, FuncSign,
-		|BasicLitExpr, SelectExpr, DesigExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
+		|BasicLitExpr, FieldExpr, IndexExpr, IdentExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
 		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
 		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepUseInst"
 	);
 EndFunction // Nodes()
-
-Function SelectKinds() Export
-	Return Enum(New Structure,
-		"Ident," // Something._
-		"Index," // Something[_]
-		"Call"   // Something(_)
-	);
-EndFunction // SelectKinds()
 
 Function Directives() Export
 	Return Enum(New Structure,
@@ -417,11 +407,11 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place = Undefined)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcSign, FuncSign)
-		"Vars,"  // array (VarLocDecl) 
+		"Vars,"  // array (VarLocDecl)
 		"Auto,"  // array (Object)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);	
+		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
 EndFunction // MethodDecl()
 
 Function ProcSign(Name, Directive, Params, Exported, Place = Undefined)
@@ -472,45 +462,59 @@ Function BasicLitExpr(Kind, Value, Place = Undefined)
 		Nodes.BasicLitExpr, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
-Function SelectExpr(Kind, Value, Place = Undefined)
-	// Хранит информацию о селекторе.
-	// Селектор может быть обращением через точку, обращением по индексу или вызовом метода.
-	// Примеры:
+Function FieldExpr(Name, Args, Place = Undefined)
+	// Хранит информацию об обращении к полю объекта через точку.
+	// В поле Name содержится имя поля.
+	// В поле Args содержатся аргументы вызова (если это вызов).
+	// Пример:
 	// <pre>
-	// // селекторы заключены в скобки <...>
-	// Значение = Объект<.Поле>  // обращение через точку; поле "Kind" = SelectKinds.Ident;
-	//                           // поле "Value" хранит имя поля
-	// Значение = Объект<[Ключ]> // обращение по индексу; поле "Kind" = SelectKinds.Index;
-	//                           // поле "Value" хранит индекс-выражение
-	// Значение = Объект<()>     // вызов метода; поле "Kind" = SelectKinds.Call;
-	//                           // поле "Value" хранит список аргументов-выражений
+	// // обращения через точку заключены в скобки <...>
+	// Значение = Объект<.Поле>
+	// Значение = Объект<.Добавить(П1, П2)>
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Kind,"  // string (one of SelectKinds)
-		"Value," // string, structure (one of #Expressions), array (undefined, one of #Expressions)
+		"Name,"  // string
+		"Args,"  // undefined, array (undefined, one of #Expressions)
 		"Place", // number, structure (Place)
-		Nodes.SelectExpr, Kind, Value, Place);
-EndFunction // SelectExpr()
+		Nodes.FieldExpr, Name, Args, Place);
+EndFunction // FieldExpr()
 
-Function DesigExpr(Object, Select, Call, Place = Undefined)
-	// Хранит информацию об указателе (идентификатор + селекторы).
+Function IndexExpr(Expr, Place = Undefined)
+	// Хранит информацию об обращении к элементу объекта по индексу.
 	// Пример:
 	// <pre>
-	// // указатель заключен в скобки <...>
+	// // обращение по индексу заключено в скобки <...>
+	// Значение = Объект<[Ключ]>
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Expr,"  // structure (one of #Expressions)
+		"Place", // number, structure (Place)
+		Nodes.IndexExpr, Expr, Place);
+EndFunction // IndexExpr()
+
+Function IdentExpr(Object, Tail, Args, Place = Undefined)
+	// Хранит информацию об обращении к идентификатору.
+	// В поле Head содержится объект области видимости соответствующий идентификатору.
+	// В поле Tail содержится последовательность обращений через точку и по индексу.
+	// В поле Args содержатся аргументы вызова (если это вызов).
+	// Пример:
+	// <pre>
+	// // идентификатор заключен в скобки <...>
 	// // поле "Object" будет содержать объект переменной "Запрос";
-	// // поле "Select" будет содержать пять селекторов;
-	// // поле "Call" будет равно Ложь, т.к. последний селектор не является вызовом.
+	// // поле "Entries" будет содержать три обращения;
+	// // поле "Args" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
 	// Возврат <Запрос.Выполнить().Выгрузить()[0]>;
 	// </pre>
 	Return New Structure( // @Node
-		"Type,"   // string (one of Nodes)
-		"Object," // structure (Unknown, Func, Proc, VarMod, VarLoc, Param)
-		"Select," // array (SelectExpr)
-		"Call,"   // boolean
-		"Place",  // number, structure (Place)
-		Nodes.DesigExpr, Object, Select, Call, Place);
-EndFunction // DesigExpr()
+		"Type,"  // string (one of Nodes)
+		"Head,"  // structure (Object)
+		"Tail,"  // array (FieldExpr, IndexExpr)
+		"Args,"  // undefined, array (undefined, one of #Expressions)
+		"Place", // number, structure (Place)
+		Nodes.IdentExpr, Object, Tail, Args, Place);
+EndFunction // IdentExpr()
 
 Function UnaryExpr(Operator, Operand, Place = Undefined)
 	// Хранит унарное выражение.
@@ -575,23 +579,23 @@ Function NewExpr(Name, Args, Place = Undefined)
 		Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
-Function TernaryExpr(Cond, ThenPart, ElsePart, Select, Place = Undefined)
+Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place = Undefined)
 	// Хранит тернарное выражение "?(,,)".
 	// Пример:
 	// <pre>
 	// Значение = ?(Ложь,   // поле "Cond"
 	//     Неопределено,    // поле "Then"
 	//     Новый Массив     // поле "Else"
-	// ).Количество();      // поле "Select"
+	// ).Количество();      // поле "Tail"
 	// </pre>
 	Return New Structure( // @Node
-		"Type,"   // string (one of Nodes)
-		"Cond,"   // structure (one of #Expressions)
-		"Then,"   // structure (one of #Expressions)
-		"Else,"   // structure (one of #Expressions)
-		"Select," // array (SelectExpr)
-		"Place",  // number, structure (Place)
-		Nodes.TernaryExpr, Cond, ThenPart, ElsePart, Select, Place);
+		"Type,"  // string (one of Nodes)
+		"Cond,"  // structure (one of #Expressions)
+		"Then,"  // structure (one of #Expressions)
+		"Else,"  // structure (one of #Expressions)
+		"Tail,"  // array (FieldExpr, IndexExpr)
+		"Place", // number, structure (Place)
+		Nodes.TernaryExpr, Cond, ThenPart, ElsePart, Tail, Place);
 EndFunction // TernaryExpr()
 
 Function ParenExpr(Expr, Place = Undefined)
@@ -650,7 +654,7 @@ Function AssignStmt(Left, Right, Place = Undefined)
 	// Хранит оператор присваивания.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Left,"  // structure (DesigExpr)
+		"Left,"  // structure (IdentExpr)
 		"Right," // structure (one of #Expressions)
 		"Place", // number, structure (Place)
 		Nodes.AssignStmt, Left, Right, Place);
@@ -701,13 +705,13 @@ Function ExecuteStmt(Expr, Place = Undefined)
 		Nodes.ExecuteStmt, Expr, Place);
 EndFunction // ExecuteStmt()
 
-Function CallStmt(DesigExpr, Place = Undefined)
+Function CallStmt(IdentExpr, Place = Undefined)
 	// Хранит вызов процедуры или функции как процедуры.
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Desig," // structure (DesigExpr)
+		"Ident," // structure (IdentExpr)
 		"Place", // number, structure (Place)
-		Nodes.CallStmt, DesigExpr, Place);
+		Nodes.CallStmt, IdentExpr, Place);
 EndFunction // CallStmt()
 
 Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Place = Undefined)
@@ -776,41 +780,41 @@ Function WhileStmt(Cond, Statements, Place = Undefined)
 		Nodes.WhileStmt, Cond, Statements, Place);
 EndFunction // WhileStmt()
 
-Function ForStmt(DesigExpr, From, Until, Statements, Place = Undefined)
+Function ForStmt(IdentExpr, From, Until, Statements, Place = Undefined)
 	// Хранит оператор цикла "Для".
 	// Пример:
 	// <pre>
-	// Для Индекс = 0      // поля "Desig" и "From" хранят переменную и выражение инициализации.
+	// Для Индекс = 0      // поля "Ident" и "From" хранят переменную и выражение инициализации.
 	//   По Длина - 1 Цикл // поле "To" хранит выражение границы
 	//     // поле "Body" хранит операторы в этом блоке
 	// КонецЦикла
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Desig," // structure (DesigExpr)
+		"Ident," // structure (IdentExpr)
 		"From,"  // structure (one of #Expressions)
 		"To,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.ForStmt, DesigExpr, From, Until, Statements, Place);
+		Nodes.ForStmt, IdentExpr, From, Until, Statements, Place);
 EndFunction // ForStmt()
 
-Function ForEachStmt(DesigExpr, Collection, Statements, Place = Undefined)
+Function ForEachStmt(IdentExpr, Collection, Statements, Place = Undefined)
 	// Хранит оператор цикла "Для Каждого".
 	// Пример:
 	// <pre>
-	// Для Каждого Элемент // поле "Desig" хранит переменную.
+	// Для Каждого Элемент // поле "Ident" хранит переменную.
 	//   Из Список Цикл    // поле "In" хранит выражение коллекции.
 	//     // поле "Body" хранит операторы в этом блоке
 	// КонецЦикла
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Desig," // structure (DesigExpr)
+		"Ident," // structure (IdentExpr)
 		"In,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
-		Nodes.ForEachStmt, DesigExpr, Collection, Statements, Place);
+		Nodes.ForEachStmt, IdentExpr, Collection, Statements, Place);
 EndFunction // ForEachStmt()
 
 Function TryStmt(TryPart, ExceptPart, Place = Undefined)
@@ -1443,7 +1447,7 @@ Function ParseOperand()
 		Operand = BasicLitExpr(Tok, Parser_Val, Place());
 		Scan();
 	ElsIf Tok = Tokens.Ident Then
-		Operand = ParseDesigExpr();
+		Operand = ParseIdentExpr();
 	ElsIf Tok = Tokens.Lparen Then
 		Operand = ParseParenExpr();
 	ElsIf Tok = Tokens.New Then
@@ -1513,87 +1517,86 @@ Function ParseNewExpr()
 	Return NewExpr(Name, Args, Place(Pos, Line));
 EndFunction // ParseNewExpr()
 
-Function ParseDesigExpr(Val AllowNewVar = False, NewVar = Undefined)
-	Var Name, SelectExpr, Object, List, Kind, Pos, Line;
+Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
+	Var Name, Object, Tail, Args, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Name = Parser_Lit;
 	Scan();
-	SelectExpr = ParseSelectExpr();
-	If SelectExpr = Undefined Then
-		Object = FindObject(Name);
-		List = EmptyArray;
-	Else
-		AllowNewVar = False;
-		Kind = SelectExpr.Kind;
-		If Kind = "Call" Then
-			If Not Parser_Methods.Property(Name, Object) Then
-				If Not Parser_Unknown.Property(Name, Object) Then
-					Object = Object(Name);
-					Parser_Unknown.Insert(Name, Object);
-				EndIf;
-			EndIf;
+	If Parser_Tok = Tokens.Lparen Then
+		If Scan() = Tokens.Rparen Then
+			Args = EmptyArray;
 		Else
-			Object = FindObject(Name);
-		EndIf;
-		List = New Array;
-		List.Add(SelectExpr);
-		SelectExpr = ParseSelectExpr();
-		While SelectExpr <> Undefined Do
-			Kind = SelectExpr.Kind;
-			List.Add(SelectExpr);
-			SelectExpr = ParseSelectExpr();
-		EndDo;
-	EndIf;
-	If Object = Undefined Then
-		If AllowNewVar Then
-			Object = Object(Name);
-			NewVar = Object;
-		Else
-			Object = Object(Name);
-			If Verbose Then
-				Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
-			EndIf;
-		EndIf;
-	EndIf;
-	Return DesigExpr(Object, List, Kind = SelectKinds.Call, Place(Pos, Line));
-EndFunction // ParseDesigExpr()
-
-Function ParseSelectExpr()
-	Var Tok, Value, SelectExpr, Pos, Line;
-	Pos = Parser_BegPos;
-	Line = Parser_Line;
-	Tok = Parser_Tok;
-	If Tok = Tokens.Period Then
-		Scan();
-		If AlphaDigitMap[Left(Parser_Lit, 1)] <> Alpha Or Not Keywords.Property(Parser_Lit) Then
-			Expect(Tokens.Ident);
-		EndIf;
-		Value = Parser_Lit;
-		Scan();
-		SelectExpr = SelectExpr(SelectKinds.Ident, Value, Place(Pos, Line));
-	ElsIf Tok = Tokens.Lbrack Then
-		Tok = Scan();
-		If Tok = Tokens.Rbrack Then
-			Error("Expected expression", Pos, True);
-		EndIf;
-		Value = ParseExpression();
-		Expect(Tokens.Rbrack);
-		Scan();
-		SelectExpr = SelectExpr(SelectKinds.Index, Value, Place(Pos, Line));
-	ElsIf Tok = Tokens.Lparen Then
-		Tok = Scan();
-		If Tok = Tokens.Rparen Then
-			Value = EmptyArray;
-		Else
-			Value = ParseArguments();
+			Args = ParseArguments();
 		EndIf;
 		Expect(Tokens.Rparen);
 		Scan();
-		SelectExpr = SelectExpr(SelectKinds.Call, Value, Place(Pos, Line));
+		If Not Parser_Methods.Property(Name, Object) Then
+			If Not Parser_Unknown.Property(Name, Object) Then
+				Object = Object(Name);
+				Parser_Unknown.Insert(Name, Object);
+			EndIf;
+		EndIf;
+		Call = True;
+	Else
+		Object = FindObject(Name);
+		If Object = Undefined Then
+			If AllowNewVar Then
+				Object = Object(Name);
+				NewVar = Object;
+			Else
+				Object = Object(Name);
+				If Verbose Then
+					Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
+				EndIf;
+			EndIf;
+		EndIf;
+		Call = False;
+		Tail = ParseIdentTail(Call);
 	EndIf;
-	Return SelectExpr;
-EndFunction // ParseSelectExpr()
+	Return IdentExpr(Object, Tail, Args, Place(Pos, Line));
+EndFunction // ParseIdentExpr()
+
+Function ParseIdentTail(Call = Undefined)
+	Var Tail, Name, Args, Expr, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_Line;
+	Tail = New Array;
+	While True Do
+		If Parser_Tok = Tokens.Period Then
+			Scan();
+			If AlphaDigitMap[Left(Parser_Lit, 1)] <> Alpha Or Not Keywords.Property(Parser_Lit) Then
+				Expect(Tokens.Ident);
+			EndIf;
+			Name = Parser_Lit;
+			If Scan() = Tokens.Lparen Then
+				If Scan() = Tokens.Rparen Then
+					Args = EmptyArray;
+				Else
+					Args = ParseArguments();
+				EndIf;
+				Expect(Tokens.Rparen);
+				Scan();
+				Call = True;
+			Else
+				Args = Undefined;
+			EndIf;
+			Tail.Add(FieldExpr(Name, Args, Place(Pos, Line)));
+		ElsIf Parser_Tok = Tokens.Lbrack Then
+			Call = False;
+			If Scan() = Tokens.Rbrack Then
+				Error("Expected expression", Pos, True);
+			EndIf;
+			Expr = ParseExpression();
+			Expect(Tokens.Rbrack);
+			Scan();
+			Tail.Add(IndexExpr(Expr, Place(Pos, Line)));
+		Else
+			Break;
+		EndIf;
+	EndDo;
+	Return Tail;
+EndFunction // ParseIdentTail()
 
 Function ParseArguments()
 	Var ExprList;
@@ -1614,7 +1617,7 @@ Function ParseArguments()
 EndFunction // ParseArguments()
 
 Function ParseTernaryExpr()
-	Var Cond, ThenPart, ElsePart, SelectList, SelectExpr, Pos, Line;
+	Var Cond, ThenPart, ElsePart, Tail, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_Line;
 	Scan();
@@ -1629,16 +1632,11 @@ Function ParseTernaryExpr()
 	ElsePart = ParseExpression();
 	Expect(Tokens.Rparen);
 	If Scan() = Tokens.Period Then
-		SelectList = New Array;
-		SelectExpr = ParseSelectExpr();
-		While SelectExpr <> Undefined Do
-			SelectList.Add(SelectExpr);
-			SelectExpr = ParseSelectExpr();
-		EndDo;
+		Tail = ParseIdentTail();
 	Else
-		SelectList = EmptyArray;
+		Tail = EmptyArray;
 	EndIf;
-	Return TernaryExpr(Cond, ThenPart, ElsePart, SelectList, Place(Pos, Line));
+	Return TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place(Pos, Line));
 EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr()
@@ -1809,7 +1807,7 @@ Function ParseMethodDecl()
 		Sign = FuncSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	Else
 	    Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
-	EndIf; 
+	EndIf;
 	If Parser_Unknown.Property(Name, Object) Then
 		Parser_Unknown.Delete(Name);
 		Object.Decl = Sign;
@@ -1829,7 +1827,7 @@ Function ParseMethodDecl()
 		Expect(Tokens.EndFunction);
 	Else
 	    Expect(Tokens.EndProcedure);
-	EndIf; 
+	EndIf;
 	Auto = New Array;
 	For Each VarObj In Parser_Scope.Auto Do
 		Auto.Add(VarObj);
@@ -1984,9 +1982,9 @@ Function ParseExecuteStmt()
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt()
-	Var Left, Right, Stmt, NewVar;
-	Left = ParseDesigExpr(True, NewVar);
-	If Left.Call Then
+	Var Left, Call, Right, Stmt, NewVar;
+	Left = ParseIdentExpr(True, NewVar, Call);
+	If Call Then
 		Stmt = CallStmt(Left);
 	Else
 		Expect(Tokens.Eql);
@@ -2062,11 +2060,11 @@ Function ParseWhileStmt()
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt()
-	Var DesigExpr, From, Until, Statements, VarPos, NewVar;
+	Var IdentExpr, Call, From, Until, Statements, VarPos, NewVar;
 	Expect(Tokens.Ident);
 	VarPos = Parser_BegPos;
-	DesigExpr = ParseDesigExpr(True, NewVar);
-	If DesigExpr.Call Then
+	IdentExpr = ParseIdentExpr(True, NewVar, Call);
+	If Call Then
 		Error("Expected variable", VarPos, True);
 	EndIf;
 	Expect(Tokens.Eql);
@@ -2084,16 +2082,16 @@ Function ParseForStmt()
 	Statements = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForStmt(DesigExpr, From, Until, Statements);
+	Return ForStmt(IdentExpr, From, Until, Statements);
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt()
-	Var DesigExpr, Collection, Statements, VarPos, NewVar;
+	Var IdentExpr, Call, Collection, Statements, VarPos, NewVar;
 	Scan();
 	Expect(Tokens.Ident);
 	VarPos = Parser_BegPos;
-	DesigExpr = ParseDesigExpr(True, NewVar);
-	If DesigExpr.Call Then
+	IdentExpr = ParseIdentExpr(True, NewVar, Call);
+	If Call Then
 		Error("Expected variable", VarPos, True);
 	EndIf;
 	Expect(Tokens.In);
@@ -2108,7 +2106,7 @@ Function ParseForEachStmt()
 	Statements = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForEachStmt(DesigExpr, Collection, Statements);
+	Return ForEachStmt(IdentExpr, Collection, Statements);
 EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt()
@@ -2288,7 +2286,7 @@ Function AsDate(DateLit)
 		Or DateString = "000000000000"
 		Or DateString = "00000000000000" Then
 		Return '00010101';
-	EndIf; 
+	EndIf;
 	Return Date(DateString);
 EndFunction // AsDate()
 
@@ -2386,7 +2384,7 @@ Function Hooks()
 		"VisitSignature,      AfterVisitSignature,"
 		"VisitExpr,           AfterVisitExpr,"
 		"VisitBasicLitExpr,   AfterVisitBasicLitExpr,"
-		"VisitDesigExpr,      AfterVisitDesigExpr,"
+		"VisitIdentExpr,      AfterVisitIdentExpr,"
 		"VisitUnaryExpr,      AfterVisitUnaryExpr,"
 		"VisitBinaryExpr,     AfterVisitBinaryExpr,"
 		"VisitNewExpr,        AfterVisitNewExpr,"
@@ -2430,7 +2428,7 @@ Procedure VisitModule(Module) Export
 	Var Plugin, Hook, Item;
 	For Each Plugin In Visitor_Plugins Do
 		Plugin.Init(ThisObject);
-	EndDo; 
+	EndDo;
 	Visitor_Stack = New FixedStructure("Outer, Parent", Undefined, Undefined);
 	Visitor_Counters = New Structure;
 	For Each Item In Nodes Do
@@ -2553,10 +2551,10 @@ Procedure VisitMethodDecl(MethodDecl)
 		Hook.VisitMethodDecl(MethodDecl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(MethodDecl);
-	VisitSignature(MethodDecl.Sign); 
+	VisitSignature(MethodDecl.Sign);
 	For Each VarLocDecl In MethodDecl.Vars Do
 		VisitVarLocDecl(VarLocDecl);
-	EndDo; 
+	EndDo;
 	VisitStatements(MethodDecl.Body);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitMethodDecl Do
@@ -2591,8 +2589,8 @@ Procedure VisitExpr(Expr)
 	Type = Expr.Type;
 	If Type = Nodes.BasicLitExpr Then
 		VisitBasicLitExpr(Expr);
-	ElsIf Type = Nodes.DesigExpr Then
-		VisitDesigExpr(Expr);
+	ElsIf Type = Nodes.IdentExpr Then
+		VisitIdentExpr(Expr);
 	ElsIf Type = Nodes.UnaryExpr Then
 		VisitUnaryExpr(Expr);
 	ElsIf Type = Nodes.BinaryExpr Then
@@ -2623,28 +2621,39 @@ Procedure VisitBasicLitExpr(BasicLitExpr)
 	EndDo;
 EndProcedure // VisitBasicLitExpr()
 
-Procedure VisitDesigExpr(DesigExpr)
-	Var SelectExpr, Expr, Hook;
-	For Each Hook In Visitor_Hooks.VisitDesigExpr Do
-		Hook.VisitDesigExpr(DesigExpr, Visitor_Stack, Visitor_Counters);
+Procedure VisitIdentExpr(IdentExpr)
+	Var Item, Expr, Hook;
+	For Each Hook In Visitor_Hooks.VisitIdentExpr Do
+		Hook.VisitIdentExpr(IdentExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-	PushInfo(DesigExpr);
-	For Each SelectExpr In DesigExpr.Select Do
-		If SelectExpr.Kind = SelectKinds.Index Then
-			VisitExpr(SelectExpr.Value);
-		ElsIf SelectExpr.Kind = SelectKinds.Call Then
-			For Each Expr In SelectExpr.Value Do
-				If Expr <> Undefined Then
-					VisitExpr(Expr);
-				EndIf;
-			EndDo;
+	PushInfo(IdentExpr);
+	If IdentExpr.Args <> Undefined Then
+		For Each Expr In IdentExpr.Args Do
+			If Expr <> Undefined Then
+				VisitExpr(Expr);
+			EndIf;
+		EndDo;
+	EndIf;
+	For Each Item In IdentExpr.Tail Do
+		If Item.Type = Nodes.FieldExpr Then
+			If Item.Args <> Undefined Then
+				For Each Expr In Item.Args Do
+					If Expr <> Undefined Then
+						VisitExpr(Expr);
+					EndIf;
+				EndDo;
+			EndIf;
+		ElsIf Item.Type = Nodes.IndexExpr Then
+			VisitExpr(Item.Value);
+		Else
+			Raise "Call in violation of protocol"
 		EndIf;
 	EndDo;
 	PopInfo();
-	For Each Hook In Visitor_Hooks.AfterVisitDesigExpr Do
-		Hook.AfterVisitDesigExpr(DesigExpr, Visitor_Stack, Visitor_Counters);
+	For Each Hook In Visitor_Hooks.AfterVisitIdentExpr Do
+		Hook.AfterVisitIdentExpr(IdentExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
-EndProcedure // VisitDesigExpr()
+EndProcedure // VisitIdentExpr()
 
 Procedure VisitUnaryExpr(UnaryExpr)
 	Var Hook;
@@ -2691,7 +2700,7 @@ Procedure VisitNewExpr(NewExpr)
 EndProcedure // VisitNewExpr()
 
 Procedure VisitTernaryExpr(TernaryExpr)
-	Var SelectExpr, Expr, Hook;
+	Var Item, Expr, Hook;
 	For Each Hook In Visitor_Hooks.VisitTernaryExpr Do
 		Hook.VisitTernaryExpr(TernaryExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
@@ -2699,13 +2708,19 @@ Procedure VisitTernaryExpr(TernaryExpr)
 	VisitExpr(TernaryExpr.Cond);
 	VisitExpr(TernaryExpr.Then);
 	VisitExpr(TernaryExpr.Else);
-	For Each SelectExpr In TernaryExpr.Select Do
-		If SelectExpr.Kind <> SelectKinds.Ident Then
-			For Each Expr In SelectExpr.Value Do
-				If Expr <> Undefined Then
-					VisitExpr(Expr);
-				EndIf;
-			EndDo;
+	For Each Item In TernaryExpr.Tail Do
+		If Item.Type = Nodes.FieldExpr Then
+			If Item.Args <> Undefined Then
+				For Each Expr In Item.Args Do
+					If Expr <> Undefined Then
+						VisitExpr(Expr);
+					EndIf;
+				EndDo;
+			EndIf;
+		ElsIf Item.Type = Nodes.IndexExpr Then
+			VisitExpr(Item.Value);
+		Else
+			Raise "Call in violation of protocol"
 		EndIf;
 	EndDo;
 	PopInfo();
@@ -2812,7 +2827,7 @@ Procedure VisitAssignStmt(AssignStmt)
 		Hook.VisitAssignStmt(AssignStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(AssignStmt);
-	VisitDesigExpr(AssignStmt.Left);
+	VisitIdentExpr(AssignStmt.Left);
 	VisitExpr(AssignStmt.Right);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitAssignStmt Do
@@ -2889,7 +2904,7 @@ Procedure VisitCallStmt(CallStmt)
 		Hook.VisitCallStmt(CallStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(CallStmt);
-	VisitDesigExpr(CallStmt.Desig);
+	VisitIdentExpr(CallStmt.Ident);
 	PopInfo();
 	For Each Hook In Visitor_Hooks.AfterVisitCallStmt Do
 		Hook.AfterVisitCallStmt(CallStmt, Visitor_Stack, Visitor_Counters);
@@ -2965,7 +2980,7 @@ Procedure VisitForStmt(ForStmt)
 		Hook.VisitForStmt(ForStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(ForStmt);
-	VisitDesigExpr(ForStmt.Desig);
+	VisitIdentExpr(ForStmt.Ident);
 	VisitExpr(ForStmt.From);
 	VisitExpr(ForStmt.To);
 	VisitStatements(ForStmt.Body);
@@ -2981,7 +2996,7 @@ Procedure VisitForEachStmt(ForEachStmt)
 		Hook.VisitForEachStmt(ForEachStmt, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	PushInfo(ForEachStmt);
-	VisitDesigExpr(ForEachStmt.Desig);
+	VisitIdentExpr(ForEachStmt.Ident);
 	VisitExpr(ForEachStmt.In);
 	VisitStatements(ForEachStmt.Body);
 	PopInfo();
