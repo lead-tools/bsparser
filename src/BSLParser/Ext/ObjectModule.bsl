@@ -314,8 +314,8 @@ EndFunction // Module()
 Function Scope(Outer)
 	Return New Structure(
 		"Outer,"   // undefined, structure (Scope)
-		"Objects," // structure as map[string] (Unknown, Func, Proc, VarMod, VarLoc, Param)
-		"Auto",    // array (VarLoc)
+		"Objects," // structure as map[string] (Object)
+		"Auto",    // array (Object)
 		Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -324,7 +324,7 @@ Function Object(Name, Decl = Undefined)
 	// Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
-		"Name,"  // string
+		"Name," // string
 		"Decl", // undefined, structure (one of #Declarations)
 		Nodes.Object, Name, Decl);
 EndFunction // Object()
@@ -397,8 +397,8 @@ Function AutoDecl(Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Place", // number, structure (Place)
-		Nodes.AutoDecl, Place);	
-EndFunction // AutoDecl() 
+		Nodes.AutoDecl, Place);
+EndFunction // AutoDecl()
 
 Function ParamDecl(Name, ByVal, Value = Undefined, Place)
 	// Хранит информацию об объявлении параметра.
@@ -1818,7 +1818,7 @@ Function ParseMethodDecl()
 	If Parser_IsFunc Then
 		Sign = FuncSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	Else
-	    Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
+		Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	EndIf;
 	If Parser_Unknown.Property(Name, Object) Then
 		Parser_Unknown.Delete(Name);
@@ -1838,7 +1838,7 @@ Function ParseMethodDecl()
 	If Parser_IsFunc Then
 		Expect(Tokens.EndFunction);
 	Else
-	    Expect(Tokens.EndProcedure);
+		Expect(Tokens.EndProcedure);
 	EndIf;
 	Auto = New Array;
 	For Each VarObj In Parser_Scope.Auto Do
@@ -2040,7 +2040,7 @@ Function ParseElsIfStmt()
 	Scan();
 	ElsIfThen = ParseStatements();
 	Return ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Line));
-EndFunction // ParseElsIfStmt() 
+EndFunction // ParseElsIfStmt()
 
 Function ParseElseStmt()
 	Var Pos, Line;
@@ -2048,7 +2048,7 @@ Function ParseElseStmt()
 	Line = Parser_CurLine;
 	Scan();
 	Return ElseStmt(ParseStatements(), Place(Pos, Line));
-EndFunction // ParseElseStmt() 
+EndFunction // ParseElseStmt()
 
 Function ParseTryStmt()
 	Var TryPart, ExceptPart, Pos, Line;
@@ -2069,7 +2069,7 @@ Function ParseExceptStmt()
 	Line = Parser_CurLine;
 	Scan();
 	Return ExceptStmt(ParseStatements(), Place(Pos, Line));
-EndFunction // ParseExceptStmt() 
+EndFunction // ParseExceptStmt()
 
 Function ParseWhileStmt()
 	Var Cond, Body, Pos, Line;
@@ -2184,7 +2184,7 @@ Function ParseLabelStmt()
 	Expect(Tokens.Colon);
 	Parser_Tok = Tokens.Semicolon; // cheat code
 	Return LabelStmt(Label, Place(Pos, Line));
-EndFunction // ParseLabelStmt() 
+EndFunction // ParseLabelStmt()
 
 #EndRegion // ParseStmt
 
@@ -2297,7 +2297,7 @@ Function ParsePrepElseInst()
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
 	Return PrepElseInst(Place(Pos, Line, Parser_CurPos - Pos));
-EndFunction // ParsePrepElseInst() 
+EndFunction // ParsePrepElseInst()
 
 Function ParsePrepEndIfInst()
 	Var Pos, Line;
