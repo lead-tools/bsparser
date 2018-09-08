@@ -1291,7 +1291,7 @@ Function Scan()
 
 	Return Parser_Tok;
 
-EndFunction // Next()
+EndFunction // Scan()
 
 Function FindObject(Name)
 	Var Scope, Object;
@@ -1602,6 +1602,7 @@ Function ParseIdentTail(Call = Undefined)
 				Call = True;
 			Else
 				Args = Undefined;
+				Call = False;
 			EndIf;
 			Tail.Add(FieldExpr(Name, Args, Place(Pos, Line)));
 		ElsIf Parser_Tok = Tokens.Lbrack Then
@@ -1677,7 +1678,7 @@ EndFunction // ParseParenExpr()
 #Region ParseDecl
 
 Function ParseModDecls()
-	Var Decls, Inst;
+	Var Decls;
 	Decls = New Array;
 	While Parser_Tok = Tokens.Directive Do
 		Parser_Directive = Directives[Parser_Lit];
@@ -1747,7 +1748,7 @@ Function ParseVarModListDecl()
 EndFunction // ParseVarModListDecl()
 
 Function ParseVarModDecl()
-	Var Name, VarModDecl, Exported, Pos, Line;
+	Var Name, VarModDecl, Object, Exported, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Expect(Tokens.Ident);
@@ -1759,13 +1760,14 @@ Function ParseVarModDecl()
 		Exported = False;
 	EndIf;
 	VarModDecl = VarModDecl(Name, Parser_Directive, Exported, Place(Pos, Line));
-	If Exported Then
-		Parser_Interface.Add(VarModDecl);
-	EndIf;
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object(Name, VarModDecl));
+	Object = Object(Name, VarModDecl);
+	Parser_Vars.Insert(Name, Object);
+	If Exported Then
+		Parser_Interface.Add(Object);
+	EndIf;
 	Return VarModDecl;
 EndFunction // ParseVarModDecl()
 
@@ -1919,9 +1921,7 @@ Function ParseStatements()
 EndFunction // ParseStatements()
 
 Function ParseStmt()
-	Var Tok, Stmt, Pos, Line;
-	Pos = Parser_BegPos;
-	Line = Parser_CurLine;
+	Var Tok, Stmt;
 	Tok = Parser_Tok;
 	If Tok = Tokens.Ident Then
 		Stmt = ParseAssignOrCallStmt();
@@ -2567,7 +2567,9 @@ Procedure VisitDecl(Decl)
 		Hook.VisitDecl(Decl, Visitor_Stack, Visitor_Counters);
 	EndDo;
 	Type = Decl.Type;
-	If Type = Nodes.VarModDecl Then
+	If Type = Nodes.VarModListDecl Then
+		VisitVarModListDecl(Decl);
+	ElsIf Type = Nodes.VarModDecl Then
 		VisitVarModDecl(Decl);
 	ElsIf Type = Nodes.VarLocDecl Then
 		VisitVarLocDecl(Decl);
