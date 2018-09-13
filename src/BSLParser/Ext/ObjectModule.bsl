@@ -2296,6 +2296,7 @@ Function ParsePrepElseInst()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
+	Parser_EndLine = Parser_CurLine; // cheat code
 	Return PrepElseInst(Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepElseInst()
 
@@ -2304,6 +2305,7 @@ Function ParsePrepEndIfInst()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
+	Parser_EndLine = Parser_CurLine; // cheat code
 	Return PrepEndIfInst(Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepEndIfInst()
 
@@ -2323,6 +2325,7 @@ Function ParsePrepEndRegionInst()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
+	Parser_EndLine = Parser_CurLine; // cheat code
 	Return PrepEndRegionInst(Place(Pos, Line, Parser_CurPos - Pos));
 EndFunction // ParsePrepEndRegionInst()
 
