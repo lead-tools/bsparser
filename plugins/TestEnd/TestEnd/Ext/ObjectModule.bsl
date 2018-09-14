@@ -33,7 +33,7 @@ EndProcedure // VisitModule()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export 
 	Comment = Comments[MethodDecl.Place.EndLine];
-	If Comment <> Undefined And Comment <> StrTemplate(" %1%2", MethodDecl.Sign.Name, "()") Then
+	If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1%2", MethodDecl.Sign.Name, "()") Then
 		Result.Add(StrTemplate("Метод `%1()` имеет неправильный замыкающий комментарий в строке %2", MethodDecl.Sign.Name, MethodDecl.Place.EndLine));
 	EndIf; 
 EndProcedure // VisitMethodDecl()
@@ -45,7 +45,7 @@ Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
 	ElsIf PrepInst.Type = Nodes.PrepEndRegionInst Then
 		Comment = Comments[PrepInst.Place.BegLine];
 		RegionName = RegionStack[RegionLevel];
-		If Comment <> Undefined And Comment <> StrTemplate(" %1", RegionName) Then
+		If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1", RegionName) Then
 			Result.Add(StrTemplate("Область `%1` имеет неправильный замыкающий комментарий в строке %2", RegionName, PrepInst.Place.BegLine));
 		EndIf;
 		RegionLevel = RegionLevel - 1;
