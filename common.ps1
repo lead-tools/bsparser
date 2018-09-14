@@ -28,8 +28,12 @@ function connect() {
     $PSCredential = New-Object System.Management.Automation.PSCredential($UserName, $EmptyPassword)
 
     $ArgList = @('DESIGNER', '/F .\temp\', '/AgentMode', '/AgentSSHHostKeyAuto', '/AgentBaseDir .\')
-    #$ArgList += '/Visible'
-    Start-Process 'C:\Program Files (x86)\1cv8\common\1cestart.exe' -ArgumentList $ArgList
+    $ArgList += '/Visible'
+    $1cpath = 'C:\Program Files (x86)\1cv8\common\1cestart.exe'
+    if (-not (Test-Path $1cpath)) {
+        $1cpath = 'C:\Program Files\1cv8\common\1cestart.exe'
+    }
+    Start-Process $1cpath -ArgumentList $ArgList
 
     Start-Sleep 1
 
@@ -47,7 +51,7 @@ function connect() {
 function disconnect($1c, $ssh) {
     send $ssh 'common disconnect-ib'
     $ssh.WriteLine('common shutdown')
-    wait($ssh)
+    #wait($ssh)
 
     $1c | Remove-SSHSession | Out-Null
 }
