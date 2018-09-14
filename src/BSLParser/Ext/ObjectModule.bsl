@@ -1539,7 +1539,7 @@ Function ParseNewExpr()
 EndFunction // ParseNewExpr()
 
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
-	Var Name, Object, Tail, Args, Pos, Line;
+	Var Name, Object, Tail, Args, Pos, Line, AutoPlace;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Name = Parser_Lit;
