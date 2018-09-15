@@ -1560,7 +1560,13 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 			EndIf;
 		EndIf;
 		Call = True;
+		Tail = ParseIdentTail(Call);
 	Else
+		Call = False;
+		Tail = ParseIdentTail(Call);
+		If Tail.Count() > 0 Then
+			AllowNewVar = False;
+		EndIf;
 		Object = FindObject(Name);
 		If Object = Undefined Then
 			If AllowNewVar Then
@@ -1573,9 +1579,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 				EndIf;
 			EndIf;
 		EndIf;
-		Call = False;
 	EndIf;
-	Tail = ParseIdentTail(Call);
 	Return IdentExpr(Object, Tail, Args, Place(Pos, Line));
 EndFunction // ParseIdentExpr()
 
