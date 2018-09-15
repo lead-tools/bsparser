@@ -57,14 +57,15 @@ function disconnect($1c, $ssh) {
 }
 
 $list = @{
-    BSLParser     = "\"
-    gui           = "\gui\"
-    DocGen        = "\plugins\DocGen\"
-    BSL           = "\plugins\BSL\"
-    ReturnCheck   = "\plugins\ReturnCheck\"
-    AutoVarsCheck = "\plugins\AutoVarsCheck\"
-    TestCheck     = "\plugins\TestCheck\"
-    TestStat      = "\plugins\TestStat\"
-    TestVars      = "\plugins\TestVars\"
-    TestEnd       = "\plugins\TestEnd\"
+    BSLParser      = "\"
+    gui            = "\gui\"
+    DocGen         = "\plugins\DocGen\"
+    BSL            = "\plugins\BSL\"
+    ReturnCheck    = "\plugins\ReturnCheck\"
+    AutoVarsCheck  = "\plugins\AutoVarsCheck\"
+    TestCheck      = "\plugins\TestCheck\"
+    TestStat       = "\plugins\TestStat\"
+    TestVars       = "\plugins\TestVars\"
+    TestEnd        = "\plugins\TestEnd\"
+    TestServerCall = "\plugins\TestServerCall\"
 }
