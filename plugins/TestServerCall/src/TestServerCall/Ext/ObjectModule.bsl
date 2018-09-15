@@ -1,5 +1,9 @@
 ﻿
-// Рекурсивный подсчет серверных вызовов в модулях форм
+// Рекурсивный подсчет серверных вызовов в модулях форм.
+// Выводятся только случаи с количеством серверных вызовов > 1.
+
+// Вызовы других модулей не учитываются.
+// Вызовы типа Таблица.НайтиСтроки() не учитываются.
 
 Var Nodes;
 Var Directives;
@@ -26,7 +30,7 @@ Function Interface() Export
 	Var Interface;
 	Interface = New Array;
 	Interface.Add("VisitMethodDecl");
-	Interface.Add("VisitCallStmt");
+	Interface.Add("VisitIdentExpr");
 	Return Interface;
 EndFunction // Interface() 
 
@@ -35,10 +39,10 @@ Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	CallerAtClient = (Caller.Directive = Directives.AtClient);
 EndProcedure // VisitMethodDecl()
 
-Procedure VisitCallStmt(CallStmt, Stack, Counters) Export
+Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
 	Var CallRow, Method;
-	If CallStmt.Ident.Tail.Count() = 0 Then // только простые вызовы методов данного модуля
-		Method = CallStmt.Ident.Head.Decl;
+	If IdentExpr.Args <> Undefined And IdentExpr.Tail.Count() = 0 Then // только простые вызовы методов данного модуля
+		Method = IdentExpr.Head.Decl;
 		If Method <> Undefined Then // только известные методы
 			CallRow = CallTable.Add();
 			Callrow.Caller = Caller;
@@ -47,7 +51,7 @@ Procedure VisitCallStmt(CallStmt, Stack, Counters) Export
 			Methods[Method] = True;
 		EndIf; 
 	EndIf; 
-EndProcedure // VisitAssignStmt() 
+EndProcedure // VisitIdentExpr() 
 
 Function Result() Export
 	For Each Method In Methods Do
@@ -57,7 +61,7 @@ Function Result() Export
 	EndDo; 
 	CallTable.GroupBy("Caller", "ServerCall");
 	For Each Row In CallTable Do
-		If Row.ServerCall > 0 Then
+		If Row.ServerCall > 1 Then
 			Result.Add(StrTemplate("Метод `%1()` содержит %2 серверных вызовов", Row.Caller.Name, Row.ServerCall));
 		EndIf; 
 	EndDo;
