@@ -28,12 +28,12 @@ Procedure Init(BSLParserProcessor) Export
 
 EndProcedure // Init()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitModule");
-	Return Interface;
-EndFunction // Interface()
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitModule");
+	Return Hooks;
+EndFunction // Hooks()
 
 Function Result() Export
 	Return StrConcat(Result);

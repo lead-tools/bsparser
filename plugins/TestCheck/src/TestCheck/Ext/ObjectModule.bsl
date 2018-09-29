@@ -13,14 +13,14 @@ Function Result() Export
 	Return StrConcat(Result, Chars.LF);
 EndFunction // Result()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitWhileStmt");
-	Interface.Add("VisitForStmt");
-	Interface.Add("VisitForEachStmt");
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitWhileStmt");
+	Hooks.Add("VisitForStmt");
+	Hooks.Add("VisitForEachStmt");
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
 	VisitLoopStmt(WhileStmt, Stack, Counters);

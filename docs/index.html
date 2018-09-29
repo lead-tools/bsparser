@@ -23,9 +23,9 @@ Plugins.Add(Plugin1);
 Plugin2 = ExternalDataProcessors.Create(PluginPath2, False);
 Plugins.Add(Plugin2);
 
-Module = BSLParser.ParseModule(Source.GetText());
+Module = BSLParser.Parse(Source.GetText());
 BSLParser.HookUp(Plugins);
-BSLParser.VisitModule(Module);
+BSLParser.Visit(Module);
 
 Message(Plugin1.Result());
 Message(Plugin2.Result());
@@ -40,11 +40,11 @@ Source = TextReader.Read();
 
 BSLParser = New BSLParser;
 BSLParser.Location = False;
-Module = BSLParser.ParseModule(Source);
+Module = BSLParser.Parse(Source);
 
 PluginTestVars = New PluginTestVars;
 BSLParser.HookUp(PluginTestVars);
-BSLParser.VisitModule(Module);
+BSLParser.Visit(Module);
 
 Message(PluginTestVars.Result());
 </pre>
@@ -67,14 +67,14 @@ Function Result() Export
 	Return StrConcat(Result);
 EndFunction // Refult()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	// Interface.Add("VisitAssignStmt");
-	// Interface.Add("AfterVisitAssignStmt");
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	// Hooks.Add("VisitAssignStmt");
+	// Hooks.Add("AfterVisitAssignStmt");
 	...
-	Return Interface;
-EndFunction // Interface()
+	Return Hooks;
+EndFunction // Hooks()
 
 #Region Hooks
 
@@ -92,17 +92,17 @@ EndFunction // Interface()
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#Object'>Object</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#Item'>Item</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Interface</strong>: array (<a href='#Object'>Object</a>)</li>
+		<li><strong>Interface</strong>: array (<a href='#Item'>Item</a>)</li>
 		<li><strong>Comments</strong>: map[number] (string)</li>
 	</ul>
 	<h2 id='#Scope'>#Scope</h2>
-	<h3 id='Object'>Object<a class='permalink' href='#Object'>¶</a></h3>
+	<h3 id='Item'>Item<a class='permalink' href='#Item'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию об объекте области видимости.</i><br>
 	<i> Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Object</li>
+	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Item</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Decl</strong>: undefined, structure (one of <a href='##Declarations'>#Declarations</a>)</li>
 	</ul>
@@ -183,7 +183,7 @@ EndFunction // Interface()
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
 		<li><strong>Sign</strong>: structure (<a href='#ProcSign'>ProcSign</a>, <a href='#FuncSign'>FuncSign</a>)</li>
 		<li><strong>Vars</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#Object'>Object</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#Item'>Item</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
 	</ul>
@@ -259,7 +259,7 @@ EndFunction // Interface()
  // поле "Tail" будет содержать три обращения;
  // поле "Args" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
  Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IdentExpr</li>
-		<li><strong>Head</strong>: structure (<a href='#Object'>Object</a>)</li>
+		<li><strong>Head</strong>: structure (<a href='#Item'>Item</a>)</li>
 		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
 		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
@@ -665,7 +665,7 @@ EndFunction // Interface()
 </ul>
 <h3 id='Nodes'>Nodes</h3>
 <ul><li>"<a href='#Module'>Module</a>"</li>
-<li>"<a href='#Object'>Object</a>"</li>
+<li>"<a href='#Item'>Item</a>"</li>
 <li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
 <li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
 <li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>

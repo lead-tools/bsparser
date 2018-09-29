@@ -12,16 +12,19 @@ BSLParser.HookUp(PluginTestVars);
 TextReader = New TextReader;
 
 For Each File In Files Do
-	Message(Chars.LF);
-	Message(File.FullName);
 	TextReader.Open(File.FullName);
 	Source = TextReader.Read();
 	Try
-		Module = BSLParser.ParseModule(Source);
-		BSLParser.VisitModule(Module);
+		Module = BSLParser.Parse(Source);
+		BSLParser.Visit(Module);
 	Except
 		Message(DetailErrorDescription(ErrorInfo()));
 	EndTry;
-	Message(PluginTestVars.Result());
+	Result = PluginTestVars.Result();
+	If ValueIsFilled(Result) Then
+		Message(Chars.LF);
+		Message(File.FullName);
+		Message(Result);
+	EndIf;
 	TextReader.Close()
 EndDo;

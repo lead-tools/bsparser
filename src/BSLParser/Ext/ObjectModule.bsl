@@ -42,20 +42,20 @@ Var Parser_Tok;       // string (one of Tokens)
 Var Parser_Lit;       // string
 Var Parser_Val;       // number, string, date, boolean, undefined, null
 Var Parser_Scope;     // structure (Scope)
-Var Parser_Vars;      // structure as map[string] (Object)
-Var Parser_Methods;   // structure as map[string] (Object)
-Var Parser_Unknown;   // structure as map[string] (Object)
+Var Parser_Vars;      // structure as map[string] (Item)
+Var Parser_Methods;   // structure as map[string] (Item)
+Var Parser_Unknown;   // structure as map[string] (Item)
 Var Parser_IsFunc;    // boolean
 Var Parser_AllowVar;  // boolean
 Var Parser_Directive; // string (one of Directives)
-Var Parser_Interface; // array (Object)
+Var Parser_Interface; // array (Item)
 Var Parser_Comments;  // map[number] (string)
 
 #EndRegion // ParserState
 
 #Region VisitorState
 
-Var Visitor_Plugins;  // array (DataProcessorObject)
+Var Visitor_Plugins;  // array (DataProcessorItem)
 Var Visitor_Hooks;    // structure as map[string] (array)
 Var Visitor_Stack;    // structure
 Var Visitor_Counters; // structure as map[string] (number)
@@ -231,7 +231,7 @@ EndFunction // Tokens()
 
 Function Nodes() Export
 	Return Enum(New Structure,
-		"Module, Object,
+		"Module, Item,
 		|VarModDecl, VarModListDecl, VarLocDecl, AutoDecl, ParamDecl, MethodDecl, ProcSign, FuncSign,
 		|BasicLitExpr, FieldExpr, IndexExpr, IdentExpr, UnaryExpr, BinaryExpr, NewExpr, TernaryExpr, ParenExpr, NotExpr, StringExpr,
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
@@ -302,9 +302,9 @@ Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Decls,"     // array (one of #Declarations)
-		"Auto,"      // array (Object)
+		"Auto,"      // array (Item)
 		"Body,"      // array (one of #Statements)
-		"Interface," // array (Object)
+		"Interface," // array (Item)
 		"Comments",  // map[number] (string)
 		Nodes.Module, Decls, Auto, Statements, Interface, Comments);
 EndFunction // Module()
@@ -313,21 +313,21 @@ EndFunction // Module()
 
 Function Scope(Outer)
 	Return New Structure(
-		"Outer,"   // undefined, structure (Scope)
-		"Objects," // structure as map[string] (Object)
-		"Auto",    // array (Object)
+		"Outer," // undefined, structure (Scope)
+		"Items," // structure as map[string] (Item)
+		"Auto",  // array (Item)
 		Outer, New Structure, New Array);
 EndFunction // Scope()
 
-Function Object(Name, Decl = Undefined)
+Function Item(Name, Decl = Undefined)
 	// Узел хранит информацию об объекте области видимости.
 	// Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).
 	Return New Structure( // @Node
 		"Type," // string (one of Nodes)
 		"Name," // string
 		"Decl", // undefined, structure (one of #Declarations)
-		Nodes.Object, Name, Decl);
-EndFunction // Object()
+		Nodes.Item, Name, Decl);
+EndFunction // Item()
 
 #EndRegion // Scope
 
@@ -429,7 +429,7 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place)
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcSign, FuncSign)
 		"Vars,"  // array (VarLocDecl)
-		"Auto,"  // array (Object)
+		"Auto,"  // array (Item)
 		"Body,"  // array (one of #Statements)
 		"Place", // number, structure (Place)
 		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
@@ -515,7 +515,7 @@ Function IndexExpr(Expr, Place)
 		Nodes.IndexExpr, Expr, Place);
 EndFunction // IndexExpr()
 
-Function IdentExpr(Object, Tail, Args, Place)
+Function IdentExpr(Item, Tail, Args, Place)
 	// Хранит информацию об обращении к идентификатору.
 	// В поле Head содержится объект области видимости соответствующий идентификатору.
 	// В поле Tail содержится последовательность обращений через точку и по индексу.
@@ -530,11 +530,11 @@ Function IdentExpr(Object, Tail, Args, Place)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Head,"  // structure (Object)
+		"Head,"  // structure (Item)
 		"Tail,"  // array (FieldExpr, IndexExpr)
 		"Args,"  // undefined, array (undefined, one of #Expressions)
 		"Place", // number, structure (Place)
-		Nodes.IdentExpr, Object, Tail, Args, Place);
+		Nodes.IdentExpr, Item, Tail, Args, Place);
 EndFunction // IdentExpr()
 
 Function UnaryExpr(Operator, Operand, Place)
@@ -1293,22 +1293,22 @@ Function Scan()
 
 EndFunction // Scan()
 
-Function FindObject(Name)
-	Var Scope, Object;
+Function FindItem(Name)
+	Var Scope, Item;
 	Scope = Parser_Scope;
-	Scope.Objects.Property(Name, Object);
-	While Object = Undefined And Scope.Outer <> Undefined Do
+	Scope.Items.Property(Name, Item);
+	While Item = Undefined And Scope.Outer <> Undefined Do
 		Scope = Scope.Outer;
-		Scope.Objects.Property(Name, Object);
+		Scope.Items.Property(Name, Item);
 	EndDo;
-	Return Object;
-EndFunction // FindObject()
+	Return Item;
+EndFunction // FindItem()
 
 Function OpenScope()
 	Var Scope;
 	Scope = Scope(Parser_Scope);
 	Parser_Scope = Scope;
-	Parser_Vars = Scope.Objects;
+	Parser_Vars = Scope.Items;
 	Return Scope;
 EndFunction // OpenScope()
 
@@ -1316,11 +1316,11 @@ Function CloseScope()
 	Var Scope;
 	Scope = Parser_Scope.Outer;
 	Parser_Scope = Scope;
-	Parser_Vars = Scope.Objects;
+	Parser_Vars = Scope.Items;
 	Return Scope;
 EndFunction // CloseScope()
 
-Function ParseModule(Source) Export
+Function Parse(Source) Export
 	Var Decls, Auto, VarObj, Item, Statements, Module;
 	Parser_Source = Source;
 	Parser_CurPos = 0;
@@ -1361,7 +1361,7 @@ Function ParseModule(Source) Export
 	Parser_Vars = Undefined;
 	Parser_Source = Undefined;
 	Return Module;
-EndFunction // ParseModule()
+EndFunction // Parse()
 
 #Region ParseExpr
 
@@ -1539,7 +1539,7 @@ Function ParseNewExpr()
 EndFunction // ParseNewExpr()
 
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
-	Var Name, Object, Tail, Args, Pos, Line, AutoPlace;
+	Var Name, Item, Tail, Args, Pos, Line, AutoPlace;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Name = Parser_Lit;
@@ -1553,10 +1553,10 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 		EndIf;
 		Expect(Tokens.Rparen);
 		Scan();
-		If Not Parser_Methods.Property(Name, Object) Then
-			If Not Parser_Unknown.Property(Name, Object) Then
-				Object = Object(Name);
-				Parser_Unknown.Insert(Name, Object);
+		If Not Parser_Methods.Property(Name, Item) Then
+			If Not Parser_Unknown.Property(Name, Item) Then
+				Item = Item(Name);
+				Parser_Unknown.Insert(Name, Item);
 			EndIf;
 		EndIf;
 		Call = True;
@@ -1567,20 +1567,20 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 		If Tail.Count() > 0 Then
 			AllowNewVar = False;
 		EndIf;
-		Object = FindObject(Name);
-		If Object = Undefined Then
+		Item = FindItem(Name);
+		If Item = Undefined Then
 			If AllowNewVar Then
-				Object = Object(Name, AutoDecl(AutoPlace));
-				NewVar = Object;
+				Item = Item(Name, AutoDecl(AutoPlace));
+				NewVar = Item;
 			Else
-				Object = Object(Name);
+				Item = Item(Name);
 				If Verbose Then
 					Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
 				EndIf;
 			EndIf;
 		EndIf;
 	EndIf;
-	Return IdentExpr(Object, Tail, Args, Place(Pos, Line));
+	Return IdentExpr(Item, Tail, Args, Place(Pos, Line));
 EndFunction // ParseIdentExpr()
 
 Function ParseIdentTail(Call = Undefined)
@@ -1752,7 +1752,7 @@ Function ParseVarModListDecl()
 EndFunction // ParseVarModListDecl()
 
 Function ParseVarModDecl()
-	Var Name, VarModDecl, Object, Exported, Pos, Line;
+	Var Name, VarModDecl, Item, Exported, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Expect(Tokens.Ident);
@@ -1767,10 +1767,10 @@ Function ParseVarModDecl()
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Object = Object(Name, VarModDecl);
-	Parser_Vars.Insert(Name, Object);
+	Item = Item(Name, VarModDecl);
+	Parser_Vars.Insert(Name, Item);
 	If Exported Then
-		Parser_Interface.Add(Object);
+		Parser_Interface.Add(Item);
 	EndIf;
 	Return VarModDecl;
 EndFunction // ParseVarModDecl()
@@ -1801,13 +1801,13 @@ Function ParseVarLocDecl()
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object(Name, VarLocDecl));
+	Parser_Vars.Insert(Name, Item(Name, VarLocDecl));
 	Scan();
 	Return VarLocDecl;
 EndFunction // ParseVarLocDecl()
 
 Function ParseMethodDecl()
-	Var Sign, Object, Name, Vars, Params, Exported, Body, Auto, VarObj, Pos, Line;
+	Var Sign, Item, Name, Vars, Params, Exported, Body, Auto, VarObj, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Exported = False;
@@ -1826,18 +1826,18 @@ Function ParseMethodDecl()
 	Else
 		Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
 	EndIf;
-	If Parser_Unknown.Property(Name, Object) Then
+	If Parser_Unknown.Property(Name, Item) Then
 		Parser_Unknown.Delete(Name);
-		Object.Decl = Sign;
+		Item.Decl = Sign;
 	Else
-		Object = Object(Name, Sign);
+		Item = Item(Name, Sign);
 	EndIf;
 	If Parser_Methods.Property(Name) Then
 		Error("Method already declared", Pos, True);
 	EndIf;
-	Parser_Methods.Insert(Name, Object);
+	Parser_Methods.Insert(Name, Item);
 	If Exported Then
-		Parser_Interface.Add(Object);
+		Parser_Interface.Add(Item);
 	EndIf;
 	Vars = ParseVars();
 	Body = ParseStatements();
@@ -1895,7 +1895,7 @@ Function ParseParamDecl()
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
-	Parser_Vars.Insert(Name, Object(Name, ParamDecl));
+	Parser_Vars.Insert(Name, Item(Name, ParamDecl));
 	Return ParamDecl;
 EndFunction // ParseParamDecl()
 
@@ -2440,7 +2440,7 @@ Procedure HookUp(Val Plugins) Export
 	Visitor_Hooks = Hooks();
 	For Each Plugin In Plugins Do
 		List = Undefined;
-		For Each MethodName In Plugin.Interface() Do
+		For Each MethodName In Plugin.Hooks() Do
 			If Visitor_Hooks.Property(MethodName, List) Then
 				List.Add(Plugin);
 			EndIf;
@@ -2518,7 +2518,7 @@ Function Hooks()
 
 EndFunction // Hooks()
 
-Procedure VisitModule(Module) Export
+Procedure Visit(Module) Export
 	Var Plugin, Hook, Item;
 	For Each Plugin In Visitor_Plugins Do
 		Plugin.Init(ThisObject);
@@ -2538,7 +2538,7 @@ Procedure VisitModule(Module) Export
 	For Each Hook In Visitor_Hooks.AfterVisitModule Do
 		Hook.AfterVisitModule(Module, Visitor_Stack, Visitor_Counters);
 	EndDo;
-EndProcedure // VisitModule()
+EndProcedure // Visit()
 
 Procedure VisitDeclarations(Declarations)
 	Var Decl, Hook;

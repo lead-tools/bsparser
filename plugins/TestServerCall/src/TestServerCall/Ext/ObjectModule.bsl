@@ -26,13 +26,13 @@ Procedure Init(BSLParser) Export
 	Methods = New Map;
 EndProcedure // Init() 
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitMethodDecl");
-	Interface.Add("VisitIdentExpr");
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitMethodDecl");
+	Hooks.Add("VisitIdentExpr");
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Caller = MethodDecl.Sign;

@@ -16,14 +16,14 @@ Function Result() Export
 	Return StrConcat(Result, Chars.LF);
 EndFunction // Result()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitAssignStmt");
-	Interface.Add("VisitMethodDecl");
-	Interface.Add("AfterVisitMethodDecl");
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitAssignStmt");
+	Hooks.Add("VisitMethodDecl");
+	Hooks.Add("AfterVisitMethodDecl");
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
 	AssignCount = AssignCount + 1;

@@ -20,30 +20,30 @@ Procedure Init(BSLParser) Export
 	ExprLevel = 0;
 EndProcedure // Init() 
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitMethodDecl");
-	Interface.Add("AfterVisitMethodDecl");
-	Interface.Add("VisitBinaryExpr");
-	Interface.Add("VisitTernaryExpr");
-	Interface.Add("VisitIfStmt");
-	Interface.Add("AfterVisitIfStmt");
-	Interface.Add("VisitElsIfStmt");
-	Interface.Add("VisitElseStmt");
-	Interface.Add("VisitWhileStmt");
-	Interface.Add("AfterVisitWhileStmt");
-	Interface.Add("VisitForStmt");
-	Interface.Add("AfterVisitForStmt");
-	Interface.Add("VisitForEachStmt");
-	Interface.Add("AfterVisitForEachStmt");
-	Interface.Add("VisitExceptStmt");
-	Interface.Add("VisitCallStmt");
-	Interface.Add("VisitGotoStmt");
-	Interface.Add("VisitBreakStmt");
-	Interface.Add("VisitContinueStmt");	
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitMethodDecl");
+	Hooks.Add("AfterVisitMethodDecl");
+	Hooks.Add("VisitBinaryExpr");
+	Hooks.Add("VisitTernaryExpr");
+	Hooks.Add("VisitIfStmt");
+	Hooks.Add("AfterVisitIfStmt");
+	Hooks.Add("VisitElsIfStmt");
+	Hooks.Add("VisitElseStmt");
+	Hooks.Add("VisitWhileStmt");
+	Hooks.Add("AfterVisitWhileStmt");
+	Hooks.Add("VisitForStmt");
+	Hooks.Add("AfterVisitForStmt");
+	Hooks.Add("VisitForEachStmt");
+	Hooks.Add("AfterVisitForEachStmt");
+	Hooks.Add("VisitExceptStmt");
+	Hooks.Add("VisitCallStmt");
+	Hooks.Add("VisitGotoStmt");
+	Hooks.Add("VisitBreakStmt");
+	Hooks.Add("VisitContinueStmt");	
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	CurMethod = MethodDecl.Sign;

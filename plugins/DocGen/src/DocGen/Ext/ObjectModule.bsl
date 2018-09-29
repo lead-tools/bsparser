@@ -38,9 +38,9 @@ Procedure Init(BSLParser) Export
 		|Plugin2 = ExternalDataProcessors.Create(PluginPath2, False);
 		|Plugins.Add(Plugin2);
 		|
-		|Module = BSLParser.ParseModule(Source.GetText());
+		|Module = BSLParser.Parse(Source.GetText());
 		|BSLParser.HookUp(Plugins);
-		|BSLParser.VisitModule(Module);
+		|BSLParser.Visit(Module);
 		|
 		|Message(Plugin1.Result());
 		|Message(Plugin2.Result());
@@ -55,11 +55,11 @@ Procedure Init(BSLParser) Export
 		|
 		|BSLParser = New BSLParser;
 		|BSLParser.Location = False;
-		|Module = BSLParser.ParseModule(Source);
+		|Module = BSLParser.Parse(Source);
 		|
 		|PluginTestVars = New PluginTestVars;
 		|BSLParser.HookUp(PluginTestVars);
-		|BSLParser.VisitModule(Module);
+		|BSLParser.Visit(Module);
 		|
 		|Message(PluginTestVars.Result());
 		|</pre>
@@ -82,14 +82,14 @@ Procedure Init(BSLParser) Export
 		|	Return StrConcat(Result);
 		|EndFunction // Refult()
 		|
-		|Function Interface() Export
-		|	Var Interface;
-		|	Interface = New Array;
-		|	// Interface.Add(""VisitAssignStmt"");
-		|	// Interface.Add(""AfterVisitAssignStmt"");
+		|Function Hooks() Export
+		|	Var Hooks;
+		|	Hooks = New Array;
+		|	// Hooks.Add(""VisitAssignStmt"");
+		|	// Hooks.Add(""AfterVisitAssignStmt"");
 		|	...
-		|	Return Interface;
-		|EndFunction // Interface()
+		|	Return Hooks;
+		|EndFunction // Hooks()
 		|
 		|#Region Hooks
 		|
@@ -150,14 +150,14 @@ Function GenerateEnum(Name, Enum, Links = False)
 	Return StrConcat(Buffer);
 EndFunction // GenerateEnum()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitModule");
-	Interface.Add("VisitPrepInst");
-	Interface.Add("VisitNewExpr");
-	Return Interface;
-EndFunction // Interface()
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitModule");
+	Hooks.Add("VisitPrepInst");
+	Hooks.Add("VisitNewExpr");
+	Return Hooks;
+EndFunction // Hooks()
 
 Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;

@@ -43,11 +43,11 @@ Procedure TranslateAtServer()
 
 	If Output = "NULL" Then
 
-		BSLParser.ParseModule(Source.GetText());
+		BSLParser.Parse(Source.GetText());
 		
 	ElsIf Output = "AST" Then
 
-		Parser_Module = BSLParser.ParseModule(Source.GetText());
+		Parser_Module = BSLParser.Parse(Source.GetText());
 		JSONWriter = New JSONWriter;
 		JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
 		If ShowComments Then
@@ -64,7 +64,7 @@ Procedure TranslateAtServer()
 		
 	ElsIf Output = "Tree" Then
 
-		Parser_Module = BSLParser.ParseModule(Source.GetText());
+		Parser_Module = BSLParser.Parse(Source.GetText());
 		FillTree(Parser_Module);
 		
 	ElsIf Output = "Plugin" Then
@@ -72,9 +72,9 @@ Procedure TranslateAtServer()
 		BSLParser.Location = True;
 		
 		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
-		Parser_Module = BSLParser.ParseModule(Source.GetText());
+		Parser_Module = BSLParser.Parse(Source.GetText());
 		BSLParser.HookUp(PluginProcessor);
-		BSLParser.VisitModule(Parser_Module);
+		BSLParser.Visit(Parser_Module);
 		Result.SetText(PluginProcessor.Result());
 		
 	EndIf;

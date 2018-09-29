@@ -11,7 +11,7 @@ TextReader.Close();
 
 BSLParser = New BSLParser;
 BSLParser.Location = True;
-Module = BSLParser.ParseModule(Source);
+Module = BSLParser.Parse(Source);
 
 Plugins = New Array;
 
@@ -20,7 +20,7 @@ Plugins.Add(New PluginTestEnd);
 Plugins.Add(New PluginReturnCheck);
 Plugins.Add(New PluginAutoVarsCheck);
 BSLParser.HookUp(Plugins);
-BSLParser.VisitModule(Module);
+BSLParser.Visit(Module);
 
 For Each Plugin In Plugins Do
 	Message(Plugin.Result());

@@ -18,14 +18,14 @@ Function Result() Export
 	Return StrConcat(Result, Chars.LF);
 EndFunction // Result()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitModule");
-	Interface.Add("VisitMethodDecl");
-	Interface.Add("VisitPrepInst");
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitModule");
+	Hooks.Add("VisitMethodDecl");
+	Hooks.Add("VisitPrepInst");
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitModule(Module, Stack, Counters) Export
 	Comments = Module.Comments;	

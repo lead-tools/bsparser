@@ -20,12 +20,12 @@ Function Result() Export
 	Return StrConcat(Result, Chars.LF);
 EndFunction // Result()
 
-Function Interface() Export
-	Var Interface;
-	Interface = New Array;
-	Interface.Add("VisitMethodDecl");
-	Return Interface;
-EndFunction // Interface() 
+Function Hooks() Export
+	Var Hooks;
+	Hooks = New Array;
+	Hooks.Add("VisitMethodDecl");
+	Return Hooks;
+EndFunction // Hooks() 
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var StmtCount;
