@@ -1311,6 +1311,41 @@ Function CloseScope()
 	Return Scope;
 EndFunction // CloseScope()
 
+Procedure OpenGlobalScope()
+	OpenScope();
+	// Constants
+	InsertConstant("Chars", "Символы");
+	InsertConstant("SearchDirection", "НаправлениеПоиска");
+	InsertConstant("ThisObject", "ЭтотОбъект");
+	// Methods
+	InsertMethod("Date", "Дата");
+	InsertMethod("IsBlankString", "ПустаяСтрока");
+	InsertMethod("Left", "Лев");
+	InsertMethod("Mid", "Сред");
+	InsertMethod("Min", "Мин");
+	InsertMethod("Number", "Число");
+	InsertMethod("Right", "Прав");
+	InsertMethod("StrConcat", "СтрСоединить");
+	InsertMethod("StrFind", "СтрНайти");
+	InsertMethod("String", "Строка");
+	InsertMethod("StrLen", "СтрДлина");
+	InsertMethod("StrSplit", "СтрРазделить");
+	InsertMethod("StrTemplate", "СтрШаблон");
+	InsertMethod("TrimAll", "СокрЛП");
+	InsertMethod("Type", "Тип");
+	InsertMethod("TypeOf", "ТипЗнч");
+EndProcedure // OpenGlobalScope()
+
+Procedure InsertConstant(NameEn, NameRu)
+	Parser_Vars.Insert(NameEn, Item(NameEn));
+	Parser_Vars.Insert(NameRu, Item(NameRu));
+EndProcedure // InsertConstant()
+
+Procedure InsertMethod(NameEn, NameRu)
+	Parser_Methods.Insert(NameEn, Item(NameEn));
+	Parser_Methods.Insert(NameRu, Item(NameRu));
+EndProcedure // InsertMethod()
+
 Function Parse(Source) Export
 	Var Decls, Auto, VarObj, Item, Statements, Module;
 	Parser_Source = Source;
@@ -1333,6 +1368,7 @@ Function Parse(Source) Export
 	Parser_Errors.Columns.Add("Text", New TypeDescription("String"));
 	Parser_Errors.Columns.Add("Line", New TypeDescription("Number"));
 	Parser_Errors.Columns.Add("Pos", New TypeDescription("Number"));
+	OpenGlobalScope();
 	OpenScope();
 	Scan();
 	Decls = ParseModDecls();
@@ -1346,7 +1382,7 @@ Function Parse(Source) Export
 		CallSites = Parser_CallSites[Item.Value];
 		For Each Place In CallSites Do
 			Error(StrTemplate("Undeclared method `%1`", Item.Key), Place.Pos);
-		EndDo; 
+		EndDo;
 	EndDo;
 	Expect(Tokens.Eof);
 	Parser_Unknown = Undefined;
@@ -1362,7 +1398,7 @@ EndFunction // Parse()
 
 Function Errors() Export
 	Return Parser_Errors;
-EndFunction 
+EndFunction
 
 #Region ParseExpr
 
@@ -1563,7 +1599,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 				Parser_Unknown.Insert(Name, Item);
 				CallSites = New Array;
 				CallSites.Add(AutoPlace);
-				Parser_CallSites[Item] = CallSites;		
+				Parser_CallSites[Item] = CallSites;
 			EndIf;
 		EndIf;
 		Call = True;
@@ -3227,10 +3263,10 @@ EndProcedure // VisitPrepInst()
 #EndRegion // Visitor
 
 Procedure Go(Source, Val Plugins) Export
-	
+
 	HookUp(Plugins);
 	Visit(Parse(Source));
-	
-EndProcedure // Go() 
+
+EndProcedure // Go()
 
 Init();
