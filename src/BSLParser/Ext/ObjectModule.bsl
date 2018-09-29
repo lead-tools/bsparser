@@ -20,14 +20,6 @@ Var Chars_LF;         // string
 
 #EndRegion // Constants
 
-#Region Settings
-
-Var Verbose Export;  // boolean
-Var Debug Export;    // boolean
-Var Location Export; // boolean
-
-#EndRegion // Settings
-
 #Region ParserState
 
 Var Parser_Source;    // string
@@ -50,6 +42,7 @@ Var Parser_AllowVar;  // boolean
 Var Parser_Directive; // string (one of Directives)
 Var Parser_Interface; // array (Item)
 Var Parser_Comments;  // map[number] (string)
+Var Parser_Errors;    // table
 
 #EndRegion // ParserState
 
@@ -66,10 +59,6 @@ Var Visitor_Counters; // structure as map[string] (number)
 
 Procedure Init()
 	Var Letters, Index, Char;
-
-	Verbose = False;
-	Debug = False;
-	Location = True;
 
 	InitEnums();
 
@@ -379,7 +368,7 @@ Function VarLocDecl(Name, Place)
 		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
 
-Function AutoDecl(Place)
+Function AutoDecl(Name, Place)
 	// Хранит информацию об объявлении авто-переменной.
 	// Пример:
 	// Объявления переменных заключены в скобки <...>
@@ -396,8 +385,9 @@ Function AutoDecl(Place)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
+		"Name,"  // string
 		"Place", // number, structure (Place)
-		Nodes.AutoDecl, Place);
+		Nodes.AutoDecl, Name, Place);
 EndFunction // AutoDecl()
 
 Function ParamDecl(Name, ByVal, Value = Undefined, Place)
@@ -1337,6 +1327,10 @@ Function Parse(Source) Export
 	Parser_Len = StrLen(Source);
 	Parser_Lit = "";
 	Parser_Char = Undefined;
+	Parser_Errors = New ValueTable;
+	Parser_Errors.Columns.Add("Text", New TypeDescription("String"));
+	Parser_Errors.Columns.Add("Line", New TypeDescription("Number"));
+	Parser_Errors.Columns.Add("Pos", New TypeDescription("Number"));
 	OpenScope();
 	Scan();
 	Decls = ParseModDecls();
@@ -1346,11 +1340,9 @@ Function Parse(Source) Export
 		Auto.Add(VarObj);
 	EndDo;
 	Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
-	If Verbose Then
-		For Each Item In Parser_Unknown Do
-			Message(StrTemplate("Undeclared method `%1`", Item.Key));
-		EndDo;
-	EndIf;
+	For Each Item In Parser_Unknown Do
+		Error(StrTemplate("Undeclared method `%1`", Item.Key),,, True);
+	EndDo;
 	Expect(Tokens.Eof);
 	Parser_Unknown = Undefined;
 	Parser_Methods = Undefined;
@@ -1362,6 +1354,10 @@ Function Parse(Source) Export
 	Parser_Source = Undefined;
 	Return Module;
 EndFunction // Parse()
+
+Function Errors() Export
+	Return Parser_Errors;
+EndFunction 
 
 #Region ParseExpr
 
@@ -1570,13 +1566,11 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 		Item = FindItem(Name);
 		If Item = Undefined Then
 			If AllowNewVar Then
-				Item = Item(Name, AutoDecl(AutoPlace));
+				Item = Item(Name, AutoDecl(Name, AutoPlace));
 				NewVar = Item;
 			Else
 				Item = Item(Name);
-				If Verbose Then
-					Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
-				EndIf;
+				Error(StrTemplate("Undeclared identifier `%1`", Name), Pos);
 			EndIf;
 		EndIf;
 	EndIf;
@@ -2341,28 +2335,21 @@ EndFunction // ParsePrepEndRegionInst()
 
 Function Place(Pos = Undefined, Line = Undefined, Len = Undefined)
 	Var Place;
-	If Location Then
-		If Pos = Undefined Then
-			Len = StrLen(Parser_Lit);
-			Pos = Parser_CurPos - Len;
-		ElsIf Len = Undefined Then
-			Len = Parser_EndPos - Pos;
-		EndIf;
-		If Line = Undefined Then
-			Line = Parser_CurLine;
-		EndIf;
-		Place = New Structure(
-			"Pos,"     // number
-			"Len,"     // number
-			"BegLine," // number
-			"EndLine", // number
-			Pos, Len, Line, Parser_EndLine);
-		If Debug Then
-			Place.Insert("Str", Mid(Parser_Source, Pos, Len));
-		EndIf;
-	Else
-		Place = Line;
+	If Pos = Undefined Then
+		Len = StrLen(Parser_Lit);
+		Pos = Parser_CurPos - Len;
+	ElsIf Len = Undefined Then
+		Len = Parser_EndPos - Pos;
 	EndIf;
+	If Line = Undefined Then
+		Line = Parser_CurLine;
+	EndIf;
+	Place = New Structure(
+		"Pos,"     // number
+		"Len,"     // number
+		"BegLine," // number
+		"EndLine", // number
+		Pos, Len, Line, Parser_EndLine);
 	Return Place;
 EndFunction // Place()
 
@@ -2408,20 +2395,28 @@ Function StringToken(Lit)
 	Return Tok;
 EndFunction // StringToken()
 
-Procedure Error(Note, Pos = Undefined, Stop = False)
-	Var ErrorText;
-	If Pos = Undefined Then
-		Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
-	EndIf;
-	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		StrOccurrenceCount(Mid(Parser_Source, 1, Pos), Chars_LF) + 1,
-		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
-		Note
-	);
+Procedure Error(Note, Pos = Undefined, Stop = False, WithoutPos = False)
+	Var ErrorText, Error;
+	If WithoutPos Then
+		ErrorText = Note;
+	Else
+		If Pos = Undefined Then
+			Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
+		EndIf;
+		ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
+			Parser_CurLine,
+			Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
+			Note
+		);
+	EndIf;	
+	Error = Parser_Errors.Add();
+	Error.Text = ErrorText;
+	If Not WithoutPos Then
+		Error.Line = Parser_CurLine;
+		Error.Pos = Pos;
+	EndIf; 
 	If Stop Then
 		Raise ErrorText;
-	Else
-		Message(ErrorText);
 	EndIf;
 EndProcedure // Error()
 

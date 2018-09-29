@@ -35,10 +35,6 @@ Procedure TranslateAtServer()
 
 	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSLParser.epf", False);
 
-	BSLParser.Verbose = Verbose;
-	BSLParser.Location = Location;
-	BSLParser.Debug = Debug;
-
 	Start = CurrentUniversalDateInMilliseconds();
 
 	If Output = "NULL" Then
@@ -69,13 +65,18 @@ Procedure TranslateAtServer()
 		
 	ElsIf Output = "Plugin" Then
 		
-		BSLParser.Location = True;
-		
-		PluginProcessor = ExternalDataProcessors.Create(PluginPath, False);
 		Parser_Module = BSLParser.Parse(Source.GetText());
-		BSLParser.HookUp(PluginProcessor);
+		PluginsList = New Array;
+		For Each Row In Plugins Do
+			PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
+		EndDo;
+	    BSLParser.HookUp(PluginsList);
 		BSLParser.Visit(Parser_Module);
-		Result.SetText(PluginProcessor.Result());
+		ResultArray = New Array;
+		For Each Plugin In PluginsList Do
+			ResultArray.Add(Plugin.Result());
+		EndDo; 
+		Result.SetText(StrConcat(ResultArray));
 		
 	EndIf;
 
@@ -83,6 +84,8 @@ Procedure TranslateAtServer()
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 	EndIf;
 
+	Errors.Load(BSLParser.Errors());  
+	
 EndProcedure // TranslateAtServer()
 
 &AtServer
@@ -159,11 +162,10 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 
 	If Reason = Items.Output Or Reason = Undefined Then
 
-		Items.PluginPath.Visible = (ThisObject.Output = "Plugin");
-		Items.Location.Visible = (ThisObject.Output <> "Plugin");
+		Items.PagePlugins.Visible = (ThisObject.Output = "Plugin");
 		Items.ShowComments.Visible = (ThisObject.Output = "AST");
-		Items.Tree.Visible = (ThisObject.Output = "Tree");
-		Items.Result.Visible = (ThisObject.Output <> "Tree");
+		Items.PageResultTree.Visible = (ThisObject.Output = "Tree");
+		Items.PageResultText.Visible = (ThisObject.Output <> "Tree");
 		
 	EndIf;
 
@@ -177,35 +179,70 @@ Procedure OutputOnChange(Item)
 EndProcedure // OutputOnChange()
 
 &AtClient
-Procedure PluginPathStartChoice(Item, ChoiceData, StandardProcessing)
-
+Procedure PluginsPathStartChoice(Item, ChoiceData, StandardProcessing)
+	
 	StandardProcessing = False;
 	ChoosePath(Item, ThisObject, FileDialogMode.Open, "(*.epf)|*.epf");
-
-EndProcedure // PluginPathStartChoice()
+	
+EndProcedure // PluginsPathStartChoice()
 
 &AtClient
-Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined)
-
+Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined) Export
+	
 	If DialogMode = Undefined Then
 		DialogMode = FileDialogMode.ChooseDirectory;
-	EndIf;
-
+	EndIf; 
+	
 	FileOpeningDialog = New FileDialog(DialogMode);
+	FileOpeningDialog.Multiselect = False;
 	FileOpeningDialog.Filter = Filter;
-
-	FileOpeningDialog.Show(New NotifyDescription("ChoosePathNotifyChoice", ThisObject));
-
+	If DialogMode = FileDialogMode.ChooseDirectory Then
+		FileOpeningDialog.Directory = Item.EditText;
+	Else
+		FileOpeningDialog.FullFileName = Item.EditText;
+	EndIf; 
+	
+	AdditionalParameters = New Structure("Item, Form", Item, Form);
+	
+	NotifyDescription = New NotifyDescription("ChoosePathNotifyChoice", ThisObject, AdditionalParameters);
+	
+	FileOpeningDialog.Show(NotifyDescription);
+	
 EndProcedure // ChoosePath()
 
 &AtClient
 Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
-
+	
 	If Result <> Undefined Then
-		PluginPath = Result[0];
-	EndIf;
+		InteractivelySetValueOfFormItem(
+			Result[0],
+			AdditionalParameters.Item,
+			AdditionalParameters.Form
+		);
+	EndIf; 
+	
+EndProcedure // ChoosePathHandle()
 
-EndProcedure // ChoosePathNotifyChoice()
+&AtClient
+Procedure InteractivelySetValueOfFormItem(Value, Item, Form) Export
+	
+	FormOwner = Form.FormOwner;
+	CloseOnChoice = Form.CloseOnChoice;
+	
+	Form.FormOwner = Item;
+	Form.CloseOnChoice = False;
+	
+	Form.NotifyChoice(Value);
+	
+	If Form.FormOwner = Item Then
+		Form.FormOwner = FormOwner;
+	EndIf;
+	
+	If Form.CloseOnChoice = False Then
+		Form.CloseOnChoice = CloseOnChoice;
+	EndIf;  
+	
+EndProcedure // InteractivelySetValueOfFormItem()
 
 &AtClient
 Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
@@ -216,4 +253,32 @@ Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
 	EndIf; 
 EndProcedure // TreeSelection()
 
+&AtClient
+Procedure PluginsPathOpening(Item, StandardProcessing)	
+	StandardProcessing = False;
+	ShowFile(Items.Plugins.CurrentData.Path);
+EndProcedure
 
+&AtClient
+Procedure ShowFile(FullName) Export
+	If FullName <> Undefined Then
+		BeginRunningApplication(
+			New NotifyDescription("ShowFileHandleResult", ThisObject, FullName),
+			"explorer.exe /select, " + FullName
+		);
+	EndIf; 	
+EndProcedure // ShowFolder()
+
+&AtClient
+Procedure ShowFileHandleResult(ReturnCode, FullName) Export
+	// silently continue
+EndProcedure // ShowFileHandleResult()
+
+&AtClient
+Procedure ErrorsSelection(Item, SelectedRow, Field, StandardProcessing)
+	Row = Errors.FindByID(SelectedRow);
+	If Row.Line > 0 Then
+		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + 1);
+		CurrentItem = Items.Source;
+	EndIf;
+EndProcedure
