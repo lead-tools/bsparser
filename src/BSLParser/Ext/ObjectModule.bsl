@@ -3226,4 +3226,11 @@ EndProcedure // VisitPrepInst()
 
 #EndRegion // Visitor
 
+Procedure Go(Source, Val Plugins) Export
+	
+	HookUp(Plugins);
+	Visit(Parse(Source));
+	
+EndProcedure // Go() 
+
 Init();

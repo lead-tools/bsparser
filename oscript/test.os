@@ -9,18 +9,14 @@ TextReader = New TextReader("..\src\BSLParser\Ext\ObjectModule.bsl");
 Source = TextReader.Read();
 TextReader.Close();
 
-BSLParser = New BSLParser;
-BSLParser.Location = True;
-Module = BSLParser.Parse(Source);
-
 Plugins = New Array;
-
 Plugins.Add(New PluginTestVars);
 Plugins.Add(New PluginTestEnd);
 Plugins.Add(New PluginReturnCheck);
 Plugins.Add(New PluginAutoVarsCheck);
-BSLParser.HookUp(Plugins);
-BSLParser.Visit(Module);
+
+BSLParser = New BSLParser;
+BSLParser.Go(Source, Plugins);
 
 For Each Plugin In Plugins Do
 	Message(Plugin.Result());
