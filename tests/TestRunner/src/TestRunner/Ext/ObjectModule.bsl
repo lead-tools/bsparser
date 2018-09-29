@@ -47,6 +47,30 @@ Procedure Run(BSLParser) Export
 		Raise "Test failed"
 	EndIf;
 
+	If Not Failed("x[0] = 1 + 1", "Undeclared identifier `x`", 1, 1) Then
+		Raise "Test failed"
+	EndIf;
+
+	If Not Failed("for each x in x do enddo", "Undeclared identifier `x`", 1, 15) Then
+		Raise "Test failed"
+	EndIf;
+
+	If Not Failed("for each in x do enddo", "Expected Ident", 1, 10) Then
+		Raise "Test failed"
+	EndIf;
+
+	If Not Failed("for x in x do enddo", "Expected Eql", 1, 7) Then
+		Raise "Test failed"
+	EndIf;
+
+	If Not Failed("for x = 1 in x do enddo", "Expected To", 1, 11) Then
+		Raise "Test failed"
+	EndIf;
+
+	If Not Failed("for x = 1 to 2 enddo", "Expected Do", 1, 16) Then
+		Raise "Test failed"
+	EndIf;
+
 	If Not Failed("x = .1", "Expected operand", 1, 5) Then
 		Raise "Test failed"
 	EndIf;

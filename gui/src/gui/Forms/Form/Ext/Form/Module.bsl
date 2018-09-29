@@ -38,45 +38,67 @@ Procedure TranslateAtServer()
 	Start = CurrentUniversalDateInMilliseconds();
 
 	If Output = "NULL" Then
-
-		BSLParser.Parse(Source.GetText());
+		
+		Try
+			BSLParser.Parse(Source.GetText());
+		Except
+			Message("syntax error!");
+		EndTry;
 		
 	ElsIf Output = "AST" Then
 
-		Parser_Module = BSLParser.Parse(Source.GetText());
-		JSONWriter = New JSONWriter;
-		JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
-		If ShowComments Then
-			Comments = New Map;
-			For Each Item In Parser_Module.Comments Do
-				Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
-			EndDo;
-			Parser_Module.Comments = Comments;
-		Else
-			Parser_Module.Delete("Comments");
-		EndIf;
-		WriteJSON(JSONWriter, Parser_Module,, "ConvertJSON", ThisObject);
-		Result.SetText(JSONWriter.Close());
+		Try
+			Parser_Module = BSLParser.Parse(Source.GetText());
+		Except
+			Message("syntax error!");
+		EndTry;
+		If Parser_Module <> Undefined Then
+			JSONWriter = New JSONWriter;
+			JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
+			If ShowComments Then
+				Comments = New Map;
+				For Each Item In Parser_Module.Comments Do
+					Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
+				EndDo;
+				Parser_Module.Comments = Comments;
+			Else
+				Parser_Module.Delete("Comments");
+			EndIf;
+			WriteJSON(JSONWriter, Parser_Module,, "ConvertJSON", ThisObject);
+			Result.SetText(JSONWriter.Close());
+		EndIf; 
 		
 	ElsIf Output = "Tree" Then
-
-		Parser_Module = BSLParser.Parse(Source.GetText());
-		FillTree(Parser_Module);
+		
+		Try
+			Parser_Module = BSLParser.Parse(Source.GetText());
+		Except
+			Message("syntax error!");
+		EndTry;
+		If Parser_Module <> Undefined Then
+			FillTree(Parser_Module);
+		EndIf; 
 		
 	ElsIf Output = "Plugin" Then
 		
-		Parser_Module = BSLParser.Parse(Source.GetText());
-		PluginsList = New Array;
-		For Each Row In Plugins Do
-			PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
-		EndDo;
-	    BSLParser.HookUp(PluginsList);
-		BSLParser.Visit(Parser_Module);
-		ResultArray = New Array;
-		For Each Plugin In PluginsList Do
-			ResultArray.Add(Plugin.Result());
-		EndDo; 
-		Result.SetText(StrConcat(ResultArray));
+		Try
+			Parser_Module = BSLParser.Parse(Source.GetText());
+		Except
+			Message("syntax error!");
+		EndTry;
+		If Parser_Module <> Undefined Then
+			PluginsList = New Array;
+			For Each Row In Plugins Do
+				PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
+			EndDo;
+			BSLParser.HookUp(PluginsList);
+			BSLParser.Visit(Parser_Module);
+			ResultArray = New Array;
+			For Each Plugin In PluginsList Do
+				ResultArray.Add(Plugin.Result());
+			EndDo; 
+			Result.SetText(StrConcat(ResultArray));
+		EndIf; 
 		
 	EndIf;
 

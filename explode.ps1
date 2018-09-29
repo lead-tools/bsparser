@@ -9,7 +9,7 @@ $1c, $ssh = connect
 
 $x = 0; $dx = 100 / $list.Count
 foreach ($item in $list.GetEnumerator()) {
-    Remove-Item ".$($item.Value)src\*" -recurse
+    Remove-Item ".$($item.Value)src\*" -recurse -force
     send $ssh "config dump-ext-files --file=""..$($item.Value)src\$($item.Name).xml"" --ext-file=""..\build\$($item.Name).epf"""
     $x += $dx
     complete $x "Explode"
