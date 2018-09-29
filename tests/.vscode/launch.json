@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "OneScript",
+            "type": "oscript",
+            "request": "launch",
+            "program": "${workspaceRoot}/run.os",
+            "args": [],
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": null,
+            "debugPort": 2801,
+            "protocol": "internal"
+        }
+    ]
+}
