@@ -37,6 +37,7 @@ Var Parser_Scope;     // structure (Scope)
 Var Parser_Vars;      // structure as map[string] (Item)
 Var Parser_Methods;   // structure as map[string] (Item)
 Var Parser_Unknown;   // structure as map[string] (Item)
+Var Parser_CallSites; // map[Item] (Place)
 Var Parser_IsFunc;    // boolean
 Var Parser_AllowVar;  // boolean
 Var Parser_Directive; // string (one of Directives)
@@ -1320,6 +1321,7 @@ Function Parse(Source) Export
 	Parser_EndPos = 0;
 	Parser_Methods = New Structure;
 	Parser_Unknown = New Structure;
+	Parser_CallSites = New Map;
 	Parser_IsFunc = False;
 	Parser_AllowVar = True;
 	Parser_Interface = New Array;
@@ -1341,7 +1343,10 @@ Function Parse(Source) Export
 	EndDo;
 	Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
 	For Each Item In Parser_Unknown Do
-		Error(StrTemplate("Undeclared method `%1`", Item.Key),,, True);
+		CallSites = Parser_CallSites[Item.Value];
+		For Each Place In CallSites Do
+			Error(StrTemplate("Undeclared method `%1`", Item.Key), Place.Pos);
+		EndDo; 
 	EndDo;
 	Expect(Tokens.Eof);
 	Parser_Unknown = Undefined;
@@ -1550,9 +1555,15 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 		Expect(Tokens.Rparen);
 		Scan();
 		If Not Parser_Methods.Property(Name, Item) Then
-			If Not Parser_Unknown.Property(Name, Item) Then
+			If Parser_Unknown.Property(Name, Item) Then
+				CallSites = Parser_CallSites[Item];
+				CallSites.Add(AutoPlace);
+			Else
 				Item = Item(Name);
 				Parser_Unknown.Insert(Name, Item);
+				CallSites = New Array;
+				CallSites.Add(AutoPlace);
+				Parser_CallSites[Item] = CallSites;		
 			EndIf;
 		EndIf;
 		Call = True;
@@ -2395,26 +2406,20 @@ Function StringToken(Lit)
 	Return Tok;
 EndFunction // StringToken()
 
-Procedure Error(Note, Pos = Undefined, Stop = False, WithoutPos = False)
+Procedure Error(Note, Pos = Undefined, Stop = False)
 	Var ErrorText, Error;
-	If WithoutPos Then
-		ErrorText = Note;
-	Else
-		If Pos = Undefined Then
-			Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
-		EndIf;
-		ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-			Parser_CurLine,
-			Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
-			Note
-		);
-	EndIf;	
+	If Pos = Undefined Then
+		Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
+	EndIf;
+	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
+		Parser_CurLine,
+		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
+		Note
+	);
 	Error = Parser_Errors.Add();
 	Error.Text = ErrorText;
-	If Not WithoutPos Then
-		Error.Line = Parser_CurLine;
-		Error.Pos = Pos;
-	EndIf; 
+	Error.Line = Parser_CurLine;
+	Error.Pos = Pos;
 	If Stop Then
 		Raise ErrorText;
 	EndIf;
