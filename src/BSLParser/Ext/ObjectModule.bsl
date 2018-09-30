@@ -309,7 +309,7 @@ Function Scope(Outer)
 		Outer, New Structure, New Array);
 EndFunction // Scope()
 
-Function Item(Name, Decl = Undefined)
+Function Item(Name, Decl = Undefined) Export
 	// Узел хранит информацию об объекте области видимости.
 	// Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).
 	Return New Structure( // @Node
@@ -1311,12 +1311,16 @@ Function CloseScope()
 	Return Scope;
 EndFunction // CloseScope()
 
-Procedure OpenGlobalScope()
+Function Context() Export
+	Return New Structure("Scope, Methods", Scope(Undefined), New Structure)
+EndFunction // Context()
+
+Procedure CreateMinimalContext()
 	OpenScope();
 	// Constants
-	InsertConstant("Chars", "Символы");
-	InsertConstant("SearchDirection", "НаправлениеПоиска");
-	InsertConstant("ThisObject", "ЭтотОбъект");
+	InsertVar("Chars", "Символы");
+	InsertVar("SearchDirection", "НаправлениеПоиска");
+	InsertVar("ThisObject", "ЭтотОбъект");
 	// Methods
 	InsertMethod("Date", "Дата");
 	InsertMethod("IsBlankString", "ПустаяСтрока");
@@ -1334,19 +1338,19 @@ Procedure OpenGlobalScope()
 	InsertMethod("TrimAll", "СокрЛП");
 	InsertMethod("Type", "Тип");
 	InsertMethod("TypeOf", "ТипЗнч");
-EndProcedure // OpenGlobalScope()
+EndProcedure // CreateMinimalContext()
 
-Procedure InsertConstant(NameEn, NameRu)
+Procedure InsertVar(NameEn, NameRu)
 	Parser_Vars.Insert(NameEn, Item(NameEn));
 	Parser_Vars.Insert(NameRu, Item(NameRu));
-EndProcedure // InsertConstant()
+EndProcedure // InsertVar()
 
 Procedure InsertMethod(NameEn, NameRu)
 	Parser_Methods.Insert(NameEn, Item(NameEn));
 	Parser_Methods.Insert(NameRu, Item(NameRu));
 EndProcedure // InsertMethod()
 
-Function Parse(Source) Export
+Function Parse(Source, Context = Undefined) Export
 	Var Decls, Auto, VarObj, Item, Statements, Module;
 	Parser_Source = Source;
 	Parser_CurPos = 0;
@@ -1354,7 +1358,6 @@ Function Parse(Source) Export
 	Parser_EndLine = 1;
 	Parser_BegPos = 0;
 	Parser_EndPos = 0;
-	Parser_Methods = New Structure;
 	Parser_Unknown = New Structure;
 	Parser_CallSites = New Map;
 	Parser_IsFunc = False;
@@ -1368,7 +1371,14 @@ Function Parse(Source) Export
 	Parser_Errors.Columns.Add("Text", New TypeDescription("String"));
 	Parser_Errors.Columns.Add("Line", New TypeDescription("Number"));
 	Parser_Errors.Columns.Add("Pos", New TypeDescription("Number"));
-	OpenGlobalScope();
+	If Context = Undefined Then
+		Parser_Scope = Undefined;
+		Parser_Methods = New Structure;
+		CreateMinimalContext();
+	Else
+		Parser_Scope = Context.Scope;
+		Parser_Methods = Context.Methods;
+	EndIf;
 	OpenScope();
 	Scan();
 	Decls = ParseModDecls();
@@ -3262,10 +3272,10 @@ EndProcedure // VisitPrepInst()
 
 #EndRegion // Visitor
 
-Procedure Go(Source, Val Plugins) Export
+Procedure Go(Source, Val Plugins, Context = Undefined) Export
 
 	HookUp(Plugins);
-	Visit(Parse(Source));
+	Visit(Parse(Source, Context));
 
 EndProcedure // Go()
 
