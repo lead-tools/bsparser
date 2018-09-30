@@ -334,7 +334,7 @@ Function VarModListDecl(Directive, VarList, Place)
 		"Type,"      // string (one of Nodes)
 		"Directive," // string (one of Directives)
 		"List,"      // array (VarModDecl)
-		"Place",     // number, structure (Place)
+		"Place",     // structure (Place)
 		Nodes.VarModListDecl, Directive, VarList, Place);
 EndFunction // VarModListDecl()
 
@@ -351,7 +351,7 @@ Function VarModDecl(Name, Directive, Exported, Place)
 		"Name,"      // string
 		"Directive," // string (one of Directives)
 		"Export,"    // boolean
-		"Place",     // number, structure (Place)
+		"Place",     // structure (Place)
 		Nodes.VarModDecl, Name, Directive, Exported, Place);
 EndFunction // VarModDecl()
 
@@ -365,7 +365,7 @@ Function VarLocDecl(Name, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.VarLocDecl, Name, Place);
 EndFunction // VarLocDecl()
 
@@ -387,7 +387,7 @@ Function AutoDecl(Name, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.AutoDecl, Name, Place);
 EndFunction // AutoDecl()
 
@@ -403,7 +403,7 @@ Function ParamDecl(Name, ByVal, Value = Undefined, Place)
 		"Name,"  // string
 		"ByVal," // boolean
 		"Value," // undefined, structure (UnaryExpr, BasicLitExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ParamDecl, Name, ByVal, Value, Place);
 EndFunction // ParamDecl()
 
@@ -422,7 +422,7 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place)
 		"Vars,"  // array (VarLocDecl)
 		"Auto,"  // array (Item)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
 EndFunction // MethodDecl()
 
@@ -439,7 +439,7 @@ Function ProcSign(Name, Directive, Params, Exported, Place)
 		"Directive," // string (one of Directives)
 		"Params,"    // array (ParamDecl)
 		"Export,"    // boolean
-		"Place",     // number, structure (Place)
+		"Place",     // structure (Place)
 		Nodes.ProcSign, Name, Directive, Params, Exported, Place);
 EndFunction // ProcSign()
 
@@ -456,7 +456,7 @@ Function FuncSign(Name, Directive, Params, Exported, Place)
 		"Directive," // string (one of Directives)
 		"Params,"    // array (ParamDecl)
 		"Export,"    // boolean
-		"Place",     // number, structure (Place)
+		"Place",     // structure (Place)
 		Nodes.FuncSign, Name, Directive, Params, Exported, Place);
 EndFunction // FuncSign()
 
@@ -470,7 +470,7 @@ Function BasicLitExpr(Kind, Value, Place)
 		"Type,"  // string (one of Nodes)
 		"Kind,"  // string (one of Tokens)
 		"Value," // undefined, string, number, boolean, date, null
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.BasicLitExpr, Kind, Value, Place);
 EndFunction // BasicLitExpr()
 
@@ -488,7 +488,7 @@ Function FieldExpr(Name, Args, Place)
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
 		"Args,"  // undefined, array (undefined, one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.FieldExpr, Name, Args, Place);
 EndFunction // FieldExpr()
 
@@ -502,7 +502,7 @@ Function IndexExpr(Expr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.IndexExpr, Expr, Place);
 EndFunction // IndexExpr()
 
@@ -524,7 +524,7 @@ Function IdentExpr(Item, Tail, Args, Place)
 		"Head,"  // structure (Item)
 		"Tail,"  // array (FieldExpr, IndexExpr)
 		"Args,"  // undefined, array (undefined, one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.IdentExpr, Item, Tail, Args, Place);
 EndFunction // IdentExpr()
 
@@ -543,7 +543,7 @@ Function UnaryExpr(Operator, Operand, Place)
 		"Type,"     // string (one of Nodes)
 		"Operator," // string (one of Tokens)
 		"Operand,"  // structure (one of #Expressions)
-		"Place",    // number, structure (Place)
+		"Place",    // structure (Place)
 		Nodes.UnaryExpr, Operator, Operand, Place);
 EndFunction // UnaryExpr()
 
@@ -566,7 +566,7 @@ Function BinaryExpr(Left, Operator, Right, Place)
 		"Left,"     // structure (one of #Expressions)
 		"Operator," // string (one of Tokens)
 		"Right,"    // structure (one of #Expressions)
-		"Place",    // number, structure (Place)
+		"Place",    // structure (Place)
 		Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
@@ -587,7 +587,7 @@ Function NewExpr(Name, Args, Place)
 		"Type,"  // string (one of Nodes)
 		"Name,"  // undefined, string
 		"Args,"  // array (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
@@ -606,7 +606,7 @@ Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place)
 		"Then,"  // structure (one of #Expressions)
 		"Else,"  // structure (one of #Expressions)
 		"Tail,"  // array (FieldExpr, IndexExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.TernaryExpr, Cond, ThenPart, ElsePart, Tail, Place);
 EndFunction // TernaryExpr()
 
@@ -620,7 +620,7 @@ Function ParenExpr(Expr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ParenExpr, Expr, Place);
 EndFunction // ParenExpr()
 
@@ -634,7 +634,7 @@ Function NotExpr(Expr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.NotExpr, Expr, Place);
 EndFunction // NotExpr()
 
@@ -654,7 +654,7 @@ Function StringExpr(ExprList, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"List,"  // array (BasicLitExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.StringExpr, ExprList, Place);
 EndFunction // StringExpr()
 
@@ -668,7 +668,7 @@ Function AssignStmt(Left, Right, Place)
 		"Type,"  // string (one of Nodes)
 		"Left,"  // structure (IdentExpr)
 		"Right," // structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.AssignStmt, Left, Right, Place);
 EndFunction // AssignStmt()
 
@@ -678,7 +678,7 @@ Function ReturnStmt(Expr = Undefined, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // undefined, structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ReturnStmt, Expr, Place);
 EndFunction // ReturnStmt()
 
@@ -686,7 +686,7 @@ Function BreakStmt(Place)
 	// Хранит оператор "Прервать".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.BreakStmt, Place);
 EndFunction // BreakStmt()
 
@@ -694,7 +694,7 @@ Function ContinueStmt(Place)
 	// Хранит оператор "Продолжить".
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ContinueStmt, Place);
 EndFunction // ContinueStmt()
 
@@ -704,7 +704,7 @@ Function RaiseStmt(Expr = Undefined, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // undefined, structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.RaiseStmt, Expr, Place);
 EndFunction // RaiseStmt()
 
@@ -713,7 +713,7 @@ Function ExecuteStmt(Expr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // structure (one of #Expressions)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ExecuteStmt, Expr, Place);
 EndFunction // ExecuteStmt()
 
@@ -722,7 +722,7 @@ Function CallStmt(IdentExpr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Ident," // structure (IdentExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.CallStmt, IdentExpr, Place);
 EndFunction // CallStmt()
 
@@ -746,7 +746,7 @@ Function IfStmt(Cond, ThenPart, ElsIfPart = Undefined, ElsePart = Undefined, Pla
 		"Then,"  // array (one of #Statements)
 		"ElsIf," // undefined, array (ElsIfStmt)
 		"Else,"  // undefined, structure (ElseStmt)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.IfStmt, Cond, ThenPart, ElsIfPart, ElsePart, Place);
 EndFunction // IfStmt()
 
@@ -755,7 +755,7 @@ Function ElseStmt(Body, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ElseStmt, Body, Place);
 EndFunction // ElseStmt()
 
@@ -772,7 +772,7 @@ Function ElsIfStmt(Cond, ThenPart, Place)
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
 		"Then,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ElsIfStmt, Cond, ThenPart, Place);
 EndFunction // ElsIfStmt()
 
@@ -788,7 +788,7 @@ Function WhileStmt(Cond, Body, Place)
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.WhileStmt, Cond, Body, Place);
 EndFunction // WhileStmt()
 
@@ -807,7 +807,7 @@ Function ForStmt(IdentExpr, From, Until, Body, Place)
 		"From,"  // structure (one of #Expressions)
 		"To,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ForStmt, IdentExpr, From, Until, Body, Place);
 EndFunction // ForStmt()
 
@@ -825,7 +825,7 @@ Function ForEachStmt(IdentExpr, Collection, Body, Place)
 		"Ident," // structure (IdentExpr)
 		"In,"    // structure (one of #Expressions)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ForEachStmt, IdentExpr, Collection, Body, Place);
 EndFunction // ForEachStmt()
 
@@ -843,7 +843,7 @@ Function TryStmt(TryPart, ExceptPart, Place)
 		"Type,"   // string (one of Nodes)
 		"Try,"    // array (one of #Statements)
 		"Except," // structure (ExceptStmt)
-		"Place",  // number, structure (Place)
+		"Place",  // structure (Place)
 		Nodes.TryStmt, TryPart, ExceptPart, Place);
 EndFunction // TryStmt()
 
@@ -852,7 +852,7 @@ Function ExceptStmt(Body, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Body,"  // array (one of #Statements)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.ExceptStmt, Body, Place);
 EndFunction // ExceptStmt()
 
@@ -861,7 +861,7 @@ Function GotoStmt(Label, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.GotoStmt, Label, Place);
 EndFunction // GotoStmt()
 
@@ -870,7 +870,7 @@ Function LabelStmt(Label, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Label," // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.LabelStmt, Label, Place);
 EndFunction // LabelStmt()
 
@@ -889,7 +889,7 @@ Function PrepIfInst(Cond, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #PrepExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepIfInst, Cond, Place);
 EndFunction // PrepIfInst()
 
@@ -904,7 +904,7 @@ Function PrepElsIfInst(Cond, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Cond,"  // structure (one of #PrepExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepElsIfInst, Cond, Place);
 EndFunction // PrepElsIfInst()
 
@@ -912,7 +912,7 @@ Function PrepElseInst(Place)
 	// Хранит информацию об инструкции препроцессора #Иначе
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepElseInst, Place);
 EndFunction // PrepElseInst()
 
@@ -920,7 +920,7 @@ Function PrepEndIfInst(Place)
 	// Хранит информацию об инструкции препроцессора #КонецЕсли
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepEndIfInst, Place);
 EndFunction // PrepEndIfInst()
 
@@ -935,7 +935,7 @@ Function PrepRegionInst(Name, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Name,"  // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepRegionInst, Name, Place);
 EndFunction // PrepRegionInst()
 
@@ -949,7 +949,7 @@ Function PrepEndRegionInst(Place)
 	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepEndRegionInst, Place);
 EndFunction // PrepEndRegionInst()
 
@@ -963,7 +963,7 @@ Function PrepUseInst(Path, Place)
 	Return New Structure( // @Node @OneScript
 		"Type,"  // string (one of Nodes)
 		"Path,"  // string
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepUseInst, Path, Place);
 EndFunction // PrepUseInst()
 
@@ -986,7 +986,7 @@ Function PrepBinaryExpr(Left, Operator, Right, Place)
 		"Left,"     // structure (one of #PrepExpr)
 		"Operator," // string (one of Tokens)
 		"Right,"    // structure (one of #PrepExpr)
-		"Place",    // number, structure (Place)
+		"Place",    // structure (Place)
 		Nodes.PrepBinaryExpr, Left, Operator, Right, Place);
 EndFunction // PrepBinaryExpr()
 
@@ -1001,7 +1001,7 @@ Function PrepNotExpr(Expr, Place)
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Expr,"  // structure (one of #PrepExpr)
-		"Place", // number, structure (Place)
+		"Place", // structure (Place)
 		Nodes.PrepNotExpr, Expr, Place);
 EndFunction // PrepNotExpr()
 
@@ -1017,7 +1017,7 @@ Function PrepSymExpr(Symbol, Exist, Place)
 		"Type,"   // string (one of Nodes)
 		"Symbol," // string (one of PrepSymbols)
 		"Exist,"  // boolean
-		"Place",  // number, structure (Place)
+		"Place",  // structure (Place)
 		Nodes.PrepSymExpr, Symbol, Exist, Place);
 EndFunction // PrepSymExpr()
 

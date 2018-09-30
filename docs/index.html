@@ -116,7 +116,7 @@ EndFunction // Hooks()
  Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModListDecl</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>List</strong>: array (<a href='#VarModDecl'>VarModDecl</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='VarModDecl'>VarModDecl<a class='permalink' href='#VarModDecl'>¶</a></h3>
 	<ul>
@@ -129,7 +129,7 @@ EndFunction // Hooks()
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
 	<ul>
@@ -139,7 +139,7 @@ EndFunction // Hooks()
  <pre>
  Перем <П1>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
 		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='AutoDecl'>AutoDecl<a class='permalink' href='#AutoDecl'>¶</a></h3>
 	<ul>
@@ -156,7 +156,8 @@ EndFunction // Hooks()
  		КонецЕсли;
  	КонецЦикла;
  КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AutoDecl</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Name</strong>: string</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ParamDecl'>ParamDecl<a class='permalink' href='#ParamDecl'>¶</a></h3>
 	<ul>
@@ -168,7 +169,7 @@ EndFunction // Hooks()
 		<li><strong>Name</strong>: string</li>
 		<li><strong>ByVal</strong>: boolean</li>
 		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='MethodDecl'>MethodDecl<a class='permalink' href='#MethodDecl'>¶</a></h3>
 	<ul>
@@ -185,7 +186,7 @@ EndFunction // Hooks()
 		<li><strong>Vars</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
 		<li><strong>Auto</strong>: array (<a href='#Item'>Item</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ProcSign'>ProcSign<a class='permalink' href='#ProcSign'>¶</a></h3>
 	<ul>
@@ -198,7 +199,7 @@ EndFunction // Hooks()
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='FuncSign'>FuncSign<a class='permalink' href='#FuncSign'>¶</a></h3>
 	<ul>
@@ -211,7 +212,7 @@ EndFunction // Hooks()
 		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
 		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
 		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Expressions'>#Expressions</h2>
 	<h3 id='BasicLitExpr'>BasicLitExpr<a class='permalink' href='#BasicLitExpr'>¶</a></h3>
@@ -220,7 +221,7 @@ EndFunction // Hooks()
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BasicLitExpr</li>
 		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='FieldExpr'>FieldExpr<a class='permalink' href='#FieldExpr'>¶</a></h3>
 	<ul>
@@ -234,7 +235,7 @@ EndFunction // Hooks()
  Значение = Объект<.Добавить(П1, П2)></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FieldExpr</li>
 		<li><strong>Name</strong>: string</li>
 		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IndexExpr'>IndexExpr<a class='permalink' href='#IndexExpr'>¶</a></h3>
 	<ul>
@@ -244,7 +245,7 @@ EndFunction // Hooks()
  // обращение по индексу заключено в скобки <...>
  Значение = Объект<[Ключ]></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IndexExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IdentExpr'>IdentExpr<a class='permalink' href='#IdentExpr'>¶</a></h3>
 	<ul>
@@ -262,7 +263,7 @@ EndFunction // Hooks()
 		<li><strong>Head</strong>: structure (<a href='#Item'>Item</a>)</li>
 		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
 		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='UnaryExpr'>UnaryExpr<a class='permalink' href='#UnaryExpr'>¶</a></h3>
 	<ul>
@@ -277,7 +278,7 @@ EndFunction // Hooks()
  Значение = <-(Сумма1 + Сумма2)> / 2;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.UnaryExpr</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Operand</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='BinaryExpr'>BinaryExpr<a class='permalink' href='#BinaryExpr'>¶</a></h3>
 	<ul>
@@ -296,7 +297,7 @@ EndFunction // Hooks()
 		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='NewExpr'>NewExpr<a class='permalink' href='#NewExpr'>¶</a></h3>
 	<ul>
@@ -313,7 +314,7 @@ EndFunction // Hooks()
  Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NewExpr</li>
 		<li><strong>Name</strong>: undefined, string</li>
 		<li><strong>Args</strong>: array (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='TernaryExpr'>TernaryExpr<a class='permalink' href='#TernaryExpr'>¶</a></h3>
 	<ul>
@@ -328,7 +329,7 @@ EndFunction // Hooks()
 		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ParenExpr'>ParenExpr<a class='permalink' href='#ParenExpr'>¶</a></h3>
 	<ul>
@@ -338,7 +339,7 @@ EndFunction // Hooks()
  // скобочное выражение заключено в скобки <...>
  Сумма = <(Сумма1 + Сумма2)> * Количество;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParenExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='NotExpr'>NotExpr<a class='permalink' href='#NotExpr'>¶</a></h3>
 	<ul>
@@ -348,7 +349,7 @@ EndFunction // Hooks()
  // выражение-отрицание заключено в скобки <...>
  НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NotExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='StringExpr'>StringExpr<a class='permalink' href='#StringExpr'>¶</a></h3>
 	<ul>
@@ -364,7 +365,7 @@ EndFunction // Hooks()
  | окончание строки"          // Nodes.StringEnd
  "еще часть";                 // Nodes.String</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.StringExpr</li>
 		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#Statements'>#Statements</h2>
 	<h3 id='AssignStmt'>AssignStmt<a class='permalink' href='#AssignStmt'>¶</a></h3>
@@ -373,7 +374,7 @@ EndFunction // Hooks()
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AssignStmt</li>
 		<li><strong>Left</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ReturnStmt'>ReturnStmt<a class='permalink' href='#ReturnStmt'>¶</a></h3>
 	<ul>
@@ -381,19 +382,19 @@ EndFunction // Hooks()
 	<i> Поле "Expr" равно Неопределено если это возврат из процедуры.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ReturnStmt</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='BreakStmt'>BreakStmt<a class='permalink' href='#BreakStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Прервать".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BreakStmt</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ContinueStmt'>ContinueStmt<a class='permalink' href='#ContinueStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Продолжить".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ContinueStmt</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='RaiseStmt'>RaiseStmt<a class='permalink' href='#RaiseStmt'>¶</a></h3>
 	<ul>
@@ -401,21 +402,21 @@ EndFunction // Hooks()
 	<i> Поле "Expr" равно Неопределено если это вариант оператора без выражения.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.RaiseStmt</li>
 		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ExecuteStmt'>ExecuteStmt<a class='permalink' href='#ExecuteStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Выполнить".</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExecuteStmt</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='CallStmt'>CallStmt<a class='permalink' href='#CallStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит вызов процедуры или функции как процедуры.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.CallStmt</li>
 		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='IfStmt'>IfStmt<a class='permalink' href='#IfStmt'>¶</a></h3>
 	<ul>
@@ -435,14 +436,14 @@ EndFunction // Hooks()
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>ElsIf</strong>: undefined, array (<a href='#ElsIfStmt'>ElsIfStmt</a>)</li>
 		<li><strong>Else</strong>: undefined, structure (<a href='#ElseStmt'>ElseStmt</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ElseStmt'>ElseStmt<a class='permalink' href='#ElseStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "Иначе"</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElseStmt</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ElsIfStmt'>ElsIfStmt<a class='permalink' href='#ElsIfStmt'>¶</a></h3>
 	<ul>
@@ -455,7 +456,7 @@ EndFunction // Hooks()
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElsIfStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='WhileStmt'>WhileStmt<a class='permalink' href='#WhileStmt'>¶</a></h3>
 	<ul>
@@ -467,7 +468,7 @@ EndFunction // Hooks()
  КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.WhileStmt</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ForStmt'>ForStmt<a class='permalink' href='#ForStmt'>¶</a></h3>
 	<ul>
@@ -482,7 +483,7 @@ EndFunction // Hooks()
 		<li><strong>From</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>To</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ForEachStmt'>ForEachStmt<a class='permalink' href='#ForEachStmt'>¶</a></h3>
 	<ul>
@@ -496,7 +497,7 @@ EndFunction // Hooks()
 		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
 		<li><strong>In</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='TryStmt'>TryStmt<a class='permalink' href='#TryStmt'>¶</a></h3>
 	<ul>
@@ -510,28 +511,28 @@ EndFunction // Hooks()
  КонецПопытки</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TryStmt</li>
 		<li><strong>Try</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Except</strong>: structure (<a href='#ExceptStmt'>ExceptStmt</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='ExceptStmt'>ExceptStmt<a class='permalink' href='#ExceptStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "Исключение"</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExceptStmt</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='GotoStmt'>GotoStmt<a class='permalink' href='#GotoStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Перейти"</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.GotoStmt</li>
 		<li><strong>Label</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='LabelStmt'>LabelStmt<a class='permalink' href='#LabelStmt'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор метки.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.LabelStmt</li>
 		<li><strong>Label</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#PrepInst'>#PrepInst</h2>
 	<h3 id='PrepIfInst'>PrepIfInst<a class='permalink' href='#PrepIfInst'>¶</a></h3>
@@ -543,7 +544,7 @@ EndFunction // Hooks()
  #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfInst</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepElsIfInst'>PrepElsIfInst<a class='permalink' href='#PrepElsIfInst'>¶</a></h3>
 	<ul>
@@ -554,19 +555,19 @@ EndFunction // Hooks()
  #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfInst</li>
 		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Иначе</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepEndIfInst'>PrepEndIfInst<a class='permalink' href='#PrepEndIfInst'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #КонецЕсли</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndIfInst</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepRegionInst'>PrepRegionInst<a class='permalink' href='#PrepRegionInst'>¶</a></h3>
 	<ul>
@@ -577,7 +578,7 @@ EndFunction // Hooks()
  #Область Интерфейс   // поле "Name" хранит имя области
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionInst</li>
 		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepEndRegionInst'>PrepEndRegionInst<a class='permalink' href='#PrepEndRegionInst'>¶</a></h3>
 	<ul>
@@ -587,7 +588,7 @@ EndFunction // Hooks()
  ...
  #КонецОбласти
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndRegionInst</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepUseInst'>PrepUseInst<a class='permalink' href='#PrepUseInst'>¶</a></h3>
 	<ul>
@@ -597,7 +598,7 @@ EndFunction // Hooks()
  <pre>
  #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepUseInst</li>
 		<li><strong>Path</strong>: string</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h2 id='#PrepExpr'>#PrepExpr</h2>
 	<h3 id='PrepBinaryExpr'>PrepBinaryExpr<a class='permalink' href='#PrepBinaryExpr'>¶</a></h3>
@@ -613,7 +614,7 @@ EndFunction // Hooks()
 		<li><strong>Left</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
 		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
 		<li><strong>Right</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepNotExpr'>PrepNotExpr<a class='permalink' href='#PrepNotExpr'>¶</a></h3>
 	<ul>
@@ -624,7 +625,7 @@ EndFunction // Hooks()
  #Если <Не ВебКлиент> Тогда
  ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepNotExpr</li>
 		<li><strong>Expr</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='PrepSymExpr'>PrepSymExpr<a class='permalink' href='#PrepSymExpr'>¶</a></h3>
 	<ul>
@@ -636,7 +637,7 @@ EndFunction // Hooks()
  #Если <Сервер> Тогда</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepSymExpr</li>
 		<li><strong>Symbol</strong>: string (one of <a href='#PrepSymbols'>PrepSymbols</a>)</li>
 		<li><strong>Exist</strong>: boolean</li>
-		<li><strong>Place</strong>: number, structure (<a href='#Place'>Place</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 <h2 id='#Other'>#Other</h2>
 <h3 id='Place'>Place</h3>
