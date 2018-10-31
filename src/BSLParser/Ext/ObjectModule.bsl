@@ -1391,7 +1391,10 @@ Function Parse(Source, Context = Undefined) Export
 	For Each Item In Parser_Unknown Do
 		CallSites = Parser_CallSites[Item.Value];
 		For Each Place In CallSites Do
-			Error(StrTemplate("Undeclared method `%1`", Item.Key), Place.Pos);
+			Error = Parser_Errors.Add();
+			Error.Text = StrTemplate("Undeclared method `%1`", Item.Key);
+			Error.Line = Place.BegLine;
+			Error.Pos = Place.Pos;
 		EndDo;
 	EndDo;
 	Expect(Tokens.Eof);
@@ -2453,21 +2456,16 @@ Function StringToken(Lit)
 EndFunction // StringToken()
 
 Procedure Error(Note, Pos = Undefined, Stop = False)
-	Var ErrorText, Error;
+	Var Error;
 	If Pos = Undefined Then
 		Pos = Min(Parser_CurPos - StrLen(Parser_Lit), Parser_Len);
 	EndIf;
-	ErrorText = StrTemplate("[ Ln: %1; Col: %2 ] %3",
-		Parser_CurLine,
-		Pos - ?(Pos = 0, 0, StrFind(Parser_Source, Chars_LF, SearchDirection.FromEnd, Pos)),
-		Note
-	);
 	Error = Parser_Errors.Add();
-	Error.Text = ErrorText;
+	Error.Text = Note;
 	Error.Line = Parser_CurLine;
 	Error.Pos = Pos;
 	If Stop Then
-		Raise ErrorText;
+		Raise Note;
 	EndIf;
 EndProcedure // Error()
 
