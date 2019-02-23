@@ -458,6 +458,8 @@ Procedure VisitPrepExpr(PrepExpr)
 		VisitPrepBinaryExpr(PrepExpr);
 	ElsIf Type = Nodes.PrepNotExpr Then
 		VisitPrepNotExpr(PrepExpr);
+	ElsIf Type = Nodes.PrepParenExpr Then
+		VisitPrepParenExpr(PrepExpr);
 	EndIf;
 EndProcedure // VisitPrepExpr()
 
@@ -475,6 +477,15 @@ Procedure VisitPrepNotExpr(PrepNotExpr)
 	Result.Add("Not ");
 	VisitPrepExpr(PrepNotExpr.Expr);
 EndProcedure // VisitPrepNotExpr()
+
+Procedure VisitPrepParenExpr(PrepParenExpr)
+	Result.Add("(");
+	Indent = Indent + 1; // >>
+	VisitPrepExpr(PrepParenExpr.Expr);
+	Indent = Indent - 1; // <<
+	AlignLine(PrepParenExpr.Place.EndLine);
+	Result.Add(")");
+EndProcedure // VisitPrepParenExpr()
 
 Procedure VisitPrepInst(PrepInst)
 	Var Type;

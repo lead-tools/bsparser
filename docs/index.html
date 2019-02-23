@@ -639,6 +639,16 @@ EndFunction // Hooks()
 		<li><strong>Exist</strong>: boolean</li>
 		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
+	<h3 id='PrepParenExpr'>PrepParenExpr<a class='permalink' href='#PrepParenExpr'>¶</a></h3>
+	<ul>
+	<i> Хранит скобочное выражение препроцессора.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ // скобочное выражение заключено в скобки <...>
+ #Если <(Сервер Или ВнешнееСоединение)> Тогда</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepParenExpr</li>
+		<li><strong>Expr</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
+		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	</ul>
 <h2 id='#Other'>#Other</h2>
 <h3 id='Place'>Place</h3>
 <ul>
@@ -712,6 +722,7 @@ EndFunction // Hooks()
 <li>"<a href='#PrepBinaryExpr'>PrepBinaryExpr</a>"</li>
 <li>"<a href='#PrepNotExpr'>PrepNotExpr</a>"</li>
 <li>"<a href='#PrepSymExpr'>PrepSymExpr</a>"</li>
+<li>"<a href='#PrepParenExpr'>PrepParenExpr</a>"</li>
 <li>"<a href='#PrepUseInst'>PrepUseInst</a>"</li>
 </ul>
 <h3 id='Tokens'>Tokens</h3>

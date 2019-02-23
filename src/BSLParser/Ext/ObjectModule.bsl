@@ -227,7 +227,7 @@ Function Nodes() Export
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
 		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
-		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepUseInst"
+		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepParenExpr, PrepUseInst"
 	);
 EndFunction // Nodes()
 
@@ -1020,6 +1020,20 @@ Function PrepSymExpr(Symbol, Exist, Place)
 		"Place",  // structure (Place)
 		Nodes.PrepSymExpr, Symbol, Exist, Place);
 EndFunction // PrepSymExpr()
+
+Function PrepParenExpr(Expr, Place)
+	// Хранит скобочное выражение препроцессора.
+	// Пример:
+	// <pre>
+	// // скобочное выражение заключено в скобки <...>
+	// #Если <(Сервер Или ВнешнееСоединение)> Тогда
+	// </pre>
+	Return New Structure( // @Node
+		"Type,"  // string (one of Nodes)
+		"Expr,"  // structure (one of #PrepExpr)
+		"Place", // structure (Place)
+		Nodes.PrepParenExpr, Expr, Place);
+EndFunction // PrepParenExpr()
 
 #EndRegion // PrepExpr
 
@@ -2282,24 +2296,43 @@ Function ParsePrepNotExpr()
 	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Not Then
 		Scan();
-		Expr = PrepNotExpr(ParsePrepSymExpr(), Place(Pos, Line));
+		Expr = PrepNotExpr(ParsePrepOperand(), Place(Pos, Line));
 	Else
-		Expr = ParsePrepSymExpr();
+		Expr = ParsePrepOperand();
 	EndIf;
 	Return Expr;
 EndFunction // ParsePrepNotExpr()
 
-Function ParsePrepSymExpr()
-	Var Operand, SymbolExist;
+Function ParsePrepOperand()
+	Var Operand;
 	If Parser_Tok = Tokens.Ident Then
-		SymbolExist = PrepSymbols.Property(Parser_Lit);
-		Operand = PrepSymExpr(Parser_Lit, SymbolExist, Place());
-		Scan();
+	    Operand = ParsePrepSymExpr();
+	ElsIf Parser_Tok = Tokens.Lparen Then
+		Operand = ParsePrepParenExpr();
 	Else
 		Error("Expected preprocessor symbol",, True);
-	EndIf;
+	EndIf; 
 	Return Operand;
+EndFunction 
+
+Function ParsePrepSymExpr()
+	Var Symbol, SymbolExist;
+	SymbolExist = PrepSymbols.Property(Parser_Lit);
+	Symbol = PrepSymExpr(Parser_Lit, SymbolExist, Place());
+	Scan();
+	Return Symbol;
 EndFunction // ParsePrepSymExpr()
+
+Function ParsePrepParenExpr()
+	Var Expr, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
+	Scan();
+	Expr = ParsePrepExpression();
+	Expect(Tokens.Rparen);
+	Scan();
+	Return PrepParenExpr(Expr, Place(Pos, Line));
+EndFunction // ParsePrepParenExpr()
 
 // Inst
 
@@ -2552,7 +2585,8 @@ Function Hooks()
 		"VisitPrepExpr,       AfterVisitPrepExpr,"
 		"VisitPrepBinaryExpr, AfterVisitPrepBinaryExpr,"
 		"VisitPrepNotExpr,    AfterVisitPrepNotExpr,"
-		"VisitPrepSymExpr,    AfterVisitPrepSymExpr"
+		"VisitPrepSymExpr,    AfterVisitPrepSymExpr,"
+		"VisitPrepParenExpr,  AfterVisitPrepParenExpr"
 	);
 	For Each Item In Hooks Do
 		Hooks[Item.Key] = New Array;
@@ -3208,6 +3242,8 @@ Procedure VisitPrepExpr(PrepExpr)
 		VisitPrepBinaryExpr(PrepExpr);
 	ElsIf Type = Nodes.PrepNotExpr Then
 		VisitPrepNotExpr(PrepExpr);
+	ElsIf Type = Nodes.PrepParenExpr Then
+		VisitPrepParenExpr(PrepExpr);
 	EndIf;
 	For Each Hook In Visitor_Hooks.AfterVisitPrepExpr Do
 		Hook.AfterVisitPrepExpr(PrepExpr, Visitor_Stack, Visitor_Counters);
@@ -3250,6 +3286,19 @@ Procedure VisitPrepNotExpr(PrepNotExpr)
 		Hook.AfterVisitPrepNotExpr(PrepNotExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
 EndProcedure // VisitPrepNotExpr()
+
+Procedure VisitPrepParenExpr(PrepParenExpr)
+	Var Hook;
+	For Each Hook In Visitor_Hooks.VisitPrepParenExpr Do
+		Hook.VisitPrepParenExpr(PrepParenExpr, Visitor_Stack, Visitor_Counters);
+	EndDo;
+	PushInfo(PrepParenExpr);
+	VisitPrepExpr(PrepParenExpr.Expr);
+	PopInfo();
+	For Each Hook In Visitor_Hooks.AfterVisitPrepParenExpr Do
+		Hook.AfterVisitPrepParenExpr(PrepParenExpr, Visitor_Stack, Visitor_Counters);
+	EndDo;
+EndProcedure // VisitPrepParenExpr()
 
 Procedure VisitPrepInst(PrepInst)
 	Var Hook;
