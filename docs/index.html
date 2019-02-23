@@ -302,6 +302,8 @@ EndFunction // Hooks()
 	<h3 id='NewExpr'>NewExpr<a class='permalink' href='#NewExpr'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение "Новый".</i><br>
+	<i> Для совместимости с OneScript поддерживается</i><br>
+	<i> обращение к конструктору через точку (поле Tail)</i><br>
 	<i> Пример:</i><br>
  <pre>
  // выражения "Новый" заключены в скобки <...>
@@ -314,6 +316,7 @@ EndFunction // Hooks()
  Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NewExpr</li>
 		<li><strong>Name</strong>: undefined, string</li>
 		<li><strong>Args</strong>: array (one of <a href='##Expressions'>#Expressions</a>)</li>
+		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
 		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>
 	<h3 id='TernaryExpr'>TernaryExpr<a class='permalink' href='#TernaryExpr'>¶</a></h3>

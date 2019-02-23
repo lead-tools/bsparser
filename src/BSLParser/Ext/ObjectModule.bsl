@@ -570,8 +570,10 @@ Function BinaryExpr(Left, Operator, Right, Place)
 		Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Name, Args, Place)
+Function NewExpr(Name, Args, Tail, Place)
 	// Хранит выражение "Новый".
+	// Для совместимости с OneScript поддерживается
+	// обращение к конструктору через точку (поле Tail)
 	// Пример:
 	// <pre>
 	// // выражения "Новый" заключены в скобки <...>
@@ -587,8 +589,9 @@ Function NewExpr(Name, Args, Place)
 		"Type,"  // string (one of Nodes)
 		"Name,"  // undefined, string
 		"Args,"  // array (one of #Expressions)
+		"Tail,"  // array (FieldExpr, IndexExpr) 
 		"Place", // structure (Place)
-		Nodes.NewExpr, Name, Args, Place);
+		Nodes.NewExpr, Name, Args, Tail, Place);
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place)
@@ -1579,7 +1582,7 @@ Function ParseStringExpr()
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr()
-	Var Tok, Name, Args, Pos, Line;
+	Var Tok, Name, Args, Tail, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Tok = Scan();
@@ -1594,12 +1597,16 @@ Function ParseNewExpr()
 			Args = ParseArguments();
 			Expect(Tokens.Rparen);
 		EndIf;
-		Scan();
+		If Scan() = Tokens.Period Then
+			Tail = ParseIdentTail();
+		Else
+			Tail = EmptyArray;
+		EndIf;
 	EndIf;
 	If Name = Undefined And Args = Undefined Then
 		Error("Expected constructor", Parser_EndPos, True);
-	EndIf;
-	Return NewExpr(Name, Args, Place(Pos, Line));
+	EndIf;	
+	Return NewExpr(Name, Args, Tail, Place(Pos, Line));
 EndFunction // ParseNewExpr()
 
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
@@ -2865,6 +2872,21 @@ Procedure VisitNewExpr(NewExpr)
 	For Each Expr In NewExpr.Args Do
 		If Expr <> Undefined Then
 			VisitExpr(Expr);
+		EndIf;
+	EndDo;
+	For Each Item In NewExpr.Tail Do
+		If Item.Type = Nodes.FieldExpr Then
+			If Item.Args <> Undefined Then
+				For Each Expr In Item.Args Do
+					If Expr <> Undefined Then
+						VisitExpr(Expr);
+					EndIf;
+				EndDo;
+			EndIf;
+		ElsIf Item.Type = Nodes.IndexExpr Then
+			VisitExpr(Item.Expr);
+		Else
+			Raise "Call in violation of protocol";
 		EndIf;
 	EndDo;
 	PopInfo();

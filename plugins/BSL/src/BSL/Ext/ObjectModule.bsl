@@ -232,6 +232,7 @@ Procedure VisitNewExpr(NewExpr)
 		Indent = Indent - 1; // <<
 		AlignLine(NewExpr.Place.EndLine);
 		Result.Add(")");
+		VisitTail(NewExpr.Tail);
 	EndIf;
 EndProcedure // VisitNewExpr()
 
