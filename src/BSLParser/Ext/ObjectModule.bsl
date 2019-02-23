@@ -1591,6 +1591,7 @@ Function ParseNewExpr()
 		Args = EmptyArray;
 		Tok = Scan();
 	EndIf;
+	Tail = EmptyArray;
 	If Tok = Tokens.Lparen Then
 		Tok = Scan();
 		If Tok <> Tokens.Rparen Then
@@ -1599,8 +1600,6 @@ Function ParseNewExpr()
 		EndIf;
 		If Scan() = Tokens.Period Then
 			Tail = ParseIdentTail();
-		Else
-			Tail = EmptyArray;
 		EndIf;
 	EndIf;
 	If Name = Undefined And Args = Undefined Then
