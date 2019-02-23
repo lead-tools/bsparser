@@ -2466,7 +2466,7 @@ EndFunction // AsDate()
 
 Procedure Expect(Tok)
 	If Parser_Tok <> Tok Then
-		Error("Expected " + Tok,, True);
+		Error("Expected " + Tok, Parser_BegPos, True);
 	EndIf;
 EndProcedure // Expect()
 
