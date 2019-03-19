@@ -2,6 +2,7 @@
 // Проверка комментариев в окончаниях инструкций
 
 Var Nodes;
+Var Source;
 Var Result;
 Var Comments;
 Var RegionLevel;
@@ -9,6 +10,7 @@ Var RegionStack;
 
 Procedure Init(BSLParser) Export
 	Nodes = BSLParser.Nodes();
+	Source = BSLParser.Source();
 	Result = New Array;
 	RegionLevel = 0;
 	RegionStack = New Map;
@@ -46,7 +48,8 @@ Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
 		Comment = Comments[PrepInst.Place.BegLine];
 		RegionName = RegionStack[RegionLevel];
 		If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1", RegionName) Then
-			Result.Add(StrTemplate("Область `%1` имеет неправильный замыкающий комментарий в строке %2", RegionName, PrepInst.Place.BegLine));
+			Result.Add(StrTemplate("Область `%1` имеет неправильный замыкающий комментарий в строке %2:", RegionName, PrepInst.Place.BegLine));
+			Result.Add(StrTemplate("%1`%2%3`", Chars.Tab, Mid(Source, PrepInst.Place.Pos, PrepInst.Place.Len), Comment));
 		EndIf;
 		RegionLevel = RegionLevel - 1;
 	EndIf; 
