@@ -1372,7 +1372,7 @@ Procedure InsertMethod(NameEn, NameRu)
 EndProcedure // InsertMethod()
 
 Function Parse(Source, Context = Undefined) Export
-	Var Decls, Auto, VarObj, Item, Statements, Module;
+	Var Decls, Auto, VarObj, Item, Statements, Module, CallSites, Place, Error;
 	Parser_Source = Source;
 	Parser_CurPos = 0;
 	Parser_CurLine = 1;
@@ -1444,7 +1444,7 @@ Function ParseExpression()
 	While Parser_Tok = Tokens.Or Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(), Place(Pos, Line));
+		Expr = BinaryExpr(Expr, Operator, ParseAndExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParseExpression()
@@ -1457,7 +1457,7 @@ Function ParseAndExpr()
 	While Parser_Tok = Tokens.And Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(), Place(Pos, Line));
+		Expr = BinaryExpr(Expr, Operator, ParseNotExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAndExpr()
@@ -1468,7 +1468,7 @@ Function ParseNotExpr()
 	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Not Then
 		Scan();
-		Expr = NotExpr(ParseRelExpr(), Place(Pos, Line));
+		Expr = NotExpr(ParseRelExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Else
 		Expr = ParseRelExpr();
 	EndIf;
@@ -1483,7 +1483,7 @@ Function ParseRelExpr()
 	While RelOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(), Place(Pos, Line));
+		Expr = BinaryExpr(Expr, Operator, ParseAddExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParseRelExpr()
@@ -1496,7 +1496,7 @@ Function ParseAddExpr()
 	While AddOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(), Place(Pos, Line));
+		Expr = BinaryExpr(Expr, Operator, ParseMulExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParseAddExpr()
@@ -1509,7 +1509,7 @@ Function ParseMulExpr()
 	While MulOperators.Find(Parser_Tok) <> Undefined Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(), Place(Pos, Line));
+		Expr = BinaryExpr(Expr, Operator, ParseUnaryExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParseMulExpr()
@@ -1521,7 +1521,7 @@ Function ParseUnaryExpr()
 	Operator = Parser_Tok;
 	If AddOperators.Find(Parser_Tok) <> Undefined Then
 		Scan();
-		Expr = UnaryExpr(Operator, ParseOperand(), Place(Pos, Line));
+		Expr = UnaryExpr(Operator, ParseOperand(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	ElsIf Parser_Tok = Tokens.Eof Then
 		Expr = Undefined;
 	Else
@@ -1536,7 +1536,7 @@ Function ParseOperand()
 	If Tok = Tokens.String Or Tok = Tokens.StringBeg Then
 		Operand = ParseStringExpr();
 	ElsIf BasicLitNoString.Find(Tok) <> Undefined Then
-		Operand = BasicLitExpr(Tok, Parser_Val, Place());
+		Operand = BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine));
 		Scan();
 	ElsIf Tok = Tokens.Ident Then
 		Operand = ParseIdentExpr();
@@ -1560,29 +1560,29 @@ Function ParseStringExpr()
 	ExprList = New Array;
 	While True Do
 		If Tok = Tokens.String Then
-			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine)));
 			Tok = Scan();
 			While Tok = Tokens.String Do
-				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine)));
 				Tok = Scan();
 			EndDo;
 		ElsIf Tok = Tokens.StringBeg Then
-			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine)));
 			Tok = Scan();
 			While Tok = Tokens.StringMid Do
-				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+				ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine)));
 				Tok = Scan();
 			EndDo;
 			If Tok <> Tokens.StringEnd Then
 				Error("Expected """,, True);
 			EndIf;
-			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place()));
+			ExprList.Add(BasicLitExpr(Tok, Parser_Val, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine)));
 			Tok = Scan();
 		Else
 			Break;
 		EndIf;
 	EndDo;
-	Return StringExpr(ExprList, Place(Pos, Line));
+	Return StringExpr(ExprList, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr()
@@ -1609,15 +1609,15 @@ Function ParseNewExpr()
 	If Name = Undefined And Args = Undefined Then
 		Error("Expected constructor", Parser_EndPos, True);
 	EndIf;	
-	Return NewExpr(Name, Args, Tail, Place(Pos, Line));
+	Return NewExpr(Name, Args, Tail, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseNewExpr()
 
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
-	Var Name, Item, Tail, Args, Pos, Line, AutoPlace;
+	Var Name, Item, Tail, Args, Pos, Line, AutoPlace, CallSites;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Name = Parser_Lit;
-	AutoPlace = Place();
+	AutoPlace = Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine);
 	Scan();
 	If Parser_Tok = Tokens.Lparen Then
 		If Scan() = Tokens.Rparen Then
@@ -1658,7 +1658,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 			EndIf;
 		EndIf;
 	EndIf;
-	Return IdentExpr(Item, Tail, Args, Place(Pos, Line));
+	Return IdentExpr(Item, Tail, Args, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseIdentExpr()
 
 Function ParseIdentTail(Call = Undefined)
@@ -1686,7 +1686,7 @@ Function ParseIdentTail(Call = Undefined)
 				Args = Undefined;
 				Call = False;
 			EndIf;
-			Tail.Add(FieldExpr(Name, Args, Place(Pos, Line)));
+			Tail.Add(FieldExpr(Name, Args, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine)));
 		ElsIf Parser_Tok = Tokens.Lbrack Then
 			Call = False;
 			If Scan() = Tokens.Rbrack Then
@@ -1695,7 +1695,7 @@ Function ParseIdentTail(Call = Undefined)
 			Expr = ParseExpression();
 			Expect(Tokens.Rbrack);
 			Scan();
-			Tail.Add(IndexExpr(Expr, Place(Pos, Line)));
+			Tail.Add(IndexExpr(Expr, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine)));
 		Else
 			Break;
 		EndIf;
@@ -1741,7 +1741,7 @@ Function ParseTernaryExpr()
 	Else
 		Tail = EmptyArray;
 	EndIf;
-	Return TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place(Pos, Line));
+	Return TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseTernaryExpr()
 
 Function ParseParenExpr()
@@ -1752,7 +1752,7 @@ Function ParseParenExpr()
 	Expr = ParseExpression();
 	Expect(Tokens.Rparen);
 	Scan();
-	Return ParenExpr(Expr, Place(Pos, Line));
+	Return ParenExpr(Expr, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseParenExpr()
 
 #EndRegion // ParseExpr
@@ -1820,7 +1820,7 @@ Function ParseVarModListDecl()
 		Scan();
 		VarList.Add(ParseVarModDecl());
 	EndDo;
-	Decl = VarModListDecl(Parser_Directive, VarList, Place(Pos, Line));
+	Decl = VarModListDecl(Parser_Directive, VarList, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Expect(Tokens.Semicolon);
 	Scan();
 	While Parser_Tok = Tokens.Semicolon Do
@@ -1841,7 +1841,7 @@ Function ParseVarModDecl()
 	Else
 		Exported = False;
 	EndIf;
-	VarModDecl = VarModDecl(Name, Parser_Directive, Exported, Place(Pos, Line));
+	VarModDecl = VarModDecl(Name, Parser_Directive, Exported, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
@@ -1875,7 +1875,7 @@ Function ParseVarLocDecl()
 	Pos = Parser_BegPos;
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
-	VarLocDecl = VarLocDecl(Name, Place());
+	VarLocDecl = VarLocDecl(Name, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine));
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
 	EndIf;
@@ -1900,9 +1900,9 @@ Function ParseMethodDecl()
 		Scan();
 	EndIf;
 	If Parser_IsFunc Then
-		Sign = FuncSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
+		Sign = FuncSign(Name, Parser_Directive, Params, Exported, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Else
-		Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Line));
+		Sign = ProcSign(Name, Parser_Directive, Params, Exported, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndIf;
 	If Parser_Unknown.Property(Name, Item) Then
 		Parser_Unknown.Delete(Name);
@@ -1930,7 +1930,7 @@ Function ParseMethodDecl()
 	EndDo;
 	CloseScope();
 	Scan();
-	Return MethodDecl(Sign, Vars, Auto, Body, Place(Pos, Line));
+	Return MethodDecl(Sign, Vars, Auto, Body, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseMethodDecl()
 
 Function ParseParams()
@@ -1966,9 +1966,9 @@ Function ParseParamDecl()
 	Name = Parser_Lit;
 	If Scan() = Tokens.Eql Then
 		Scan();
-		ParamDecl = ParamDecl(Name, ByVal, ParseUnaryExpr(), Place(Pos, Line));
+		ParamDecl = ParamDecl(Name, ByVal, ParseUnaryExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Else
-		ParamDecl = ParamDecl(Name, ByVal,, Place(Pos, Line));
+		ParamDecl = ParamDecl(Name, ByVal,, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndIf;
 	If Parser_Vars.Property(Name) Then
 		Error("Identifier already declared", Pos, True);
@@ -2058,7 +2058,7 @@ Function ParseRaiseStmt()
 	If InitOfExpression.Find(Scan()) <> Undefined Then
 		Expr = ParseExpression();
 	EndIf;
-	Return RaiseStmt(Expr, Place(Pos, Line));
+	Return RaiseStmt(Expr, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseRaiseStmt()
 
 Function ParseExecuteStmt()
@@ -2066,7 +2066,7 @@ Function ParseExecuteStmt()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Scan();
-	Return ExecuteStmt(ParseExpression(), Place(Pos, Line));
+	Return ExecuteStmt(ParseExpression(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseExecuteStmt()
 
 Function ParseAssignOrCallStmt()
@@ -2075,7 +2075,7 @@ Function ParseAssignOrCallStmt()
 	Line = Parser_CurLine;
 	Left = ParseIdentExpr(True, NewVar, Call);
 	If Call Then
-		Stmt = CallStmt(Left, Place(Pos, Line));
+		Stmt = CallStmt(Left, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Else
 		Expect(Tokens.Eql);
 		Scan();
@@ -2084,7 +2084,7 @@ Function ParseAssignOrCallStmt()
 			Parser_Vars.Insert(NewVar.Name, NewVar);
 			Parser_Scope.Auto.Add(NewVar);
 		EndIf;
-		Stmt = AssignStmt(Left, Right, Place(Pos, Line));
+		Stmt = AssignStmt(Left, Right, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndIf;
 	Return Stmt;
 EndFunction // ParseAssignOrCallStmt()
@@ -2109,7 +2109,7 @@ Function ParseIfStmt()
 	EndIf;
 	Expect(Tokens.EndIf);
 	Scan();
-	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart, Place(Pos, Line));
+	Return IfStmt(Cond, ThenPart, ElsIfPart, ElsePart, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseIfStmt()
 
 Function ParseElsIfStmt()
@@ -2121,7 +2121,7 @@ Function ParseElsIfStmt()
 	Expect(Tokens.Then);
 	Scan();
 	ElsIfThen = ParseStatements();
-	Return ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Line));
+	Return ElsIfStmt(ElsIfCond, ElsIfThen, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseElsIfStmt()
 
 Function ParseElseStmt()
@@ -2129,7 +2129,7 @@ Function ParseElseStmt()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Scan();
-	Return ElseStmt(ParseStatements(), Place(Pos, Line));
+	Return ElseStmt(ParseStatements(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseElseStmt()
 
 Function ParseTryStmt()
@@ -2142,7 +2142,7 @@ Function ParseTryStmt()
 	ExceptPart = ParseExceptStmt();
 	Expect(Tokens.EndTry);
 	Scan();
-	Return TryStmt(TryPart, ExceptPart, Place(Pos, Line));
+	Return TryStmt(TryPart, ExceptPart, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseTryStmt()
 
 Function ParseExceptStmt()
@@ -2150,7 +2150,7 @@ Function ParseExceptStmt()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Scan();
-	Return ExceptStmt(ParseStatements(), Place(Pos, Line));
+	Return ExceptStmt(ParseStatements(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseExceptStmt()
 
 Function ParseWhileStmt()
@@ -2164,7 +2164,7 @@ Function ParseWhileStmt()
 	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return WhileStmt(Cond, Body, Place(Pos, Line));
+	Return WhileStmt(Cond, Body, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseWhileStmt()
 
 Function ParseForStmt()
@@ -2192,7 +2192,7 @@ Function ParseForStmt()
 	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForStmt(IdentExpr, From, Until, Body, Place(Pos, Line));
+	Return ForStmt(IdentExpr, From, Until, Body, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseForStmt()
 
 Function ParseForEachStmt()
@@ -2218,7 +2218,7 @@ Function ParseForEachStmt()
 	Body = ParseStatements();
 	Expect(Tokens.EndDo);
 	Scan();
-	Return ForEachStmt(IdentExpr, Collection, Body, Place(Pos, Line));
+	Return ForEachStmt(IdentExpr, Collection, Body, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt()
@@ -2227,7 +2227,7 @@ Function ParseGotoStmt()
 	Expect(Tokens.Label);
 	Label = Parser_Lit;
 	Scan();
-	Return GotoStmt(Label, Place(Pos, Line));
+	Return GotoStmt(Label, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseGotoStmt()
 
 Function ParseReturnStmt()
@@ -2238,7 +2238,7 @@ Function ParseReturnStmt()
 	If Parser_IsFunc Then
 		Expr = ParseExpression();
 	EndIf;
-	Return ReturnStmt(Expr, Place(Pos, Line));
+	Return ReturnStmt(Expr, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseReturnStmt()
 
 Function ParseBreakStmt()
@@ -2246,7 +2246,7 @@ Function ParseBreakStmt()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Scan();
-	Return BreakStmt(Place(Pos, Line));
+	Return BreakStmt(Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseBreakStmt()
 
 Function ParseContinueStmt()
@@ -2254,7 +2254,7 @@ Function ParseContinueStmt()
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Scan();
-	Return ContinueStmt(Place(Pos, Line));
+	Return ContinueStmt(Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseContinueStmt()
 
 Function ParseLabelStmt()
@@ -2265,7 +2265,7 @@ Function ParseLabelStmt()
 	Scan();
 	Expect(Tokens.Colon);
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return LabelStmt(Label, Place(Pos, Line));
+	Return LabelStmt(Label, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseLabelStmt()
 
 #EndRegion // ParseStmt
@@ -2282,7 +2282,7 @@ Function ParsePrepExpression()
 	While Parser_Tok = Tokens.Or Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepAndExpr(), Place(Pos, Line));
+		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepAndExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParsePrepExpression()
@@ -2295,7 +2295,7 @@ Function ParsePrepAndExpr()
 	While Parser_Tok = Tokens.And Do
 		Operator = Parser_Tok;
 		Scan();
-		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepNotExpr(), Place(Pos, Line));
+		Expr = PrepBinaryExpr(Expr, Operator, ParsePrepNotExpr(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndDo;
 	Return Expr;
 EndFunction // ParsePrepAndExpr()
@@ -2306,7 +2306,7 @@ Function ParsePrepNotExpr()
 	Line = Parser_CurLine;
 	If Parser_Tok = Tokens.Not Then
 		Scan();
-		Expr = PrepNotExpr(ParsePrepOperand(), Place(Pos, Line));
+		Expr = PrepNotExpr(ParsePrepOperand(), Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	Else
 		Expr = ParsePrepOperand();
 	EndIf;
@@ -2328,7 +2328,7 @@ EndFunction
 Function ParsePrepSymExpr()
 	Var Symbol, SymbolExist;
 	SymbolExist = PrepSymbols.Property(Parser_Lit);
-	Symbol = PrepSymExpr(Parser_Lit, SymbolExist, Place());
+	Symbol = PrepSymExpr(Parser_Lit, SymbolExist, Place(Parser_BegPos, Parser_CurPos - Parser_BegPos, Parser_CurLine, Parser_EndLine));
 	Scan();
 	Return Symbol;
 EndFunction // ParsePrepSymExpr()
@@ -2341,7 +2341,7 @@ Function ParsePrepParenExpr()
 	Expr = ParsePrepExpression();
 	Expect(Tokens.Rparen);
 	Scan();
-	Return PrepParenExpr(Expr, Place(Pos, Line));
+	Return PrepParenExpr(Expr, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepParenExpr()
 
 // Inst
@@ -2367,7 +2367,7 @@ Function ParsePrepUseInst()
 		Error("Expected string or identifier", Parser_EndPos, True);
 	EndIf;
 	Scan();
-	Return PrepUseInst(Path, Place(Pos, Line));
+	Return PrepUseInst(Path, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepUseInst()
 
 Function ParsePrepIfInst()
@@ -2378,7 +2378,7 @@ Function ParsePrepIfInst()
 	Cond = ParsePrepExpression();
 	Expect(Tokens.Then);
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepIfInst(Cond, Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepIfInst(Cond, Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepIfInst()
 
 Function ParsePrepElsIfInst()
@@ -2389,7 +2389,7 @@ Function ParsePrepElsIfInst()
 	Cond = ParsePrepExpression();
 	Expect(Tokens.Then);
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepElsIfInst(Cond, Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepElsIfInst(Cond, Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepElsIfInst()
 
 Function ParsePrepElseInst()
@@ -2398,7 +2398,7 @@ Function ParsePrepElseInst()
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
 	Parser_EndLine = Parser_CurLine; // cheat code
-	Return PrepElseInst(Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepElseInst(Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepElseInst()
 
 Function ParsePrepEndIfInst()
@@ -2407,7 +2407,7 @@ Function ParsePrepEndIfInst()
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
 	Parser_EndLine = Parser_CurLine; // cheat code
-	Return PrepEndIfInst(Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepEndIfInst(Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepEndIfInst()
 
 Function ParsePrepRegionInst()
@@ -2418,7 +2418,7 @@ Function ParsePrepRegionInst()
 	Expect(Tokens.Ident);
 	Name = Parser_Lit;
 	Parser_Tok = Tokens.Semicolon; // cheat code
-	Return PrepRegionInst(Name, Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepRegionInst(Name, Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepRegionInst()
 
 Function ParsePrepEndRegionInst()
@@ -2427,7 +2427,7 @@ Function ParsePrepEndRegionInst()
 	Line = Parser_CurLine;
 	Parser_Tok = Tokens.Semicolon; // cheat code
 	Parser_EndLine = Parser_CurLine; // cheat code
-	Return PrepEndRegionInst(Place(Pos, Line, Parser_CurPos - Pos));
+	Return PrepEndRegionInst(Place(Pos, Parser_CurPos - Pos, Line, Parser_EndLine));
 EndFunction // ParsePrepEndRegionInst()
 
 #EndRegion // ParsePrep
@@ -2436,24 +2436,13 @@ EndFunction // ParsePrepEndRegionInst()
 
 #Region Auxiliary
 
-Function Place(Pos = Undefined, Line = Undefined, Len = Undefined)
-	Var Place;
-	If Pos = Undefined Then
-		Len = StrLen(Parser_Lit);
-		Pos = Parser_CurPos - Len;
-	ElsIf Len = Undefined Then
-		Len = Parser_EndPos - Pos;
-	EndIf;
-	If Line = Undefined Then
-		Line = Parser_CurLine;
-	EndIf;
-	Place = New Structure(
+Function Place(Pos, Len, BegLine, EndLine)
+	Return New Structure(
 		"Pos,"     // number
 		"Len,"     // number
 		"BegLine," // number
 		"EndLine", // number
-		Pos, Len, Line, Parser_EndLine);
-	Return Place;
+		Pos, Len, BegLine, EndLine);
 EndFunction // Place()
 
 Function AsDate(DateLit)
@@ -2867,7 +2856,7 @@ Procedure VisitBinaryExpr(BinaryExpr)
 EndProcedure // VisitBinaryExpr()
 
 Procedure VisitNewExpr(NewExpr)
-	Var Expr, Hook;
+	Var Expr, Hook, Item;
 	For Each Hook In Visitor_Hooks.VisitNewExpr Do
 		Hook.VisitNewExpr(NewExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
