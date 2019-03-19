@@ -410,12 +410,15 @@ EndFunction // ParamDecl()
 Function MethodDecl(Sign, Decls, Auto, Body, Place)
 	// Хранит информацию об объявлении метода.
 	// Сигнатура метода хранится в поле Sign.
+	// Пример:
+	// <pre>
 	// &НаКлиенте
 	// Функция Тест() Экспорт
 	//     Перем П1;    // поле "Vars" хранит объявления переменных.
 	//     П1 = 2;      // операторы собираются в поле Body
 	//     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
 	// КонецФункции
+	// </pre>
 	Return New Structure( // @Node
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcSign, FuncSign)
