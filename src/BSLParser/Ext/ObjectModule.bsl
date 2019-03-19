@@ -1087,7 +1087,15 @@ Function Scan()
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
 
 			// lookup
-			If Not Keywords.Property(Parser_Lit, Parser_Tok) Then
+			If Keywords.Property(Parser_Lit, Parser_Tok) Then
+				If Parser_Tok = Tokens.True Then
+					Parser_Val = True;
+				ElsIf Parser_Tok = Tokens.False Then
+					Parser_Val = False;	
+				ElsIf Parser_Tok = Tokens.Null Then
+					Parser_Val = Null;
+				EndIf; 
+			Else
 				Parser_Tok = Tokens.Ident;
 			EndIf;
 
@@ -1274,19 +1282,7 @@ Function Scan()
 
 				Raise "Unknown char!";
 
-			EndIf;
-			
-		ElsIf Parser_Tok = Tokens.True Then
-			
-			Parser_Val = True;
-			
-		ElsIf Parser_Tok = Tokens.False Then
-			
-			Parser_Val = False;	
-			
-		ElsIf Parser_Tok = Tokens.Null Then
-			
-			Parser_Val = Null;	
+			EndIf;	
 			
 		Else
 
@@ -1333,7 +1329,7 @@ Function CloseScope()
 EndFunction // CloseScope()
 
 Function Context() Export
-	Return New Structure("Scope, Methods", Scope(Undefined), New Structure)
+	Return New Structure("Scope, Methods", Scope(Undefined), New Structure);
 EndFunction // Context()
 
 Procedure CreateMinimalContext()
