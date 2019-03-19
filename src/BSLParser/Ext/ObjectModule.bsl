@@ -1422,13 +1422,16 @@ Function Parse(Source, Context = Undefined) Export
 	Parser_Comments = Undefined;
 	Parser_Scope = Undefined;
 	Parser_Vars = Undefined;
-	Parser_Source = Undefined;
 	Return Module;
 EndFunction // Parse()
 
 Function Errors() Export
 	Return Parser_Errors;
 EndFunction
+
+Function Source() Export
+	Return Parser_Source;
+EndFunction 
 
 #Region ParseExpr
 
