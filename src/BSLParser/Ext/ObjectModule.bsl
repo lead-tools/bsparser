@@ -1052,7 +1052,9 @@ Function Scan()
 
 	Parser_EndPos = Parser_CurPos;
 	Parser_EndLine = Parser_CurLine;
-
+	
+	Parser_Val = Undefined;
+	
 	If Right(Parser_Lit, 1) = Chars_LF Then
 		Parser_CurLine = Parser_CurLine + 1;
 	EndIf;
@@ -1106,7 +1108,8 @@ Function Scan()
 				EndIf;
 			EndDo;
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
-
+			
+			Parser_Val = Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2);
 			Parser_Tok = StringToken(Parser_Lit);
 
 		ElsIf Parser_Tok = Digit Then
@@ -1125,9 +1128,10 @@ Function Scan()
 				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 			EndIf;
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
-
+			
+			Parser_Val = Number(Parser_Lit);
 			Parser_Tok = Tokens.Number;
-
+		
 		ElsIf Parser_Tok = Tokens.DateTime Then
 
 			Parser_CurPos = Parser_CurPos + 1;
@@ -1137,10 +1141,11 @@ Function Scan()
 				Parser_Char = "";
 			Else
 				Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+				Parser_Val = AsDate(Parser_Lit);
 				Parser_CurPos = Parser_CurPos + 1;
 				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
-			EndIf;
-
+			EndIf;	
+			
 		ElsIf Parser_Tok = Undefined Then
 
 			Prev = Parser_Char;
@@ -1270,7 +1275,19 @@ Function Scan()
 				Raise "Unknown char!";
 
 			EndIf;
-
+			
+		ElsIf Parser_Tok = Tokens.True Then
+			
+			Parser_Val = True;
+			
+		ElsIf Parser_Tok = Tokens.False Then
+			
+			Parser_Val = False;	
+			
+		ElsIf Parser_Tok = Tokens.Null Then
+			
+			Parser_Val = Null;	
+			
 		Else
 
 			Parser_CurPos = Parser_CurPos + 1;
@@ -1283,22 +1300,6 @@ Function Scan()
 		EndIf;
 
 	EndDo;
-
-	If Parser_Tok = Tokens.Number Then
-		Parser_Val = Number(Parser_Lit);
-	ElsIf Parser_Tok = Tokens.True Then
-		Parser_Val = True;
-	ElsIf Parser_Tok = Tokens.False Then
-		Parser_Val = False;
-	ElsIf Parser_Tok = Tokens.DateTime Then
-		Parser_Val = AsDate(Parser_Lit);
-	ElsIf Left(Parser_Tok, 6) = Tokens.String Then
-		Parser_Val = Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2);
-	ElsIf Parser_Tok = Tokens.Null Then
-		Parser_Val = Null;
-	Else
-		Parser_Val = Undefined;
-	EndIf;
 
 	Return Parser_Tok;
 
@@ -2355,7 +2356,7 @@ Function ParsePrepUseInst()
 	EndIf;
 	If Parser_Tok = Tokens.Number Then
 		Path = Parser_Lit;
-		If AlphaDigitMap[Parser_Char] = Alpha Then // can be a keyword
+		If AlphaDigitMap[Parser_Char] = Alpha Then // it can be a keyword
 			Scan();
 			Path = Path + Parser_Lit;
 		EndIf;

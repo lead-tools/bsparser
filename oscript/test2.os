@@ -2,6 +2,10 @@
 AttachScript("..\src\BSLParser\Ext\ObjectModule.bsl", "BSLParser");
 AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
 
+If CommandLineArguments.Count() = 0 Then
+	Raise "Укажите в качестве параметра путь к папке с общими модулями bsl";
+EndIf;
+
 CommonModulesPath = CommandLineArguments[0];
 Files = FindFiles(CommonModulesPath, "*.bsl", True);
 
