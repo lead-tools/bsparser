@@ -4,6 +4,10 @@ AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTes
 AttachScript("..\plugins\TestEnd\src\TestEnd\Ext\ObjectModule.bsl", "PluginTestEnd");
 AttachScript("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "PluginReturnCheck");
 
+If CommandLineArguments.Count() = 0 Then
+	Raise "Укажите в качестве параметра путь к папке с общими модулями os";
+EndIf;
+
 CommonModulesPath = CommandLineArguments[0];
 Files = FindFiles(CommonModulesPath, "*.os", True);
 
