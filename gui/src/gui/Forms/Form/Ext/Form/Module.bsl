@@ -100,6 +100,10 @@ Procedure TranslateAtServer()
 			Result.SetText(StrConcat(ResultArray));
 		EndIf; 
 		
+	ElsIf Output = "Tokens" Then
+		
+		Tokens.Load(BSLParser.Tokenize(Source.GetText()).Tokens);
+		
 	EndIf;
 
 	If Measure Then
@@ -187,7 +191,8 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 		Items.PagePlugins.Visible = (ThisObject.Output = "Plugin");
 		Items.ShowComments.Visible = (ThisObject.Output = "AST");
 		Items.PageResultTree.Visible = (ThisObject.Output = "Tree");
-		Items.PageResultText.Visible = (ThisObject.Output <> "Tree");
+		Items.PageResultText.Visible = (ThisObject.Output <> "Tree" And ThisObject.Output <> "Tokens");
+		Items.PageResultTokens.Visible = (ThisObject.Output = "Tokens");
 		
 	EndIf;
 
@@ -276,6 +281,15 @@ Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
 EndProcedure // TreeSelection()
 
 &AtClient
+Procedure TokensSelection(Item, SelectedRow, Field, StandardProcessing)
+	Row = Tokens.FindByID(SelectedRow);
+	If Row.Line > 0 Then
+		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
+		CurrentItem = Items.Source;
+	EndIf;
+EndProcedure // TokensSelection()
+
+&AtClient
 Procedure PluginsPathOpening(Item, StandardProcessing)	
 	StandardProcessing = False;
 	ShowFile(Items.Plugins.CurrentData.Path);
@@ -304,3 +318,4 @@ Procedure ErrorsSelection(Item, SelectedRow, Field, StandardProcessing)
 		CurrentItem = Items.Source;
 	EndIf;
 EndProcedure
+

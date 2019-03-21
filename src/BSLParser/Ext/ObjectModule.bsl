@@ -1267,10 +1267,11 @@ Function Scan()
 			EndIf;	
 			
 		Else
-
+			
+			Parser_Lit = Parser_Char;
 			Parser_CurPos = Parser_CurPos + 1;
 			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
-
+			
 		EndIf;
 
 		If Not Comment Then
@@ -1348,6 +1349,48 @@ Procedure InsertMethod(NameEn, NameRu)
 	Parser_Methods.Insert(NameEn, Item(NameEn));
 	Parser_Methods.Insert(NameRu, Item(NameRu));
 EndProcedure // InsertMethod()
+
+Function Tokenize(Source) Export
+	Var Result, TokenTable, TokenRow;
+	
+	Parser_Source = Source;
+	Parser_CurPos = 0;
+	Parser_CurLine = 1;
+	Parser_EndLine = 1;
+	Parser_BegPos = 0;
+	Parser_EndPos = 0;
+	Parser_Comments = New Map;
+	Parser_Len = StrLen(Source);
+	Parser_Lit = "";
+	Parser_Char = Undefined;
+	Parser_Errors = New ValueTable;
+	Parser_Errors.Columns.Add("Text", New TypeDescription("String"));
+	Parser_Errors.Columns.Add("Line", New TypeDescription("Number"));
+	Parser_Errors.Columns.Add("Pos", New TypeDescription("Number"));
+	
+	TokenTable = New ValueTable;
+	TokenTable.Columns.Add("Tok", New TypeDescription("String"));
+	TokenTable.Columns.Add("Lit", New TypeDescription("String"));
+	TokenTable.Columns.Add("Line", New TypeDescription("Number"));
+	TokenTable.Columns.Add("Pos", New TypeDescription("Number"));
+	TokenTable.Columns.Add("Len", New TypeDescription("Number"));
+	
+	While Scan() <> Tokens.Eof Do
+		TokenRow = TokenTable.Add();
+		TokenRow.Tok = Parser_Tok;
+		TokenRow.Lit = Parser_Lit;
+		TokenRow.Line = Parser_CurLine;
+		TokenRow.Pos = Parser_BegPos;
+		TokenRow.Len = Parser_CurPos - Parser_BegPos;
+	EndDo; 
+	
+	Result = New Structure("Tokens, Comments", TokenTable, Parser_Comments);
+	
+	Parser_Comments = Undefined;
+	
+	Return Result;
+	
+EndFunction 
 
 Function Parse(Source, Context = Undefined) Export
 	Var Decls, Auto, VarObj, Item, Statements, Module, CallSites, Place, Error;
