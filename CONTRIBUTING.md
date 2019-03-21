@@ -16,4 +16,4 @@
 * Открыть форк на github, перейти на вкладку "Pull requests" и создать новый
 * Подтвердить
 
-Если возникнут вопросы или трудности, то пишите в [чат](https://gitter.im/Lead-Bullets/BSL-Parser?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Если возникнут вопросы или трудности, то пишите в чат: https://t.me/bslparser
