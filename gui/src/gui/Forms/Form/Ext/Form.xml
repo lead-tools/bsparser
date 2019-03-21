@@ -106,6 +106,14 @@
 								<Value xsi:type="xs:string">Plugin</Value>
 							</xr:Value>
 						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation/>
+								<Value xsi:type="xs:string">Tokens</Value>
+							</xr:Value>
+						</xr:Item>
 					</ChoiceList>
 					<ContextMenu name="OutputContextMenu" id="15"/>
 					<ExtendedTooltip name="OutputExtendedTooltip" id="16"/>
@@ -406,6 +414,98 @@
 											<HorizontalStretch>true</HorizontalStretch>
 											<ContextMenu name="TreeLenContextMenu" id="69"/>
 											<ExtendedTooltip name="TreeLenExtendedTooltip" id="70"/>
+										</InputField>
+									</ChildItems>
+								</Table>
+							</ChildItems>
+						</Page>
+						<Page name="PageResultTokens" id="126">
+							<Title>
+								<v8:item>
+									<v8:lang>en</v8:lang>
+									<v8:content>Result</v8:content>
+								</v8:item>
+							</Title>
+							<ToolTip>
+								<v8:item>
+									<v8:lang>en</v8:lang>
+									<v8:content>Page result tokens</v8:content>
+								</v8:item>
+							</ToolTip>
+							<ExtendedTooltip name="PageResultTokensExtendedTooltip" id="127"/>
+							<ChildItems>
+								<Table name="Tokens" id="128">
+									<Representation>List</Representation>
+									<ReadOnly>true</ReadOnly>
+									<ChangeRowSet>false</ChangeRowSet>
+									<ChangeRowOrder>false</ChangeRowOrder>
+									<AutoInsertNewRow>true</AutoInsertNewRow>
+									<EnableStartDrag>true</EnableStartDrag>
+									<EnableDrag>true</EnableDrag>
+									<DataPath>Tokens</DataPath>
+									<RowFilter xsi:nil="true"/>
+									<ContextMenu name="TokensContextMenu" id="129"/>
+									<AutoCommandBar name="TokensCommandBar" id="130">
+										<Autofill>false</Autofill>
+									</AutoCommandBar>
+									<ExtendedTooltip name="TokensExtendedTooltip" id="131"/>
+									<SearchStringAddition name="TokensSearchString" id="132">
+										<AdditionSource>
+											<Item>Tokens</Item>
+											<Type>SearchStringRepresentation</Type>
+										</AdditionSource>
+										<ContextMenu name="TokensSearchStringContextMenu" id="133"/>
+										<ExtendedTooltip name="TokensSearchStringExtendedTooltip" id="134"/>
+									</SearchStringAddition>
+									<ViewStatusAddition name="TokensViewStatus" id="135">
+										<AdditionSource>
+											<Item>Tokens</Item>
+											<Type>ViewStatusRepresentation</Type>
+										</AdditionSource>
+										<ContextMenu name="TokensViewStatusContextMenu" id="136"/>
+										<ExtendedTooltip name="TokensViewStatusExtendedTooltip" id="137"/>
+									</ViewStatusAddition>
+									<SearchControlAddition name="TokensSearchControl" id="138">
+										<AdditionSource>
+											<Item>Tokens</Item>
+											<Type>SearchControl</Type>
+										</AdditionSource>
+										<ContextMenu name="TokensSearchControlContextMenu" id="139"/>
+										<ExtendedTooltip name="TokensSearchControlExtendedTooltip" id="140"/>
+									</SearchControlAddition>
+									<Events>
+										<Event name="Selection">TokensSelection</Event>
+									</Events>
+									<ChildItems>
+										<InputField name="TokensTok" id="141">
+											<DataPath>Tokens.Tok</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="TokensTokContextMenu" id="142"/>
+											<ExtendedTooltip name="TokensTokExtendedTooltip" id="143"/>
+										</InputField>
+										<InputField name="TokensLit" id="144">
+											<DataPath>Tokens.Lit</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="TokensLitContextMenu" id="145"/>
+											<ExtendedTooltip name="TokensLitExtendedTooltip" id="146"/>
+										</InputField>
+										<InputField name="TokensLine" id="147">
+											<DataPath>Tokens.Line</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="TokensLineContextMenu" id="148"/>
+											<ExtendedTooltip name="TokensLineExtendedTooltip" id="149"/>
+										</InputField>
+										<InputField name="TokensPos" id="150">
+											<DataPath>Tokens.Pos</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="TokensPosContextMenu" id="151"/>
+											<ExtendedTooltip name="TokensPosExtendedTooltip" id="152"/>
+										</InputField>
+										<InputField name="TokensLen" id="153">
+											<DataPath>Tokens.Len</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="TokensLenContextMenu" id="154"/>
+											<ExtendedTooltip name="TokensLenExtendedTooltip" id="155"/>
 										</InputField>
 									</ChildItems>
 								</Table>
@@ -793,6 +893,97 @@
 							<v8:Length>0</v8:Length>
 							<v8:AllowedLength>Variable</v8:AllowedLength>
 						</v8:StringQualifiers>
+					</Type>
+				</Column>
+			</Columns>
+		</Attribute>
+		<Attribute name="Tokens" id="16">
+			<Title>
+				<v8:item>
+					<v8:lang>en</v8:lang>
+					<v8:content>Tokens</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>v8:ValueTable</v8:Type>
+			</Type>
+			<Columns>
+				<Column name="Tok" id="1">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Tok</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="Lit" id="2">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Lit</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="Line" id="3">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Line</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Pos" id="4">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Pos</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Len" id="5">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Len</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
 					</Type>
 				</Column>
 			</Columns>
