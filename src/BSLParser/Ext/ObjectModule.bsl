@@ -1076,6 +1076,12 @@ Function Scan()
 					Parser_Val = False;	
 				ElsIf Parser_Tok = Tokens.Null Then
 					Parser_Val = Null;
+				EndIf;
+				If Parser_Lit <> Parser_Tok Then
+					Error = Parser_Errors.Add();
+					Error.Text = StrTemplate("Non-canonical spelling of keyword `%1`", Parser_Lit);
+					Error.Line = Parser_CurLine;
+					Error.Pos = Parser_BegPos;
 				EndIf; 
 			Else
 				Parser_Tok = Tokens.Ident;
