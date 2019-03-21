@@ -77,8 +77,7 @@ Procedure VisitDecl(Decl)
 		Or Type = Nodes.PrepIfInst
 		Or Type = Nodes.PrepElsIfInst
 		Or Type = Nodes.PrepElseInst
-		Or Type = Nodes.PrepEndIfInst
-		Or Type = Nodes.PrepUseInst Then
+		Or Type = Nodes.PrepEndIfInst Then
 		VisitPrepInst(Decl);
     EndIf;
 EndProcedure // VisitDecl()
@@ -232,7 +231,6 @@ Procedure VisitNewExpr(NewExpr)
 		Indent = Indent - 1; // <<
 		AlignLine(NewExpr.Place.EndLine);
 		Result.Add(")");
-		VisitTail(NewExpr.Tail);
 	EndIf;
 EndProcedure // VisitNewExpr()
 
@@ -508,9 +506,6 @@ Procedure VisitPrepInst(PrepInst)
 		Result.Add("#Else");
 	ElsIf Type = Nodes.PrepEndIfInst Then
 		Result.Add("#EndIf");
-	ElsIf Type = Nodes.PrepUseInst Then
-		Result.Add("#Use ");
-		Result.Add(PrepInst.Path);
 	EndIf;
 EndProcedure // VisitPrepInst()
 

@@ -207,7 +207,7 @@ Function Tokens(Keywords = Undefined) Export
 		|Ternary, Comma, Period, Colon, Semicolon,
 
 		// Preprocessor instructions
-		|_If, _ElsIf, _Else, _EndIf, _Region, _EndRegion, _Use,
+		|_If, _ElsIf, _Else, _EndIf, _Region, _EndRegion,
 
 		// Other
 
@@ -227,7 +227,7 @@ Function Nodes() Export
 		|AssignStmt, ReturnStmt, BreakStmt, ContinueStmt, RaiseStmt, ExecuteStmt, WhileStmt, ForStmt, ForEachStmt,
 		|TryStmt, ExceptStmt, GotoStmt, LabelStmt, CallStmt, IfStmt, ElsIfStmt, ElseStmt,
 		|PrepIfInst, PrepElsIfInst, PrepElseInst, PrepEndIfInst, PrepRegionInst, PrepEndRegionInst,
-		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepParenExpr, PrepUseInst"
+		|PrepBinaryExpr, PrepNotExpr, PrepSymExpr, PrepParenExpr"
 	);
 EndFunction // Nodes()
 
@@ -248,8 +248,7 @@ Function PrepInstructions() Export
 		"Else.Иначе,"
 		"EndIf.КонецЕсли,"
 		"Region.Область,"
-		"EndRegion.КонецОбласти,"
-		"Use.Использовать" // onescript
+		"EndRegion.КонецОбласти"
 	);
 EndFunction // PrepInstructions()
 
@@ -573,10 +572,8 @@ Function BinaryExpr(Left, Operator, Right, Place)
 		Nodes.BinaryExpr, Left, Operator, Right, Place);
 EndFunction // BinaryExpr()
 
-Function NewExpr(Name, Args, Tail, Place)
+Function NewExpr(Name, Args, Place)
 	// Хранит выражение "Новый".
-	// Для совместимости с OneScript поддерживается
-	// обращение к конструктору через точку (поле Tail)
 	// Пример:
 	// <pre>
 	// // выражения "Новый" заключены в скобки <...>
@@ -592,9 +589,8 @@ Function NewExpr(Name, Args, Tail, Place)
 		"Type,"  // string (one of Nodes)
 		"Name,"  // undefined, string
 		"Args,"  // array (one of #Expressions)
-		"Tail,"  // array (FieldExpr, IndexExpr) 
 		"Place", // structure (Place)
-		Nodes.NewExpr, Name, Args, Tail, Place);
+		Nodes.NewExpr, Name, Args, Place);
 EndFunction // NewExpr()
 
 Function TernaryExpr(Cond, ThenPart, ElsePart, Tail, Place)
@@ -958,20 +954,6 @@ Function PrepEndRegionInst(Place)
 		"Place", // structure (Place)
 		Nodes.PrepEndRegionInst, Place);
 EndFunction // PrepEndRegionInst()
-
-Function PrepUseInst(Path, Place)
-	// Хранит информацию об инструкции препроцессора #Использовать,
-	// Это нестандартная инструкция из OneScript
-	// Пример:
-	// <pre>
-	// #Использовать 1commands // поле "Path" хранит имя библиотеки или путь в кавычках
-	// </pre>
-	Return New Structure( // @Node @OneScript
-		"Type,"  // string (one of Nodes)
-		"Path,"  // string
-		"Place", // structure (Place)
-		Nodes.PrepUseInst, Path, Place);
-EndFunction // PrepUseInst()
 
 #EndRegion // PrepInst
 
@@ -1585,7 +1567,7 @@ Function ParseStringExpr()
 EndFunction // ParseStringExpr()
 
 Function ParseNewExpr()
-	Var Tok, Name, Args, Tail, Pos, Line;
+	Var Tok, Name, Args, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Tok = Scan();
@@ -1594,21 +1576,18 @@ Function ParseNewExpr()
 		Args = EmptyArray;
 		Tok = Scan();
 	EndIf;
-	Tail = EmptyArray;
 	If Tok = Tokens.Lparen Then
 		Tok = Scan();
 		If Tok <> Tokens.Rparen Then
 			Args = ParseArguments();
 			Expect(Tokens.Rparen);
 		EndIf;
-		If Scan() = Tokens.Period Then
-			Tail = ParseIdentTail();
-		EndIf;
+		Scan();
 	EndIf;
 	If Name = Undefined And Args = Undefined Then
 		Error("Expected constructor", Parser_EndPos, True);
 	EndIf;	
-	Return NewExpr(Name, Args, Tail, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
+	Return NewExpr(Name, Args, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseNewExpr()
 
 Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Undefined)
@@ -1639,10 +1618,10 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 			EndIf;
 		EndIf;
 		Call = True;
-		Tail = ParseIdentTail(Call);
+		Tail = ParseTail(Call);
 	Else
 		Call = False;
-		Tail = ParseIdentTail(Call);
+		Tail = ParseTail(Call);
 		If Tail.Count() > 0 Then
 			AllowNewVar = False;
 		EndIf;
@@ -1660,7 +1639,7 @@ Function ParseIdentExpr(Val AllowNewVar = False, NewVar = Undefined, Call = Unde
 	Return IdentExpr(Item, Tail, Args, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseIdentExpr()
 
-Function ParseIdentTail(Call = Undefined)
+Function ParseTail(Call = Undefined)
 	Var Tail, Name, Args, Expr, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
@@ -1700,7 +1679,7 @@ Function ParseIdentTail(Call = Undefined)
 		EndIf;
 	EndDo;
 	Return Tail;
-EndFunction // ParseIdentTail()
+EndFunction // ParseTail()
 
 Function ParseArguments()
 	Var ExprList;
@@ -1736,7 +1715,7 @@ Function ParseTernaryExpr()
 	ElsePart = ParseExpression();
 	Expect(Tokens.Rparen);
 	If Scan() = Tokens.Period Then
-		Tail = ParseIdentTail();
+		Tail = ParseTail();
 	Else
 		Tail = EmptyArray;
 	EndIf;
@@ -1794,8 +1773,6 @@ Function ParseModDecls()
 		ElsIf Parser_Tok = Tokens._EndIf Then
 			Decls.Add(ParsePrepEndIfInst());
 			Scan();
-		ElsIf Parser_Tok = Tokens._Use Then
-			Decls.Add(ParsePrepUseInst());
 		Else
 			Break;
 		EndIf;
@@ -2345,30 +2322,6 @@ EndFunction // ParsePrepParenExpr()
 
 // Inst
 
-Function ParsePrepUseInst()
-	Var Path, Pos, Line;
-	Pos = Parser_BegPos;
-	Line = Parser_CurLine;
-	Scan();
-	If Line <> Parser_CurLine Then
-		Error("Expected string or identifier", Parser_EndPos, True);
-	EndIf;
-	If Parser_Tok = Tokens.Number Then
-		Path = Parser_Lit;
-		If AlphaDigitMap[Parser_Char] = Alpha Then // it can be a keyword
-			Scan();
-			Path = Path + Parser_Lit;
-		EndIf;
-	ElsIf Parser_Tok = Tokens.Ident
-		Or Parser_Tok = Tokens.String Then
-		Path = Parser_Lit;
-	Else
-		Error("Expected string or identifier", Parser_EndPos, True);
-	EndIf;
-	Scan();
-	Return PrepUseInst(Path, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
-EndFunction // ParsePrepUseInst()
-
 Function ParsePrepIfInst()
 	Var Cond, Pos, Line;
 	Pos = Parser_BegPos;
@@ -2663,8 +2616,7 @@ Procedure VisitDecl(Decl)
 		Or Type = Nodes.PrepIfInst
 		Or Type = Nodes.PrepElsIfInst
 		Or Type = Nodes.PrepElseInst
-		Or Type = Nodes.PrepEndIfInst
-		Or Type = Nodes.PrepUseInst Then
+		Or Type = Nodes.PrepEndIfInst Then
 		VisitPrepInst(Decl);
 	EndIf;
 	For Each Hook In Visitor_Hooks.AfterVisitDecl Do
@@ -2855,7 +2807,7 @@ Procedure VisitBinaryExpr(BinaryExpr)
 EndProcedure // VisitBinaryExpr()
 
 Procedure VisitNewExpr(NewExpr)
-	Var Expr, Hook, Item;
+	Var Expr, Hook;
 	For Each Hook In Visitor_Hooks.VisitNewExpr Do
 		Hook.VisitNewExpr(NewExpr, Visitor_Stack, Visitor_Counters);
 	EndDo;
@@ -2863,21 +2815,6 @@ Procedure VisitNewExpr(NewExpr)
 	For Each Expr In NewExpr.Args Do
 		If Expr <> Undefined Then
 			VisitExpr(Expr);
-		EndIf;
-	EndDo;
-	For Each Item In NewExpr.Tail Do
-		If Item.Type = Nodes.FieldExpr Then
-			If Item.Args <> Undefined Then
-				For Each Expr In Item.Args Do
-					If Expr <> Undefined Then
-						VisitExpr(Expr);
-					EndIf;
-				EndDo;
-			EndIf;
-		ElsIf Item.Type = Nodes.IndexExpr Then
-			VisitExpr(Item.Expr);
-		Else
-			Raise "Call in violation of protocol";
 		EndIf;
 	EndDo;
 	PopInfo();
