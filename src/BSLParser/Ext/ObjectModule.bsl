@@ -17,6 +17,7 @@ Var TokenMap;         // map[string] (string)
 Var AlphaDigitMap;    // map[string] (string)
 Var Alpha, Digit;     // string
 Var Chars_LF;         // string
+Var Canonical;        // map[string] (boolean)
 
 #EndRegion // Constants
 
@@ -62,7 +63,12 @@ Procedure Init()
 	Var Letters, Index, Char;
 
 	InitEnums();
-
+	
+	Canonical = New Map;
+	For Each Item In Keywords Do
+		Canonical[Item.Key] = True;
+	EndDo; 
+	
 	BasicLitNoString = New Array;
 	BasicLitNoString.Add(Tokens.Number);
 	BasicLitNoString.Add(Tokens.DateTime);
@@ -1077,7 +1083,7 @@ Function Scan()
 				ElsIf Parser_Tok = Tokens.Null Then
 					Parser_Val = Null;
 				EndIf;
-				If Parser_Lit <> Parser_Tok Then
+				If Canonical[Parser_Lit] <> True Then
 					Error = Parser_Errors.Add();
 					Error.Text = StrTemplate("Non-canonical spelling of keyword `%1`", Parser_Lit);
 					Error.Line = Parser_CurLine;
