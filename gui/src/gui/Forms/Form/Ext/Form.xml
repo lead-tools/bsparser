@@ -244,6 +244,13 @@
 										<ExtendedTooltip name="PluginsSearchControlExtendedTooltip" id="122"/>
 									</SearchControlAddition>
 									<ChildItems>
+										<CheckBoxField name="PluginsOff" id="156">
+											<DataPath>Plugins.Off</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<CheckBoxType>Auto</CheckBoxType>
+											<ContextMenu name="PluginsOffContextMenu" id="157"/>
+											<ExtendedTooltip name="PluginsOffExtendedTooltip" id="158"/>
+										</CheckBoxField>
 										<InputField name="PluginsPath" id="123">
 											<DataPath>Plugins.Path</DataPath>
 											<EditMode>EnterOnInput</EditMode>
@@ -893,6 +900,21 @@
 							<v8:Length>0</v8:Length>
 							<v8:AllowedLength>Variable</v8:AllowedLength>
 						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="Off" id="2">
+					<Title>
+						<v8:item>
+							<v8:lang>en</v8:lang>
+							<v8:content>Off</v8:content>
+						</v8:item>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Выкл</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:boolean</v8:Type>
 					</Type>
 				</Column>
 			</Columns>

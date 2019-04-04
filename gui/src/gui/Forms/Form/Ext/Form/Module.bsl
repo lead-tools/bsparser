@@ -88,7 +88,7 @@ Procedure TranslateAtServer()
 		EndTry;
 		If Parser_Module <> Undefined Then
 			PluginsList = New Array;
-			For Each Row In Plugins Do
+			For Each Row In Plugins.FindRows(New Structure("Off", False)) Do
 				PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
 			EndDo;
 			BSLParser.HookUp(PluginsList);
