@@ -26,6 +26,7 @@ Function Hooks() Export
 	Hooks.Add("VisitMethodDecl");
 	Hooks.Add("AfterVisitMethodDecl");
 	Hooks.Add("VisitBinaryExpr");
+	Hooks.Add("AfterVisitBinaryExpr");
 	Hooks.Add("VisitTernaryExpr");
 	Hooks.Add("VisitIfStmt");
 	Hooks.Add("AfterVisitIfStmt");
@@ -75,7 +76,7 @@ Procedure VisitBinaryExpr(BinaryExpr, Stack, Counters) Export
 	ExprLevel = ExprLevel + 1;
 EndProcedure // VisitBinaryExpr()  
 
-Procedure AfterVisitBinaryExpr() Export
+Procedure AfterVisitBinaryExpr(BinaryExpr, Stack, Counters) Export
 	ExprLevel = ExprLevel - 1;
 EndProcedure // AfterVisitBinaryExpr()
 
