@@ -22,11 +22,11 @@ Function Hooks() Export
 EndFunction // Hooks() 
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
-	Var Item;
+	Var AutoDecl;
 	If MethodDecl.Auto.Count() > 0 Then
 		Result.Add(StrTemplate("Метод `%1()` содержит авто-переменные:", MethodDecl.Sign.Name));
-		For Each Item In MethodDecl.Auto Do
-			Result.Add(Chars.Tab + Item.Name);
+		For Each AutoDecl In MethodDecl.Auto Do
+			Result.Add(Chars.Tab + AutoDecl.Name);
 		EndDo; 
 	EndIf; 
 EndProcedure // VisitMethodDecl()
