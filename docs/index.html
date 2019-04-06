@@ -92,7 +92,7 @@ EndFunction // Hooks()
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
 	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
 		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#Item'>Item</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#AutoDecl'>AutoDecl</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Interface</strong>: array (<a href='#Item'>Item</a>)</li>
 		<li><strong>Comments</strong>: map[number] (string)</li>
@@ -185,7 +185,7 @@ EndFunction // Hooks()
  КонецФункции</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
 		<li><strong>Sign</strong>: structure (<a href='#ProcSign'>ProcSign</a>, <a href='#FuncSign'>FuncSign</a>)</li>
 		<li><strong>Vars</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#Item'>Item</a>)</li>
+		<li><strong>Auto</strong>: array (<a href='#AutoDecl'>AutoDecl</a>)</li>
 		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
 		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
 	</ul>

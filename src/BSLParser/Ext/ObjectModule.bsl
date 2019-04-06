@@ -60,7 +60,7 @@ Var Visitor_Counters; // structure as map[string] (number)
 #Region Init
 
 Procedure Init()
-	Var Letters, Index, Char;
+	Var Letters, Item, Index, Char;
 
 	InitEnums();
 	
@@ -297,7 +297,7 @@ Function Module(Decls, Auto, Statements, Interface, Comments)
 	Return New Structure( // @Node
 		"Type,"      // string (one of Nodes)
 		"Decls,"     // array (one of #Declarations)
-		"Auto,"      // array (Item)
+		"Auto,"      // array (AutoDecl)
 		"Body,"      // array (one of #Statements)
 		"Interface," // array (Item)
 		"Comments",  // map[number] (string)
@@ -310,7 +310,7 @@ Function Scope(Outer)
 	Return New Structure(
 		"Outer," // undefined, structure (Scope)
 		"Items," // structure as map[string] (Item)
-		"Auto",  // array (Item)
+		"Auto",  // array (AutoDecl)
 		Outer, New Structure, New Array);
 EndFunction // Scope()
 
@@ -428,7 +428,7 @@ Function MethodDecl(Sign, Decls, Auto, Body, Place)
 		"Type,"  // string (one of Nodes)
 		"Sign,"  // structure (ProcSign, FuncSign)
 		"Vars,"  // array (VarLocDecl)
-		"Auto,"  // array (Item)
+		"Auto,"  // array (AutoDecl)
 		"Body,"  // array (one of #Statements)
 		"Place", // structure (Place)
 		Nodes.MethodDecl, Sign, Decls, Auto, Body, Place);
@@ -1036,7 +1036,7 @@ EndFunction // PrepParenExpr()
 #Region Parser
 
 Function Scan()
-	Var Beg, Prev, Comment;
+	Var Beg, Prev, Comment, Error;
 
 	Parser_EndPos = Parser_CurPos;
 	Parser_EndLine = Parser_CurLine;
@@ -1405,7 +1405,7 @@ Function Tokenize(Source) Export
 EndFunction 
 
 Function Parse(Source, Context = Undefined) Export
-	Var Decls, Auto, VarObj, Item, Statements, Module, CallSites, Place, Error;
+	Var Decls, Auto, AutoDecl, Item, Statements, Module, CallSites, Place, Error;
 	Parser_Source = Source;
 	Parser_CurPos = 0;
 	Parser_CurLine = 1;
@@ -1438,8 +1438,8 @@ Function Parse(Source, Context = Undefined) Export
 	Decls = ParseModDecls();
 	Statements = ParseStatements();
 	Auto = New Array;
-	For Each VarObj In Parser_Scope.Auto Do
-		Auto.Add(VarObj);
+	For Each AutoDecl In Parser_Scope.Auto Do
+		Auto.Add(AutoDecl);
 	EndDo;
 	Module = Module(Decls, Auto, Statements, Parser_Interface, Parser_Comments);
 	For Each Item In Parser_Unknown Do
@@ -1916,7 +1916,7 @@ Function ParseVarLocDecl()
 EndFunction // ParseVarLocDecl()
 
 Function ParseMethodDecl()
-	Var Sign, Item, Name, Vars, Params, Exported, Body, Auto, VarObj, Pos, Line;
+	Var Sign, Item, Name, Vars, Params, Exported, Body, Auto, AutoDecl, Pos, Line;
 	Pos = Parser_BegPos;
 	Line = Parser_CurLine;
 	Exported = False;
@@ -1956,8 +1956,8 @@ Function ParseMethodDecl()
 		Expect(Tokens.EndProcedure);
 	EndIf;
 	Auto = New Array;
-	For Each VarObj In Parser_Scope.Auto Do
-		Auto.Add(VarObj);
+	For Each AutoDecl In Parser_Scope.Auto Do
+		Auto.Add(AutoDecl);
 	EndDo;
 	CloseScope();
 	Scan();
@@ -2113,7 +2113,7 @@ Function ParseAssignOrCallStmt()
 		Right = ParseExpression();
 		If NewVar <> Undefined Then
 			Parser_Vars.Insert(NewVar.Name, NewVar);
-			Parser_Scope.Auto.Add(NewVar);
+			Parser_Scope.Auto.Add(NewVar.Decl);
 		EndIf;
 		Stmt = AssignStmt(Left, Right, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 	EndIf;
@@ -2216,7 +2216,7 @@ Function ParseForStmt()
 	Until = ParseExpression();
 	If NewVar <> Undefined Then
 		Parser_Vars.Insert(NewVar.Name, NewVar);
-		Parser_Scope.Auto.Add(NewVar);
+		Parser_Scope.Auto.Add(NewVar.Decl);
 	EndIf;
 	Expect(Tokens.Do);
 	Scan();
@@ -2242,7 +2242,7 @@ Function ParseForEachStmt()
 	Collection = ParseExpression();
 	If NewVar <> Undefined Then
 		Parser_Vars.Insert(NewVar.Name, NewVar);
-		Parser_Scope.Auto.Add(NewVar);
+		Parser_Scope.Auto.Add(NewVar.Decl);
 	EndIf;
 	Expect(Tokens.Do);
 	Scan();

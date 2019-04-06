@@ -94,8 +94,8 @@ Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	For Each VarLocDecl In MethodDecl.Vars Do
 		Vars[VarLocDecl] = "Set";
 	EndDo;
-	For Each Item In MethodDecl.Auto Do
-		Vars[Item.Decl] = "Set";
+	For Each AutoDecl In MethodDecl.Auto Do
+		Vars[AutoDecl] = "Set";
 	EndDo;
 EndProcedure // VisitMethodDecl()
 
