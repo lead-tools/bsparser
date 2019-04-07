@@ -2254,6 +2254,8 @@ EndFunction // ParseForEachStmt()
 
 Function ParseGotoStmt()
 	Var Label, Pos, Line;
+	Pos = Parser_BegPos;
+	Line = Parser_CurLine;
 	Scan();
 	Expect(Tokens.Label);
 	Label = Parser_Lit;
