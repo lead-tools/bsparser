@@ -63,12 +63,12 @@ Procedure Init()
 	Var Letters, Item, Index, Char;
 
 	InitEnums();
-	
+
 	Canonical = New Map;
 	For Each Item In Keywords Do
 		Canonical[Item.Key] = True;
-	EndDo; 
-	
+	EndDo;
+
 	BasicLitNoString = New Array;
 	BasicLitNoString.Add(Tokens.Number);
 	BasicLitNoString.Add(Tokens.DateTime);
@@ -141,8 +141,8 @@ Procedure Init()
 		AlphaDigitMap[String(Index)] = Digit;
 	EndDo;
 
-	TokenMap[""""] = Tokens.String;
-	TokenMap["|"] = Tokens.String;
+	TokenMap[""""] = Tokens.StringBeg;
+	TokenMap["|"] = Tokens.StringMid;
 	TokenMap["'"] = Tokens.DateTime;
 	TokenMap["="] = Tokens.Eql;
 	TokenMap["+"] = Tokens.Add;
@@ -1040,9 +1040,9 @@ Function Scan()
 
 	Parser_EndPos = Parser_CurPos;
 	Parser_EndLine = Parser_CurLine;
-	
+
 	Parser_Val = Undefined;
-	
+
 	If Right(Parser_Lit, 1) = Chars_LF Then
 		Parser_CurLine = Parser_CurLine + 1;
 	EndIf;
@@ -1079,7 +1079,7 @@ Function Scan()
 				If Parser_Tok = Tokens.True Then
 					Parser_Val = True;
 				ElsIf Parser_Tok = Tokens.False Then
-					Parser_Val = False;	
+					Parser_Val = False;
 				ElsIf Parser_Tok = Tokens.Null Then
 					Parser_Val = Null;
 				EndIf;
@@ -1088,12 +1088,12 @@ Function Scan()
 					Error.Text = StrTemplate("Non-canonical spelling of keyword `%1`", Parser_Lit);
 					Error.Line = Parser_CurLine;
 					Error.Pos = Parser_BegPos;
-				EndIf; 
+				EndIf;
 			Else
 				Parser_Tok = Tokens.Ident;
 			EndIf;
 
-		ElsIf Parser_Tok = Tokens.String Then
+		ElsIf Parser_Tok = Tokens.StringBeg Then
 
 			Beg = Parser_CurPos;
 			Parser_Char = """"; // cheat code
@@ -1109,10 +1109,35 @@ Function Scan()
 					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 				EndIf;
 			EndDo;
+
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
-			
-			Parser_Val = Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2);
-			Parser_Tok = StringToken(Parser_Lit);
+			Parser_Val = StrReplace(Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2), """""", """");
+			If Right(Parser_Lit, 1) = """" Then
+				Parser_Tok = Tokens.String;
+			EndIf;
+
+		ElsIf Parser_Tok = Tokens.StringMid Then
+
+			Beg = Parser_CurPos;
+			Parser_Char = """"; // cheat code
+			While Parser_Char = """" Do
+				Parser_CurPos = Parser_CurPos + 1;
+				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+				While Parser_Char <> """" And Parser_Char <> Chars_LF And Parser_Char <> "" Do
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+				EndDo;
+				If Parser_Char <> "" Then
+					Parser_CurPos = Parser_CurPos + 1;
+					Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
+				EndIf;
+			EndDo;
+
+			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+			Parser_Val = StrReplace(Mid(Parser_Lit, 2, StrLen(Parser_Lit) - 2), """""", """");
+			If Right(Parser_Lit, 1) = """" Then
+				Parser_Tok = Tokens.StringEnd;
+			EndIf;
 
 		ElsIf Parser_Tok = Digit Then
 
@@ -1130,10 +1155,10 @@ Function Scan()
 				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
 			EndIf;
 			Parser_Lit = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
-			
+
 			Parser_Val = Number(Parser_Lit);
 			Parser_Tok = Tokens.Number;
-		
+
 		ElsIf Parser_Tok = Tokens.DateTime Then
 
 			Parser_CurPos = Parser_CurPos + 1;
@@ -1146,8 +1171,8 @@ Function Scan()
 				Parser_Val = AsDate(Parser_Lit);
 				Parser_CurPos = Parser_CurPos + 1;
 				Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
-			EndIf;	
-			
+			EndIf;
+
 		ElsIf Parser_Tok = Undefined Then
 
 			Prev = Parser_Char;
@@ -1159,8 +1184,12 @@ Function Scan()
 				If Parser_Char = "/" Then
 					// scan comment
 					Beg = Parser_CurPos + 1;
-					Parser_CurPos = StrFind(Parser_Source, Chars_LF,, Beg);
-					Parser_Comments[Parser_CurLine] = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+					If Beg < Parser_Len Then
+						Parser_CurPos = StrFind(Parser_Source, Chars_LF,, Beg);
+						Parser_Comments[Parser_CurLine] = Mid(Parser_Source, Beg, Parser_CurPos - Beg);
+					Else
+						Parser_CurPos = 0;
+					EndIf;
 					If Parser_CurPos = 0 Then
 						Parser_Char = "";
 					Else
@@ -1276,14 +1305,14 @@ Function Scan()
 
 				Raise "Unknown char!";
 
-			EndIf;	
-			
+			EndIf;
+
 		Else
-			
+
 			Parser_Lit = Parser_Char;
 			Parser_CurPos = Parser_CurPos + 1;
 			Parser_Char = Mid(Parser_Source, Parser_CurPos, 1);
-			
+
 		EndIf;
 
 		If Not Comment Then
@@ -1364,7 +1393,7 @@ EndProcedure // InsertMethod()
 
 Function Tokenize(Source) Export
 	Var Result, TokenTable, TokenRow;
-	
+
 	Parser_Source = Source;
 	Parser_CurPos = 0;
 	Parser_CurLine = 1;
@@ -1379,14 +1408,14 @@ Function Tokenize(Source) Export
 	Parser_Errors.Columns.Add("Text", New TypeDescription("String"));
 	Parser_Errors.Columns.Add("Line", New TypeDescription("Number"));
 	Parser_Errors.Columns.Add("Pos", New TypeDescription("Number"));
-	
+
 	TokenTable = New ValueTable;
 	TokenTable.Columns.Add("Tok", New TypeDescription("String"));
 	TokenTable.Columns.Add("Lit", New TypeDescription("String"));
 	TokenTable.Columns.Add("Line", New TypeDescription("Number"));
 	TokenTable.Columns.Add("Pos", New TypeDescription("Number"));
 	TokenTable.Columns.Add("Len", New TypeDescription("Number"));
-	
+
 	While Scan() <> Tokens.Eof Do
 		TokenRow = TokenTable.Add();
 		TokenRow.Tok = Parser_Tok;
@@ -1394,15 +1423,15 @@ Function Tokenize(Source) Export
 		TokenRow.Line = Parser_CurLine;
 		TokenRow.Pos = Parser_BegPos;
 		TokenRow.Len = Parser_CurPos - Parser_BegPos;
-	EndDo; 
-	
+	EndDo;
+
 	Result = New Structure("Tokens, Comments", TokenTable, Parser_Comments);
-	
+
 	Parser_Comments = Undefined;
-	
+
 	Return Result;
-	
-EndFunction 
+
+EndFunction
 
 Function Parse(Source, Context = Undefined) Export
 	Var Decls, Auto, AutoDecl, Item, Statements, Module, CallSites, Place, Error;
@@ -1468,7 +1497,7 @@ EndFunction
 
 Function Source() Export
 	Return Parser_Source;
-EndFunction 
+EndFunction
 
 #Region ParseExpr
 
@@ -1641,7 +1670,7 @@ Function ParseNewExpr()
 	EndIf;
 	If Name = Undefined And Args = Undefined Then
 		Error("Expected constructor", Parser_EndPos, True);
-	EndIf;	
+	EndIf;
 	Return NewExpr(Name, Args, Place(Pos, Parser_EndPos - Pos, Line, Parser_EndLine));
 EndFunction // ParseNewExpr()
 
@@ -2354,9 +2383,9 @@ Function ParsePrepOperand()
 		Operand = ParsePrepParenExpr();
 	Else
 		Error("Expected preprocessor symbol",, True);
-	EndIf; 
+	EndIf;
 	Return Operand;
-EndFunction 
+EndFunction
 
 Function ParsePrepSymExpr()
 	Var Symbol, SymbolExist;
@@ -2477,24 +2506,6 @@ Procedure Expect(Tok)
 		Error("Expected " + Tok, Parser_BegPos, True);
 	EndIf;
 EndProcedure // Expect()
-
-Function StringToken(Lit)
-	Var Tok;
-	If Left(Lit, 1) = """" Then
-		If Right(Lit, 1) = """" Then
-			Tok = Tokens.String;
-		Else
-			Tok = Tokens.StringBeg;
-		EndIf;
-	Else // |
-		If Right(Lit, 1) = """" Then
-			Tok = Tokens.StringEnd;
-		Else
-			Tok = Tokens.StringMid;
-		EndIf;
-	EndIf;
-	Return Tok;
-EndFunction // StringToken()
 
 Procedure Error(Note, Pos = Undefined, Stop = False)
 	Var Error;
