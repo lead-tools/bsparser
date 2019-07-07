@@ -45,6 +45,8 @@ EndProcedure // VisitMethodDecl()
 Пример сложного плагина: [onesick](https://github.com/Lead-Tools/onesick/blob/master/Compiler/src/Compiler/Ext/ObjectModule.bsl)  
 Это генератор кода для интерпретации языка 1С на языке 1С.
 
+Пример на OneScript, демонстрирующий прогон проверок исходного кода: [test.os](https://github.com/Lead-Tools/BSL-Parser/blob/master/oscript/test.os)
+
 # Цели проекта
 
 * Создать удобный инструмент для работы с исходным кодом на языке 1С как с данными
