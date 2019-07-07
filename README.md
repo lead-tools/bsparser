@@ -55,6 +55,7 @@ EndProcedure // VisitMethodDecl()
 
 Например проект у вас в папке `c:\sonarqube-7.7\myprj\`  
 Исходный код, который нужно анализировать в папке `c:\sonarqube-7.7\myprj\src\`  
+
 Настройки проекта (`"c:\sonarqube-7.7\myprj\conf\sonar-project.properties"`):  
 ```json
 sonar.host.url=http://localhost:9000
