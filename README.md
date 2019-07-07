@@ -20,7 +20,7 @@ BSL-Parser - это парсер встроенного языка платфо�
 
 По сути это фронтенд компилятора, а вы можете к нему писать бакенды (плагины).
 
-Пример плагина проверяющего наличие возврата в конце функций: [ReturnCheck](https://github.com/Lead-Tools/BSL-Parser/blob/master/plugins/ReturnCheck/src/ReturnCheck/Ext/ObjectModule.bsl)
+Пример плагина проверяющего наличие возврата в конце функций: [ReturnCheck](https://github.com/Lead-Tools/BSL-Parser/blob/master/plugins/ReturnCheck/src/ReturnCheck/Ext/ObjectModule.bsl)  
 Конкретно весь код проверки выглядит так (остальное там просто интерфейс плагина):
 ```bsl
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
