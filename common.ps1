@@ -69,5 +69,6 @@ $list = @{
     TestEnd             = "\plugins\TestEnd\"
     TestServerCall      = "\plugins\TestServerCall\"
     CognitiveComplexity = "\plugins\CognitiveComplexity\"
+    CodeModification    = "\plugins\CodeModification\"
     TestRunner          = "\tests\TestRunner\"
 }
