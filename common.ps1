@@ -9,13 +9,14 @@ function send($ssh, $cmd) {
     "#cmd: $cmd" >> log.txt
     $ssh.WriteLine($cmd)
     wait($ssh)
-    $res = ConvertFrom-Json $ssh.Read()
-    $res | Format-Table | Out-File log.txt -Append
-    if (-not ($res | where {$_.type -eq 'success'})) {
-        [System.Windows.Forms.MessageBox]::Show('An error has occured. Please see log file') | Out-Null
-        $res | where {$_.type -eq 'error'} | Write-Host
-        throw
-    }
+    $ssh.Read() >> log.txt
+    # $res = ConvertFrom-Json $ssh.Read()
+    # $res | Format-Table | Out-File log.txt -Append
+    # if (-not ($res | where {$_.type -eq 'success'})) {
+    #     [System.Windows.Forms.MessageBox]::Show('An error has occured. Please see log file') | Out-Null
+    #     $res | where {$_.type -eq 'error'} | Write-Host
+    #     throw
+    # }
 }
 
 function complete($percent, $activity) {
@@ -50,8 +51,7 @@ function connect() {
 
 function disconnect($1c, $ssh) {
     send $ssh 'common disconnect-ib'
-    $ssh.WriteLine('common shutdown')
-    #wait($ssh)
+    send $ssh 'common shutdown'
 
     $1c | Remove-SSHSession | Out-Null
 }
