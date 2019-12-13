@@ -13,9 +13,9 @@ Var Caller, CallerAtClient;
 Var CallTable;
 Var Methods;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
-	Directives = BSLParser.Directives();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
+	Directives = BSParser.Directives();
 	Result = New Array;
 	CallTable = New ValueTable;
 	CallTable.Columns.Add("Caller");
@@ -24,7 +24,7 @@ Procedure Init(BSLParser) Export
 	CallTable.Columns.Add("ServerCall", New TypeDescription("Number"));
 	CallTable.Indexes.Add("Method, AtClient");
 	Methods = New Map;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Hooks() Export
 	Var Hooks;
@@ -32,7 +32,7 @@ Function Hooks() Export
 	Hooks.Add("VisitMethodDecl");
 	Hooks.Add("VisitIdentExpr");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Caller = MethodDecl.Sign;
@@ -49,21 +49,21 @@ Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
 			Callrow.AtClient = CallerAtClient;
 			CallRow.Method = Method;
 			Methods[Method] = True;
-		EndIf; 
-	EndIf; 
-EndProcedure // VisitIdentExpr() 
+		EndIf;
+	EndIf;
+EndProcedure // VisitIdentExpr()
 
 Function Result() Export
 	For Each Method In Methods Do
 		If Method.Key.Directive = Directives.AtServer Then
-			CountServerCalls(Method.Key); 
-		EndIf; 
-	EndDo; 
+			CountServerCalls(Method.Key);
+		EndIf;
+	EndDo;
 	CallTable.GroupBy("Caller", "ServerCall");
 	For Each Row In CallTable Do
 		If Row.ServerCall > 1 Then
 			Result.Add(StrTemplate("Метод `%1()` содержит %2 серверных вызовов", Row.Caller.Name, Row.ServerCall));
-		EndIf; 
+		EndIf;
 	EndDo;
 	Return StrConcat(Result, Chars.LF);
 EndFunction // Result()

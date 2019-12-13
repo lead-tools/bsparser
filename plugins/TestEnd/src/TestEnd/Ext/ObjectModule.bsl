@@ -8,13 +8,13 @@ Var Comments;
 Var RegionLevel;
 Var RegionStack;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
-	Source = BSLParser.Source();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
+	Source = BSParser.Source();
 	Result = New Array;
 	RegionLevel = 0;
 	RegionStack = New Map;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
@@ -27,17 +27,17 @@ Function Hooks() Export
 	Hooks.Add("VisitMethodDecl");
 	Hooks.Add("VisitPrepInst");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitModule(Module, Stack, Counters) Export
-	Comments = Module.Comments;	
+	Comments = Module.Comments;
 EndProcedure // VisitModule()
 
-Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export 
+Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Comment = Comments[MethodDecl.Place.EndLine];
 	If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1%2", MethodDecl.Sign.Name, "()") Then
 		Result.Add(StrTemplate("Метод `%1()` имеет неправильный замыкающий комментарий в строке %2", MethodDecl.Sign.Name, MethodDecl.Place.EndLine));
-	EndIf; 
+	EndIf;
 EndProcedure // VisitMethodDecl()
 
 Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
@@ -52,5 +52,5 @@ Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
 			Result.Add(StrTemplate("%1`%2%3`", Chars.Tab, Mid(Source, PrepInst.Place.Pos, PrepInst.Place.Len), Comment));
 		EndIf;
 		RegionLevel = RegionLevel - 1;
-	EndIf; 
+	EndIf;
 EndProcedure // VisitPrepInst()

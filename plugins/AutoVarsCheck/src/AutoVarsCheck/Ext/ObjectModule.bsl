@@ -5,21 +5,21 @@
 Var Nodes;
 Var Result;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
 	Result = New Array;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
-EndFunction // Result() 
+EndFunction // Result()
 
 Function Hooks() Export
 	Var Hooks;
 	Hooks = New Array;
 	Hooks.Add("VisitMethodDecl");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var AutoDecl;
@@ -27,6 +27,6 @@ Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 		Result.Add(StrTemplate("Метод `%1()` содержит авто-переменные:", MethodDecl.Sign.Name));
 		For Each AutoDecl In MethodDecl.Auto Do
 			Result.Add(Chars.Tab + AutoDecl.Name);
-		EndDo; 
-	EndIf; 
+		EndDo;
+	EndIf;
 EndProcedure // VisitMethodDecl()

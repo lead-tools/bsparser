@@ -1,9 +1,9 @@
 
-AttachScript("..\src\BSLParser\Ext\ObjectModule.bsl", "BSLParser");
+AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
 AttachScript(".\TestRunner\src\TestRunner\Ext\ObjectModule.bsl", "TestRunner");
 
 
-BSLParser = New BSLParser;
+BSParser = New BSParser;
 TestRunner = New TestRunner;
 
-TestRunner.Run(BSLParser);
+TestRunner.Run(BSParser);

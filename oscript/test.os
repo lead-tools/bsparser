@@ -2,7 +2,7 @@
 
 // Сначала подключаем обработку парсера
 
-AttachScript("..\src\BSLParser\Ext\ObjectModule.bsl", "BSLParser");
+AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
 
 // и обработки необходимых плагинов (набор просто для демонстрации работы с несколькими плагинами).
 
@@ -16,7 +16,7 @@ AttachScript("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "Plu
 AttachScript("..\plugins\AutoVarsCheck\src\AutoVarsCheck\Ext\ObjectModule.bsl", "PluginAutoVarsCheck");
 
 // Далее читаем исходный код, который хотим проверить.
-TextReader = New TextReader("..\src\BSLParser\Ext\ObjectModule.bsl");
+TextReader = New TextReader("..\src\BSParser\Ext\ObjectModule.bsl");
 Source = TextReader.Read();
 TextReader.Close();
 
@@ -28,8 +28,8 @@ Plugins.Add(New PluginReturnCheck);
 Plugins.Add(New PluginAutoVarsCheck);
 
 // Запуск проверки на данном исходном коде (Source) с желаемым набором плагинов (Plugins).
-BSLParser = New BSLParser;
-BSLParser.Go(Source, Plugins);
+BSParser = New BSParser;
+BSParser.Go(Source, Plugins);
 
 // Собираем и выводим результаты работы плагинов.
 For Each Plugin In Plugins Do

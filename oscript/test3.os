@@ -1,5 +1,5 @@
 
-AttachScript("..\src\BSLParser\Ext\ObjectModule.bsl", "BSLParser");
+AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
 AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
 AttachScript("..\plugins\TestEnd\src\TestEnd\Ext\ObjectModule.bsl", "PluginTestEnd");
 AttachScript("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "PluginReturnCheck");
@@ -11,14 +11,14 @@ EndIf;
 CommonModulesPath = CommandLineArguments[0];
 Files = FindFiles(CommonModulesPath, "*.os", True);
 
-BSLParser = New BSLParser;
+BSParser = New BSParser;
 
 Plugins = New Array;
 Plugins.Add(New PluginTestVars);
 Plugins.Add(New PluginTestEnd);
 Plugins.Add(New PluginReturnCheck);
 
-BSLParser.HookUp(Plugins);
+BSParser.HookUp(Plugins);
 
 TextReader = New TextReader;
 
@@ -26,8 +26,8 @@ For Each File In Files Do
 	TextReader.Open(File.FullName, "UTF-8");
 	Source = TextReader.Read();
 	Try
-		Module = BSLParser.Parse(Source);
-		BSLParser.Visit(Module);
+		Module = BSParser.Parse(Source);
+		BSParser.Visit(Module);
 	Except
 		Message(Chars.LF);
 		Message(File.FullName);

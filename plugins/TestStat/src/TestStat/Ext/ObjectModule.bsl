@@ -6,11 +6,11 @@ Var Result;
 
 Var AssignCount;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
 	Result = New Array;
 	AssignCount = 0;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
@@ -23,7 +23,7 @@ Function Hooks() Export
 	Hooks.Add("VisitMethodDecl");
 	Hooks.Add("AfterVisitMethodDecl");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
 	AssignCount = AssignCount + 1;

@@ -4,10 +4,10 @@
 Var Nodes;
 Var Result;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
 	Result = New Array;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
@@ -20,7 +20,7 @@ Function Hooks() Export
 	Hooks.Add("VisitForStmt");
 	Hooks.Add("VisitForEachStmt");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
 	VisitLoopStmt(WhileStmt, Stack, Counters);

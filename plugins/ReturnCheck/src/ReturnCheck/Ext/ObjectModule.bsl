@@ -11,10 +11,10 @@
 Var Nodes;
 Var Result;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
 	Result = New Array;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
@@ -25,13 +25,13 @@ Function Hooks() Export
 	Hooks = New Array;
 	Hooks.Add("VisitMethodDecl");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Var StmtCount;
 	If MethodDecl.Sign.Type <> Nodes.FuncSign Then
 		Return;
-	EndIf; 
+	EndIf;
 	StmtCount = MethodDecl.Body.Count();
 	If StmtCount = 0 Or MethodDecl.Body[StmtCount - 1].Type <> "ReturnStmt" Then
 		Result.Add(StrTemplate("Последней инструкцией функции `%1()` должен быть `Возврат`" "", MethodDecl.Sign.Name));

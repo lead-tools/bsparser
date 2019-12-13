@@ -12,9 +12,9 @@ EndProcedure // OnCreateAtServer()
 
 &AtClient
 Procedure OnOpen(Cancel)
-	
+
 	SetVisibilityOfAttributes(ThisObject);
-	
+
 EndProcedure // OnOpen()
 
 &AtClient
@@ -33,22 +33,22 @@ Procedure TranslateAtServer()
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
 
-	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSLParser.epf", False);
+	BSParser = ExternalDataProcessors.Create(ThisFile.Path + "BSParser.epf", False);
 
 	Start = CurrentUniversalDateInMilliseconds();
 
 	If Output = "NULL" Then
-		
+
 		Try
-			BSLParser.Parse(Source.GetText());
+			BSParser.Parse(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
-		
+
 	ElsIf Output = "AST" Then
 
 		Try
-			Parser_Module = BSLParser.Parse(Source.GetText());
+			Parser_Module = BSParser.Parse(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -66,23 +66,23 @@ Procedure TranslateAtServer()
 			EndIf;
 			WriteJSON(JSONWriter, Parser_Module,, "ConvertJSON", ThisObject);
 			Result.SetText(JSONWriter.Close());
-		EndIf; 
-		
+		EndIf;
+
 	ElsIf Output = "Tree" Then
-		
+
 		Try
-			Parser_Module = BSLParser.Parse(Source.GetText());
+			Parser_Module = BSParser.Parse(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
 		If Parser_Module <> Undefined Then
 			FillTree(Parser_Module);
-		EndIf; 
-		
+		EndIf;
+
 	ElsIf Output = "Plugin" Then
-		
+
 		Try
-			Parser_Module = BSLParser.Parse(Source.GetText());
+			Parser_Module = BSParser.Parse(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -91,27 +91,27 @@ Procedure TranslateAtServer()
 			For Each Row In Plugins.FindRows(New Structure("Off", False)) Do
 				PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
 			EndDo;
-			BSLParser.HookUp(PluginsList);
-			BSLParser.Visit(Parser_Module);
+			BSParser.HookUp(PluginsList);
+			BSParser.Visit(Parser_Module);
 			ResultArray = New Array;
 			For Each Plugin In PluginsList Do
 				ResultArray.Add(Plugin.Result());
-			EndDo; 
+			EndDo;
 			Result.SetText(StrConcat(ResultArray));
-		EndIf; 
-		
+		EndIf;
+
 	ElsIf Output = "Tokens" Then
-		
-		Tokens.Load(BSLParser.Tokenize(Source.GetText()).Tokens);
-		
+
+		Tokens.Load(BSParser.Tokenize(Source.GetText()).Tokens);
+
 	EndIf;
 
 	If Measure Then
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 	EndIf;
 
-	Errors.Load(BSLParser.Errors());  
-	
+	Errors.Load(BSParser.Errors());
+
 EndProcedure // TranslateAtServer()
 
 &AtServer
@@ -124,7 +124,7 @@ Function FillTree(Module)
 	Row.Type = Module.Type;
 	Row.Value = "<...>";
 	FillNode(Row, Module);
-EndFunction // FillTree() 
+EndFunction // FillTree()
 
 &AtServer
 Function FillNode(Row, Node)
@@ -139,7 +139,7 @@ Function FillNode(Row, Node)
 		If Item.Key = "Place"
 			Or Item.Key = "Type" Then
 			Continue;
-		EndIf; 
+		EndIf;
 		If TypeOf(Item.Value) = Type("Array") Then
 			Row = TreeItems.Add();
 			Row.Name = Item.Key;
@@ -157,8 +157,8 @@ Function FillNode(Row, Node)
 					Item.Property("Type", Row.Type);
 					Row.Value = "<...>";
 					FillNode(Row, Item);
-				EndIf; 
-			EndDo;			
+				EndIf;
+			EndDo;
 		ElsIf TypeOf(Item.Value) = Type("Structure") Then
 			Row = TreeItems.Add();
 			Row.Name = Item.Key;
@@ -170,9 +170,9 @@ Function FillNode(Row, Node)
 			Row.Name = Item.Key;
 			Row.Value = Item.Value;
 			Row.Type = TypeOf(Item.Value);
-		EndIf; 
+		EndIf;
 	EndDo;
-EndFunction // FillNode() 
+EndFunction // FillNode()
 
 &AtServer
 Function ConvertJSON(Property, Value, Other, Cancel) Export
@@ -193,7 +193,7 @@ Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
 		Items.PageResultTree.Visible = (ThisObject.Output = "Tree");
 		Items.PageResultText.Visible = (ThisObject.Output <> "Tree" And ThisObject.Output <> "Tokens");
 		Items.PageResultTokens.Visible = (ThisObject.Output = "Tokens");
-		
+
 	EndIf;
 
 EndProcedure // SetVisibilityOfAttributes()
@@ -207,19 +207,19 @@ EndProcedure // OutputOnChange()
 
 &AtClient
 Procedure PluginsPathStartChoice(Item, ChoiceData, StandardProcessing)
-	
+
 	StandardProcessing = False;
 	ChoosePath(Item, ThisObject, FileDialogMode.Open, "(*.epf)|*.epf");
-	
+
 EndProcedure // PluginsPathStartChoice()
 
 &AtClient
 Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined) Export
-	
+
 	If DialogMode = Undefined Then
 		DialogMode = FileDialogMode.ChooseDirectory;
-	EndIf; 
-	
+	EndIf;
+
 	FileOpeningDialog = New FileDialog(DialogMode);
 	FileOpeningDialog.Multiselect = False;
 	FileOpeningDialog.Filter = Filter;
@@ -227,48 +227,48 @@ Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined) Exp
 		FileOpeningDialog.Directory = Item.EditText;
 	Else
 		FileOpeningDialog.FullFileName = Item.EditText;
-	EndIf; 
-	
+	EndIf;
+
 	AdditionalParameters = New Structure("Item, Form", Item, Form);
-	
+
 	NotifyDescription = New NotifyDescription("ChoosePathNotifyChoice", ThisObject, AdditionalParameters);
-	
+
 	FileOpeningDialog.Show(NotifyDescription);
-	
+
 EndProcedure // ChoosePath()
 
 &AtClient
 Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
-	
+
 	If Result <> Undefined Then
 		InteractivelySetValueOfFormItem(
 			Result[0],
 			AdditionalParameters.Item,
 			AdditionalParameters.Form
 		);
-	EndIf; 
-	
+	EndIf;
+
 EndProcedure // ChoosePathHandle()
 
 &AtClient
 Procedure InteractivelySetValueOfFormItem(Value, Item, Form) Export
-	
+
 	FormOwner = Form.FormOwner;
 	CloseOnChoice = Form.CloseOnChoice;
-	
+
 	Form.FormOwner = Item;
 	Form.CloseOnChoice = False;
-	
+
 	Form.NotifyChoice(Value);
-	
+
 	If Form.FormOwner = Item Then
 		Form.FormOwner = FormOwner;
 	EndIf;
-	
+
 	If Form.CloseOnChoice = False Then
 		Form.CloseOnChoice = CloseOnChoice;
-	EndIf;  
-	
+	EndIf;
+
 EndProcedure // InteractivelySetValueOfFormItem()
 
 &AtClient
@@ -277,7 +277,7 @@ Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
 	If Row.Line > 0 Then
 		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
 		CurrentItem = Items.Source;
-	EndIf; 
+	EndIf;
 EndProcedure // TreeSelection()
 
 &AtClient
@@ -290,7 +290,7 @@ Procedure TokensSelection(Item, SelectedRow, Field, StandardProcessing)
 EndProcedure // TokensSelection()
 
 &AtClient
-Procedure PluginsPathOpening(Item, StandardProcessing)	
+Procedure PluginsPathOpening(Item, StandardProcessing)
 	StandardProcessing = False;
 	ShowFile(Items.Plugins.CurrentData.Path);
 EndProcedure
@@ -302,7 +302,7 @@ Procedure ShowFile(FullName) Export
 			New NotifyDescription("ShowFileHandleResult", ThisObject, FullName),
 			"explorer.exe /select, " + FullName
 		);
-	EndIf; 	
+	EndIf;
 EndProcedure // ShowFolder()
 
 &AtClient

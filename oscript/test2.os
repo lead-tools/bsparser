@@ -1,5 +1,5 @@
 
-AttachScript("..\src\BSLParser\Ext\ObjectModule.bsl", "BSLParser");
+AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
 AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
 
 If CommandLineArguments.Count() = 0 Then
@@ -9,9 +9,9 @@ EndIf;
 CommonModulesPath = CommandLineArguments[0];
 Files = FindFiles(CommonModulesPath, "*.bsl", True);
 
-BSLParser = New BSLParser;
+BSParser = New BSParser;
 PluginTestVars = New PluginTestVars;
-BSLParser.HookUp(PluginTestVars);
+BSParser.HookUp(PluginTestVars);
 
 TextReader = New TextReader;
 
@@ -19,8 +19,8 @@ For Each File In Files Do
 	TextReader.Open(File.FullName);
 	Source = TextReader.Read();
 	Try
-		Module = BSLParser.Parse(Source);
-		BSLParser.Visit(Module);
+		Module = BSParser.Parse(Source);
+		BSParser.Visit(Module);
 	Except
 		Message(DetailErrorDescription(ErrorInfo()));
 	EndTry;

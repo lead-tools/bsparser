@@ -11,14 +11,14 @@ Var CognitiveComplexity;
 Var CurMethod;
 Var ExprLevel;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
-	Tokens = BSLParser.Tokens();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
+	Tokens = BSParser.Tokens();
 	Result = New Array;
 	Level = 1;
 	CognitiveComplexity = 0;
 	ExprLevel = 0;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Hooks() Export
 	Var Hooks;
@@ -42,9 +42,9 @@ Function Hooks() Export
 	Hooks.Add("VisitCallStmt");
 	Hooks.Add("VisitGotoStmt");
 	Hooks.Add("VisitBreakStmt");
-	Hooks.Add("VisitContinueStmt");	
+	Hooks.Add("VisitContinueStmt");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	CurMethod = MethodDecl.Sign;
@@ -53,10 +53,10 @@ EndProcedure // VisitMethodDecl()
 Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
 	If CognitiveComplexity > 0 Then
 		Result.Add(StrTemplate("Когнитивная сложность метода %1() равна %2", MethodDecl.Sign.Name, CognitiveComplexity));
-	EndIf; 
+	EndIf;
 	Level = 1;
 	CognitiveComplexity = 0;
-EndProcedure // AfterVisitMethodDecl() 
+EndProcedure // AfterVisitMethodDecl()
 
 Procedure VisitBinaryExpr(BinaryExpr, Stack, Counters) Export
 	If ExprLevel = 0 Then // только для корневого
@@ -69,12 +69,12 @@ Procedure VisitBinaryExpr(BinaryExpr, Stack, Counters) Export
 				If Operator = Tokens.Or
 					Or Operator = Tokens.And Then
 					CognitiveComplexity = CognitiveComplexity + 1;
-				EndIf; 
-			EndIf; 
-		EndDo; 
+				EndIf;
+			EndIf;
+		EndDo;
 	EndIf;
 	ExprLevel = ExprLevel + 1;
-EndProcedure // VisitBinaryExpr()  
+EndProcedure // VisitBinaryExpr()
 
 Procedure AfterVisitBinaryExpr(BinaryExpr, Stack, Counters) Export
 	ExprLevel = ExprLevel - 1;
@@ -91,22 +91,22 @@ Function BuildExprList(List, BinaryExpr)
 EndFunction // BuildExprList()
 
 Procedure VisitTernaryExpr(TernaryExpr, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level; 
+	CognitiveComplexity = CognitiveComplexity + Level;
 EndProcedure // VisitTernaryExpr()
 
 Procedure VisitCallStmt(CallStmt, Stack, Counters) Export
 	If CallStmt.Ident.Head.Decl = CurMethod Then
 		CognitiveComplexity = CognitiveComplexity + 1;
-	EndIf; 
-EndProcedure // VisitCallStmt() 
+	EndIf;
+EndProcedure // VisitCallStmt()
 
 Procedure VisitIfStmt(IfStmt, Stack, Counters) Export
 	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1; 
+	Level = Level + 1;
 EndProcedure // VisitIfStmt()
 
 Procedure AfterVisitIfStmt(IfStmt, Stack, Counters) Export
-	Level = Level - 1; 
+	Level = Level - 1;
 EndProcedure // AfterVisitIfStmt()
 
 Procedure VisitElsIfStmt(ElsIfStmt, Stack, Counters) Export
@@ -119,29 +119,29 @@ EndProcedure // VisitElseStmt()
 
 Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
 	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1; 
+	Level = Level + 1;
 EndProcedure // VisitWhileStmt()
 
 Procedure AfterVisitWhileStmt(WhileStmt, Stack, Counters) Export
-	Level = Level - 1; 
+	Level = Level - 1;
 EndProcedure // AfterVisitWhileStmt()
 
 Procedure VisitForStmt(ForStmt, Stack, Counters) Export
 	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1; 
+	Level = Level + 1;
 EndProcedure // VisitForStmt()
 
 Procedure AfterVisitForStmt(ForStmt, Stack, Counters) Export
-	Level = Level - 1; 
+	Level = Level - 1;
 EndProcedure // AfterVisitForStmt()
 
 Procedure VisitForEachStmt(ForEachStmt, Stack, Counters) Export
 	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1; 
+	Level = Level + 1;
 EndProcedure // VisitForEachStmt()
 
 Procedure AfterVisitForEachStmt(ForEachStmt, Stack, Counters) Export
-	Level = Level - 1; 
+	Level = Level - 1;
 EndProcedure // AfterVisitForEachStmt()
 
 Procedure VisitExceptStmt(ExceptStmt, Stack, Counters) Export

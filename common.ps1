@@ -57,7 +57,7 @@ function disconnect($1c, $ssh) {
 }
 
 $list = @{
-    BSLParser           = "\"
+    BSParser           = "\"
     gui                 = "\gui\"
     DocGen              = "\plugins\DocGen\"
     BSL                 = "\plugins\BSL\"

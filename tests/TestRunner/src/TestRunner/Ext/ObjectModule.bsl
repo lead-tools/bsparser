@@ -1,9 +1,9 @@
 ﻿
 Var Parser;
 
-Procedure Run(BSLParser) Export
+Procedure Run(BSParser) Export
 
-	Parser = BSLParser;
+	Parser = BSParser;
 
 	//#Region Correct
 

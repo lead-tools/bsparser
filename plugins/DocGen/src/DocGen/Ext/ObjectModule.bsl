@@ -6,30 +6,30 @@ Var Region, SubRegion, RegionLevel;
 Var Comments;
 Var Result;
 
-Procedure Init(BSLParser) Export
-	Tokens = BSLParser.Tokens();
-	Nodes = BSLParser.Nodes();
-	Directives = BSLParser.Directives();
-	PrepInstructions = BSLParser.PrepInstructions();
+Procedure Init(BSParser) Export
+	Tokens = BSParser.Tokens();
+	Nodes = BSParser.Nodes();
+	Directives = BSParser.Directives();
+	PrepInstructions = BSParser.PrepInstructions();
 	Result = New Array;
 	Result.Add(
 		"<!DOCTYPE html>
 		|<html>
 		|<head>
 		|<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		|<title>BSL-Parser</title>
+		|<title>BSParser</title>
 		|<link rel='stylesheet' type='text/css' href='ast.css'>
 		|</head>
 		|<body>
 		|<header>
-		|<h1>BSL-Parser</h1>
+		|<h1>BSParser</h1>
 		|</header>
 		|<h1>Examples of using the parser</h1>
 		|<pre>
 		|
 		|// 1C:Enterprise 8.3.11
 		|
-		|BSLParser = ExternalDataProcessors.Create(BSLParserPath, False);
+		|BSParser = ExternalDataProcessors.Create(BSParserPath, False);
 		|Plugins = New Array;
 		|
 		|Plugin1 = ExternalDataProcessors.Create(PluginPath1, False);
@@ -38,28 +38,28 @@ Procedure Init(BSLParser) Export
 		|Plugin2 = ExternalDataProcessors.Create(PluginPath2, False);
 		|Plugins.Add(Plugin2);
 		|
-		|Module = BSLParser.Parse(Source.GetText());
-		|BSLParser.HookUp(Plugins);
-		|BSLParser.Visit(Module);
+		|Module = BSParser.Parse(Source.GetText());
+		|BSParser.HookUp(Plugins);
+		|BSParser.Visit(Module);
 		|
 		|Message(Plugin1.Result());
 		|Message(Plugin2.Result());
 		|
 		|// OneScript
 		|
-		|AttachScript(""..\src\BSLParser\Ext\ObjectModule.bsl"", ""BSLParser"");
+		|AttachScript(""..\src\BSParser\Ext\ObjectModule.bsl"", ""BSParser"");
 		|AttachScript(""..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl"", ""PluginTestVars"");
 		|
-		|TextReader = New TextReader(""..\src\BSLParser\Ext\ObjectModule.bsl"");
+		|TextReader = New TextReader(""..\src\BSParser\Ext\ObjectModule.bsl"");
 		|Source = TextReader.Read();
 		|
-		|BSLParser = New BSLParser;
-		|BSLParser.Location = False;
-		|Module = BSLParser.Parse(Source);
+		|BSParser = New BSParser;
+		|BSParser.Location = False;
+		|Module = BSParser.Parse(Source);
 		|
 		|PluginTestVars = New PluginTestVars;
-		|BSLParser.HookUp(PluginTestVars);
-		|BSLParser.Visit(Module);
+		|BSParser.HookUp(PluginTestVars);
+		|BSParser.Visit(Module);
 		|
 		|Message(PluginTestVars.Result());
 		|</pre>
@@ -68,12 +68,12 @@ Procedure Init(BSLParser) Export
 		|Var Tokens, Nodes, Directives, PrepInstructions, PrepSymbols;
 		|Var Result;
 		|
-		|Procedure Init(BSLParser) Export
-		|	Tokens = BSLParser.Tokens();
-		|	Nodes = BSLParser.Nodes();
-		|	Directives = BSLParser.Directives();
-		|	PrepInstructions = BSLParser.PrepInstructions();
-		|	PrepSymbols = BSLParser.PrepSymbols();
+		|Procedure Init(BSParser) Export
+		|	Tokens = BSParser.Tokens();
+		|	Nodes = BSParser.Nodes();
+		|	Directives = BSParser.Directives();
+		|	PrepInstructions = BSParser.PrepInstructions();
+		|	PrepSymbols = BSParser.PrepSymbols();
 		|	Result = New Array;
 		|EndProcedure // Init()
 		|
@@ -185,7 +185,7 @@ Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
 		ElsIf RegionLevel = 1 Then
 			SubRegion = "";
 		EndIf;
-	EndIf; 
+	EndIf;
 EndProcedure // VisitPrepInst()
 
 Procedure VisitNewExpr(NewExpr, Stack, Counters) Export

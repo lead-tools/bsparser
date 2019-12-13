@@ -1,12 +1,12 @@
 ﻿
 &AtServer
 Procedure RunAtServer()
-	
+
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
-	BSLParser = ExternalDataProcessors.Create(ThisFile.Path + "BSLParser.epf", False);
-	This.Run(BSLParser);
-	
+	BSParser = ExternalDataProcessors.Create(ThisFile.Path + "BSParser.epf", False);
+	This.Run(BSParser);
+
 EndProcedure
 
 &AtClient

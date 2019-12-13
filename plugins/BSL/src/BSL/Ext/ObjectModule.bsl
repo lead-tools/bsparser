@@ -11,15 +11,15 @@ Var Operators;     // structure as map[one of Tokens](string)
 Var LastLine;
 Var Comments;      // map[number](string)
 
-Procedure Init(BSLParserProcessor) Export
+Procedure Init(BSParserProcessor) Export
 
 	Operators = New Structure(
 		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
 		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Or", "And", "Not"
 	);
 
-	Nodes = BSLParserProcessor.Nodes();
-	Tokens = BSLParserProcessor.Tokens();
+	Nodes = BSParserProcessor.Nodes();
+	Tokens = BSParserProcessor.Tokens();
 
 	LastLine = 1;
 

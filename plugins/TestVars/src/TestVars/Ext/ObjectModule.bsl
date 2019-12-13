@@ -16,13 +16,13 @@ Var Result;
 
 Var Vars, Params;
 
-Procedure Init(BSLParser) Export
-	Nodes = BSLParser.Nodes();
-	Errors = BSLParser.Errors();
+Procedure Init(BSParser) Export
+	Nodes = BSParser.Nodes();
+	Errors = BSParser.Errors();
 	Result = New Array;
 	Vars = New Map;
 	Params = New Map;
-EndProcedure // Init() 
+EndProcedure // Init()
 
 Function Result() Export
 	Return StrConcat(Result, Chars.LF);
@@ -36,14 +36,14 @@ Function Hooks() Export
 	Hooks.Add("VisitMethodDecl");
 	Hooks.Add("AfterVisitMethodDecl");
 	Return Hooks;
-EndFunction // Hooks() 
+EndFunction // Hooks()
 
 Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
-	Var Decl, Operation; 
+	Var Decl, Operation;
 	If AssignStmt.Left.Args <> Undefined Or AssignStmt.Left.Tail.Count() > 0 Then
 		Return;
 	EndIf;
-	Decl = AssignStmt.Left.Head.Decl; 
+	Decl = AssignStmt.Left.Head.Decl;
 	Operation = Vars[Decl];
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
@@ -52,16 +52,16 @@ Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
 			Vars[Decl] = "Set";
 		EndIf;
 		Return;
-	EndIf; 	
+	EndIf;
 	Decl = AssignStmt.Left.Head.Decl;
-	Operation = Params[Decl];	
+	Operation = Params[Decl];
 	If Operation <> Undefined Then
 		If Operation = "GetInLoop" Then
 			Params[Decl] = "Get";
 		Else
 			Params[Decl] = "Set";
-		EndIf; 
-	EndIf; 
+		EndIf;
+	EndIf;
 EndProcedure // AfterVisitAssignStmt()
 
 Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
@@ -75,18 +75,18 @@ Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
 		Operation = "GetInLoop";
 	Else
 		Operation = "Get";
-	EndIf; 
+	EndIf;
 	Decl = IdentExpr.Head.Decl;
 	If Vars[Decl] <> Undefined Then
 		Vars[Decl] = Operation;
 	ElsIf Params[Decl] <> Undefined Then
-		Params[Decl] = Operation;	
-	EndIf; 
+		Params[Decl] = Operation;
+	EndIf;
 EndProcedure // VisitIdentExpr()
 
 Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
 	Vars = New Map;
-	Params = New Map;		
+	Params = New Map;
 	For Each Param In MethodDecl.Sign.Params Do
 		Params[Param] = "Get";
 		//Params[Param] = "Nil"; <- чтобы чекать все параметры (в формах адъ)
@@ -105,7 +105,7 @@ Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
 		Method = "Функция";
 	Else
 		Method = "Процедура";
-	EndIf; 
+	EndIf;
 	For Each Item In Vars Do
 		If Not StrStartsWith(Item.Value, "Get") Then
 			Text = StrTemplate("%1 `%2()` содержит неиспользуемую переменную `%3`", Method, MethodDecl.Sign.Name, Item.Key.Name);
@@ -114,7 +114,7 @@ Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
 			Error.Text = Text;
 			Error.Line = Item.Key.Place.BegLine;
 			Error.Pos = Item.Key.Place.Pos;
-		EndIf; 
+		EndIf;
 	EndDo;
 	For Each Item In Params Do
 		If Item.Value = "Nil" Or Item.Value = "Set" And Item.Key.ByVal Then
@@ -124,6 +124,6 @@ Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
 			Error.Text = Text;
 			Error.Line = Item.Key.Place.BegLine;
 			Error.Pos = Item.Key.Place.Pos;
-		EndIf; 
+		EndIf;
 	EndDo;
 EndProcedure // AfterVisitMethodDecl()
