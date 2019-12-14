@@ -10,15 +10,14 @@ bsparser - это парсер встроенного языка платфор�
 
 ## Содержание
 1. [Введение](#введение)
-2. [Интеграция с SonarQube](#интеграция-с-sonarqube)
-3. [Цели проекта](#цели-проекта)
-4. [Мотивация](#мотивация)
-5. [Философия](#философия)
-6. [Структура репозитория](#структура-репозитория)
-7. [Системные требования](#системные-требования)
-8. [Сборка проекта](#сборка-проекта)
-9. [Быстрый старт](#быстрый-старт)
-10. [Принцип работы](#принцип-работы)
+2. [Цели проекта](#цели-проекта)
+3. [Мотивация](#мотивация)
+4. [Философия](#философия)
+5. [Структура репозитория](#структура-репозитория)
+6. [Системные требования](#системные-требования)
+7. [Сборка проекта](#сборка-проекта)
+8. [Быстрый старт](#быстрый-старт)
+9. [Принцип работы](#принцип-работы)
 
 ## Введение
 
@@ -60,102 +59,6 @@ EndProcedure // VisitMethodDecl()
 Это генератор кода для интерпретации языка 1С на языке 1С.
 
 Пример на OneScript, демонстрирующий прогон проверок исходного кода: [test.os](https://github.com/lead-tools/bsparser/blob/master/oscript/test.os)
-
-## Интеграция с SonarQube
-
-Если вы хотите результаты проверок видеть в SonarQube, то можете просто выгрузить их в формате [Generic Issue](https://docs.sonarqube.org/latest/analysis/generic-issue/)
-
-Вам понадобится только установленный сонар и созданный проект в нем.
-
-Например проект у вас в папке `c:\sonarqube-7.7\myprj\`
-Исходный код, который нужно анализировать в папке `c:\sonarqube-7.7\myprj\src\`
-
-Настройки проекта (`"c:\sonarqube-7.7\myprj\conf\sonar-project.properties"`):
-```json
-sonar.host.url=http://localhost:9000
-sonar.projectKey=myprj
-sonar.projectVersion=1.0
-sonar.sources=myprj/src
-sonar.sourceEncoding=UTF-8
-sonar.inclusions=**/*.bsl
-sonar.externalIssuesReportPaths=myprj/bsl-generic-json.json
-```
-
-Выгружаете результаты проверок в файл: `"c:\sonarqube-7.7\myprj\bsl-generic-json.json"`
-
-Примерный код для формирования json (если например предварительно ошибки были сохранены для отчетов в регистре в 1С):
-```bsl
-&AtClient
-Procedure GenerateJSON(Command)
-
-	Data = GenerateJSONAtServer();
-
-	JSONWriter = New JSONWriter;
-	JSONWriter.SetString(New JSONWriterSettings(JSONLineBreak.Unix));
-	WriteJSON(JSONWriter, Data);
-	Report = JSONWriter.Close();
-
-	TextDoc = New TextDocument;
-	TextDoc.SetText(Report);
-	TextDoc.Show("Generic Issue Data");
-
-EndProcedure
-
-&AtServerNoContext
-Function GenerateJSONAtServer()
-
-	Query = New Query;
-	Query.Text =
-	"SELECT
-	|	Errors.Period AS Period,
-	|	Errors.FileName AS FileName,
-	|	Errors.Pos AS Pos,
-	|	Errors.Line AS Line,
-	|	Errors.Text AS Text
-	|FROM
-	|	InformationRegister.Errors AS Errors";
-
-	Issues = New Array;
-
-	For Each Item In Query.Execute().Unload() Do
-
-		textRange = New Structure;
-		textRange.Insert("startLine", Item.Line);
-
-		primaryLocation = New Structure;
-		primaryLocation.Insert("message", Item.Text);
-		primaryLocation.Insert("filePath", Item.FileName);
-		primaryLocation.Insert("textRange", textRange);
-
-		Issue = New Structure;
-		Issue.Insert("engineId", "test");
-		Issue.Insert("ruleId", "rule42");
-		Issue.Insert("severity", "INFO");
-		Issue.Insert("type", "CODE_SMELL");
-		Issue.Insert("primaryLocation", primaryLocation);
-
-		Issues.Add(Issue);
-
-	EndDo;
-
-	Return New Structure("issues", Issues);
-
-EndFunction
-```
-
-Открываете консоль повершела в папке `C:\sonarqube-7.7\`
-
-Запускаете сонар:
-```powershell
-.\bin\windows-x86-64\StartSonar.bat
-```
-
-Запускаете загрузку проверок в сонар:
-```powershell
-.\sonar-scanner\bin\sonar-scanner.bat -D project.settings=./myprj/conf/sonar-project.properties
-```
-
-Все. Можно смотреть отчет в сонаре.
 
 ## Цели проекта
 
