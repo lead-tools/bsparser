@@ -1,56 +1,56 @@
 ﻿
 // Проверка комментариев в окончаниях инструкций
 
-Var Nodes;
-Var Source;
-Var Result;
-Var Comments;
-Var RegionLevel;
-Var RegionStack;
+Перем Узлы;
+Перем Исходник;
+Перем Результат;
+Перем Комментарии;
+Перем УровеньОбласти;
+Перем СтекОбластей;
 
-Procedure Init(BSParser) Export
-	Nodes = BSParser.Nodes();
-	Source = BSParser.Source();
-	Result = New Array;
-	RegionLevel = 0;
-	RegionStack = New Map;
-EndProcedure // Init()
+Процедура Инициализировать(Парсер) Экспорт
+	Узлы = Парсер.Узлы();
+	Исходник = Парсер.Исходник();
+	Результат = Новый Массив;
+	УровеньОбласти = 0;
+	СтекОбластей = Новый Соответствие;
+КонецПроцедуры
 
-Function Result() Export
-	Return StrConcat(Result, Chars.LF);
-EndFunction // Result()
+Функция Закрыть() Экспорт
+	Возврат СтрСоединить(Результат, Символы.ПС);
+КонецФункции
 
-Function Hooks() Export
-	Var Hooks;
-	Hooks = New Array;
-	Hooks.Add("VisitModule");
-	Hooks.Add("VisitMethodDecl");
-	Hooks.Add("VisitPrepInst");
-	Return Hooks;
-EndFunction // Hooks()
+Function Подписки() Экспорт
+	Перем Подписки;
+	Подписки = Новый Массив;
+	Подписки.Add("ПосетитьМодуль");
+	Подписки.Add("ПосетитьОбъявлениеМетода");
+	Подписки.Add("ПосетитьИнструкциюПрепроцессора");
+	Возврат Подписки;
+EndFunction
 
-Procedure VisitModule(Module, Stack, Counters) Export
-	Comments = Module.Comments;
-EndProcedure // VisitModule()
+Процедура ПосетитьМодуль(Модуль, Стек, Счетчики) Экспорт
+	Комментарии = Модуль.Комментарии;
+КонецПроцедуры
 
-Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
-	Comment = Comments[MethodDecl.Place.EndLine];
-	If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1%2", MethodDecl.Sign.Name, "()") Then
-		Result.Add(StrTemplate("Метод `%1()` имеет неправильный замыкающий комментарий в строке %2", MethodDecl.Sign.Name, MethodDecl.Place.EndLine));
-	EndIf;
-EndProcedure // VisitMethodDecl()
+Процедура ПосетитьОбъявлениеМетода(ОбъявлениеМетода, Стек, Счетчики) Экспорт
+	Комментарий = Комментарии[ОбъявлениеМетода.Место.НомерПоследнейСтроки];
+	Если Комментарий <> Неопределено And СокрП(Комментарий) <> СтрШаблон(" %1%2", ОбъявлениеМетода.Сигнатура.Имя, "()") Тогда
+		Результат.Add(СтрШаблон("Метод `%1()` имеет неправильный замыкающий комментарий в строке %2", ОбъявлениеМетода.Сигнатура.Имя, ОбъявлениеМетода.Место.НомерПоследнейСтроки));
+	КонецЕсли;
+КонецПроцедуры
 
-Procedure VisitPrepInst(PrepInst, Stack, Counters) Export
-	If PrepInst.Type = Nodes.PrepRegionInst Then
-		RegionLevel = RegionLevel + 1;
-		RegionStack[RegionLevel] = PrepInst.Name;
-	ElsIf PrepInst.Type = Nodes.PrepEndRegionInst Then
-		Comment = Comments[PrepInst.Place.BegLine];
-		RegionName = RegionStack[RegionLevel];
-		If Comment <> Undefined And TrimR(Comment) <> StrTemplate(" %1", RegionName) Then
-			Result.Add(StrTemplate("Область `%1` имеет неправильный замыкающий комментарий в строке %2:", RegionName, PrepInst.Place.BegLine));
-			Result.Add(StrTemplate("%1`%2%3`", Chars.Tab, Mid(Source, PrepInst.Place.Pos, PrepInst.Place.Len), Comment));
-		EndIf;
-		RegionLevel = RegionLevel - 1;
-	EndIf;
-EndProcedure // VisitPrepInst()
+Процедура ПосетитьИнструкциюПрепроцессора(ИнструкцияПрепроцессора, Stack, Counters) Экспорт
+	Если ИнструкцияПрепроцессора.Тип = Узлы.ИнструкцияПрепроцессораОбласть Тогда
+		УровеньОбласти = УровеньОбласти + 1;
+		СтекОбластей[УровеньОбласти] = ИнструкцияПрепроцессора.Имя;
+	ИначеЕсли ИнструкцияПрепроцессора.Тип = Узлы.ИнструкцияПрепроцессораКонецОбласти Тогда
+		Комментарий = Комментарии[ИнструкцияПрепроцессора.Место.НомерПервойСтроки];
+		ИмяОбласти = СтекОбластей[УровеньОбласти];
+		Если Комментарий <> Неопределено And TrimR(Комментарий) <> СтрШаблон(" %1", ИмяОбласти) Тогда
+			Результат.Add(СтрШаблон("Область `%1` имеет неправильный замыкающий комментарий в строке %2:", ИмяОбласти, ИнструкцияПрепроцессора.Место.НомерПервойСтроки));
+			Результат.Add(СтрШаблон("%1`%2%3`", Chars.Tab, Mid(Исходник, ИнструкцияПрепроцессора.Место.Позиция, ИнструкцияПрепроцессора.Место.Длина), Комментарий));
+		КонецЕсли;
+		УровеньОбласти = УровеньОбласти - 1;
+	КонецЕсли;
+КонецПроцедуры

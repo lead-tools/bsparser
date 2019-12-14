@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.7">
+<Form xmlns="http://v8.1c.ru/8.3/xcf/logform" xmlns:app="http://v8.1c.ru/8.2/managed-application/core" xmlns:cfg="http://v8.1c.ru/8.1/data/enterprise/current-config" xmlns:dcscor="http://v8.1c.ru/8.1/data-composition-system/core" xmlns:dcsset="http://v8.1c.ru/8.1/data-composition-system/settings" xmlns:ent="http://v8.1c.ru/8.1/data/enterprise" xmlns:lf="http://v8.1c.ru/8.2/managed-application/logform" xmlns:style="http://v8.1c.ru/8.1/data/ui/style" xmlns:sys="http://v8.1c.ru/8.1/data/ui/fonts/system" xmlns:v8="http://v8.1c.ru/8.1/data/core" xmlns:v8ui="http://v8.1c.ru/8.1/data/ui" xmlns:web="http://v8.1c.ru/8.1/data/ui/colors/web" xmlns:win="http://v8.1c.ru/8.1/data/ui/colors/windows" xmlns:xr="http://v8.1c.ru/8.3/xcf/readable" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.8">
 	<Title>
 		<v8:item>
 			<v8:lang>en</v8:lang>
-			<v8:content>BSL Parser</v8:content>
+			<v8:content>BSParser</v8:content>
 		</v8:item>
 		<v8:item>
 			<v8:lang>ru</v8:lang>
-			<v8:content>BSL Parser</v8:content>
+			<v8:content>Парсер Встроенного Языка</v8:content>
 		</v8:item>
 	</Title>
 	<AutoSaveDataInSettings>Use</AutoSaveDataInSettings>
@@ -344,6 +344,7 @@
 											<v8:content>Result</v8:content>
 										</v8:item>
 									</Title>
+									<TreeSpecialSearch>false</TreeSpecialSearch>
 									<ContextMenu name="TreeContextMenu" id="44"/>
 									<AutoCommandBar name="TreeCommandBar" id="45">
 										<Autofill>false</Autofill>
@@ -431,6 +432,10 @@
 								<v8:item>
 									<v8:lang>en</v8:lang>
 									<v8:content>Result</v8:content>
+								</v8:item>
+								<v8:item>
+									<v8:lang>ru</v8:lang>
+									<v8:content>Токены</v8:content>
 								</v8:item>
 							</Title>
 							<ToolTip>
@@ -580,19 +585,19 @@
 									</Events>
 									<ChildItems>
 										<InputField name="ErrorsText" id="97">
-											<DataPath>Errors.Text</DataPath>
+											<DataPath>Errors.Текст</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ErrorsTextContextMenu" id="98"/>
 											<ExtendedTooltip name="ErrorsTextExtendedTooltip" id="99"/>
 										</InputField>
 										<InputField name="ErrorsLine" id="100">
-											<DataPath>Errors.Line</DataPath>
+											<DataPath>Errors.НомерСтроки</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ErrorsLineContextMenu" id="101"/>
 											<ExtendedTooltip name="ErrorsLineExtendedTooltip" id="102"/>
 										</InputField>
 										<InputField name="ErrorsPos" id="103">
-											<DataPath>Errors.Pos</DataPath>
+											<DataPath>Errors.Позиция</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ErrorsPosContextMenu" id="104"/>
 											<ExtendedTooltip name="ErrorsPosExtendedTooltip" id="105"/>
@@ -709,6 +714,10 @@
 					<v8:lang>en</v8:lang>
 					<v8:content>Tree</v8:content>
 				</v8:item>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Дерево</v8:content>
+				</v8:item>
 			</Title>
 			<Type>
 				<v8:Type>v8:ValueTree</v8:Type>
@@ -815,16 +824,24 @@
 					<v8:lang>en</v8:lang>
 					<v8:content>Errors</v8:content>
 				</v8:item>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Ошибки</v8:content>
+				</v8:item>
 			</Title>
 			<Type>
 				<v8:Type>v8:ValueTable</v8:Type>
 			</Type>
 			<Columns>
-				<Column name="Text" id="1">
+				<Column name="Текст" id="1">
 					<Title>
 						<v8:item>
 							<v8:lang>en</v8:lang>
 							<v8:content>Text</v8:content>
+						</v8:item>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Текст</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -835,11 +852,15 @@
 						</v8:StringQualifiers>
 					</Type>
 				</Column>
-				<Column name="Line" id="2">
+				<Column name="НомерСтроки" id="2">
 					<Title>
 						<v8:item>
 							<v8:lang>en</v8:lang>
 							<v8:content>Line</v8:content>
+						</v8:item>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Номер строки</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -851,11 +872,15 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="Pos" id="3">
+				<Column name="Позиция" id="3">
 					<Title>
 						<v8:item>
 							<v8:lang>en</v8:lang>
 							<v8:content>Pos</v8:content>
+						</v8:item>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Позиция</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -874,6 +899,10 @@
 				<v8:item>
 					<v8:lang>en</v8:lang>
 					<v8:content>Plugins</v8:content>
+				</v8:item>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Плагины</v8:content>
 				</v8:item>
 			</Title>
 			<Type>
@@ -924,6 +953,10 @@
 				<v8:item>
 					<v8:lang>en</v8:lang>
 					<v8:content>Tokens</v8:content>
+				</v8:item>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Токены</v8:content>
 				</v8:item>
 			</Title>
 			<Type>

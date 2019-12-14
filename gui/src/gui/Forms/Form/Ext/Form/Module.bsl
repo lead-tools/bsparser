@@ -33,14 +33,14 @@ Procedure TranslateAtServer()
 	This = FormAttributeToValue("Object");
 	ThisFile = New File(This.UsedFileName);
 
-	BSParser = ExternalDataProcessors.Create(ThisFile.Path + "BSParser.epf", False);
+	Парсер = ExternalDataProcessors.Create(ThisFile.Path + "ПарсерВстроенногоЯзыка.epf", False);
 
 	Start = CurrentUniversalDateInMilliseconds();
 
 	If Output = "NULL" Then
 
 		Try
-			BSParser.Parse(Source.GetText());
+			Парсер.Разобрать(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -48,7 +48,7 @@ Procedure TranslateAtServer()
 	ElsIf Output = "AST" Then
 
 		Try
-			Parser_Module = BSParser.Parse(Source.GetText());
+			Parser_Module = Парсер.Разобрать(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -60,7 +60,7 @@ Procedure TranslateAtServer()
 				For Each Item In Parser_Module.Comments Do
 					Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
 				EndDo;
-				Parser_Module.Comments = Comments;
+				Parser_Module.Комментарии = Comments;
 			Else
 				Parser_Module.Delete("Comments");
 			EndIf;
@@ -71,7 +71,7 @@ Procedure TranslateAtServer()
 	ElsIf Output = "Tree" Then
 
 		Try
-			Parser_Module = BSParser.Parse(Source.GetText());
+			Parser_Module = Парсер.Разобрать(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -82,7 +82,7 @@ Procedure TranslateAtServer()
 	ElsIf Output = "Plugin" Then
 
 		Try
-			Parser_Module = BSParser.Parse(Source.GetText());
+			Parser_Module = Парсер.Разобрать(Source.GetText());
 		Except
 			Message("syntax error!");
 		EndTry;
@@ -91,18 +91,18 @@ Procedure TranslateAtServer()
 			For Each Row In Plugins.FindRows(New Structure("Off", False)) Do
 				PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
 			EndDo;
-			BSParser.HookUp(PluginsList);
-			BSParser.Visit(Parser_Module);
+			Парсер.Подключить(PluginsList);
+			Парсер.Посетить(Parser_Module);
 			ResultArray = New Array;
 			For Each Plugin In PluginsList Do
-				ResultArray.Add(Plugin.Result());
+				ResultArray.Add(Plugin.Закрыть());
 			EndDo;
 			Result.SetText(StrConcat(ResultArray));
 		EndIf;
 
 	ElsIf Output = "Tokens" Then
 
-		Tokens.Load(BSParser.Tokenize(Source.GetText()).Tokens);
+		Tokens.Load(Парсер.Токенизировать(Source.GetText()).Tokens);
 
 	EndIf;
 
@@ -110,7 +110,7 @@ Procedure TranslateAtServer()
 		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
 	EndIf;
 
-	Errors.Load(BSParser.Errors());
+	Errors.Load(Парсер.Ошибки());
 
 EndProcedure // TranslateAtServer()
 
@@ -121,7 +121,7 @@ Function FillTree(Module)
 	TreeItems.Clear();
 	Row = TreeItems.Add();
 	Row.Name = "Module";
-	Row.Type = Module.Type;
+	Row.Type = Module.Тип;
 	Row.Value = "<...>";
 	FillNode(Row, Module);
 EndFunction // FillTree()
@@ -136,14 +136,14 @@ Function FillNode(Row, Node)
 	EndIf;
 	TreeItems = Row.GetItems();
 	For Each Item In Node Do
-		If Item.Key = "Place"
-			Or Item.Key = "Type" Then
+		If Item.Key = "Место"
+			Or Item.Key = "Тип" Then
 			Continue;
 		EndIf;
 		If TypeOf(Item.Value) = Type("Array") Then
 			Row = TreeItems.Add();
 			Row.Name = Item.Key;
-			Row.Type = StrTemplate("List (%1)", Item.Value.Count());
+			Row.Type = StrTemplate("Массив (%1)", Item.Value.Count());
 			Row.Value = "<...>";
 			RowItems = Row.GetItems();
 			Index = 0;
@@ -152,7 +152,7 @@ Function FillNode(Row, Node)
 				Index = Index + 1;
 				Row.Name = Index;
 				If Item = Undefined Then
-					Row.Value = "Undefined";
+					Row.Value = "Неопределено";
 				Else
 					Item.Property("Type", Row.Type);
 					Row.Value = "<...>";
@@ -162,7 +162,7 @@ Function FillNode(Row, Node)
 		ElsIf TypeOf(Item.Value) = Type("Structure") Then
 			Row = TreeItems.Add();
 			Row.Name = Item.Key;
-			Row.Type = Item.Value.Type;
+			Row.Type = Item.Value.Тип;
 			Row.Value = "<...>";
 			FillNode(Row, Item.Value);
 		Else
