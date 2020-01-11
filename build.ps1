@@ -1,9 +1,9 @@
-
+﻿
 . .\common.ps1
 
-complete 0 "Build"
+complete 0 "Сборка"
 
-"#build.ps1 START $(Get-Date)`n`n" >> log.txt
+"#build.ps1 START $(Get-Date)`n`n" > log.txt
 
 $1c, $ssh = connect
 
@@ -11,7 +11,7 @@ $x = 0; $dx = 100 / $list.Count
 foreach ($item in $list.GetEnumerator()) {
     send $ssh "config load-ext-files --file=""..$($item.Value)src\$($item.Name).xml"" --ext-file=""..\build\$($item.Name).epf"""
     $x += $dx
-    complete $x "Build"
+    complete $x "Сборка"
 }
 
 disconnect $1c $ssh
