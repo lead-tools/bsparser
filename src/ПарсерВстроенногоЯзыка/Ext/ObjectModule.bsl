@@ -1,7 +1,7 @@
 ﻿
 // MIT License
 
-// Copyright (c) 2019 Tsukanov Alexander
+// Copyright (c) 2020 Tsukanov Alexander
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -283,10 +283,10 @@
 
 Функция ИнструкцииПрепроцессора() Экспорт
 	Возврат Перечисление(Новый Структура,
-		"Если.Если,"
-		"ИначеЕсли.ИначеЕсли,"
-		"Иначе.Иначе,"
-		"КонецЕсли.КонецЕсли,"
+		"Если.If,"
+		"ИначеЕсли.ElsIf,"
+		"Иначе.Else,"
+		"КонецЕсли.EndIf,"
 		"Область.Region,"
 		"КонецОбласти.EndRegion"
 	);
