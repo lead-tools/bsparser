@@ -2,36 +2,33 @@
 
 // Сначала подключаем обработку парсера
 
-AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
+ПодключитьСценарий("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl", "ПарсерВстроенногоЯзыка");
 
 // и обработки необходимых плагинов (набор просто для демонстрации работы с несколькими плагинами).
 
 // Плагин, проверяющий наличие неиспользуемых переменных:
-AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
-// Плагин, проверяющий что в окончаниях инструкций стоит актуальны комментарий:
-AttachScript("..\plugins\TestEnd\src\TestEnd\Ext\ObjectModule.bsl", "PluginTestEnd");
+ПодключитьСценарий("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
+// Плагин, проверяющий что в окончаниях инструкций стоит актуальный комментарий:
+ПодключитьСценарий("..\plugins\TestEnd\src\TestEnd\Ext\ObjectModule.bsl", "PluginTestEnd");
 // Плагин, проверяющий наличие возвратов в конце функций:
-AttachScript("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "PluginReturnCheck");
-// Плагин, проверяющий наличие авто-переменных (необъявленных переменных):
-AttachScript("..\plugins\AutoVarsCheck\src\AutoVarsCheck\Ext\ObjectModule.bsl", "PluginAutoVarsCheck");
+ПодключитьСценарий("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "PluginReturnCheck");
 
 // Далее читаем исходный код, который хотим проверить.
-TextReader = New TextReader("..\src\BSParser\Ext\ObjectModule.bsl");
-Source = TextReader.Read();
-TextReader.Close();
+ЧтениеТекста = Новый ЧтениеТекста("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl");
+Исходник = ЧтениеТекста.Прочитать();
+ЧтениеТекста.Закрыть();
 
 // собираем нужные плагины в массив
-Plugins = New Array;
-Plugins.Add(New PluginTestVars);
-Plugins.Add(New PluginTestEnd);
-Plugins.Add(New PluginReturnCheck);
-Plugins.Add(New PluginAutoVarsCheck);
+Плагины = Новый Массив;
+Плагины.Add(Новый PluginTestVars);
+Плагины.Add(Новый PluginTestEnd);
+Плагины.Add(Новый PluginReturnCheck);
 
-// Запуск проверки на данном исходном коде (Source) с желаемым набором плагинов (Plugins).
-BSParser = New BSParser;
-BSParser.Go(Source, Plugins);
+// Запуск проверки на данном исходном коде (Исходник) с желаемым набором плагинов (Плагины).
+ПарсерВстроенногоЯзыка = Новый ПарсерВстроенногоЯзыка;
+ПарсерВстроенногоЯзыка.Пуск(Исходник, Плагины);
 
 // Собираем и выводим результаты работы плагинов.
-For Each Plugin In Plugins Do
-	Message(Plugin.Result());
-EndDo;
+Для Каждого Плагин Из Плагины Цикл
+	Сообщить(Плагин.Закрыть());
+КонецЦикла;
