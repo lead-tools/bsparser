@@ -1,791 +1,820 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-<title>BSParser</title>
+<meta http-equiv='Content-Тип' content='text/html; charset=utf-8'>
+<title>ПарсерВстроенногоЯзыка</title>
 <link rel='stylesheet' type='text/css' href='ast.css'>
 </head>
 <body>
 <header>
-<h1>BSParser</h1>
+<h1>ПарсерВстроенногоЯзыка</h1>
 </header>
-<h1>Examples of using the parser</h1>
+<h1>Примеры использования парсера</h1>
 <pre>
 
-// 1C:Enterprise 8.3.11
+// 1С:Предприятие 8.3.15
 
-BSParser = ExternalDataProcessors.Create(BSParserPath, False);
-Plugins = New Array;
+ПарсерВстроенногоЯзыка = ВнешниеОбработки.Создать(ПарсерВстроенногоЯзыкаПуть, Ложь);
+Плагины = Новый Массив;
 
-Plugin1 = ExternalDataProcessors.Create(PluginPath1, False);
-Plugins.Add(Plugin1);
+Плагин1 = ВнешниеОбработки.Создать(ПлагинПуть1, Ложь);
+Плагины.Добавить(Плагин1);
 
-Plugin2 = ExternalDataProcessors.Create(PluginPath2, False);
-Plugins.Add(Plugin2);
+Плагин2 = ВнешниеОбработки.Создать(ПлагинПуть2, Ложь);
+Плагины.Добавить(Плагин2);
 
-Module = BSParser.Parse(Source.GetText());
-BSParser.HookUp(Plugins);
-BSParser.Visit(Module);
+ПарсерВстроенногоЯзыка.Пуск(Исходник.ПолучитьТекст(), Плагины);
 
-Message(Plugin1.Result());
-Message(Plugin2.Result());
+Сообщить(Плагин1.Закрыть());
+Сообщить(Плагин2.Закрыть());
 
 // OneScript
 
-AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
-AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
+ПодключитьСценарий("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectМодуль.bsl", "ПарсерВстроенногоЯзыка");
+ПодключитьСценарий("..\plugins\TestVars\src\TestVars\Ext\ObjectМодуль.bsl", "ПлагинПроверкаНаНеиспользуемыеПеременные");
 
-TextReader = New TextReader("..\src\BSParser\Ext\ObjectModule.bsl");
-Source = TextReader.Read();
+ЧтениеТекста = Новый ЧтениеТекста("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectМодуль.bsl");
+Исходник = ЧтениеТекста.Read();
 
-BSParser = New BSParser;
-BSParser.Location = False;
-Module = BSParser.Parse(Source);
+ПарсерВстроенногоЯзыка = Новый ПарсерВстроенногоЯзыка;
+ПлагинПроверкаНаНеиспользуемыеПеременные = Новый ПлагинПроверкаНаНеиспользуемыеПеременные;
+ПарсерВстроенногоЯзыка.Пуск(Исходник, ПлагинПроверкаНаНеиспользуемыеПеременные);
 
-PluginTestVars = New PluginTestVars;
-BSParser.HookUp(PluginTestVars);
-BSParser.Visit(Module);
-
-Message(PluginTestVars.Result());
+Сообщить(ПлагинПроверкаНаНеиспользуемыеПеременные.Закрыть());
 </pre>
-<h1>Plugin Template</h1>
+<h1>Шаблон плагина</h1>
 <pre>
-Var Tokens, Nodes, Directives, PrepInstructions, PrepSymbols;
-Var Result;
+Перем Токены, Узлы, Директивы, ИнструкцииПрепроцессора, СимволыПрепроцессора;
+Перем Результат;
 
-Procedure Init(BSParser) Export
-	Tokens = BSParser.Tokens();
-	Nodes = BSParser.Nodes();
-	Directives = BSParser.Directives();
-	PrepInstructions = BSParser.PrepInstructions();
-	PrepSymbols = BSParser.PrepSymbols();
-	Result = New Array;
-EndProcedure // Init()
+// Будет вызвана один раз перед обходом дерева.
+Процедура Инициализировать(ПарсерВстроенногоЯзыка) Экспорт
+	Токены = ПарсерВстроенногоЯзыка.Токены();
+	Узлы = ПарсерВстроенногоЯзыка.Узлы();
+	Директивы = ПарсерВстроенногоЯзыка.Директивы();
+	ИнструкцииПрепроцессора = ПарсерВстроенногоЯзыка.ИнструкцииПрепроцессора();
+	СимволыПрепроцессора = ПарсерВстроенногоЯзыка.СимволыПрепроцессора();
+	Результат = Новый Массив;
+КонецПроцедуры // Инициализировать()
 
-Function Result() Export
+// Возвращает результат работы плагина.
+// Будет вызвана после полного обхода дерева.
+Функция Закрыть() Экспорт
 	// ...
-	Return StrConcat(Result);
-EndFunction // Refult()
+	Возврат СтрСоединить(Результат);
+КонецФункции // Закрыть()
 
-Function Hooks() Export
-	Var Hooks;
-	Hooks = New Array;
-	// Hooks.Add("VisitAssignStmt");
-	// Hooks.Add("AfterVisitAssignStmt");
+// Возвращает список процедур-подписок, которые будут вызываться визитером.
+// Состав возможных подписок можно посмотреть в парсере в функции Подписки().
+Функция Подписки() Экспорт
+	Перем Подписки;
+	Подписки = Новый Массив;
+	// Подписки.Добавить("ПосетитьОператорПрисваивания");
+	// Подписки.Добавить("ПокинутьОператорПрисваивания");
 	...
-	Return Hooks;
-EndFunction // Hooks()
+	Возврат Подписки;
+КонецФункции // Подписки()
 
-#Region Hooks
+#Область РеализацияПодписок
 
-// Procedure VisitAssignStmt(AssignStmt, Stack, Counters) Export
-// EndProcedure // VisitAssignStmt()
+// Процедура ПосетитьОператорПрисваивания(ОператорПрисваивания, Стек, Счетчики) Экспорт
+// КонецПроцедуры // ПосетитьОператорПрисваивания()
 
-// Procedure AfterVisitAssignStmt(AssignStmt, Stack, Counters) Export
-// EndProcedure // AfterVisitAssignStmt()
+// Процедура ПокинутьОператорПрисваивания(ОператорПрисваивания, Стек, Счетчики) Экспорт
+// КонецПроцедуры // ПокинутьОператорПрисваивания()
 
-#EndRegion // Hooks
+#КонецОбласти // РеализацияПодписок
 </pre>
-	<h1>Abstract syntax tree</h1>
-	<h3 id='Module'>Module<a class='permalink' href='#Module'>¶</a></h3>
+	<h1>Абстрактное синтаксическое дерево</h1>
+	<h3 id='Модуль'>Модуль<a class='permalink' href='#Модуль'>¶</a></h3>
 	<ul>
 	<i> Корень AST. Узел хранит информацию о модуле в целом.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Module</li>
-		<li><strong>Decls</strong>: array (one of <a href='##Declarations'>#Declarations</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#AutoDecl'>AutoDecl</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Interface</strong>: array (<a href='#Item'>Item</a>)</li>
-		<li><strong>Comments</strong>: map[number] (string)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.Модуль</li>
+		<li><strong>Объявления</strong>: массив (один из <a href='##Объявления'>#Объявления</a>)</li>
+		<li><strong>АвтоПеременные</strong>: массив (<a href='#ОбъявлениеАвтоПеременной'>ОбъявлениеАвтоПеременной</a>)</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Интерфейс</strong>: массив (<a href='#ЭлементОкружения'>ЭлементОкружения</a>)</li>
+		<li><strong>Комментарии</strong>: соответствие[число] (строка)</li>
 	</ul>
-	<h2 id='#Scope'>#Scope</h2>
-	<h3 id='Item'>Item<a class='permalink' href='#Item'>¶</a></h3>
+	<h2 id='#Окружение'>#Окружение</h2>
+	<h3 id='ЭлементОкружения'>ЭлементОкружения<a class='permalink' href='#ЭлементОкружения'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию об объекте области видимости.</i><br>
-	<i> Поле Decl хранит объявление данного объекта (undefined = объявление не обнаружено).</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.Item</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Decl</strong>: undefined, structure (one of <a href='##Declarations'>#Declarations</a>)</li>
+	<i> Поле Объявление хранит объявление данного объекта (неопределено = объявление не обнаружено).</i><br>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ЭлементОкружения</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Объявление</strong>: неопределено, структура (один из <a href='##Объявления'>#Объявления</a>)</li>
 	</ul>
-	<h2 id='#Declarations'>#Declarations</h2>
-	<h3 id='VarModListDecl'>VarModListDecl<a class='permalink' href='#VarModListDecl'>¶</a></h3>
+	<h2 id='#Объявления'>#Объявления</h2>
+	<h3 id='ОбъявлениеДирективы'>ОбъявлениеДирективы<a class='permalink' href='#ОбъявлениеДирективы'>¶</a></h3>
+	<ul>
+	<i> Хранит информацию об объявлении директивы.</i><br>
+	<i> Пример:</i><br>
+ <pre>
+ &НаКлиенте</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеДирективы</li>
+		<li><strong>Директива</strong>: строка (один из <a href='#Директивы'>Директивы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
+	</ul>
+	<h3 id='ОбъявлениеСпискаПеременныхМодуля'>ОбъявлениеСпискаПеременныхМодуля<a class='permalink' href='#ОбъявлениеСпискаПеременныхМодуля'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции объявления переменных уровня модуля.</i><br>
 	<i> Пример:</i><br>
  <pre>
- &НаКлиенте            // поле "Directive"
- Перем П1 Экспорт, П2; // поле "List"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModListDecl</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>List</strong>: array (<a href='#VarModDecl'>VarModDecl</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ &НаКлиенте            // поле "Директивы"
+ Перем П1 Экспорт, П2; // поле "ОбъявленияПеременных"</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеСпискаПеременныхМодуля</li>
+		<li><strong>Директивы</strong>: массив (один из <a href='#Директивы'>Директивы</a>)</li>
+		<li><strong>ОбъявленияПеременных</strong>: массив (<a href='#ОбъявлениеПеременнойМодуля'>ОбъявлениеПеременнойМодуля</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='VarModDecl'>VarModDecl<a class='permalink' href='#VarModDecl'>¶</a></h3>
+	<h3 id='ОбъявлениеПеременнойМодуля'>ОбъявлениеПеременнойМодуля<a class='permalink' href='#ОбъявлениеПеременнойМодуля'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении переменной уровня модуля.</i><br>
 	<i> Пример:</i><br>
-	<i> Объявления переменных заключены в скобки <...></i><br>
+	<i> Объявления переменных заключены в скобки {...}</i><br>
  <pre>
  &НаКлиенте
- Перем <П1 Экспорт>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarModDecl</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Перем {П1 Экспорт}, {П2};</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеПеременнойМодуля</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Директивы</strong>: массив (один из <a href='#Директивы'>Директивы</a>)</li>
+		<li><strong>Экспорт</strong>: булево</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='VarLocDecl'>VarLocDecl<a class='permalink' href='#VarLocDecl'>¶</a></h3>
+	<h3 id='ОбъявлениеЛокальнойПеременной'>ОбъявлениеЛокальнойПеременной<a class='permalink' href='#ОбъявлениеЛокальнойПеременной'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении локальной переменной.</i><br>
 	<i> Пример:</i><br>
-	<i> Объявления переменных заключены в скобки <...></i><br>
+	<i> Объявления переменных заключены в скобки {...}</i><br>
  <pre>
- Перем <П1>, <П2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.VarLocDecl</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Перем <П1>, <П2>;</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеЛокальнойПеременной</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='AutoDecl'>AutoDecl<a class='permalink' href='#AutoDecl'>¶</a></h3>
+	<h3 id='ОбъявлениеАвтоПеременной'>ОбъявлениеАвтоПеременной<a class='permalink' href='#ОбъявлениеАвтоПеременной'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении авто-переменной.</i><br>
 	<i> Пример:</i><br>
-	<i> Объявления переменных заключены в скобки <...></i><br>
+	<i> Объявления переменных заключены в скобки {...}</i><br>
  <pre>
- <Макс> = 0;
- Для <Индекс> = 0 По Массив.ВГраница() Цикл
-	<Структура> = Массив[Индекс];
- 	Для Каждого <Элемент> Из Структура Цикл
+ {Макс} = 0;
+ Для {Индекс} = 0 По Массив.ВГраница() Цикл
+	{Структура} = Массив[Индекс];
+ 	Для Каждого {Элемент} Из Структура Цикл
 		Если Макс < Элемент.Значение Тогда
  			Макс = Элемент.Значение;
  		КонецЕсли;
  	КонецЦикла;
- КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AutoDecl</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ КонецЦикла</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеАвтоПеременной</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ParamDecl'>ParamDecl<a class='permalink' href='#ParamDecl'>¶</a></h3>
+	<h3 id='ОбъявлениеПараметра'>ОбъявлениеПараметра<a class='permalink' href='#ОбъявлениеПараметра'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении параметра.</i><br>
 	<i> Пример:</i><br>
-	<i> Объявления параметров заключены в скобки <...></i><br>
+	<i> Объявления параметров заключены в скобки {...}</i><br>
  <pre>
- Процедура(<П1>, <Знач П2 = Неопределено>)</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParamDecl</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>ByVal</strong>: boolean</li>
-		<li><strong>Value</strong>: undefined, structure (<a href='#UnaryExpr'>UnaryExpr</a>, <a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Процедура({П1}, {Знач П2 = Неопределено})</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеПараметра</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>ПоЗначению</strong>: булево</li>
+		<li><strong>Значение</strong>: неопределено, структура (<a href='#ВыражениеУнарное'>ВыражениеУнарное</a>, <a href='#ВыражениеЛитерал'>ВыражениеЛитерал</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='MethodDecl'>MethodDecl<a class='permalink' href='#MethodDecl'>¶</a></h3>
+	<h3 id='ОбъявлениеМетода'>ОбъявлениеМетода<a class='permalink' href='#ОбъявлениеМетода'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об объявлении метода.</i><br>
-	<i> Сигнатура метода хранится в поле Sign.</i><br>
+	<i> Сигнатура метода хранится в поле Сигнатура.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
  Функция Тест() Экспорт
-     Перем П1;    // поле "Vars" хранит объявления переменных.
-     П1 = 2;      // операторы собираются в поле Body
-     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "Auto".
- КонецФункции</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.MethodDecl</li>
-		<li><strong>Sign</strong>: structure (<a href='#ProcSign'>ProcSign</a>, <a href='#FuncSign'>FuncSign</a>)</li>
-		<li><strong>Vars</strong>: array (<a href='#VarLocDecl'>VarLocDecl</a>)</li>
-		<li><strong>Auto</strong>: array (<a href='#AutoDecl'>AutoDecl</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+     Перем П1;    // поле "Переменные" хранит объявления переменных.
+     П1 = 2;      // операторы собираются в поле Операторы
+     П2 = П1 + 2; // Авто-переменные (П2) собираются в поле "АвтоПеременные".
+ КонецФункции</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОбъявлениеМетода</li>
+		<li><strong>Сигнатура</strong>: структура (<a href='#СигнатураПроцедуры'>СигнатураПроцедуры</a>, <a href='#СигнатураФункции'>СигнатураФункции</a>)</li>
+		<li><strong>Переменные</strong>: массив (<a href='#ОбъявлениеЛокальнойПеременной'>ОбъявлениеЛокальнойПеременной</a>)</li>
+		<li><strong>АвтоПеременные</strong>: массив (<a href='#ОбъявлениеАвтоПеременной'>ОбъявлениеАвтоПеременной</a>)</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ProcSign'>ProcSign<a class='permalink' href='#ProcSign'>¶</a></h3>
+	<h3 id='СигнатураПроцедуры'>СигнатураПроцедуры<a class='permalink' href='#СигнатураПроцедуры'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о сигнатуре объявления процедуры.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Процедура Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ProcSign</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Процедура Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.СигнатураПроцедуры</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Директивы</strong>: массив (один из <a href='#Директивы'>Директивы</a>)</li>
+		<li><strong>Параметры</strong>: массив (<a href='#ОбъявлениеПараметра'>ОбъявлениеПараметра</a>)</li>
+		<li><strong>Экспорт</strong>: булево</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='FuncSign'>FuncSign<a class='permalink' href='#FuncSign'>¶</a></h3>
+	<h3 id='СигнатураФункции'>СигнатураФункции<a class='permalink' href='#СигнатураФункции'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о сигнатуре объявления функции.</i><br>
 	<i> Пример:</i><br>
  <pre>
  &НаКлиенте
- Функция Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FuncSign</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Directive</strong>: string (one of <a href='#Directives'>Directives</a>)</li>
-		<li><strong>Params</strong>: array (<a href='#ParamDecl'>ParamDecl</a>)</li>
-		<li><strong>Export</strong>: boolean</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Функция Тест(П1, П2) Экспорт</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.СигнатураФункции</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Директивы</strong>: массив (один из <a href='#Директивы'>Директивы</a>)</li>
+		<li><strong>Параметры</strong>: массив (<a href='#ОбъявлениеПараметра'>ОбъявлениеПараметра</a>)</li>
+		<li><strong>Экспорт</strong>: булево</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h2 id='#Expressions'>#Expressions</h2>
-	<h3 id='BasicLitExpr'>BasicLitExpr<a class='permalink' href='#BasicLitExpr'>¶</a></h3>
+	<h2 id='#Выражения'>#Выражения</h2>
+	<h3 id='ВыражениеЛитерал'>ВыражениеЛитерал<a class='permalink' href='#ВыражениеЛитерал'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию о литерале примитивного типа.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BasicLitExpr</li>
-		<li><strong>Kind</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
-		<li><strong>Value</strong>: undefined, string, number, boolean, date, null</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеЛитерал</li>
+		<li><strong>Вид</strong>: строка (один из <a href='#Токены'>Токены</a>)</li>
+		<li><strong>Значение</strong>: неопределено, строка, число, булево, дата, null</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='FieldExpr'>FieldExpr<a class='permalink' href='#FieldExpr'>¶</a></h3>
+	<h3 id='ВыражениеПоле'>ВыражениеПоле<a class='permalink' href='#ВыражениеПоле'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об обращении к полю объекта через точку.</i><br>
-	<i> В поле Name содержится имя поля.</i><br>
-	<i> В поле Args содержатся аргументы вызова (если это вызов).</i><br>
+	<i> В поле Имя содержится имя поля.</i><br>
+	<i> В поле Аргументы содержатся аргументы вызова (если это вызов).</i><br>
 	<i> Пример:</i><br>
  <pre>
- // обращения через точку заключены в скобки <...>
- Значение = Объект<.Поле>
- Значение = Объект<.Добавить(П1, П2)></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.FieldExpr</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // обращения через точку заключены в скобки {...}
+ Значение = Объект{.Поле}
+ Значение = Объект{.Добавить(П1, П2)}</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеПоле</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Аргументы</strong>: неопределено, массив (неопределено, один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='IndexExpr'>IndexExpr<a class='permalink' href='#IndexExpr'>¶</a></h3>
+	<h3 id='ВыражениеИндекс'>ВыражениеИндекс<a class='permalink' href='#ВыражениеИндекс'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об обращении к элементу объекта по индексу.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // обращение по индексу заключено в скобки <...>
- Значение = Объект<[Ключ]></pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IndexExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // обращение по индексу заключено в скобки {...}
+ Значение = Объект<[Ключ]></pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеИндекс</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='IdentExpr'>IdentExpr<a class='permalink' href='#IdentExpr'>¶</a></h3>
+	<h3 id='ВыражениеИдентификатор'>ВыражениеИдентификатор<a class='permalink' href='#ВыражениеИдентификатор'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об обращении к идентификатору.</i><br>
 	<i> В поле Head содержится объект области видимости соответствующий идентификатору.</i><br>
-	<i> В поле Tail содержится последовательность обращений через точку и по индексу.</i><br>
-	<i> В поле Args содержатся аргументы вызова (если это вызов).</i><br>
+	<i> В поле Хвост содержится последовательность обращений через точку и по индексу.</i><br>
+	<i> В поле Аргументы содержатся аргументы вызова (если это вызов).</i><br>
 	<i> Пример:</i><br>
  <pre>
- // идентификатор заключен в скобки <...>
- // поле "Head" будет содержать объект переменной "Запрос";
- // поле "Tail" будет содержать три обращения;
- // поле "Args" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
- Возврат <Запрос.Выполнить().Выгрузить()[0]>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IdentExpr</li>
-		<li><strong>Head</strong>: structure (<a href='#Item'>Item</a>)</li>
-		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
-		<li><strong>Args</strong>: undefined, array (undefined, one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // идентификатор заключен в скобки {...}
+ // поле "Голова" будет содержать объект переменной "Запрос";
+ // поле "Хвост" будет содержать три обращения;
+ // поле "Аргументы" будет равно Неопределено, т.к. обращение к "Запрос" не является вызовом.
+ Возврат {Запрос.Выполнить().Выгрузить()[0]};</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеИдентификатор</li>
+		<li><strong>Голова</strong>: структура (<a href='#ЭлементОкружения'>ЭлементОкружения</a>)</li>
+		<li><strong>Хвост</strong>: массив (<a href='#ВыражениеПоле'>ВыражениеПоле</a>, <a href='#ВыражениеИндекс'>ВыражениеИндекс</a>)</li>
+		<li><strong>Аргументы</strong>: неопределено, массив (неопределено, один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='UnaryExpr'>UnaryExpr<a class='permalink' href='#UnaryExpr'>¶</a></h3>
+	<h3 id='ВыражениеУнарное'>ВыражениеУнарное<a class='permalink' href='#ВыражениеУнарное'>¶</a></h3>
 	<ul>
 	<i> Хранит унарное выражение.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // унарные выражения заключены в скобки <...>
- // поле "Operator" равно либо Tokens.Add, либо Tokens.Sub
- // поле "Operand" хранит операнд-выражение
- Значение = <-Сумма> * 2;
- Значение = <+Сумма>;
- Значение = <-(Сумма1 + Сумма2)> / 2;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.UnaryExpr</li>
-		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
-		<li><strong>Operand</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // унарные выражения заключены в скобки {...}
+ // поле "Операция" равно либо Токены.ЗнакСложения, либо Токены.ЗнакВычитания
+ // поле "Операнд" хранит операнд-выражение
+ Значение = {-Сумма} * 2;
+ Значение = {+Сумма};
+ Значение = {-(Сумма1 + Сумма2)} / 2;</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеУнарное</li>
+		<li><strong>Операция</strong>: строка (один из <a href='#Токены'>Токены</a>)</li>
+		<li><strong>Операнд</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='BinaryExpr'>BinaryExpr<a class='permalink' href='#BinaryExpr'>¶</a></h3>
+	<h3 id='ВыражениеБинарное'>ВыражениеБинарное<a class='permalink' href='#ВыражениеБинарное'>¶</a></h3>
 	<ul>
 	<i> Хранит бинарное выражение.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // бинарные выражения заключены в скобки <...>
- // поле "Operator" равно одному из допустимых операторов:
+ // бинарные выражения заключены в скобки {...}
+ // поле "Операция" равно одному из допустимых операторов:
  // - логических (кроме "Не")
  // - реляционных
  // - арифметических
- // поля "Left" и "Right" содержат операнды-выражения
- Если <Не Отмена И Продолжить> Тогда
-     Значение = <Сумма1 + <Сумма2 * Коэффициент>>;
- КонецЕсли;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BinaryExpr</li>
-		<li><strong>Left</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
-		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // поля "ЛевыйОперанд" и "ПравыйОперанд" содержат операнды-выражения
+ Если {Не Отмена И Продолжить} Тогда
+     Значение = {Сумма1 + {Сумма2 * Коэффициент}};
+ КонецЕсли;</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеБинарное</li>
+		<li><strong>ЛевыйОперанд</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Операция</strong>: строка (один из <a href='#Токены'>Токены</a>)</li>
+		<li><strong>ПравыйОперанд</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='NewExpr'>NewExpr<a class='permalink' href='#NewExpr'>¶</a></h3>
+	<h3 id='ВыражениеНовый'>ВыражениеНовый<a class='permalink' href='#ВыражениеНовый'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение "Новый".</i><br>
 	<i> Пример:</i><br>
  <pre>
- // выражения "Новый" заключены в скобки <...>
- // в этом варианте поле "Name" хранит имя типа "Массив",
- // а поле "Args" хранит массив из одного выражения
- Параметры = <Новый Массив(1)>;
+ // выражения "Новый" заключены в скобки {...}
+ // в этом варианте поле "Имя" хранит имя типа "Массив",
+ // а поле "Аргументы" хранит массив из одного выражения
+ Параметры = {Новый Массив(1)};
  Параметры[0] = 10;
- // в этом варианте поле "Name" равно Неопределено,
- // а поле "Args" хранит массив из двух выражений
- Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NewExpr</li>
-		<li><strong>Name</strong>: undefined, string</li>
-		<li><strong>Args</strong>: array (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // в этом варианте поле "Имя" равно Неопределено,
+ // а поле "Аргументы" хранит массив из двух выражений
+ Массив = <Новый (Тип("Массив"), Параметры)>;</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеНовый</li>
+		<li><strong>Имя</strong>: неопределено, строка</li>
+		<li><strong>Аргументы</strong>: массив (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='TernaryExpr'>TernaryExpr<a class='permalink' href='#TernaryExpr'>¶</a></h3>
+	<h3 id='ВыражениеТернарное'>ВыражениеТернарное<a class='permalink' href='#ВыражениеТернарное'>¶</a></h3>
 	<ul>
 	<i> Хранит тернарное выражение "?(,,)".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Значение = ?(Ложь,   // поле "Cond"
-     Неопределено,    // поле "Then"
-     Новый Массив     // поле "Else"
- ).Количество();      // поле "Tail"</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TernaryExpr</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Else</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Tail</strong>: array (<a href='#FieldExpr'>FieldExpr</a>, <a href='#IndexExpr'>IndexExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Значение = ?(Ложь,   // поле "Выражение"
+     Неопределено,    // поле "Тогда"
+     Новый Массив     // поле "Иначе"
+ ).Количество();      // поле "Хвост"</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеТернарное</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Тогда</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Иначе</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Хвост</strong>: массив (<a href='#ВыражениеПоле'>ВыражениеПоле</a>, <a href='#ВыражениеИндекс'>ВыражениеИндекс</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ParenExpr'>ParenExpr<a class='permalink' href='#ParenExpr'>¶</a></h3>
+	<h3 id='ВыражениеСкобочное'>ВыражениеСкобочное<a class='permalink' href='#ВыражениеСкобочное'>¶</a></h3>
 	<ul>
 	<i> Хранит скобочное выражение.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // скобочное выражение заключено в скобки <...>
- Сумма = <(Сумма1 + Сумма2)> * Количество;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ParenExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // скобочное выражение заключено в скобки {...}
+ Сумма = {(Сумма1 + Сумма2)} * Количество;</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеСкобочное</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='NotExpr'>NotExpr<a class='permalink' href='#NotExpr'>¶</a></h3>
+	<h3 id='ВыражениеНе'>ВыражениеНе<a class='permalink' href='#ВыражениеНе'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение, к которому применено логическое отрицание "Не".</i><br>
 	<i> Пример:</i><br>
  <pre>
- // выражение-отрицание заключено в скобки <...>
- НеРавны = <Не Сумма1 = Сумма2>;</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.NotExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // выражение-отрицание заключено в скобки {...}
+ НеРавны = {Не Сумма1 = Сумма2};</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеНе</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='StringExpr'>StringExpr<a class='permalink' href='#StringExpr'>¶</a></h3>
+	<h3 id='ВыражениеСтроковое'>ВыражениеСтроковое<a class='permalink' href='#ВыражениеСтроковое'>¶</a></h3>
 	<ul>
 	<i> Хранит строковое выражение.</i><br>
-	<i> Поле "List" хранит упорядоченный список частей строки.</i><br>
+	<i> Поле "Элементы" хранит упорядоченный список частей строки.</i><br>
 	<i> Пример:</i><br>
  <pre>
- Строка1 = "Часть1" "Часть2"; // эта строка состоит из двух частей типа Nodes.String
+ Строка1 = "Часть1" "Часть2"; // эта строка состоит из двух частей типа Узлы.Строка
  Строка2 =                    // эта строка состоит из пяти частей типа:
- "Начало строки               // Nodes.StringBeg
- | продолжение строки         // Nodes.StringMid
- | еще продолжение строки     // Nodes.StringMid
- | окончание строки"          // Nodes.StringEnd
- "еще часть";                 // Nodes.String</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.StringExpr</li>
-		<li><strong>List</strong>: array (<a href='#BasicLitExpr'>BasicLitExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ "Начало строки               // Узлы.НачалоСтроки
+ | продолжение строки         // Узлы.ПродолжениеСтроки
+ | еще продолжение строки     // Узлы.ПродолжениеСтроки
+ | окончание строки"          // Узлы.ОкончаниеСтроки
+ "еще часть";                 // Узлы.Строка</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеСтроковое</li>
+		<li><strong>Элементы</strong>: массив (<a href='#ВыражениеЛитерал'>ВыражениеЛитерал</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h2 id='#Statements'>#Statements</h2>
-	<h3 id='AssignStmt'>AssignStmt<a class='permalink' href='#AssignStmt'>¶</a></h3>
+	<h2 id='#Операторы'>#Операторы</h2>
+	<h3 id='ОператорПрисваивания'>ОператорПрисваивания<a class='permalink' href='#ОператорПрисваивания'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор присваивания.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.AssignStmt</li>
-		<li><strong>Left</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
-		<li><strong>Right</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПрисваивания</li>
+		<li><strong>ЛевыйОперанд</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>ПравыйОперанд</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ReturnStmt'>ReturnStmt<a class='permalink' href='#ReturnStmt'>¶</a></h3>
+	<h3 id='ОператорВозврат'>ОператорВозврат<a class='permalink' href='#ОператорВозврат'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Возврат".</i><br>
-	<i> Поле "Expr" равно Неопределено если это возврат из процедуры.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ReturnStmt</li>
-		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<i> Поле "Выражение" равно Неопределено если это возврат из процедуры.</i><br>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорВозврат</li>
+		<li><strong>Выражение</strong>: неопределено, структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='BreakStmt'>BreakStmt<a class='permalink' href='#BreakStmt'>¶</a></h3>
+	<h3 id='ОператорПрервать'>ОператорПрервать<a class='permalink' href='#ОператорПрервать'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Прервать".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.BreakStmt</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПрервать</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ContinueStmt'>ContinueStmt<a class='permalink' href='#ContinueStmt'>¶</a></h3>
+	<h3 id='ОператорПродолжить'>ОператорПродолжить<a class='permalink' href='#ОператорПродолжить'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Продолжить".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ContinueStmt</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПродолжить</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='RaiseStmt'>RaiseStmt<a class='permalink' href='#RaiseStmt'>¶</a></h3>
+	<h3 id='ОператорВызватьИсключение'>ОператорВызватьИсключение<a class='permalink' href='#ОператорВызватьИсключение'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "ВызватьИсключение".</i><br>
-	<i> Поле "Expr" равно Неопределено если это вариант оператора без выражения.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.RaiseStmt</li>
-		<li><strong>Expr</strong>: undefined, structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<i> Поле "Выражение" равно Неопределено если это вариант оператора без выражения.</i><br>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорВызватьИсключение</li>
+		<li><strong>Выражение</strong>: неопределено, структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ExecuteStmt'>ExecuteStmt<a class='permalink' href='#ExecuteStmt'>¶</a></h3>
+	<h3 id='ОператорВыполнить'>ОператорВыполнить<a class='permalink' href='#ОператорВыполнить'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Выполнить".</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExecuteStmt</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорВыполнить</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='CallStmt'>CallStmt<a class='permalink' href='#CallStmt'>¶</a></h3>
+	<h3 id='ОператорВызоваПроцедуры'>ОператорВызоваПроцедуры<a class='permalink' href='#ОператорВызоваПроцедуры'>¶</a></h3>
 	<ul>
 	<i> Хранит вызов процедуры или функции как процедуры.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.CallStmt</li>
-		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорВызоваПроцедуры</li>
+		<li><strong>Идентификатор</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='IfStmt'>IfStmt<a class='permalink' href='#IfStmt'>¶</a></h3>
+	<h3 id='ОператорЕсли'>ОператорЕсли<a class='permalink' href='#ОператорЕсли'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Если".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Если Сумма > 0 Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит операторы в этом блоке
+ Если Сумма > 0 Тогда // поле "Выражение" хранит условие (выражение)
+     // поле "Тогда" хранит операторы в этом блоке
  ИначеЕсли Сумма = 0 Тогда
-     // поле-массив "ElsIf" хранит последовательность блоков ИначеЕсли
+     // поле-массив "ИначеЕсли" хранит последовательность блоков ИначеЕсли
  Иначе
-     // поле "Else" хранит операторы в этом блоке
- КонецЕсли</pre>	<i> Поля "ElsIf" и "Else" равны Неопределено если</i><br>
+     // поле "Иначе" хранит операторы в этом блоке
+ КонецЕсли</pre>	<i> Поля "ИначеЕсли" и "Иначе" равны Неопределено если</i><br>
 	<i> соответствующие блоки отсутствуют в исходном коде.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.IfStmt</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>ElsIf</strong>: undefined, array (<a href='#ElsIfStmt'>ElsIfStmt</a>)</li>
-		<li><strong>Else</strong>: undefined, structure (<a href='#ElseStmt'>ElseStmt</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорЕсли</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Тогда</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>ИначеЕсли</strong>: неопределено, массив (<a href='#ОператорИначеЕсли'>ОператорИначеЕсли</a>)</li>
+		<li><strong>Иначе</strong>: неопределено, структура (<a href='#ОператорИначе'>ОператорИначе</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ElseStmt'>ElseStmt<a class='permalink' href='#ElseStmt'>¶</a></h3>
+	<h3 id='ОператорИначе'>ОператорИначе<a class='permalink' href='#ОператорИначе'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "Иначе"</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElseStmt</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорИначе</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ElsIfStmt'>ElsIfStmt<a class='permalink' href='#ElsIfStmt'>¶</a></h3>
+	<h3 id='ОператорИначеЕсли'>ОператорИначеЕсли<a class='permalink' href='#ОператорИначеЕсли'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "ИначеЕсли" оператора "Если".</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
- ИначеЕсли Сумма < 0 Тогда // поле "Cond" хранит условие (выражение)
-     // поле "Then" хранит операторы в этом блоке
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ElsIfStmt</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Then</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ ИначеЕсли Сумма < 0 Тогда // поле "Выражение" хранит условие (выражение)
+     // поле "Тогда" хранит операторы в этом блоке
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорИначеЕсли</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Тогда</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='WhileStmt'>WhileStmt<a class='permalink' href='#WhileStmt'>¶</a></h3>
+	<h3 id='ОператорПока'>ОператорПока<a class='permalink' href='#ОператорПока'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Пока".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Пока Индекс > 0 Цикл // поле "Cond" хранит условие (выражение)
-     // поле "Body" хранит операторы в этом блоке
- КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.WhileStmt</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Пока Индекс > 0 Цикл // поле "Выражение" хранит условие (выражение)
+     // поле "Операторы" хранит операторы в этом блоке
+ КонецЦикла</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПока</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ForStmt'>ForStmt<a class='permalink' href='#ForStmt'>¶</a></h3>
+	<h3 id='ОператорДля'>ОператорДля<a class='permalink' href='#ОператорДля'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Для".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Для Индекс = 0      // поля "Ident" и "From" хранят переменную и выражение инициализации.
+ Для Индекс = 0      // поля "Идентификатор" и "Начало" хранят переменную и выражение инициализации.
    По Длина - 1 Цикл // поле "To" хранит выражение границы
-     // поле "Body" хранит операторы в этом блоке
- КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForStmt</li>
-		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
-		<li><strong>From</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>To</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+     // поле "Операторы" хранит операторы в этом блоке
+ КонецЦикла</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорДля</li>
+		<li><strong>Идентификатор</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>Начало</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Конец</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ForEachStmt'>ForEachStmt<a class='permalink' href='#ForEachStmt'>¶</a></h3>
+	<h3 id='ОператорДляКаждого'>ОператорДляКаждого<a class='permalink' href='#ОператорДляКаждого'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор цикла "Для Каждого".</i><br>
 	<i> Пример:</i><br>
  <pre>
- Для Каждого Элемент // поле "Ident" хранит переменную.
-   Из Список Цикл    // поле "In" хранит выражение коллекции.
-     // поле "Body" хранит операторы в этом блоке
- КонецЦикла</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ForEachStmt</li>
-		<li><strong>Ident</strong>: structure (<a href='#IdentExpr'>IdentExpr</a>)</li>
-		<li><strong>In</strong>: structure (one of <a href='##Expressions'>#Expressions</a>)</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ Для Каждого Элемент // поле "Идентификатор" хранит переменную.
+   Из Список Цикл    // поле "Коллекция" хранит выражение коллекции.
+     // поле "Операторы" хранит операторы в этом блоке
+ КонецЦикла</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорДляКаждого</li>
+		<li><strong>Идентификатор</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>Коллекция</strong>: структура (один из <a href='##Выражения'>#Выражения</a>)</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='TryStmt'>TryStmt<a class='permalink' href='#TryStmt'>¶</a></h3>
+	<h3 id='ОператорПопытка'>ОператорПопытка<a class='permalink' href='#ОператорПопытка'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Попытка"</i><br>
 	<i> Пример:</i><br>
  <pre>
  Попытка
-     // поле "Try" хранит операторы в этом блоке.
+     // поле "Попытка" хранит операторы в этом блоке.
  Исключение
-     // поле "Except" хранит операторы в этом блоке
- КонецПопытки</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.TryStmt</li>
-		<li><strong>Try</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Except</strong>: structure (<a href='#ExceptStmt'>ExceptStmt</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+     // поле "Исключение" хранит операторы в этом блоке
+ КонецПопытки</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПопытка</li>
+		<li><strong>Попытка</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Исключение</strong>: структура (<a href='#ОператорИсключение'>ОператорИсключение</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='ExceptStmt'>ExceptStmt<a class='permalink' href='#ExceptStmt'>¶</a></h3>
+	<h3 id='ОператорИсключение'>ОператорИсключение<a class='permalink' href='#ОператорИсключение'>¶</a></h3>
 	<ul>
 	<i> Хранит блок "Исключение"</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.ExceptStmt</li>
-		<li><strong>Body</strong>: array (one of <a href='##Statements'>#Statements</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорИсключение</li>
+		<li><strong>Операторы</strong>: массив (один из <a href='##Операторы'>#Операторы</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='GotoStmt'>GotoStmt<a class='permalink' href='#GotoStmt'>¶</a></h3>
+	<h3 id='ОператорПерейти'>ОператорПерейти<a class='permalink' href='#ОператорПерейти'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор "Перейти"</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.GotoStmt</li>
-		<li><strong>Label</strong>: string</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорПерейти</li>
+		<li><strong>Метка</strong>: строка</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='LabelStmt'>LabelStmt<a class='permalink' href='#LabelStmt'>¶</a></h3>
+	<h3 id='ОператорМетка'>ОператорМетка<a class='permalink' href='#ОператорМетка'>¶</a></h3>
 	<ul>
 	<i> Хранит оператор метки.</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.LabelStmt</li>
-		<li><strong>Label</strong>: string</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорМетка</li>
+		<li><strong>Метка</strong>: строка</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h2 id='#PrepInst'>#PrepInst</h2>
-	<h3 id='PrepIfInst'>PrepIfInst<a class='permalink' href='#PrepIfInst'>¶</a></h3>
+	<h3 id='ОператорДобавитьОбработчик'>ОператорДобавитьОбработчик<a class='permalink' href='#ОператорДобавитьОбработчик'>¶</a></h3>
+	<ul>
+	<i> Хранит оператор "ДобавитьОбработчик".</i><br>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорДобавитьОбработчик</li>
+		<li><strong>Событие</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>ОбработчикСобытия</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
+	</ul>
+	<h3 id='ОператорУдалитьОбработчик'>ОператорУдалитьОбработчик<a class='permalink' href='#ОператорУдалитьОбработчик'>¶</a></h3>
+	<ul>
+	<i> Хранит оператор "УдалитьОбработчик".</i><br>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ОператорУдалитьОбработчик</li>
+		<li><strong>Событие</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>ОбработчикСобытия</strong>: структура (<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
+	</ul>
+	<h2 id='#ИнструкцииПрепроцессора'>#ИнструкцииПрепроцессора</h2>
+	<h3 id='ИнструкцияПрепроцессораЕсли'>ИнструкцияПрепроцессораЕсли<a class='permalink' href='#ИнструкцияПрепроцессораЕсли'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Если,</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
- #Если Сервер Тогда // поле "Cond" хранит условие (выражение)
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepIfInst</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ #Если Сервер Тогда // поле "Выражение" хранит условие (выражение)
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораЕсли</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepElsIfInst'>PrepElsIfInst<a class='permalink' href='#PrepElsIfInst'>¶</a></h3>
+	<h3 id='ИнструкцияПрепроцессораИначеЕсли'>ИнструкцияПрепроцессораИначеЕсли<a class='permalink' href='#ИнструкцияПрепроцессораИначеЕсли'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #ИначеЕсли</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
- #ИначеЕсли Клиент Тогда // поле "Cond" хранит условие (выражение)
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElsIfInst</li>
-		<li><strong>Cond</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ #ИначеЕсли Клиент Тогда // поле "Выражение" хранит условие (выражение)
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораИначеЕсли</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepElseInst'>PrepElseInst<a class='permalink' href='#PrepElseInst'>¶</a></h3>
+	<h3 id='ИнструкцияПрепроцессораИначе'>ИнструкцияПрепроцессораИначе<a class='permalink' href='#ИнструкцияПрепроцессораИначе'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Иначе</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepElseInst</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораИначе</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepEndIfInst'>PrepEndIfInst<a class='permalink' href='#PrepEndIfInst'>¶</a></h3>
+	<h3 id='ИнструкцияПрепроцессораКонецЕсли'>ИнструкцияПрепроцессораКонецЕсли<a class='permalink' href='#ИнструкцияПрепроцессораКонецЕсли'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #КонецЕсли</i><br>
-	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndIfInst</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораКонецЕсли</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepRegionInst'>PrepRegionInst<a class='permalink' href='#PrepRegionInst'>¶</a></h3>
+	<h3 id='ИнструкцияПрепроцессораОбласть'>ИнструкцияПрепроцессораОбласть<a class='permalink' href='#ИнструкцияПрепроцессораОбласть'>¶</a></h3>
 	<ul>
 	<i> Хранит информацию об инструкции препроцессора #Обрасть,</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
- #Область Интерфейс   // поле "Name" хранит имя области
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepRegionInst</li>
-		<li><strong>Name</strong>: string</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+#Область Интерфейс   // поле "Имя" хранит имя области
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораОбласть</li>
+		<li><strong>Имя</strong>: строка</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepEndRegionInst'>PrepEndRegionInst<a class='permalink' href='#PrepEndRegionInst'>¶</a></h3>
+	<h3 id='ИнструкцияПрепроцессораКонецОбласти'>ИнструкцияПрепроцессораКонецОбласти<a class='permalink' href='#ИнструкцияПрепроцессораКонецОбласти'>¶</a></h3>
 	<ul>
-	<i> Хранит информацию об инструкции препроцессора #КонецОбласти,</i><br>
+	<i> Хранит информацию об инструкции препроцессора#КонецОбласти,</i><br>
 	<i> Пример:</i><br>
  <pre>
  ...
- #КонецОбласти
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepEndRegionInst</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+#КонецОбласти
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ИнструкцияПрепроцессораКонецОбласти</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h2 id='#PrepExpr'>#PrepExpr</h2>
-	<h3 id='PrepBinaryExpr'>PrepBinaryExpr<a class='permalink' href='#PrepBinaryExpr'>¶</a></h3>
+	<h2 id='#ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</h2>
+	<h3 id='ВыражениеПрепроцессораБинарное'>ВыражениеПрепроцессораБинарное<a class='permalink' href='#ВыражениеПрепроцессораБинарное'>¶</a></h3>
 	<ul>
 	<i> Хранит бинарное выражение препроцессора.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // бинарные выражения заключены в скобки <...>
- // поле "Operator" равно либо Tokens.Or либо Tokens.And:
- // поля "Left" и "Right" содержат операнды-выражения препроцессора
+ // бинарные выражения заключены в скобки {...}
+ // поле "Операция" равно либо Токены.Или либо Токены.И:
+ // поля "ЛевыйОперанд" и "ПравыйОперанд" содержат операнды-выражения препроцессора
  #Если <Сервер Или ВнешнееСоединение> Тогда
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepBinaryExpr</li>
-		<li><strong>Left</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Operator</strong>: string (one of <a href='#Tokens'>Tokens</a>)</li>
-		<li><strong>Right</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеПрепроцессораБинарное</li>
+		<li><strong>ЛевыйОперанд</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Операция</strong>: строка (один из <a href='#Токены'>Токены</a>)</li>
+		<li><strong>ПравыйОперанд</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepNotExpr'>PrepNotExpr<a class='permalink' href='#PrepNotExpr'>¶</a></h3>
+	<h3 id='ВыражениеПрепроцессораНе'>ВыражениеПрепроцессораНе<a class='permalink' href='#ВыражениеПрепроцессораНе'>¶</a></h3>
 	<ul>
 	<i> Хранит выражение препроцессора, к которому применено логическое отрицание "Не".</i><br>
 	<i> Пример:</i><br>
  <pre>
- // выражение-отрицание заключено в скобки <...>
+ // выражение-отрицание заключено в скобки {...}
  #Если <Не ВебКлиент> Тогда
- ...</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepNotExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ ...</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеПрепроцессораНе</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepSymExpr'>PrepSymExpr<a class='permalink' href='#PrepSymExpr'>¶</a></h3>
+	<h3 id='ВыражениеПрепроцессораСимвол'>ВыражениеПрепроцессораСимвол<a class='permalink' href='#ВыражениеПрепроцессораСимвол'>¶</a></h3>
 	<ul>
 	<i> Узел хранит информацию о символе препроцессора.</i><br>
-	<i> Поле Exist = True если такой символ существует.</i><br>
+	<i> Поле Существует = Истина если такой символ существует.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // символ заключен в скобки <...>
- #Если <Сервер> Тогда</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepSymExpr</li>
-		<li><strong>Symbol</strong>: string (one of <a href='#PrepSymbols'>PrepSymbols</a>)</li>
-		<li><strong>Exist</strong>: boolean</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // символ заключен в скобки {...}
+ #Если <Сервер> Тогда</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеПрепроцессораСимвол</li>
+		<li><strong>Символ</strong>: строка (один из <a href='#PrepСимволs'>PrepСимволs</a>)</li>
+		<li><strong>Существует</strong>: булево</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-	<h3 id='PrepParenExpr'>PrepParenExpr<a class='permalink' href='#PrepParenExpr'>¶</a></h3>
+	<h3 id='ВыражениеПрепроцессораСкобочное'>ВыражениеПрепроцессораСкобочное<a class='permalink' href='#ВыражениеПрепроцессораСкобочное'>¶</a></h3>
 	<ul>
 	<i> Хранит скобочное выражение препроцессора.</i><br>
 	<i> Пример:</i><br>
  <pre>
- // скобочное выражение заключено в скобки <...>
- #Если <(Сервер Или ВнешнееСоединение)> Тогда</pre>	<p>		<li><strong>Type</strong>: string (one of <a href='#Nodes'>Nodes</a>) = Nodes.PrepParenExpr</li>
-		<li><strong>Expr</strong>: structure (one of <a href='##PrepExpr'>#PrepExpr</a>)</li>
-		<li><strong>Place</strong>: structure (<a href='#Place'>Place</a>)</li>
+ // скобочное выражение заключено в скобки {...}
+ #Если <(Сервер Или ВнешнееСоединение)> Тогда</pre>	<p>		<li><strong>Тип</strong>: строка (один из <a href='#Узлы'>Узлы</a>) = Узлы.ВыражениеПрепроцессораСкобочное</li>
+		<li><strong>Выражение</strong>: структура (один из <a href='##ВыражениеПрепроцессора'>#ВыражениеПрепроцессора</a>)</li>
+		<li><strong>Место</strong>: структура (<a href='#Место'>Место</a>)</li>
 	</ul>
-<h2 id='#Other'>#Other</h2>
-<h3 id='Place'>Place</h3>
+<h2 id='#Прочее'>#Прочее</h2>
+<h3 id='Место'>Место</h3>
 <ul>
-	<li><strong>Pos</strong>: number</li>
-	<li><strong>Len</strong>: number</li>
-	<li><strong>BegLine</strong>: number</li>
-	<li><strong>EndLine</strong>: number</li>
+	<li><strong>Позиция</strong>: number</li>
+	<li><strong>Длина</strong>: number</li>
+	<li><strong>НомерПервойСтроки</strong>: number</li>
+	<li><strong>НомерПоследнейСтроки</strong>: number</li>
 </ul>
 </body>
-</html><h2 id='#Enums'>#Enums</h2><h3 id='Directives'>Directives</h3>
-<ul><li>"AtClient"</li>
-<li>"AtServer"</li>
-<li>"AtServerNoContext"</li>
-<li>"AtClientAtServerNoContext"</li>
-<li>"AtClientAtServer"</li>
+</html><h2 id='#Перечисления'>#Перечисления</h2><h3 id='Директивы'>Директивы</h3>
+<ul><li>"НаКлиенте"</li>
+<li>"НаСервере"</li>
+<li>"НаСервереБезКонтекста"</li>
+<li>"НаКлиентеНаСервереБезКонтекста"</li>
+<li>"НаКлиентеНаСервере"</li>
 </ul>
-<h3 id='PrepInstructions'>PrepInstructions</h3>
-<ul><li>"If"</li>
-<li>"ElsIf"</li>
-<li>"Else"</li>
-<li>"EndIf"</li>
-<li>"Region"</li>
-<li>"EndRegion"</li>
+<h3 id='ИнструкцииПрепроцессора'>ИнструкцииПрепроцессора</h3>
+<ul><li>"Если"</li>
+<li>"ИначеЕсли"</li>
+<li>"Иначе"</li>
+<li>"КонецЕсли"</li>
+<li>"Область"</li>
+<li>"КонецОбласти"</li>
 </ul>
-<h3 id='Nodes'>Nodes</h3>
-<ul><li>"<a href='#Module'>Module</a>"</li>
-<li>"<a href='#Item'>Item</a>"</li>
-<li>"<a href='#VarModDecl'>VarModDecl</a>"</li>
-<li>"<a href='#VarModListDecl'>VarModListDecl</a>"</li>
-<li>"<a href='#VarLocDecl'>VarLocDecl</a>"</li>
-<li>"<a href='#AutoDecl'>AutoDecl</a>"</li>
-<li>"<a href='#ParamDecl'>ParamDecl</a>"</li>
-<li>"<a href='#MethodDecl'>MethodDecl</a>"</li>
-<li>"<a href='#ProcSign'>ProcSign</a>"</li>
-<li>"<a href='#FuncSign'>FuncSign</a>"</li>
-<li>"<a href='#BasicLitExpr'>BasicLitExpr</a>"</li>
-<li>"<a href='#FieldExpr'>FieldExpr</a>"</li>
-<li>"<a href='#IndexExpr'>IndexExpr</a>"</li>
-<li>"<a href='#IdentExpr'>IdentExpr</a>"</li>
-<li>"<a href='#UnaryExpr'>UnaryExpr</a>"</li>
-<li>"<a href='#BinaryExpr'>BinaryExpr</a>"</li>
-<li>"<a href='#NewExpr'>NewExpr</a>"</li>
-<li>"<a href='#TernaryExpr'>TernaryExpr</a>"</li>
-<li>"<a href='#ParenExpr'>ParenExpr</a>"</li>
-<li>"<a href='#NotExpr'>NotExpr</a>"</li>
-<li>"<a href='#StringExpr'>StringExpr</a>"</li>
-<li>"<a href='#AssignStmt'>AssignStmt</a>"</li>
-<li>"<a href='#ReturnStmt'>ReturnStmt</a>"</li>
-<li>"<a href='#BreakStmt'>BreakStmt</a>"</li>
-<li>"<a href='#ContinueStmt'>ContinueStmt</a>"</li>
-<li>"<a href='#RaiseStmt'>RaiseStmt</a>"</li>
-<li>"<a href='#ExecuteStmt'>ExecuteStmt</a>"</li>
-<li>"<a href='#WhileStmt'>WhileStmt</a>"</li>
-<li>"<a href='#ForStmt'>ForStmt</a>"</li>
-<li>"<a href='#ForEachStmt'>ForEachStmt</a>"</li>
-<li>"<a href='#TryStmt'>TryStmt</a>"</li>
-<li>"<a href='#ExceptStmt'>ExceptStmt</a>"</li>
-<li>"<a href='#GotoStmt'>GotoStmt</a>"</li>
-<li>"<a href='#LabelStmt'>LabelStmt</a>"</li>
-<li>"<a href='#CallStmt'>CallStmt</a>"</li>
-<li>"<a href='#IfStmt'>IfStmt</a>"</li>
-<li>"<a href='#ElsIfStmt'>ElsIfStmt</a>"</li>
-<li>"<a href='#ElseStmt'>ElseStmt</a>"</li>
-<li>"<a href='#PrepIfInst'>PrepIfInst</a>"</li>
-<li>"<a href='#PrepElsIfInst'>PrepElsIfInst</a>"</li>
-<li>"<a href='#PrepElseInst'>PrepElseInst</a>"</li>
-<li>"<a href='#PrepEndIfInst'>PrepEndIfInst</a>"</li>
-<li>"<a href='#PrepRegionInst'>PrepRegionInst</a>"</li>
-<li>"<a href='#PrepEndRegionInst'>PrepEndRegionInst</a>"</li>
-<li>"<a href='#PrepBinaryExpr'>PrepBinaryExpr</a>"</li>
-<li>"<a href='#PrepNotExpr'>PrepNotExpr</a>"</li>
-<li>"<a href='#PrepSymExpr'>PrepSymExpr</a>"</li>
-<li>"<a href='#PrepParenExpr'>PrepParenExpr</a>"</li>
+<h3 id='Узлы'>Узлы</h3>
+<ul><li>"<a href='#Модуль'>Модуль</a>"</li>
+<li>"<a href='#ЭлементОкружения'>ЭлементОкружения</a>"</li>
+<li>"<a href='#ОбъявлениеДирективы'>ОбъявлениеДирективы</a>"</li>
+<li>"<a href='#ОбъявлениеПеременнойМодуля'>ОбъявлениеПеременнойМодуля</a>"</li>
+<li>"<a href='#ОбъявлениеСпискаПеременныхМодуля'>ОбъявлениеСпискаПеременныхМодуля</a>"</li>
+<li>"<a href='#ОбъявлениеЛокальнойПеременной'>ОбъявлениеЛокальнойПеременной</a>"</li>
+<li>"<a href='#ОбъявлениеАвтоПеременной'>ОбъявлениеАвтоПеременной</a>"</li>
+<li>"<a href='#ОбъявлениеПараметра'>ОбъявлениеПараметра</a>"</li>
+<li>"<a href='#ОбъявлениеМетода'>ОбъявлениеМетода</a>"</li>
+<li>"<a href='#СигнатураПроцедуры'>СигнатураПроцедуры</a>"</li>
+<li>"<a href='#СигнатураФункции'>СигнатураФункции</a>"</li>
+<li>"<a href='#ВыражениеЛитерал'>ВыражениеЛитерал</a>"</li>
+<li>"<a href='#ВыражениеПоле'>ВыражениеПоле</a>"</li>
+<li>"<a href='#ВыражениеИндекс'>ВыражениеИндекс</a>"</li>
+<li>"<a href='#ВыражениеИдентификатор'>ВыражениеИдентификатор</a>"</li>
+<li>"<a href='#ВыражениеУнарное'>ВыражениеУнарное</a>"</li>
+<li>"<a href='#ВыражениеБинарное'>ВыражениеБинарное</a>"</li>
+<li>"<a href='#ВыражениеНовый'>ВыражениеНовый</a>"</li>
+<li>"<a href='#ВыражениеТернарное'>ВыражениеТернарное</a>"</li>
+<li>"<a href='#ВыражениеСкобочное'>ВыражениеСкобочное</a>"</li>
+<li>"<a href='#ВыражениеНе'>ВыражениеНе</a>"</li>
+<li>"<a href='#ВыражениеСтроковое'>ВыражениеСтроковое</a>"</li>
+<li>"<a href='#ОператорПрисваивания'>ОператорПрисваивания</a>"</li>
+<li>"<a href='#ОператорВозврат'>ОператорВозврат</a>"</li>
+<li>"<a href='#ОператорПрервать'>ОператорПрервать</a>"</li>
+<li>"<a href='#ОператорПродолжить'>ОператорПродолжить</a>"</li>
+<li>"<a href='#ОператорВызватьИсключение'>ОператорВызватьИсключение</a>"</li>
+<li>"<a href='#ОператорВыполнить'>ОператорВыполнить</a>"</li>
+<li>"<a href='#ОператорПока'>ОператорПока</a>"</li>
+<li>"<a href='#ОператорДля'>ОператорДля</a>"</li>
+<li>"<a href='#ОператорДляКаждого'>ОператорДляКаждого</a>"</li>
+<li>"<a href='#ОператорПопытка'>ОператорПопытка</a>"</li>
+<li>"<a href='#ОператорИсключение'>ОператорИсключение</a>"</li>
+<li>"<a href='#ОператорПерейти'>ОператорПерейти</a>"</li>
+<li>"<a href='#ОператорМетка'>ОператорМетка</a>"</li>
+<li>"<a href='#ОператорВызоваПроцедуры'>ОператорВызоваПроцедуры</a>"</li>
+<li>"<a href='#ОператорЕсли'>ОператорЕсли</a>"</li>
+<li>"<a href='#ОператорИначеЕсли'>ОператорИначеЕсли</a>"</li>
+<li>"<a href='#ОператорИначе'>ОператорИначе</a>"</li>
+<li>"<a href='#ОператорДобавитьОбработчик'>ОператорДобавитьОбработчик</a>"</li>
+<li>"<a href='#ОператорУдалитьОбработчик'>ОператорУдалитьОбработчик</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораЕсли'>ИнструкцияПрепроцессораЕсли</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораИначеЕсли'>ИнструкцияПрепроцессораИначеЕсли</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораИначе'>ИнструкцияПрепроцессораИначе</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораКонецЕсли'>ИнструкцияПрепроцессораКонецЕсли</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораОбласть'>ИнструкцияПрепроцессораОбласть</a>"</li>
+<li>"<a href='#ИнструкцияПрепроцессораКонецОбласти'>ИнструкцияПрепроцессораКонецОбласти</a>"</li>
+<li>"<a href='#ВыражениеПрепроцессораБинарное'>ВыражениеПрепроцессораБинарное</a>"</li>
+<li>"<a href='#ВыражениеПрепроцессораНе'>ВыражениеПрепроцессораНе</a>"</li>
+<li>"<a href='#ВыражениеПрепроцессораСимвол'>ВыражениеПрепроцессораСимвол</a>"</li>
+<li>"<a href='#ВыражениеПрепроцессораСкобочное'>ВыражениеПрепроцессораСкобочное</a>"</li>
 </ul>
-<h3 id='Tokens'>Tokens</h3>
-<ul><li>"If"</li>
-<li>"Then"</li>
-<li>"ElsIf"</li>
-<li>"Else"</li>
-<li>"EndIf"</li>
-<li>"For"</li>
-<li>"Each"</li>
-<li>"In"</li>
-<li>"To"</li>
-<li>"While"</li>
-<li>"Do"</li>
-<li>"EndDo"</li>
-<li>"Procedure"</li>
-<li>"EndProcedure"</li>
-<li>"Function"</li>
-<li>"EndFunction"</li>
-<li>"Var"</li>
-<li>"Val"</li>
-<li>"Return"</li>
-<li>"Continue"</li>
-<li>"Break"</li>
-<li>"And"</li>
-<li>"Or"</li>
-<li>"Not"</li>
-<li>"Try"</li>
-<li>"Except"</li>
-<li>"Raise"</li>
-<li>"EndTry"</li>
-<li>"New"</li>
-<li>"Execute"</li>
-<li>"Export"</li>
-<li>"Goto"</li>
-<li>"True"</li>
-<li>"False"</li>
-<li>"Undefined"</li>
+<h3 id='Токены'>Токены</h3>
+<ul><li>"Если"</li>
+<li>"Тогда"</li>
+<li>"ИначеЕсли"</li>
+<li>"Иначе"</li>
+<li>"КонецЕсли"</li>
+<li>"Для"</li>
+<li>"Каждого"</li>
+<li>"Из"</li>
+<li>"По"</li>
+<li>"Пока"</li>
+<li>"Цикл"</li>
+<li>"КонецЦикла"</li>
+<li>"Процедура"</li>
+<li>"КонецПроцедуры"</li>
+<li>"Функция"</li>
+<li>"КонецФункции"</li>
+<li>"Перем"</li>
+<li>"Знач"</li>
+<li>"Возврат"</li>
+<li>"Продолжить"</li>
+<li>"Прервать"</li>
+<li>"И"</li>
+<li>"Или"</li>
+<li>"Не"</li>
+<li>"ДобавитьОбработчик"</li>
+<li>"УдалитьОбработчик"</li>
+<li>"Попытка"</li>
+<li>"Исключение"</li>
+<li>"ВызватьИсключение"</li>
+<li>"КонецПопытки"</li>
+<li>"Новый"</li>
+<li>"Выполнить"</li>
+<li>"Экспорт"</li>
+<li>"Перейти"</li>
+<li>"Истина"</li>
+<li>"Ложь"</li>
+<li>"Неопределено"</li>
 <li>"Null"</li>
-<li>"Ident"</li>
-<li>"Number"</li>
-<li>"String"</li>
-<li>"DateTime"</li>
-<li>"StringBeg"</li>
-<li>"StringMid"</li>
-<li>"StringEnd"</li>
-<li>"Eql"</li>
-<li>"Neq"</li>
-<li>"Lss"</li>
-<li>"Gtr"</li>
-<li>"Leq"</li>
-<li>"Geq"</li>
-<li>"Add"</li>
-<li>"Sub"</li>
-<li>"Mul"</li>
-<li>"Div"</li>
-<li>"Mod"</li>
-<li>"Lparen"</li>
-<li>"Rparen"</li>
-<li>"Lbrack"</li>
-<li>"Rbrack"</li>
-<li>"Ternary"</li>
-<li>"Comma"</li>
-<li>"Period"</li>
-<li>"Colon"</li>
-<li>"Semicolon"</li>
-<li>"_If"</li>
-<li>"_ElsIf"</li>
-<li>"_Else"</li>
-<li>"_EndIf"</li>
-<li>"_Region"</li>
-<li>"_EndRegion"</li>
-<li>"Eof"</li>
+<li>"Идентификатор"</li>
+<li>"Число"</li>
+<li>"Строка"</li>
+<li>"ДатаВремя"</li>
+<li>"НачалоСтроки"</li>
+<li>"ПродолжениеСтроки"</li>
+<li>"ОкончаниеСтроки"</li>
+<li>"ЗнакРавно"</li>
+<li>"ЗнакНеРавно"</li>
+<li>"ЗнакМеньше"</li>
+<li>"ЗнакБольше"</li>
+<li>"ЗнакМеньшеИлиРавно"</li>
+<li>"ЗнакБольшеИлиРавно"</li>
+<li>"ЗнакСложения"</li>
+<li>"ЗнакВычитания"</li>
+<li>"ЗнакУмножения"</li>
+<li>"ЗнакДеления"</li>
+<li>"ЗнакОстатка"</li>
+<li>"ЛеваяКруглаяСкобка"</li>
+<li>"ПраваяКруглаяСкобка"</li>
+<li>"ЛеваяКвадратнаяСкобка"</li>
+<li>"ПраваяКвадратнаяСкобка"</li>
+<li>"ЗнакВопроса"</li>
+<li>"Запятая"</li>
+<li>"Точка"</li>
+<li>"Двоеточие"</li>
+<li>"ТочкаСЗапятой"</li>
+<li>"_Если"</li>
+<li>"_ИначеЕсли"</li>
+<li>"_Иначе"</li>
+<li>"_КонецЕсли"</li>
+<li>"_Область"</li>
+<li>"_КонецОбласти"</li>
+<li>"КонецТекста"</li>
 <li>"Comment"</li>
-<li>"Directive"</li>
-<li>"Label"</li>
+<li>"Директива"</li>
+<li>"Метка"</li>
 </ul>

@@ -1,14 +1,14 @@
 
-AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
-AttachScript("..\plugins\DocGen\src\DocGen\Ext\ObjectModule.bsl", "PluginDocGen");
+ПодключитьСценарий("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl", "ПарсерВстроенногоЯзыка");
+ПодключитьСценарий("..\plugins\DocGen\src\DocGen\Ext\ObjectModule.bsl", "ГенераторДокументации");
 
-TextReader = New TextReader("..\src\BSParser\Ext\ObjectModule.bsl");
-Source = TextReader.Read();
+ЧтениеТекста = Новый ЧтениеТекста("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl");
+Исходник = ЧтениеТекста.Прочитать();
 
-PluginDocGen = New PluginDocGen;
+ГенераторДокументации = Новый ГенераторДокументации;
 
-BSParser = New BSParser;
-BSParser.Go(Source, PluginDocGen);
+ПарсерВстроенногоЯзыка = Новый ПарсерВстроенногоЯзыка;
+ПарсерВстроенногоЯзыка.Пуск(Исходник, ГенераторДокументации);
 
-TextWriter = New TextWriter("..\docs\index.html");
-TextWriter.Write(PluginDocGen.Result());
+ЗаписьТекста = Новый ЗаписьТекста("..\docs\index.html");
+ЗаписьТекста.Записать(ГенераторДокументации.Закрыть());

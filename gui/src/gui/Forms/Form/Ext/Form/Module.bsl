@@ -1,321 +1,353 @@
 ﻿
-&AtServer
-Procedure OnCreateAtServer(Cancel, StandardProcessing)
+&НаСервере
+Процедура ПриСозданииНаСервере(Отмена, СтандартнаяОбработка)
+	
+	Если СтрНайти(СтрокаСоединенияИнформационнойБазы (), "File=") = 0 Тогда 
+		Сообщить("Только для файловых баз");	
+	КонецЕсли;
+	
+	Вывод = "Дерево";
 
-	If StrFind(InfoBaseConnectionString(), "File=") = 0 Then
-		Message("Only for file bases")
-	EndIf;
+КонецПроцедуры
 
-	Output = "Tree";
+&НаКлиенте
+Процедура ПриОткрытии(Cancel)
+	
+	УстановитьВидимостьЭлементов(ЭтотОбъект);
 
-EndProcedure // OnCreateAtServer()
+КонецПроцедуры
 
-&AtClient
-Procedure OnOpen(Cancel)
+&НаКлиенте
+Процедура КомандаВыполнить(Command)
+	
+	Результат.Очистить();
+	ОчиститьСообщения();
+	ВыполнитьНаСервере();
 
-	SetVisibilityOfAttributes(ThisObject);
+КонецПроцедуры
 
-EndProcedure // OnOpen()
+&НаСервере
+Процедура ВыполнитьНаСервере()
+	
+	ОбработкаОбъект = РеквизитФормыВЗначение("Объект");
+	ФайлОбработки = Новый Файл(ОбработкаОбъект.ИспользуемоеИмяФайла);
+	
+	Парсер = ВнешниеОбработки.Создать(ФайлОбработки.Путь + "ПарсерВстроенногоЯзыка.epf", Ложь);
+	
+	Начало = ТекущаяУниверсальнаяДатаВМиллисекундах();
+	
+	Если Вывод = "NULL" Тогда 
+		
+		Попытка 
+			Парсер.Разобрать(Исходник.ПолучитьТекст());		
+		Исключение 
+			Сообщить("ошибка синтаксиса!");		
+		КонецПопытки;	
+	
+	ИначеЕсли Вывод = "АСД" Тогда 
+		
+		Попытка 
+			Модуль = Парсер.Разобрать(Исходник.ПолучитьТекст());		
+		Исключение 
+			Сообщить("ошибка синтаксиса!");		
+		КонецПопытки;
+		
+		Если Модуль <> Неопределено Тогда 
+			ЗаписьJSON = Новый ЗаписьJSON;
+			ЗаписьJSON.SetString(Новый ПараметрыЗаписиJSON(, Chars.Tab));
+			Если ПоказыватьКомментарии Тогда 
+				Комментарии = Новый Соответствие;
+				Для Каждого Элемент Из Модуль.Комментарии Цикл 
+					Комментарии[Формат(Элемент.Ключ, "NZ=0; NG=")] = Элемент.Значение;				
+				КонецЦикла;
+				Модуль.Комментарии = Комментарии;			
+			Иначе 
+				Модуль.Удалить("Комментарии");			
+			КонецЕсли;
+			ЗаписатьJSON(ЗаписьJSON, Модуль, , "КонвертироватьЗначениеJSON", ЭтотОбъект);
+			Результат.УстановитьТекст(ЗаписьJSON.Закрыть());		
+		КонецЕсли;	
+	
+	ИначеЕсли Вывод = "Дерево" Тогда 
+		
+		Попытка 
+			Модуль = Парсер.Разобрать(Исходник.ПолучитьТекст());		
+		Исключение 
+			Сообщить("ошибка синтаксиса!");		
+		КонецПопытки;
+		
+		Если Модуль <> Неопределено Тогда 
+			ЗаполнитьДерево(Модуль);		
+		КонецЕсли;	
+	
+	ИначеЕсли Вывод = "Плагины" Тогда 
+		
+		Попытка 
+			Модуль = Парсер.Разобрать(Исходник.ПолучитьТекст());		
+		Исключение 
+			Сообщить("ошибка синтаксиса!");		
+		КонецПопытки;
+		
+		Если Модуль <> Неопределено Тогда 
+			СписокПлагинов = Новый Массив;
+			Для Каждого Строка Из Плагины.НайтиСтроки(Новый Структура("Выкл", Ложь)) Цикл 
+				СписокПлагинов.Добавить(ВнешниеОбработки.Создать(Строка.Путь, Ложь));			
+			КонецЦикла;
+			Парсер.Подключить(СписокПлагинов);
+			Парсер.Посетить(Модуль);
+			МассивРезультатов = Новый Массив;
+			Для Каждого Плагин Из СписокПлагинов Цикл 
+				МассивРезультатов.Добавить(Плагин.Закрыть());			
+			КонецЦикла;
+			Результат.УстановитьТекст(СтрСоединить(МассивРезультатов));		
+		КонецЕсли;	
+		
+	ИначеЕсли Вывод = "Бакенд" Тогда 
+		
+		Попытка 
+			Модуль = Парсер.Разобрать(Исходник.ПолучитьТекст());		
+		Исключение 
+			Сообщить("ошибка синтаксиса!");		
+		КонецПопытки;
+		
+		Если Модуль <> Неопределено Тогда 
+			Бакенд = ВнешниеОбработки.Создать(ПутьБакенда, Ложь);			
+			Бакенд.Инициализировать(Парсер);
+			Результат.УстановитьТекст(Бакенд.Посетить(Модуль));		
+		КонецЕсли;	
+		
+	ИначеЕсли Вывод = "Токены" Тогда 
+		
+		Токены.Загрузить(Парсер.Токенизировать(Исходник.ПолучитьТекст()).Токены);	
+	
+	КонецЕсли;
+	
+	Если ЗамерВремени Тогда 
+		Сообщить(СтрШаблон("%1 сек.", (ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало) / 1000));	
+	КонецЕсли;
+	
+	Ошибки.Загрузить(Парсер.Ошибки());
 
-&AtClient
-Procedure Translate(Command)
+КонецПроцедуры
 
-	Result.Clear();
-	ClearMessages();
-	TranslateAtServer();
+&НаСервере
+Функция ЗаполнитьДерево(Модуль)
+	ДеревоУзлов = Дерево.ПолучитьЭлементы();
+	ДеревоУзлов.Очистить();
+	СтрокаДерева = ДеревоУзлов.Добавить();
+	СтрокаДерева.Имя = "Модуль";
+	СтрокаДерева.Тип = Модуль.Тип;
+	СтрокаДерева.Значение = "<...>";
+	ЗаполнитьУзел(СтрокаДерева, Модуль);
+КонецФункции
 
-EndProcedure // Translate()
+&НаСервере
+Функция ЗаполнитьУзел(СтрокаДерева, Узел)
+	Перем Место;
+	Если Узел.Свойство("Место", Место) И ТипЗнч(Место) = Тип("Структура") Тогда 
+		СтрокаДерева.НомерСтроки = Место.НомерПервойСтроки;
+		СтрокаДерева.Позиция = Место.Позиция;
+		СтрокаДерева.Длина = Место.Длина;	
+	КонецЕсли;
+	ЭлементыДерева = СтрокаДерева.ПолучитьЭлементы();
+	Для Каждого Элемент Из Узел Цикл 
+		Если Элемент.Ключ = "Место"
+		Или Элемент.Ключ = "Тип" Тогда 
+			Продолжить;		
+		КонецЕсли;
+		Если ТипЗнч(Элемент.Значение) = Тип("Массив") Тогда 
+			СтрокаДерева = ЭлементыДерева.Добавить();
+			СтрокаДерева.Имя = Элемент.Ключ;
+			СтрокаДерева.Тип = СтрШаблон("Массив (%1)", Элемент.Значение.Количество());
+			СтрокаДерева.Значение = "<...>";
+			ЭлементыСтроки = СтрокаДерева.ПолучитьЭлементы();
+			Индекс = 0;
+			Для Каждого Элемент Из Элемент.Значение Цикл 
+				СтрокаДерева = ЭлементыСтроки.Добавить();
+				СтрокаДерева.Имя = СтрШаблон("[%1]", Индекс);
+				Индекс = Индекс + 1;
+				Если Элемент = Неопределено Тогда 
+					СтрокаДерева.Значение = "Неопределено";				
+				ИначеЕсли ТипЗнч(Элемент) = Тип("Строка") Тогда
+					СтрокаДерева.Тип = "Строка";
+					СтрокаДерева.Значение = Элемент;	
+				Иначе 
+					Элемент.Свойство("Тип", СтрокаДерева.Тип);
+					СтрокаДерева.Значение = "<...>";
+					ЗаполнитьУзел(СтрокаДерева, Элемент);				
+				КонецЕсли;			
+			КонецЦикла;		
+		ИначеЕсли ТипЗнч(Элемент.Значение) = Тип("Структура") Тогда 
+			СтрокаДерева = ЭлементыДерева.Добавить();
+			СтрокаДерева.Имя = Элемент.Ключ;
+			СтрокаДерева.Тип = Элемент.Значение.Тип;
+			СтрокаДерева.Значение = "<...>";
+			ЗаполнитьУзел(СтрокаДерева, Элемент.Значение);		
+		Иначе 
+			СтрокаДерева = ЭлементыДерева.Добавить();
+			СтрокаДерева.Имя = Элемент.Ключ;
+			СтрокаДерева.Значение = Элемент.Значение;
+			СтрокаДерева.Тип = ТипЗнч(Элемент.Значение);		
+		КонецЕсли;	
+	КонецЦикла;
+КонецФункции
 
-&AtServer
-Procedure TranslateAtServer()
-	Var Start;
+&НаСервере
+Функция КонвертироватьЗначениеJSON(Свойство, Значение, Другое, Отмена) Экспорт
+	Если Значение = Null Тогда 
+		Возврат Неопределено;	
+	КонецЕсли;
+КонецФункции
 
-	This = FormAttributeToValue("Object");
-	ThisFile = New File(This.UsedFileName);
+&НаКлиентеНаСервереБезКонтекста
+Процедура УстановитьВидимостьЭлементов(ЭтотОбъект)
+	
+	Элементы = ЭтотОбъект.Элементы;
+	
+	Элементы.СтраницаПлагины.Видимость = (ЭтотОбъект.Вывод = "Плагины");
+	Элементы.ПоказыватьКомментарии.Видимость = (ЭтотОбъект.Вывод = "АСД");
+	Элементы.СтраницаРезультатДерево.Видимость = (ЭтотОбъект.Вывод = "Дерево");
+	Элементы.СтраницаРезультатТекст.Видимость = (
+		ЭтотОбъект.Вывод = "Плагины"
+		Или ЭтотОбъект.Вывод = "АСД"
+		Или ЭтотОбъект.Вывод = "Бакенд"
+	);
+	Элементы.ПутьБакенда.Видимость = (ЭтотОбъект.Вывод = "Бакенд"); 
+	Элементы.СтраницаРезультатТокены.Видимость = (ЭтотОбъект.Вывод = "Токены");	
 
-	Парсер = ExternalDataProcessors.Create(ThisFile.Path + "ПарсерВстроенногоЯзыка.epf", False);
+КонецПроцедуры
 
-	Start = CurrentUniversalDateInMilliseconds();
+&НаКлиенте
+Процедура ВыводПриИзменении(Item)
+	
+	УстановитьВидимостьЭлементов(ЭтотОбъект);
 
-	If Output = "NULL" Then
+КонецПроцедуры
 
-		Try
-			Парсер.Разобрать(Source.GetText());
-		Except
-			Message("syntax error!");
-		EndTry;
+&НаКлиенте
+Процедура ПлагиныПутьНачалоВыбора(Элемент, ДанныеВыбора, СтандартнаяОбработка)
+	
+	СтандартнаяОбработка = Ложь;
+	ВыбратьПуть(Элемент, ЭтотОбъект, РежимДиалогаВыбораФайла.Открытие, "(*.epf)|*.epf");
 
-	ElsIf Output = "AST" Then
+КонецПроцедуры
 
-		Try
-			Parser_Module = Парсер.Разобрать(Source.GetText());
-		Except
-			Message("syntax error!");
-		EndTry;
-		If Parser_Module <> Undefined Then
-			JSONWriter = New JSONWriter;
-			JSONWriter.SetString(New JSONWriterSettings(, Chars.Tab));
-			If ShowComments Then
-				Comments = New Map;
-				For Each Item In Parser_Module.Comments Do
-					Comments[Format(Item.Key, "NZ=0; NG=")] = Item.Value;
-				EndDo;
-				Parser_Module.Комментарии = Comments;
-			Else
-				Parser_Module.Delete("Comments");
-			EndIf;
-			WriteJSON(JSONWriter, Parser_Module,, "ConvertJSON", ThisObject);
-			Result.SetText(JSONWriter.Close());
-		EndIf;
+&НаКлиенте
+Процедура ВыбратьПуть(Элемент, Форма, РежимДиалога = Неопределено, Фильтр = Неопределено) Экспорт
+	
+	Если РежимДиалога = Неопределено Тогда 
+		РежимДиалога = РежимДиалогаВыбораФайла.ВыборКаталога;	
+	КонецЕсли;
+	
+	ДиалогВыбораФайла = Новый ДиалогВыбораФайла(РежимДиалога);
+	ДиалогВыбораФайла.МножественныйВыбор = Ложь;
+	ДиалогВыбораФайла.Фильтр = Фильтр;
+	Если РежимДиалога = РежимДиалогаВыбораФайла.ВыборКаталога Тогда 
+		ДиалогВыбораФайла.Каталог = Элемент.ТекстРедактирования;	
+	Иначе 
+		ДиалогВыбораФайла.ПолноеИмяФайла = Элемент.ТекстРедактирования;	
+	КонецЕсли;
+	
+	ДополнительныеПараметры = Новый Структура("Элемент, Форма", Элемент, Форма);
+	
+	ОписаниеОповещения = Новый ОписаниеОповещения("ОбработатьВыборФайла", ЭтотОбъект, ДополнительныеПараметры);
+	
+	ДиалогВыбораФайла.Show(ОписаниеОповещения);
 
-	ElsIf Output = "Tree" Then
+КонецПроцедуры
 
-		Try
-			Parser_Module = Парсер.Разобрать(Source.GetText());
-		Except
-			Message("syntax error!");
-		EndTry;
-		If Parser_Module <> Undefined Then
-			FillTree(Parser_Module);
-		EndIf;
+&НаКлиенте
+Процедура ОбработатьВыборФайла(Результат, ДополнительныеПараметры) Экспорт
+	
+	Если Результат <> Неопределено Тогда 
+		ИнтерактивноУстановитьЗначениеЭлементаФормы(
+			Результат[0], 
+			ДополнительныеПараметры.Элемент, 
+			ДополнительныеПараметры.Форма
+		);	
+	КонецЕсли;
 
-	ElsIf Output = "Plugin" Then
+КонецПроцедуры
 
-		Try
-			Parser_Module = Парсер.Разобрать(Source.GetText());
-		Except
-			Message("syntax error!");
-		EndTry;
-		If Parser_Module <> Undefined Then
-			PluginsList = New Array;
-			For Each Row In Plugins.FindRows(New Structure("Off", False)) Do
-				PluginsList.Add(ExternalDataProcessors.Create(Row.Path, False));
-			EndDo;
-			Парсер.Подключить(PluginsList);
-			Парсер.Посетить(Parser_Module);
-			ResultArray = New Array;
-			For Each Plugin In PluginsList Do
-				ResultArray.Add(Plugin.Закрыть());
-			EndDo;
-			Result.SetText(StrConcat(ResultArray));
-		EndIf;
+&НаКлиенте
+Процедура ИнтерактивноУстановитьЗначениеЭлементаФормы(Значение, Элемент, Форма) Экспорт
+	
+	ВладелецФормы = Форма.ВладелецФормы;
+	ЗакрыватьПриВыборе = Форма.ЗакрыватьПриВыборе;
+	
+	Форма.ВладелецФормы = Элемент;
+	Форма.ЗакрыватьПриВыборе = Ложь;
+	
+	Форма.ОповеститьОВыборе(Значение);
+	
+	Если Форма.ВладелецФормы = Элемент Тогда 
+		Форма.ВладелецФормы = ВладелецФормы;	
+	КонецЕсли;
+	
+	Если Форма.ЗакрыватьПриВыборе = Ложь Тогда 
+		Форма.ЗакрыватьПриВыборе = ЗакрыватьПриВыборе;	
+	КонецЕсли;
 
-	ElsIf Output = "Tokens" Then
+КонецПроцедуры
 
-		Tokens.Load(Парсер.Токенизировать(Source.GetText()).Tokens);
+&НаКлиенте
+Процедура ДеревоВыбор(Item, ВыбраннаяСтрока, Field, СтандартнаяОбработка)
+	СтрокаДерева = Дерево.НайтиПоИдентификатору(ВыбраннаяСтрока);
+	Если СтрокаДерева.НомерСтроки > 0 Тогда 
+		Элементы.Исходник.УстановитьГраницыВыделения(СтрокаДерева.Позиция, СтрокаДерева.Позиция + СтрокаДерева.Длина);
+		ТекущийЭлемент = Элементы.Исходник;	
+	КонецЕсли;
+КонецПроцедуры
 
-	EndIf;
+&НаКлиенте
+Процедура ТокеныВыбор(Элемент, ВыбраннаяСтрока, Поле, СтандартнаяОбработка)
+	Строка = Токены.НайтиПоИдентификатору(ВыбраннаяСтрока);
+	Если Строка.НомерСтроки > 0 Тогда 
+		Элементы.Исходник.УстановитьГраницыВыделения(Строка.Позиция, Строка.Позиция + Строка.Длина);
+		ТекущийЭлемент = Элементы.Исходник;	
+	КонецЕсли;
+КонецПроцедуры
 
-	If Measure Then
-		Message(StrTemplate("%1 sec.", (CurrentUniversalDateInMilliseconds() - Start) / 1000));
-	EndIf;
+&НаКлиенте
+Процедура ПлагиныПутьОткрытие(Item, СтандартнаяОбработка)
+	СтандартнаяОбработка = Ложь;
+	ПоказатьФайл(Элементы.Плагины.ТекущиеДанные.Путь);
+КонецПроцедуры
 
-	Errors.Load(Парсер.Ошибки());
-
-EndProcedure // TranslateAtServer()
-
-&AtServer
-Function FillTree(Module)
-	Var Place;
-	TreeItems = Tree.GetItems();
-	TreeItems.Clear();
-	Row = TreeItems.Add();
-	Row.Name = "Module";
-	Row.Type = Module.Тип;
-	Row.Value = "<...>";
-	FillNode(Row, Module);
-EndFunction // FillTree()
-
-&AtServer
-Function FillNode(Row, Node)
-	Var Place;
-	If Node.Property("Place", Place) And TypeOf(Place) = Type("Structure") Then
-		Row.Line = Place.BegLine;
-		Row.Pos = Place.Pos;
-		Row.Len = Place.Len;
-	EndIf;
-	TreeItems = Row.GetItems();
-	For Each Item In Node Do
-		If Item.Key = "Место"
-			Or Item.Key = "Тип" Then
-			Continue;
-		EndIf;
-		If TypeOf(Item.Value) = Type("Array") Then
-			Row = TreeItems.Add();
-			Row.Name = Item.Key;
-			Row.Type = StrTemplate("Массив (%1)", Item.Value.Count());
-			Row.Value = "<...>";
-			RowItems = Row.GetItems();
-			Index = 0;
-			For Each Item In Item.Value Do
-				Row = RowItems.Add();
-				Index = Index + 1;
-				Row.Name = Index;
-				If Item = Undefined Then
-					Row.Value = "Неопределено";
-				Else
-					Item.Property("Type", Row.Type);
-					Row.Value = "<...>";
-					FillNode(Row, Item);
-				EndIf;
-			EndDo;
-		ElsIf TypeOf(Item.Value) = Type("Structure") Then
-			Row = TreeItems.Add();
-			Row.Name = Item.Key;
-			Row.Type = Item.Value.Тип;
-			Row.Value = "<...>";
-			FillNode(Row, Item.Value);
-		Else
-			Row = TreeItems.Add();
-			Row.Name = Item.Key;
-			Row.Value = Item.Value;
-			Row.Type = TypeOf(Item.Value);
-		EndIf;
-	EndDo;
-EndFunction // FillNode()
-
-&AtServer
-Function ConvertJSON(Property, Value, Other, Cancel) Export
-	If Value = Null Then
-		Return Undefined;
-	EndIf;
-EndFunction // ConvertJSON()
-
-&AtClientAtServerNoContext
-Procedure SetVisibilityOfAttributes(ThisObject, Reason = Undefined)
-
-	Items = ThisObject.Items;
-
-	If Reason = Items.Output Or Reason = Undefined Then
-
-		Items.PagePlugins.Visible = (ThisObject.Output = "Plugin");
-		Items.ShowComments.Visible = (ThisObject.Output = "AST");
-		Items.PageResultTree.Visible = (ThisObject.Output = "Tree");
-		Items.PageResultText.Visible = (ThisObject.Output <> "Tree" And ThisObject.Output <> "Tokens");
-		Items.PageResultTokens.Visible = (ThisObject.Output = "Tokens");
-
-	EndIf;
-
-EndProcedure // SetVisibilityOfAttributes()
-
-&AtClient
-Procedure OutputOnChange(Item)
-
-	SetVisibilityOfAttributes(ThisObject, Item);
-
-EndProcedure // OutputOnChange()
-
-&AtClient
-Procedure PluginsPathStartChoice(Item, ChoiceData, StandardProcessing)
-
-	StandardProcessing = False;
-	ChoosePath(Item, ThisObject, FileDialogMode.Open, "(*.epf)|*.epf");
-
-EndProcedure // PluginsPathStartChoice()
-
-&AtClient
-Procedure ChoosePath(Item, Form, DialogMode = Undefined, Filter = Undefined) Export
-
-	If DialogMode = Undefined Then
-		DialogMode = FileDialogMode.ChooseDirectory;
-	EndIf;
-
-	FileOpeningDialog = New FileDialog(DialogMode);
-	FileOpeningDialog.Multiselect = False;
-	FileOpeningDialog.Filter = Filter;
-	If DialogMode = FileDialogMode.ChooseDirectory Then
-		FileOpeningDialog.Directory = Item.EditText;
-	Else
-		FileOpeningDialog.FullFileName = Item.EditText;
-	EndIf;
-
-	AdditionalParameters = New Structure("Item, Form", Item, Form);
-
-	NotifyDescription = New NotifyDescription("ChoosePathNotifyChoice", ThisObject, AdditionalParameters);
-
-	FileOpeningDialog.Show(NotifyDescription);
-
-EndProcedure // ChoosePath()
-
-&AtClient
-Procedure ChoosePathNotifyChoice(Result, AdditionalParameters) Export
-
-	If Result <> Undefined Then
-		InteractivelySetValueOfFormItem(
-			Result[0],
-			AdditionalParameters.Item,
-			AdditionalParameters.Form
-		);
-	EndIf;
-
-EndProcedure // ChoosePathHandle()
-
-&AtClient
-Procedure InteractivelySetValueOfFormItem(Value, Item, Form) Export
-
-	FormOwner = Form.FormOwner;
-	CloseOnChoice = Form.CloseOnChoice;
-
-	Form.FormOwner = Item;
-	Form.CloseOnChoice = False;
-
-	Form.NotifyChoice(Value);
-
-	If Form.FormOwner = Item Then
-		Form.FormOwner = FormOwner;
-	EndIf;
-
-	If Form.CloseOnChoice = False Then
-		Form.CloseOnChoice = CloseOnChoice;
-	EndIf;
-
-EndProcedure // InteractivelySetValueOfFormItem()
-
-&AtClient
-Procedure TreeSelection(Item, SelectedRow, Field, StandardProcessing)
-	Row = Tree.FindByID(SelectedRow);
-	If Row.Line > 0 Then
-		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
-		CurrentItem = Items.Source;
-	EndIf;
-EndProcedure // TreeSelection()
-
-&AtClient
-Procedure TokensSelection(Item, SelectedRow, Field, StandardProcessing)
-	Row = Tokens.FindByID(SelectedRow);
-	If Row.Line > 0 Then
-		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + Row.Len);
-		CurrentItem = Items.Source;
-	EndIf;
-EndProcedure // TokensSelection()
-
-&AtClient
-Procedure PluginsPathOpening(Item, StandardProcessing)
-	StandardProcessing = False;
-	ShowFile(Items.Plugins.CurrentData.Path);
-EndProcedure
-
-&AtClient
-Procedure ShowFile(FullName) Export
-	If FullName <> Undefined Then
+&НаКлиенте
+Процедура ПоказатьФайл(ПолноеИмя) Экспорт
+	Если ПолноеИмя <> Неопределено Тогда 
 		BeginRunningApplication(
-			New NotifyDescription("ShowFileHandleResult", ThisObject, FullName),
-			"explorer.exe /select, " + FullName
-		);
-	EndIf;
-EndProcedure // ShowFolder()
+			Новый ОписаниеОповещения("ОбработатьПоказатьФайл", ЭтотОбъект, ПолноеИмя), 
+			"explorer.exe /select, " + ПолноеИмя
+		);	
+	КонецЕсли;
+КонецПроцедуры
 
-&AtClient
-Procedure ShowFileHandleResult(ReturnCode, FullName) Export
-	// silently continue
-EndProcedure // ShowFileHandleResult()
+&НаКлиенте
+Процедура ОбработатьПоказатьФайл(ReturnCode, ПолноеИмя) Экспорт
+ // silently continue
+КонецПроцедуры
 
-&AtClient
-Procedure ErrorsSelection(Item, SelectedRow, Field, StandardProcessing)
-	Row = Errors.FindByID(SelectedRow);
-	If Row.Line > 0 Then
-		Items.Source.SetTextSelectionBounds(Row.Pos, Row.Pos + 1);
-		CurrentItem = Items.Source;
-	EndIf;
-EndProcedure
+&НаКлиенте
+Процедура ОшибкиВыбор(Элемент, ВыбраннаяСтрока, Поле, СтандартнаяОбработка)
+	Строка = Ошибки.НайтиПоИдентификатору(ВыбраннаяСтрока);
+	Если Строка.НомерСтроки > 0 Тогда 
+		Элементы.Исходник.УстановитьГраницыВыделения(Строка.Позиция, Строка.Позиция + 1);
+		ТекущийЭлемент = Элементы.Исходник;	
+	КонецЕсли;
+КонецПроцедуры
 
+&НаКлиенте
+Процедура ПутьБакендаНачалоВыбора(Элемент, ДанныеВыбора, СтандартнаяОбработка)
+	
+	СтандартнаяОбработка = Ложь;
+	ВыбратьПуть(Элемент, ЭтотОбъект, РежимДиалогаВыбораФайла.Открытие, "(*.epf)|*.epf");
+	
+КонецПроцедуры
+
+&НаКлиенте
+Процедура ПутьБакендаОткрытие(Элемент, СтандартнаяОбработка)
+	СтандартнаяОбработка = Ложь;
+	ПоказатьФайл(Элементы.Плагины.ТекущиеДанные.Путь);
+КонецПроцедуры

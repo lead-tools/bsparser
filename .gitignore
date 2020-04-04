@@ -3,3 +3,4 @@ temp/*
 build/*
 log.txt
 *.todo
+agentbasedir.json

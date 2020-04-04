@@ -1,5 +1,11 @@
+﻿# [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+
+Remove-Variable * -ErrorAction SilentlyContinue; Remove-Module *; $error.Clear() #; Clear-Host
 
 function wait($ssh) {
+    # похоже ожидание не всегда работает на 15 платформе
+    # как минимум точно не работает при распаковке (explode.ps1)
+    # гипотетически надо не просто ждать данные, а еще и success в этих данных
     while (-not $ssh.DataAvailable) {
         Start-Sleep -m 100
     }
@@ -9,18 +15,19 @@ function send($ssh, $cmd) {
     "#cmd: $cmd" >> log.txt
     $ssh.WriteLine($cmd)
     wait($ssh)
-    $ssh.Read() >> log.txt
-    # $res = ConvertFrom-Json $ssh.Read()
-    # $res | Format-Table | Out-File log.txt -Append
-    # if (-not ($res | where {$_.type -eq 'success'})) {
-    #     [System.Windows.Forms.MessageBox]::Show('An error has occured. Please see log file') | Out-Null
-    #     $res | where {$_.type -eq 'error'} | Write-Host
-    #     throw
-    # }
+    $data = $ssh.Read()
+    $data2 = $data -replace "\]\[", "," # фикс ошибки в json от платформы
+    $res = ConvertFrom-Json $data2 -WarningAction SilentlyContinue
+    $res | Format-Table | Out-File log.txt -Append
+    $err = $res | Where-Object {$_.type -eq 'error'}
+    if ($err) {
+        $data | Write-Host
+        # [System.Windows.Forms.MessageBox]::Show('An error has occured. Please see log file') | Out-Null
+    }
 }
 
 function complete($percent, $activity) {
-    Write-Progress -Activity $activity -Status "Progress:" -PercentComplete $percent
+    Write-Progress -Activity $activity -Status "Прогресс:" -PercentComplete $percent
 }
 
 function connect() {
@@ -29,7 +36,7 @@ function connect() {
     $PSCredential = New-Object System.Management.Automation.PSCredential($UserName, $EmptyPassword)
 
     $ArgList = @('DESIGNER', '/F .\temp\', '/AgentMode', '/AgentSSHHostKeyAuto', '/AgentBaseDir .\')
-    $ArgList += '/Visible'
+    # $ArgList += '/Visible'
     $1cpath = 'C:\Program Files (x86)\1cv8\common\1cestart.exe'
     if (-not (Test-Path $1cpath)) {
         $1cpath = 'C:\Program Files\1cv8\common\1cestart.exe'
@@ -38,7 +45,7 @@ function connect() {
 
     Start-Sleep 1
 
-    $1c = New-SSHSession 127.0.0.1 -Port 1543 -Credential $PSCredential
+    $1c = New-SSHSession 127.0.0.1 -Port 1543 -Credential $PSCredential -AcceptKey
     $ssh = $1c | New-SSHShellStream
     wait($ssh)
     $ssh.Read() | Out-Null
@@ -50,9 +57,9 @@ function connect() {
 }
 
 function disconnect($1c, $ssh) {
-    send $ssh 'common disconnect-ib'
+    send $ssh 'common disconnect-ib' #TODO: эта команда похоже ничего не возвращает (надо убрать wait в итоге)
+    Start-Sleep 1
     send $ssh 'common shutdown'
-
     $1c | Remove-SSHSession | Out-Null
 }
 
