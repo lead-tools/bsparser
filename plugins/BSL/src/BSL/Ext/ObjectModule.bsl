@@ -1,607 +1,609 @@
 ﻿
 // Транслятор BSL -> BSL
 
-Var Result; // array (string)
-Var Indent; // number
+Перем Результат; // array (string)
+Перем Отступ; // number
 
-Var Nodes;         // enum
-Var Tokens;        // enum
-Var Operators;     // structure as map[one of Tokens](string)
+Перем Узлы;         // enum
+Перем Токены;        // enum
+Перем Операции;     // structure as map[one of Токены](string)
 
-Var LastLine;
-Var Comments;      // map[number](string)
+Перем ПоследняяСтрока;
+Перем Комментарии;      // map[number](string)
 
-Procedure Init(BSParserProcessor) Export
+Процедура Инициализировать(ПарсерВстроенногоЯзыка) Экспорт
 
-	Operators = New Structure(
-		"Eql, Neq, Lss, Gtr, Leq, Geq, Add, Sub, Mul, Div, Mod, Or, And, Not",
-		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Or", "And", "Not"
+	Операции = Новый Structure(
+		"ЗнакРавно, ЗнакНеРавно, ЗнакМеньше, ЗнакБольше, ЗнакМеньшеИлиРавно, ЗнакБольшеИлиРавно, ЗнакСложения, ЗнакВычитания, ЗнакУмножения, ЗнакДеления, ЗнакОстатка, Или, И, Не",
+		"=", "<>", "<", ">", "<=", ">=", "+", "-", "*", "/", "%", "Или", "И", "Не"
 	);
 
-	Nodes = BSParserProcessor.Nodes();
-	Tokens = BSParserProcessor.Tokens();
+	Узлы = ПарсерВстроенногоЯзыка.Узлы();
+	Токены = ПарсерВстроенногоЯзыка.Токены();
 
-	LastLine = 1;
+	ПоследняяСтрока = 1;
 
-	Result = New Array;
-	Indent = -1;
+	Результат = Новый Массив;
+	Отступ = -1;
 
-EndProcedure // Init()
+КонецПроцедуры // Инициализировать()
 
-Function Hooks() Export
-	Var Hooks;
-	Hooks = New Array;
-	Hooks.Add("VisitModule");
-	Return Hooks;
-EndFunction // Hooks()
+Функция Подписки() Экспорт
+	Перем Подписки;
+	Подписки = Новый Массив;
+	Подписки.Добавить("ПосетитьМодуль");
+	Возврат Подписки;
+КонецФункции // Подписки()
 
-Function Result() Export
-	Return StrConcat(Result);
-EndFunction // Refult()
+Функция Закрыть() Экспорт
+	Возврат СтрСоединить(Результат);
+КонецФункции // Закрыть()
 
-Procedure VisitModule(Module, Stack, Counters) Export
-	Comments = Module.Comments;
-	VisitDeclarations(Module.Decls);
-	VisitStatements(Module.Body);
-EndProcedure // VisitModule()
+Процедура ПосетитьМодуль(Модуль, Стек, Счетчики) Экспорт
+	Комментарии = Модуль.Комментарии;
+	ПосетитьОбъявления(Модуль.Объявления);
+	ПосетитьОператоры(Модуль.Операторы);
+КонецПроцедуры // ПосетитьМодуль()
 
-Procedure VisitDeclarations(Declarations)
-	Indent = Indent + 1; // >>
-	For Each Decl In Declarations Do
-		VisitDecl(Decl);
-	EndDo;
-	Indent = Indent - 1; // <<
-EndProcedure // VisitDeclarations()
+Процедура ПосетитьОбъявления(Объявления)
+	Отступ = Отступ + 1; // >>
+	Для Каждого Объявление Из Объявления Цикл
+		ПосетитьОбъявление(Объявление);
+	КонецЦикла;
+	Отступ = Отступ - 1; // <<
+КонецПроцедуры // ПосетитьОбъявления()
 
-Procedure VisitStatements(Statements)
-	Indent = Indent + 1; // >>
-	For Each Stmt In Statements Do
-		VisitStmt(Stmt);
-	EndDo;
-	Indent = Indent - 1; // <<
-	Indent();
-EndProcedure // VisitStatements()
+Процедура ПосетитьОператоры(Операторы)
+	Отступ = Отступ + 1; // >>
+	Для Каждого Оператор Из Операторы Цикл
+		ПосетитьОператор(Оператор);
+	КонецЦикла;
+	Отступ = Отступ - 1; // <<
+	Отступ();
+КонецПроцедуры // ПосетитьОператоры()
 
-#Region VisitDecl
+#Область ПосетитьОбъявление
 
-Procedure VisitDecl(Decl)
-    Var Type;
-	AlignLine(Decl.Place.BegLine);
-	Type = Decl.Type;
-    If Type = Nodes.VarModListDecl Then
-        VisitVarModListDecl(Decl);
-    ElsIf Type = Nodes.MethodDecl Then
-        VisitMethodDecl(Decl);
-	ElsIf Type = Nodes.PrepRegionInst
-		Or Type = Nodes.PrepEndRegionInst
-		Or Type = Nodes.PrepIfInst
-		Or Type = Nodes.PrepElsIfInst
-		Or Type = Nodes.PrepElseInst
-		Or Type = Nodes.PrepEndIfInst Then
-		VisitPrepInst(Decl);
-    EndIf;
-EndProcedure // VisitDecl()
+Процедура ПосетитьОбъявление(Объявление)
+    Перем Тип;
+	УстановитьОтступ(Объявление.Место.НомерПервойСтроки);
+	Тип = Объявление.Тип;
+    Если Тип = Узлы.ОбъявлениеСпискаПеременныхМодуля Тогда
+        ПосетитьОбъявлениеСпискаПеременныхМодуля(Объявление);
+    ИначеЕсли Тип = Узлы.ОбъявлениеМетода Тогда
+        ПосетитьОбъявлениеМетода(Объявление);
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораОбласть
+		Или Тип = Узлы.ИнструкцияПрепроцессораКонецОбласти
+		Или Тип = Узлы.ИнструкцияПрепроцессораЕсли
+		Или Тип = Узлы.ИнструкцияПрепроцессораИначеЕсли
+		Или Тип = Узлы.ИнструкцияПрепроцессораИначе
+		Или Тип = Узлы.ИнструкцияПрепроцессораКонецЕсли Тогда
+		ПосетитьИнструкциюПрепроцессора(Объявление);
+    КонецЕсли;
+КонецПроцедуры // ПосетитьОбъявление()
 
-Procedure VisitVarModListDecl(VarModListDecl)
-	If VarModListDecl.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", VarModListDecl.Directive, Chars.LF));
-	EndIf;
-	VisitVars(VarModListDecl.List);
-EndProcedure // VisitVarModListDecl()
+Процедура ПосетитьОбъявлениеСпискаПеременныхМодуля(ОбъявлениеСпискаПеременныхМодуля)
+	Если ОбъявлениеСпискаПеременныхМодуля.Директивы.Количество() > 0 Тогда
+		Результат.Добавить(СтрШаблон("&%1%2", ОбъявлениеСпискаПеременныхМодуля.Директивы, Символы.ПС));
+	КонецЕсли;
+	ПосетитьПеременные(ОбъявлениеСпискаПеременныхМодуля.ОбъявленияПеременных);
+КонецПроцедуры // ПосетитьОбъявлениеСпискаПеременныхМодуля()
 
-Procedure VisitMethodDecl(MethodDecl)
-	If MethodDecl.Sign.Type = Nodes.FuncSign Then
-		VisitFuncSign(MethodDecl.Sign);
-		If MethodDecl.Vars.Count() > 0 Then
-			Result.Add(Chars.LF);
-			Result.Add(Chars.Tab);
-			VisitVars(MethodDecl.Vars);
-			LastLine = MethodDecl.Sign.Place.EndLine + 1;
-		EndIf;
-		VisitStatements(MethodDecl.Body);
-		AlignLine(MethodDecl.Place.EndLine);
-		Result.Add("EndFunction");
-	Else
-		VisitProcSign(MethodDecl.Sign);
-		If MethodDecl.Vars.Count() > 0 Then
-			Result.Add(Chars.LF);
-			Result.Add(Chars.Tab);
-			VisitVars(MethodDecl.Vars);
-			LastLine = MethodDecl.Sign.Place.EndLine + 1;
-		EndIf;
-    	VisitStatements(MethodDecl.Body);
-		AlignLine(MethodDecl.Place.EndLine);
-		Result.Add("EndProcedure");
-	EndIf;
-EndProcedure // VisitMethodDecl()
+Процедура ПосетитьОбъявлениеМетода(ОбъявлениеМетода)
+	Если ОбъявлениеМетода.Сигнатура.Тип = Узлы.СигнатураФункции Тогда
+		ПосетитьСигнатуруФункции(ОбъявлениеМетода.Сигнатура);
+		Если ОбъявлениеМетода.Переменные.Количество() > 0 Тогда
+			Результат.Добавить(Символы.ПС);
+			Результат.Добавить(Символы.Таб);
+			ПосетитьПеременные(ОбъявлениеМетода.Переменные);
+			ПоследняяСтрока = ОбъявлениеМетода.Сигнатура.Место.НомерПоследнейСтроки + 1;
+		КонецЕсли;
+		ПосетитьОператоры(ОбъявлениеМетода.Операторы);
+		УстановитьОтступ(ОбъявлениеМетода.Место.НомерПоследнейСтроки);
+		Результат.Добавить("КонецФункции");
+	Иначе
+		ПосетитьСигнатуруПроцедуры(ОбъявлениеМетода.Сигнатура);
+		Если ОбъявлениеМетода.Переменные.Количество() > 0 Тогда
+			Результат.Добавить(Символы.ПС);
+			Результат.Добавить(Символы.Таб);
+			ПосетитьПеременные(ОбъявлениеМетода.Переменные);
+			ПоследняяСтрока = ОбъявлениеМетода.Сигнатура.Место.НомерПоследнейСтроки + 1;
+		КонецЕсли;
+    	ПосетитьОператоры(ОбъявлениеМетода.Операторы);
+		УстановитьОтступ(ОбъявлениеМетода.Место.НомерПоследнейСтроки);
+		Результат.Добавить("КонецПроцедуры");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьОбъявлениеМетода()
 
-Procedure VisitProcSign(ProcDecl)
-	If ProcDecl.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", ProcDecl.Directive, Chars.LF));
-	EndIf;
-	Result.Add("Procedure ");
-	Result.Add(ProcDecl.Name);
-	VisitParams(ProcDecl.Params);
-	If ProcDecl.Export Then
-		Result.Add(" Export");
-	EndIf;
-EndProcedure // VisitProcSign()
+Процедура ПосетитьСигнатуруПроцедуры(ОбъявлениеПроцедуры)
+	Если ОбъявлениеПроцедуры.Директивы.Количество() > 0 Тогда
+		Результат.Добавить(СтрШаблон("&%1%2", ОбъявлениеПроцедуры.Директивы[0].Директива, Символы.ПС));
+	КонецЕсли;
+	Результат.Добавить("Процедура ");
+	Результат.Добавить(ОбъявлениеПроцедуры.Имя);
+	ПосетитьПараметры(ОбъявлениеПроцедуры.Параметры);
+	Если ОбъявлениеПроцедуры.Экспорт Тогда
+		Результат.Добавить(" Экспорт");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьСигнатуруПроцедуры()
 
-Procedure VisitFuncSign(FuncDecl)
-	If FuncDecl.Directive <> Undefined Then
-		Result.Add(StrTemplate("&%1%2", FuncDecl.Directive, Chars.LF));
-	EndIf;
-	Result.Add("Function ");
-	Result.Add(FuncDecl.Name);
-	VisitParams(FuncDecl.Params);
-	If FuncDecl.Export Then
-		Result.Add(" Export");
-	EndIf;
-EndProcedure // VisitFuncSign()
+Процедура ПосетитьСигнатуруФункции(ОбъявлениеФункции)
+	Если ОбъявлениеФункции.Директивы.Количество() > 0 Тогда
+		Результат.Добавить(СтрШаблон("&%1%2", ОбъявлениеФункции.Директивы[0].Директива, Символы.ПС));
+	КонецЕсли;
+	Результат.Добавить("Функция ");
+	Результат.Добавить(ОбъявлениеФункции.Имя);
+	ПосетитьПараметры(ОбъявлениеФункции.Параметры);
+	Если ОбъявлениеФункции.Экспорт Тогда
+		Результат.Добавить(" Экспорт");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьСигнатуруФункции()
 
-#EndRegion // VisitDecl
+#КонецОбласти // ПосетитьОбъявление
 
-#Region VisitExpr
+#Область Выражения
 
-Procedure VisitExpr(Expr)
-    Var Type, Hook;
-	AlignLine(Expr.Place.BegLine);
-	Type = Expr.Type;
-	If Type = Nodes.BasicLitExpr Then
-        VisitBasicLitExpr(Expr);
-    ElsIf Type = Nodes.IdentExpr Then
-        VisitIdentExpr(Expr);
-    ElsIf Type = Nodes.UnaryExpr Then
-        VisitUnaryExpr(Expr);
-    ElsIf Type = Nodes.BinaryExpr Then
-        VisitBinaryExpr(Expr);
-    ElsIf Type = Nodes.NewExpr Then
-        VisitNewExpr(Expr);
-    ElsIf Type = Nodes.TernaryExpr Then
-        VisitTernaryExpr(Expr);
-    ElsIf Type = Nodes.ParenExpr Then
-        VisitParenExpr(Expr);
-    ElsIf Type = Nodes.NotExpr Then
-        VisitNotExpr(Expr);
-    ElsIf Type = Nodes.StringExpr Then
-        VisitStringExpr(Expr);
-	EndIf;
-EndProcedure // VisitExpr()
+Процедура ПосетитьВыражение(Выражение)
+    Перем Тип;
+	УстановитьОтступ(Выражение.Место.НомерПервойСтроки);
+	Тип = Выражение.Тип;
+	Если Тип = Узлы.ВыражениеЛитерал Тогда
+        ПосетитьВыражениеЛитерал(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеИдентификатор Тогда
+        ПосетитьВыражениеИдентификатор(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеУнарное Тогда
+        ПосетитьВыражениеУнарное(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеБинарное Тогда
+        ПосетитьВыражениеБинарное(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеНовый Тогда
+        ПосетитьВыражениеНовый(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеТернарное Тогда
+        ПосетитьВыражениеТернарное(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеСкобочное Тогда
+        ПосетитьВыражениеСкобочное(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеНе Тогда
+        ПосетитьВыражениеНе(Выражение);
+    ИначеЕсли Тип = Узлы.ВыражениеСтроковое Тогда
+        ПосетитьВыражениеСтроковое(Выражение);
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражение()
 
-Procedure VisitBasicLitExpr(BasicLitExpr)
-	BasicLitKind = BasicLitExpr.Kind;
-	If BasicLitKind = Tokens.String Then
-		Result.Add(StrTemplate("""%1""", BasicLitExpr.Value));
-	ElsIf BasicLitKind = Tokens.StringBeg Then
-		Result.Add(StrTemplate("""%1", BasicLitExpr.Value));
-	ElsIf BasicLitKind = Tokens.StringMid Then
-		Result.Add(StrTemplate("|%1", BasicLitExpr.Value));
-	ElsIf BasicLitKind = Tokens.StringEnd Then
-		Result.Add(StrTemplate("|%1""", BasicLitExpr.Value));
-	ElsIf BasicLitKind = Tokens.Number Then
-		Result.Add(Format(BasicLitExpr.Value, "NZ=0; NG="));
-	ElsIf BasicLitKind = Tokens.DateTime Then
-		Result.Add(StrTemplate("'%1'", Format(BasicLitExpr.Value, "DF=yyyyMMdd; DE=00010101")));
-	ElsIf BasicLitKind = Tokens.True Or BasicLitKind = Tokens.False Then
-		Result.Add(Format(BasicLitExpr.Value, "BF=False; BT=True"));
-	ElsIf BasicLitKind = Tokens.Undefined Then
-		Result.Add("Undefined");
-	ElsIf BasicLitKind = Tokens.Null Then
-		Result.Add("Null");
-	Else
-		Raise "Unknown basic literal";
-	EndIf;
-EndProcedure // VisitBasicLitExpr()
+Процедура ПосетитьВыражениеЛитерал(ВыражениеЛитерал)
+	ВидЛитерала = ВыражениеЛитерал.Вид;
+	Если ВидЛитерала = Токены.Строка Тогда
+		Результат.Добавить(СтрШаблон("""%1""", СтрЗаменить(ВыражениеЛитерал.Значение, """", """""")));
+	ИначеЕсли ВидЛитерала = Токены.НачалоСтроки Тогда
+		Результат.Добавить(СтрШаблон("""%1", ВыражениеЛитерал.Значение));
+	ИначеЕсли ВидЛитерала = Токены.ПродолжениеСтроки Тогда
+		Результат.Добавить(СтрШаблон("|%1", ВыражениеЛитерал.Значение));
+	ИначеЕсли ВидЛитерала = Токены.ОкончаниеСтроки Тогда
+		Результат.Добавить(СтрШаблон("|%1""", ВыражениеЛитерал.Значение));
+	ИначеЕсли ВидЛитерала = Токены.Число Тогда
+		Результат.Добавить(Format(ВыражениеЛитерал.Значение, "NZ=0; NG="));
+	ИначеЕсли ВидЛитерала = Токены.ДатаВремя Тогда
+		Результат.Добавить(СтрШаблон("'%1'", Format(ВыражениеЛитерал.Значение, "DF=yyyyMMdd; DE=00010101")));
+	ИначеЕсли ВидЛитерала = Токены.Истина Или ВидЛитерала = Токены.Ложь Тогда
+		Результат.Добавить(Format(ВыражениеЛитерал.Значение, "BF=False; BT=True"));
+	ИначеЕсли ВидЛитерала = Токены.Неопределено Тогда
+		Результат.Добавить("Неопределено");
+	ИначеЕсли ВидЛитерала = Токены.Null Тогда
+		Результат.Добавить("Null");
+	Иначе
+		ВызватьИсключение "Неизвестный литерал";
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражениеЛитерал()
 
-Procedure VisitIdentExpr(IdentExpr)
-	Result.Add(IdentExpr.Head.Name);
-	If IdentExpr.Args <> Undefined Then
-		Result.Add("(");
-		Indent = Indent + 1; // >>
-		VisitExprList(IdentExpr.Args);
-		Indent = Indent - 1; // <<
-		AlignLine(IdentExpr.Place.EndLine);
-		Result.Add(")");
-	EndIf;
-	VisitTail(IdentExpr.Tail);
-EndProcedure // VisitIdentExpr()
+Процедура ПосетитьВыражениеИдентификатор(ВыражениеИдентификатор)
+	Результат.Добавить(ВыражениеИдентификатор.Голова.Имя);
+	Если ВыражениеИдентификатор.Аргументы <> Неопределено Тогда
+		Результат.Добавить("(");
+		Отступ = Отступ + 1; // >>
+		СписокВыражений(ВыражениеИдентификатор.Аргументы);
+		Отступ = Отступ - 1; // <<
+		УстановитьОтступ(ВыражениеИдентификатор.Место.НомерПоследнейСтроки);
+		Результат.Добавить(")");
+	КонецЕсли;
+	ПосетитьХвост(ВыражениеИдентификатор.Хвост);
+КонецПроцедуры // ПосетитьВыражениеИдентификатор()
 
-Procedure VisitUnaryExpr(UnaryExpr)
-	Result.Add(Operators[UnaryExpr.Operator]);
-	VisitExpr(UnaryExpr.Operand);
-EndProcedure // VisitUnaryExpr()
+Процедура ПосетитьВыражениеУнарное(ВыражениеУнарное)
+	Результат.Добавить(Операции[ВыражениеУнарное.Операция]);
+	ПосетитьВыражение(ВыражениеУнарное.Операнд);
+КонецПроцедуры // ПосетитьВыражениеУнарное()
 
-Procedure VisitBinaryExpr(BinaryExpr)
-	VisitExpr(BinaryExpr.Left);
-	AlignLine(BinaryExpr.Right.Place.BegLine);
-	Result.Add(StrTemplate(" %1 ", Operators[BinaryExpr.Operator]));
-    VisitExpr(BinaryExpr.Right);
-EndProcedure // VisitBinaryExpr()
+Процедура ПосетитьВыражениеБинарное(ВыражениеБинарное)
+	ПосетитьВыражение(ВыражениеБинарное.ЛевыйОперанд);
+	УстановитьОтступ(ВыражениеБинарное.ПравыйОперанд.Место.НомерПервойСтроки);
+	Результат.Добавить(СтрШаблон(" %1 ", Операции[ВыражениеБинарное.Операция]));
+    ПосетитьВыражение(ВыражениеБинарное.ПравыйОперанд);
+КонецПроцедуры // ПосетитьВыражениеБинарное()
 
-Procedure VisitNewExpr(NewExpr)
-    If NewExpr.Name <> Undefined Then
-		Result.Add("New " + NewExpr.Name);
-    Else
-		Result.Add("New ");
-	EndIf;
-	If NewExpr.Args.Count() > 0 Then
-		Result.Add("(");
-		Indent = Indent + 1; // >>
-		VisitExprList(NewExpr.Args);
-		Indent = Indent - 1; // <<
-		AlignLine(NewExpr.Place.EndLine);
-		Result.Add(")");
-	EndIf;
-EndProcedure // VisitNewExpr()
+Процедура ПосетитьВыражениеНовый(ВыражениеНовый)
+    Если ВыражениеНовый.Имя <> Неопределено Тогда
+		Результат.Добавить("Новый " + ВыражениеНовый.Имя);
+    Иначе
+		Результат.Добавить("Новый ");
+	КонецЕсли;
+	Если ВыражениеНовый.Аргументы.Количество() > 0 Тогда
+		Результат.Добавить("(");
+		Отступ = Отступ + 1; // >>
+		СписокВыражений(ВыражениеНовый.Аргументы);
+		Отступ = Отступ - 1; // <<
+		УстановитьОтступ(ВыражениеНовый.Место.НомерПоследнейСтроки);
+		Результат.Добавить(")");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражениеНовый()
 
-Procedure VisitTernaryExpr(TernaryExpr)
-	Result.Add("?(");
-	VisitExpr(TernaryExpr.Cond);
-	Result.Add(", ");
-	VisitExpr(TernaryExpr.Then);
-	Result.Add(", ");
-	VisitExpr(TernaryExpr.Else);
-	Result.Add(")");
-	VisitTail(TernaryExpr.Tail);
-EndProcedure // VisitTernaryExpr()
+Процедура ПосетитьВыражениеТернарное(ВыражениеТернарное)
+	Результат.Добавить("?(");
+	ПосетитьВыражение(ВыражениеТернарное.Выражение);
+	Результат.Добавить(", ");
+	ПосетитьВыражение(ВыражениеТернарное.Тогда);
+	Результат.Добавить(", ");
+	ПосетитьВыражение(ВыражениеТернарное.Иначе);
+	Результат.Добавить(")");
+	ПосетитьХвост(ВыражениеТернарное.Хвост);
+КонецПроцедуры // ПосетитьВыражениеТернарное()
 
-Procedure VisitParenExpr(ParenExpr)
-	Result.Add("(");
-	Indent = Indent + 1; // >>
-	VisitExpr(ParenExpr.Expr);
-	Indent = Indent - 1; // <<
-	AlignLine(ParenExpr.Place.EndLine);
-	Result.Add(")");
-EndProcedure // VisitParenExpr()
+Процедура ПосетитьВыражениеСкобочное(ВыражениеСкобочное)
+	Результат.Добавить("(");
+	Отступ = Отступ + 1; // >>
+	ПосетитьВыражение(ВыражениеСкобочное.Выражение);
+	Отступ = Отступ - 1; // <<
+	УстановитьОтступ(ВыражениеСкобочное.Место.НомерПоследнейСтроки);
+	Результат.Добавить(")");
+КонецПроцедуры // ПосетитьВыражениеСкобочное()
 
-Procedure VisitNotExpr(NotExpr)
-	Result.Add("Not ");
-	VisitExpr(NotExpr.Expr);
-EndProcedure // VisitNotExpr()
+Процедура ПосетитьВыражениеНе(ВыражениеНе)
+	Результат.Добавить("Не ");
+	ПосетитьВыражение(ВыражениеНе.Выражение);
+КонецПроцедуры // ПосетитьВыражениеНе()
 
-Procedure VisitStringExpr(StringExpr)
-	If StringExpr.List.Count() > 1 Then
-		For Each Expr In StringExpr.List Do
-			AlignLine(Expr.Place.BegLine);
-			VisitBasicLitExpr(Expr);
-		EndDo;
-	Else
-		VisitExpr(StringExpr.List[0]);
-	EndIf;
-EndProcedure // VisitStringExpr()
+Процедура ПосетитьВыражениеСтроковое(ВыражениеСтроковое)
+	Если ВыражениеСтроковое.Элементы.Количество() > 1 Тогда
+		Для Каждого Литерал Из ВыражениеСтроковое.Элементы Цикл
+			УстановитьОтступ(Литерал.Место.НомерПервойСтроки);
+			ПосетитьВыражениеЛитерал(Литерал);
+		КонецЦикла;
+	Иначе
+		ПосетитьВыражение(ВыражениеСтроковое.Элементы[0]);
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражениеСтроковое()
 
-#EndRegion // VisitExpr
+#КонецОбласти // Выражения
 
-#Region VisitStmt
+#Область Операторы
 
-Procedure VisitStmt(Stmt)
-	AlignLine(Stmt.Place.BegLine);
-	Type = Stmt.Type;
-	If Type = Nodes.AssignStmt Then
-        VisitAssignStmt(Stmt);
-    ElsIf Type = Nodes.ReturnStmt Then
-        VisitReturnStmt(Stmt);
-    ElsIf Type = Nodes.BreakStmt Then
-        VisitBreakStmt(Stmt);
-    ElsIf Type = Nodes.ContinueStmt Then
-        VisitContinueStmt(Stmt);
-    ElsIf Type = Nodes.RaiseStmt Then
-        VisitRaiseStmt(Stmt);
-    ElsIf Type = Nodes.ExecuteStmt Then
-        VisitExecuteStmt(Stmt);
-    ElsIf Type = Nodes.CallStmt Then
-        VisitCallStmt(Stmt);
-    ElsIf Type = Nodes.IfStmt Then
-        VisitIfStmt(Stmt);
-    ElsIf Type = Nodes.WhileStmt Then
-        VisitWhileStmt(Stmt);
-    ElsIf Type = Nodes.ForStmt Then
-        VisitForStmt(Stmt);
-    ElsIf Type = Nodes.ForEachStmt Then
-        VisitForEachStmt(Stmt);
-    ElsIf Type = Nodes.TryStmt Then
-        VisitTryStmt(Stmt);
-    ElsIf Type = Nodes.GotoStmt Then
-        VisitGotoStmt(Stmt);
-    ElsIf Type = Nodes.LabelStmt Then
-        VisitLabelStmt(Stmt);
-	ElsIf Type = Nodes.PrepRegionInst
-		Or Type = Nodes.PrepEndRegionInst
-		Or Type = Nodes.PrepIfInst
-		Or Type = Nodes.PrepElsIfInst
-		Or Type = Nodes.PrepElseInst
-		Or Type = Nodes.PrepEndIfInst Then
-		VisitPrepInst(Stmt);
-    EndIf;
-EndProcedure // VisitStmt()
+Процедура ПосетитьОператор(Оператор)
+	УстановитьОтступ(Оператор.Место.НомерПервойСтроки);
+	Тип = Оператор.Тип;
+	Если Тип = Узлы.ОператорПрисваивания Тогда
+        ПосетитьОператорПрисваивания(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорВозврат Тогда
+        ПосетитьОператорВозврат(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорПрервать Тогда
+        ПосетитьОператорПрервать(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорПродолжить Тогда
+        ПосетитьОператорПродолжить(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорВызватьИсключение Тогда
+        ПосетитьОператорВызватьИсключение(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорВыполнить Тогда
+        ПосетитьОператорВыполнить(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорВызоваПроцедуры Тогда
+        ПосетитьОператорВызоваПроцедуры(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорЕсли Тогда
+        ПосетитьОператорЕсли(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорПока Тогда
+        ПосетитьОператорПока(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорДля Тогда
+        ПосетитьОператорДля(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорДляКаждого Тогда
+        ПосетитьОператорДляКаждого(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорПопытка Тогда
+        ПосетитьОператорПопытка(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорПерейти Тогда
+        ПосетитьОператорПерейти(Оператор);
+    ИначеЕсли Тип = Узлы.ОператорМетка Тогда
+        ПосетитьОператорМетка(Оператор);
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораОбласть
+		Или Тип = Узлы.ИнструкцияПрепроцессораКонецОбласти
+		Или Тип = Узлы.ИнструкцияПрепроцессораЕсли
+		Или Тип = Узлы.ИнструкцияПрепроцессораИначеЕсли
+		Или Тип = Узлы.ИнструкцияПрепроцессораИначе
+		Или Тип = Узлы.ИнструкцияПрепроцессораКонецЕсли Тогда
+		ПосетитьИнструкциюПрепроцессора(Оператор);
+    КонецЕсли;
+КонецПроцедуры // Операторы()
 
-Procedure VisitAssignStmt(AssignStmt)
-    VisitIdentExpr(AssignStmt.Left);
-	Result.Add(" = ");
-	VisitExpr(AssignStmt.Right);
-	Result.Add(";");
-EndProcedure // VisitAssignStmt()
+Процедура ПосетитьОператорПрисваивания(ОператорПрисваивания)
+    ПосетитьВыражениеИдентификатор(ОператорПрисваивания.ЛевыйОперанд);
+	Результат.Добавить(" = ");
+	ПосетитьВыражение(ОператорПрисваивания.ПравыйОперанд);
+	Результат.Добавить(";");
+КонецПроцедуры // ПосетитьОператорПрисваивания()
 
-Procedure VisitReturnStmt(ReturnStmt)
-	Result.Add("Return ");
-	If ReturnStmt.Expr <> Undefined Then
-        VisitExpr(ReturnStmt.Expr);
-	EndIf;
-	Result.Add(";");
-EndProcedure // VisitReturnStmt()
+Процедура ПосетитьОператорВозврат(ОператорВозврат)
+	Результат.Добавить("Возврат ");
+	Если ОператорВозврат.Выражение <> Неопределено Тогда
+        ПосетитьВыражение(ОператорВозврат.Выражение);
+	КонецЕсли;
+	Результат.Добавить(";");
+КонецПроцедуры // ПосетитьОператорВозврат()
 
-Procedure VisitBreakStmt(BreakStmt)
-	Result.Add("Break;");
-EndProcedure // VisitBreakStmt()
+Процедура ПосетитьОператорПрервать(ОператорПрервать)
+	Результат.Добавить("Прервать;");
+КонецПроцедуры // ПосетитьОператорПрервать()
 
-Procedure VisitContinueStmt(ContinueStmt)
-	Result.Add("Continue;");
-EndProcedure // VisitContinueStmt()
+Процедура ПосетитьОператорПродолжить(ОператорПродолжить)
+	Результат.Добавить("Продолжить;");
+КонецПроцедуры // ПосетитьОператорПродолжить()
 
-Procedure VisitRaiseStmt(RaiseStmt)
-	Result.Add("Raise ");
-	If RaiseStmt.Expr <> Undefined Then
-        VisitExpr(RaiseStmt.Expr);
-	EndIf;
-	Result.Add(";");
-EndProcedure // VisitRaiseStmt()
+Процедура ПосетитьОператорВызватьИсключение(ОператорВызватьИсключение)
+	Результат.Добавить("ВызватьИсключение ");
+	Если ОператорВызватьИсключение.Выражение <> Неопределено Тогда
+        ПосетитьВыражение(ОператорВызватьИсключение.Выражение);
+	КонецЕсли;
+	Результат.Добавить(";");
+КонецПроцедуры // ПосетитьОператорВызватьИсключение()
 
-Procedure VisitExecuteStmt(ExecuteStmt)
-	Result.Add("Execute(");
-	VisitExpr(ExecuteStmt.Expr);
-	Result.Add(");");
-EndProcedure // VisitExecuteStmt()
+Процедура ПосетитьОператорВыполнить(ОператорВыполнить)
+	Результат.Добавить("Выполнить(");
+	ПосетитьВыражение(ОператорВыполнить.Выражение);
+	Результат.Добавить(");");
+КонецПроцедуры // ПосетитьОператорВыполнить()
 
-Procedure VisitCallStmt(CallStmt)
-    VisitIdentExpr(CallStmt.Ident);
-	Result.Add(";");
-EndProcedure // VisitCallStmt()
+Процедура ПосетитьОператорВызоваПроцедуры(ОператорВызоваПроцедуры)
+    ПосетитьВыражениеИдентификатор(ОператорВызоваПроцедуры.Идентификатор);
+	Результат.Добавить(";");
+КонецПроцедуры // ПосетитьОператорВызоваПроцедуры()
 
-Procedure VisitIfStmt(IfStmt)
-	Result.Add("If ");
-	VisitExpr(IfStmt.Cond);
-	Result.Add(" Then ");
-    VisitStatements(IfStmt.Then);
-    If IfStmt.ElsIf <> Undefined Then
-        For Each ElsIfStmt In IfStmt.ElsIf Do
-			AlignLine(ElsIfStmt.Place.BegLine);
-			VisitElsIfStmt(ElsIfStmt);
-        EndDo;
-    EndIf;
-    If IfStmt.Else <> Undefined Then
-		AlignLine(IfStmt.Else.Place.BegLine);
-		VisitElseStmt(IfStmt.Else);
-	EndIf;
-	AlignLine(IfStmt.Place.EndLine);
-	Result.Add("EndIf;");
-EndProcedure // VisitIfStmt()
+Процедура ПосетитьОператорЕсли(ОператорЕсли)
+	Результат.Добавить("Если ");
+	ПосетитьВыражение(ОператорЕсли.Выражение);
+	Результат.Добавить(" Тогда ");
+    ПосетитьОператоры(ОператорЕсли.Тогда);
+    Если ОператорЕсли.ИначеЕсли <> Неопределено Тогда
+        Для Каждого ОператорИначеЕсли Из ОператорЕсли.ИначеЕсли Цикл
+			УстановитьОтступ(ОператорИначеЕсли.Место.НомерПервойСтроки);
+			ПосетитьОператорИначеЕсли(ОператорИначеЕсли);
+        КонецЦикла;
+    КонецЕсли;
+    Если ОператорЕсли.Иначе <> Неопределено Тогда
+		УстановитьОтступ(ОператорЕсли.Иначе.Место.НомерПервойСтроки);
+		ПосетитьОператорИначе(ОператорЕсли.Иначе);
+	КонецЕсли;
+	УстановитьОтступ(ОператорЕсли.Место.НомерПоследнейСтроки);
+	Результат.Добавить("КонецЕсли;");
+КонецПроцедуры // ПосетитьОператорЕсли()
 
-Procedure VisitElsIfStmt(ElsIfStmt)
-	Result.Add("ElsIf ");
-	VisitExpr(ElsIfStmt.Cond);
-	Result.Add(" Then ");
-    VisitStatements(ElsIfStmt.Then);
-EndProcedure // VisitElsIfStmt()
+Процедура ПосетитьОператорИначеЕсли(ОператорИначеЕсли)
+	Результат.Добавить("ИначеЕсли ");
+	ПосетитьВыражение(ОператорИначеЕсли.Выражение);
+	Результат.Добавить(" Тогда ");
+    ПосетитьОператоры(ОператорИначеЕсли.Тогда);
+КонецПроцедуры // ПосетитьОператорИначеЕсли()
 
-Procedure VisitElseStmt(ElseStmt)
-	Result.Add("Else ");
-    VisitStatements(ElseStmt.Body);
-EndProcedure // VisitElseStmt()
+Процедура ПосетитьОператорИначе(ОператорИначе)
+	Результат.Добавить("Иначе ");
+    ПосетитьОператоры(ОператорИначе.Операторы);
+КонецПроцедуры // ПосетитьОператорИначе()
 
-Procedure VisitWhileStmt(WhileStmt)
-	Result.Add("While ");
-	VisitExpr(WhileStmt.Cond);
-	Result.Add(" Do");
-    VisitStatements(WhileStmt.Body);
-	AlignLine(WhileStmt.Place.EndLine);
-	Result.Add("EndDo;");
-EndProcedure // VisitWhileStmt()
+Процедура ПосетитьОператорПока(ОператорПока)
+	Результат.Добавить("Пока ");
+	ПосетитьВыражение(ОператорПока.Выражение);
+	Результат.Добавить(" Цикл");
+    ПосетитьОператоры(ОператорПока.Операторы);
+	УстановитьОтступ(ОператорПока.Место.НомерПоследнейСтроки);
+	Результат.Добавить("КонецЦикла;");
+КонецПроцедуры // ПосетитьОператорПока()
 
-Procedure VisitForStmt(ForStmt)
-	Result.Add("For ");
-	VisitIdentExpr(ForStmt.Ident);
-	Result.Add(" = ");
-	VisitExpr(ForStmt.From);
-	Result.Add(" To ");
-	VisitExpr(ForStmt.To);
-	Result.Add(" Do ");
-	VisitStatements(ForStmt.Body);
-	AlignLine(ForStmt.Place.EndLine);
-	Result.Add("EndDo;");
-EndProcedure // VisitForStmt()
+Процедура ПосетитьОператорДля(ОператорДля)
+	Результат.Добавить("Для ");
+	ПосетитьВыражениеИдентификатор(ОператорДля.Идентификатор);
+	Результат.Добавить(" = ");
+	ПосетитьВыражение(ОператорДля.Начало);
+	Результат.Добавить(" По ");
+	ПосетитьВыражение(ОператорДля.Конец);
+	Результат.Добавить(" Цикл ");
+	ПосетитьОператоры(ОператорДля.Операторы);
+	УстановитьОтступ(ОператорДля.Место.НомерПоследнейСтроки);
+	Результат.Добавить("КонецЦикла;");
+КонецПроцедуры // ПосетитьОператорДля()
 
-Procedure VisitForEachStmt(ForEachStmt)
-	Result.Add("For Each ");
-	VisitIdentExpr(ForEachStmt.Ident);
-	Result.Add(" In ");
-	VisitExpr(ForEachStmt.In);
-	Result.Add(" Do ");
-	VisitStatements(ForEachStmt.Body);
-	AlignLine(ForEachStmt.Place.EndLine);
-	Result.Add("EndDo;");
-EndProcedure // VisitForEachStmt()
+Процедура ПосетитьОператорДляКаждого(ОператорДляКаждого)
+	Результат.Добавить("Для Каждого ");
+	ПосетитьВыражениеИдентификатор(ОператорДляКаждого.Идентификатор);
+	Результат.Добавить(" Из ");
+	ПосетитьВыражение(ОператорДляКаждого.Коллекция);
+	Результат.Добавить(" Цикл ");
+	ПосетитьОператоры(ОператорДляКаждого.Операторы);
+	УстановитьОтступ(ОператорДляКаждого.Место.НомерПоследнейСтроки);
+	Результат.Добавить("КонецЦикла;");
+КонецПроцедуры // ПосетитьОператорДляКаждого()
 
-Procedure VisitTryStmt(TryStmt)
-	Result.Add("Try ");
-	VisitStatements(TryStmt.Try);;
-	AlignLine(TryStmt.Except.Place.BegLine);
-	VisitExceptStmt(TryStmt.Except);
-	AlignLine(TryStmt.Place.EndLine);
-	Result.Add("EndTry;");
-EndProcedure // VisitTryStmt()
+Процедура ПосетитьОператорПопытка(ОператорПопытка)
+	Результат.Добавить("Попытка ");
+	ПосетитьОператоры(ОператорПопытка.Попытка);
+	УстановитьОтступ(ОператорПопытка.Исключение.Место.НомерПервойСтроки);
+	ПосетитьОператорИсключение(ОператорПопытка.Исключение);
+	УстановитьОтступ(ОператорПопытка.Место.НомерПоследнейСтроки);
+	Результат.Добавить("КонецПопытки;");
+КонецПроцедуры // ПосетитьОператорПопытка()
 
-Procedure VisitExceptStmt(ExceptStmt)
-	Result.Add("Except ");
-    VisitStatements(ExceptStmt.Body);
-EndProcedure // VisitExceptStmt()
+Процедура ПосетитьОператорИсключение(ОператорИсключение)
+	Результат.Добавить("Исключение ");
+    ПосетитьОператоры(ОператорИсключение.Операторы);
+КонецПроцедуры // ПосетитьОператорИсключение()
 
-Procedure VisitGotoStmt(GotoStmt)
-	Result.Add(StrTemplate("Goto ~%1%2", GotoStmt.Label, ";"));
-EndProcedure // VisitGotoStmt()
+Процедура ПосетитьОператорПерейти(ОператорПерейти)
+	Результат.Добавить(СтрШаблон("Перейти ~%1%2", ОператорПерейти.Метка, ";"));
+КонецПроцедуры // ПосетитьОператорПерейти()
 
-Procedure VisitLabelStmt(LabelStmt)
-	Result.Add(StrTemplate("~%1:", LabelStmt.Label));
-EndProcedure // VisitLabelStmt()
+Процедура ПосетитьОператорМетка(ОператорМетка)
+	Результат.Добавить(СтрШаблон("~%1:", ОператорМетка.Метка));
+КонецПроцедуры // ПосетитьОператорМетка()
 
-#EndRegion // VisitStmt
+// TODO: ПосетитьОператорДобавитьОбработчик, ПосетитьОператорУдалитьОбработчик
 
-#Region VisitPrep
+#КонецОбласти // Операторы
 
-Procedure VisitPrepExpr(PrepExpr)
-	Var Type;
-	AlignLine(PrepExpr.Place.BegLine);
-	Type = PrepExpr.Type;
-	If Type = Nodes.PrepSymExpr Then
-		VisitPrepSymExpr(PrepExpr);
-	ElsIf Type = Nodes.PrepBinaryExpr Then
-		VisitPrepBinaryExpr(PrepExpr);
-	ElsIf Type = Nodes.PrepNotExpr Then
-		VisitPrepNotExpr(PrepExpr);
-	ElsIf Type = Nodes.PrepParenExpr Then
-		VisitPrepParenExpr(PrepExpr);
-	EndIf;
-EndProcedure // VisitPrepExpr()
+#Область Препроцессор
 
-Procedure VisitPrepSymExpr(PrepSymExpr)
-	Result.Add(PrepSymExpr.Symbol);
-EndProcedure // VisitPrepSymExpr()
+Процедура ПосетитьВыражениеПрепроцессора(ВыражениеПрепроцессора)
+	Перем Тип;
+	УстановитьОтступ(ВыражениеПрепроцессора.Место.НомерПервойСтроки);
+	Тип = ВыражениеПрепроцессора.Тип;
+	Если Тип = Узлы.ВыражениеПрепроцессораСимвол Тогда
+		ПосетитьВыражениеПрепроцессораСимвол(ВыражениеПрепроцессора);
+	ИначеЕсли Тип = Узлы.ВыражениеПрепроцессораБинарное Тогда
+		ПосетитьВыражениеПрепроцессораБинарное(ВыражениеПрепроцессора);
+	ИначеЕсли Тип = Узлы.ВыражениеПрепроцессораНе Тогда
+		ПосетитьВыражениеПрепроцессораНе(ВыражениеПрепроцессора);
+	ИначеЕсли Тип = Узлы.ВыражениеПрепроцессораСкобочное Тогда
+		ПосетитьВыражениеПрепроцессораСкобочное(ВыражениеПрепроцессора);
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражениеПрепроцессора()
 
-Procedure VisitPrepBinaryExpr(PrepBinaryExpr)
-	VisitPrepExpr(PrepBinaryExpr.Left);
-	Result.Add(StrTemplate(" %1 ", Operators[PrepBinaryExpr.Operator]));
-	VisitPrepExpr(PrepBinaryExpr.Right);
-EndProcedure // VisitPrepBinaryExpr()
+Процедура ПосетитьВыражениеПрепроцессораСимвол(ВыражениеПрепроцессораСимвол)
+	Результат.Добавить(ВыражениеПрепроцессораСимвол.Символ);
+КонецПроцедуры // ПосетитьВыражениеПрепроцессораСимвол()
 
-Procedure VisitPrepNotExpr(PrepNotExpr)
-	Result.Add("Not ");
-	VisitPrepExpr(PrepNotExpr.Expr);
-EndProcedure // VisitPrepNotExpr()
+Процедура ПосетитьВыражениеПрепроцессораБинарное(ВыражениеПрепроцессораБинарное)
+	ПосетитьВыражениеПрепроцессора(ВыражениеПрепроцессораБинарное.ЛевыйОперанд);
+	Результат.Добавить(СтрШаблон(" %1 ", Операции[ВыражениеПрепроцессораБинарное.Операция]));
+	ПосетитьВыражениеПрепроцессора(ВыражениеПрепроцессораБинарное.ПравыйОперанд);
+КонецПроцедуры // ПосетитьВыражениеПрепроцессораБинарное()
 
-Procedure VisitPrepParenExpr(PrepParenExpr)
-	Result.Add("(");
-	Indent = Indent + 1; // >>
-	VisitPrepExpr(PrepParenExpr.Expr);
-	Indent = Indent - 1; // <<
-	AlignLine(PrepParenExpr.Place.EndLine);
-	Result.Add(")");
-EndProcedure // VisitPrepParenExpr()
+Процедура ПосетитьВыражениеПрепроцессораНе(ВыражениеПрепроцессораНе)
+	Результат.Добавить("Не ");
+	ПосетитьВыражениеПрепроцессора(ВыражениеПрепроцессораНе.Выражение);
+КонецПроцедуры // ПосетитьВыражениеПрепроцессораНе()
 
-Procedure VisitPrepInst(PrepInst)
-	Var Type;
-	Type = PrepInst.Type;
-	If Type = Nodes.PrepRegionInst Then
-		Result.Add("#Region ");
-		Result.Add(PrepInst.Name);
-	ElsIf Type = Nodes.PrepEndRegionInst Then
-		Result.Add("#EndRegion");
-	ElsIf Type = Nodes.PrepIfInst Then
-		Result.Add("#If ");
-		VisitPrepExpr(PrepInst.Cond);
-		Result.Add(" Then");
-	ElsIf Type = Nodes.PrepElsIfInst Then
-		Result.Add("#ElsIf ");
-		VisitPrepExpr(PrepInst.Cond);
-		Result.Add(" Then");
-	ElsIf Type = Nodes.PrepElseInst Then
-		Result.Add("#Else");
-	ElsIf Type = Nodes.PrepEndIfInst Then
-		Result.Add("#EndIf");
-	EndIf;
-EndProcedure // VisitPrepInst()
+Процедура ПосетитьВыражениеПрепроцессораСкобочное(ВыражениеПрепроцессораСкобочное)
+	Результат.Добавить("(");
+	Отступ = Отступ + 1; // >>
+	ПосетитьВыражениеПрепроцессора(ВыражениеПрепроцессораСкобочное.Выражение);
+	Отступ = Отступ - 1; // <<
+	УстановитьОтступ(ВыражениеПрепроцессораСкобочное.Место.НомерПоследнейСтроки);
+	Результат.Добавить(")");
+КонецПроцедуры // ПосетитьВыражениеПрепроцессораСкобочное()
 
-#EndRegion // VisitPrep
+Процедура ПосетитьИнструкциюПрепроцессора(ИнструкцияПрепроцессора)
+	Перем Тип;
+	Тип = ИнструкцияПрепроцессора.Тип;
+	Если Тип = Узлы.ИнструкцияПрепроцессораОбласть Тогда
+		Результат.Добавить("#Область ");
+		Результат.Добавить(ИнструкцияПрепроцессора.Имя);
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораКонецОбласти Тогда
+		Результат.Добавить("#КонецОбласти");
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораЕсли Тогда
+		Результат.Добавить("#Если ");
+		ПосетитьВыражениеПрепроцессора(ИнструкцияПрепроцессора.Выражение);
+		Результат.Добавить(" Тогда");
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораИначеЕсли Тогда
+		Результат.Добавить("#ИначеЕсли ");
+		ПосетитьВыражениеПрепроцессора(ИнструкцияПрепроцессора.Выражение);
+		Результат.Добавить(" Тогда");
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораИначе Тогда
+		Результат.Добавить("#Иначе");
+	ИначеЕсли Тип = Узлы.ИнструкцияПрепроцессораКонецЕсли Тогда
+		Результат.Добавить("#КонецЕсли");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьИнструкциюПрепроцессора()
 
-#Region Aux
+#КонецОбласти // Препроцессор
 
-Procedure Indent()
-	For Index = 1 To Indent Do
-		Result.Add(Chars.Tab);
-	EndDo;
-EndProcedure // Indent()
+#Область Вспомогательное
 
-Procedure AlignLine(NewLine)
-	For LastLine = LastLine To NewLine - 1 Do
-		Comment = Comments[LastLine];
-		If Comment <> Undefined Then
-			Result.Add(" //" + Comment);
-		EndIf;
-		Result.Add(Chars.LF); Indent();
-	EndDo;
-EndProcedure // AlignLine()
+Процедура Отступ()
+	Для Индекс = 1 По Отступ Цикл
+		Результат.Добавить(Символы.Таб);
+	КонецЦикла;
+КонецПроцедуры // Отступ()
 
-Procedure VisitVars(Vars)
-	Var Buffer, VarDecl;
-	Result.Add("Var ");
-	Buffer = New Array;
-	For Each VarDecl In Vars Do
-		If VarDecl.Property("Export") And VarDecl.Export Then
-			Buffer.Add(VarDecl.Name + " Export");
-		Else
-			Buffer.Add(VarDecl.Name);
-		EndIf;
-	EndDo;
-	If Buffer.Count() > 0 Then
-		Result.Add(StrConcat(Buffer, ", "));
-	EndIf;
-	Result.Add(";");
-EndProcedure // VisitVars()
+Процедура УстановитьОтступ(НоваяСтрока)
+	Для ПоследняяСтрока = ПоследняяСтрока По НоваяСтрока - 1 Цикл
+		Комментарий = Комментарии[ПоследняяСтрока];
+		Если Комментарий <> Неопределено Тогда
+			Результат.Добавить(" //" + Комментарий);
+		КонецЕсли;
+		Результат.Добавить(Символы.ПС); Отступ();
+	КонецЦикла;
+КонецПроцедуры // УстановитьОтступ()
 
-Procedure VisitParams(Params)
-	Var ParamDecl;
-	Result.Add("(");
-	If Params.Count() > 0 Then
-		For Each ParamDecl In Params Do
-			If ParamDecl.ByVal Then
-				Result.Add("Val ");
-			EndIf;
-			Result.Add(ParamDecl.Name);
-			If ParamDecl.Value <> Undefined Then
-				Result.Add(" = ");
-				VisitExpr(ParamDecl.Value);
-			EndIf;
-			Result.Add(", ");
-		EndDo;
-		Result[Result.UBound()] = ")";
-	Else
-		Result.Add(")");
-	EndIf;
-EndProcedure // VisitParamListDecl()
+Процедура ПосетитьПеременные(Переменные)
+	Перем Буфер, ОбъявлениеПеременной;
+	Результат.Добавить("Перем ");
+	Буфер = Новый Массив;
+	Для Каждого ОбъявлениеПеременной Из Переменные Цикл
+		Если ОбъявлениеПеременной.Property("Экспорт") И ОбъявлениеПеременной.Экспорт Тогда
+			Буфер.Добавить(ОбъявлениеПеременной.Имя + " Экспорт");
+		Иначе
+			Буфер.Добавить(ОбъявлениеПеременной.Имя);
+		КонецЕсли;
+	КонецЦикла;
+	Если Буфер.Количество() > 0 Тогда
+		Результат.Добавить(СтрСоединить(Буфер, ", "));
+	КонецЕсли;
+	Результат.Добавить(";");
+КонецПроцедуры // ПосетитьПеременные()
 
-Procedure VisitExprList(ExprList)
-	If ExprList.Count() > 0 Then
-		For Each Expr In ExprList Do
-			If Expr = Undefined Then
-				Result.Add("");
-			Else
-				VisitExpr(Expr);
-			EndIf;
-			Result.Add(", ");
-		EndDo;
-		Result[Result.UBound()] = "";
-	EndIf;
-EndProcedure // VisitExprList()
+Процедура ПосетитьПараметры(Параметры)
+	Перем ОбъявлениеПараметра;
+	Результат.Добавить("(");
+	Если Параметры.Количество() > 0 Тогда
+		Для Каждого ОбъявлениеПараметра Из Параметры Цикл
+			Если ОбъявлениеПараметра.ПоЗначению Тогда
+				Результат.Добавить("Знач ");
+			КонецЕсли;
+			Результат.Добавить(ОбъявлениеПараметра.Имя);
+			Если ОбъявлениеПараметра.Значение <> Неопределено Тогда
+				Результат.Добавить(" = ");
+				ПосетитьВыражение(ОбъявлениеПараметра.Значение);
+			КонецЕсли;
+			Результат.Добавить(", ");
+		КонецЦикла;
+		Результат[Результат.ВГраница()] = ")";
+	Иначе
+		Результат.Добавить(")");
+	КонецЕсли;
+КонецПроцедуры // ПосетитьПараметры()
 
-Procedure VisitTail(Tail)
-	For Each Item In Tail Do
-		If Item.Type = Nodes.FieldExpr Then
-			Result.Add(".");
-			Result.Add(Item.Name);
-			If Item.Args <> Undefined Then
-				Result.Add("(");
-				Indent = Indent + 1; // >>
-				VisitExprList(Item.Args);
-				Indent = Indent - 1; // <<
-				AlignLine(Item.Place.EndLine);
-				Result.Add(")");
-			EndIf;
-		ElsIf Item.Type = Nodes.IndexExpr Then
-			Result.Add("[");
-			VisitExpr(Item.Expr);
-			Result.Add("]");
-		Else
-			Raise "Unknown selector kind";
-		EndIf;
-	EndDo;
-EndProcedure // VisitTail()
+Процедура СписокВыражений(Выражения)
+	Если Выражения.Количество() > 0 Тогда
+		Для Каждого Выражение Из Выражения Цикл
+			Если Выражение = Неопределено Тогда
+				Результат.Добавить("");
+			Иначе
+				ПосетитьВыражение(Выражение);
+			КонецЕсли;
+			Результат.Добавить(", ");
+		КонецЦикла;
+		Результат[Результат.ВГраница()] = "";
+	КонецЕсли;
+КонецПроцедуры // СписокВыражений()
 
-#EndRegion // Aux
+Процедура ПосетитьХвост(Хвост)
+	Для Каждого Элемент Из Хвост Цикл
+		Если Элемент.Тип = Узлы.ВыражениеПоле Тогда
+			Результат.Добавить(".");
+			Результат.Добавить(Элемент.Имя);
+			Если Элемент.Аргументы <> Неопределено Тогда
+				Результат.Добавить("(");
+				Отступ = Отступ + 1; // >>
+				СписокВыражений(Элемент.Аргументы);
+				Отступ = Отступ - 1; // <<
+				УстановитьОтступ(Элемент.Место.НомерПоследнейСтроки);
+				Результат.Добавить(")");
+			КонецЕсли;
+		ИначеЕсли Элемент.Тип = Узлы.ВыражениеИндекс Тогда
+			Результат.Добавить("[");
+			ПосетитьВыражение(Элемент.Выражение);
+			Результат.Добавить("]");
+		Иначе
+			ВызватьИсключение "Неизвестный тип узла";
+		КонецЕсли;
+	КонецЦикла;
+КонецПроцедуры // ПосетитьХвост()
+
+#КонецОбласти // Вспомогательное
