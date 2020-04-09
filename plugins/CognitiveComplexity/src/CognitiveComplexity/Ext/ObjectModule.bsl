@@ -1,167 +1,166 @@
 ﻿
-// Подсчет когнитивной сложности методов (выводятся только > 0).
-// Не учитываются косвенные рекурсивные вызовы.
+ // Подсчет когнитивной сложности методов (выводятся только > 0).
+ // Не учитываются косвенные рекурсивные вызовы.
 
-Var Nodes;
-Var Tokens;
-Var Result;
+Перем Узлы;
+Перем Токены;
+Перем Результат;
 
-Var Level;
-Var CognitiveComplexity;
-Var CurMethod;
-Var ExprLevel;
+Перем Уровень;
+Перем КогнитивнаяСложность;
+Перем ТекущийМетод;
+Перем УровеньВыражения;
 
-Procedure Init(BSParser) Export
-	Nodes = BSParser.Nodes();
-	Tokens = BSParser.Tokens();
-	Result = New Array;
-	Level = 1;
-	CognitiveComplexity = 0;
-	ExprLevel = 0;
-EndProcedure // Init()
+Процедура Инициализировать(Парсер) Экспорт
+	Узлы = Парсер.Узлы();
+	Токены = Парсер.Токены();
+	Результат = Новый Массив;
+	Уровень = 1;
+	КогнитивнаяСложность = 0;
+	УровеньВыражения = 0;
+КонецПроцедуры // Init()
 
-Function Hooks() Export
-	Var Hooks;
-	Hooks = New Array;
-	Hooks.Add("VisitMethodDecl");
-	Hooks.Add("AfterVisitMethodDecl");
-	Hooks.Add("VisitBinaryExpr");
-	Hooks.Add("AfterVisitBinaryExpr");
-	Hooks.Add("VisitTernaryExpr");
-	Hooks.Add("VisitIfStmt");
-	Hooks.Add("AfterVisitIfStmt");
-	Hooks.Add("VisitElsIfStmt");
-	Hooks.Add("VisitElseStmt");
-	Hooks.Add("VisitWhileStmt");
-	Hooks.Add("AfterVisitWhileStmt");
-	Hooks.Add("VisitForStmt");
-	Hooks.Add("AfterVisitForStmt");
-	Hooks.Add("VisitForEachStmt");
-	Hooks.Add("AfterVisitForEachStmt");
-	Hooks.Add("VisitExceptStmt");
-	Hooks.Add("VisitCallStmt");
-	Hooks.Add("VisitGotoStmt");
-	Hooks.Add("VisitBreakStmt");
-	Hooks.Add("VisitContinueStmt");
-	Return Hooks;
-EndFunction // Hooks()
+Функция Подписки() Экспорт
+	Перем Подписки;
+	Подписки = Новый Массив;
+	Подписки.Add("ПосетитьОбъявлениеМетода");
+	Подписки.Add("ПокинутьОбъявлениеМетода");
+	Подписки.Add("ПосетитьВыражениеБинарное");
+	Подписки.Add("ПокинутьВыражениеБинарное");
+	Подписки.Add("ПосетитьВыражениеТернарное");
+	Подписки.Add("ПосетитьОператорЕсли");
+	Подписки.Add("ПокинутьОператорЕсли");
+	Подписки.Add("ПосетитьОператорИначеЕсли");
+	Подписки.Add("ПосетитьОператорИначе");
+	Подписки.Add("ПосетитьОператорПока");
+	Подписки.Add("ПокинутьОператорПока");
+	Подписки.Add("ПосетитьОператорДля");
+	Подписки.Add("ПокинутьОператорДля");
+	Подписки.Add("ПосетитьОператорДляКаждого");
+	Подписки.Add("ПокинутьОператорДляКаждого");
+	Подписки.Add("ПосетитьОператорИсключение");
+	Подписки.Add("ПосетитьОператорВызоваПроцедуры");
+	Подписки.Add("ПосетитьОператорПерейти");
+	Подписки.Add("ПосетитьОператорПрервать");
+	Подписки.Add("ПосетитьОператорПродолжить");
+	Возврат Подписки;
+КонецФункции // Подписки()
 
-Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
-	CurMethod = MethodDecl.Sign;
-EndProcedure // VisitMethodDecl()
+Процедура ПосетитьОбъявлениеМетода(ОбъявлениеМетода, Стек, Счетчики) Экспорт
+	ТекущийМетод = ОбъявлениеМетода.Сигнатура;
+КонецПроцедуры // ПосетитьОбъявлениеМетода()
 
-Procedure AfterVisitMethodDecl(MethodDecl, Stack, Counters) Export
-	If CognitiveComplexity > 0 Then
-		Result.Add(StrTemplate("Когнитивная сложность метода %1() равна %2", MethodDecl.Sign.Name, CognitiveComplexity));
-	EndIf;
-	Level = 1;
-	CognitiveComplexity = 0;
-EndProcedure // AfterVisitMethodDecl()
+Процедура ПокинутьОбъявлениеМетода(ОбъявлениеМетода, Стек, Счетчики) Экспорт
+	Если КогнитивнаяСложность > 0 Тогда 
+		Результат.Add(StrTemplate("Когнитивная сложность метода %1() равна %2", ОбъявлениеМетода.Сигнатура.Имя, КогнитивнаяСложность));	
+	КонецЕсли;
+	Уровень = 1;
+	КогнитивнаяСложность = 0;
+КонецПроцедуры // ПокинутьОбъявлениеМетода()
 
-Procedure VisitBinaryExpr(BinaryExpr, Stack, Counters) Export
-	If ExprLevel = 0 Then // только для корневого
-		List = New Array;
-		BuildExprList(List, BinaryExpr);
-		Operator = Undefined;
-		For Each Item In List Do
-			If Item <> Operator Then
-				Operator = Item;
-				If Operator = Tokens.Or
-					Or Operator = Tokens.And Then
-					CognitiveComplexity = CognitiveComplexity + 1;
-				EndIf;
-			EndIf;
-		EndDo;
-	EndIf;
-	ExprLevel = ExprLevel + 1;
-EndProcedure // VisitBinaryExpr()
+Процедура ПосетитьВыражениеБинарное(ВыражениеБинарное, Стек, Счетчики) Экспорт
+	Если УровеньВыражения = 0 Тогда  // только для корневого
+		СписокОпераций = Новый Массив;
+		ПостроитьСписокОпераций(СписокОпераций, ВыражениеБинарное);
+		ТекущаяОперация = Неопределено;
+		Для Каждого Операция Из СписокОпераций Цикл 
+			Если Операция <> ТекущаяОперация Тогда 
+				ТекущаяОперация = Операция;
+				Если ТекущаяОперация = Токены.Или
+					Или ТекущаяОперация = Токены.И Тогда 
+					КогнитивнаяСложность = КогнитивнаяСложность + 1;				
+				КонецЕсли;			
+			КонецЕсли;		
+		КонецЦикла;	
+	КонецЕсли;
+	УровеньВыражения = УровеньВыражения + 1;
+КонецПроцедуры // ПосетитьВыражениеБинарное()
 
-Procedure AfterVisitBinaryExpr(BinaryExpr, Stack, Counters) Export
-	ExprLevel = ExprLevel - 1;
-EndProcedure // AfterVisitBinaryExpr()
+Процедура ПокинутьВыражениеБинарное(ВыражениеБинарное, Стек, Счетчики) Экспорт
+	УровеньВыражения = УровеньВыражения - 1;
+КонецПроцедуры // ПокинутьВыражениеБинарное()
 
-Function BuildExprList(List, BinaryExpr)
-	If BinaryExpr.Left.Type = Nodes.BinaryExpr Then
-		BuildExprList(List, BinaryExpr.Left);
-	EndIf;
-	List.Add(BinaryExpr.Operator);
-	If BinaryExpr.Right.Type = Nodes.BinaryExpr Then
-		BuildExprList(List, BinaryExpr.Right);
-	EndIf;
-EndFunction // BuildExprList()
+Функция ПостроитьСписокОпераций(СписокОпераций, ВыражениеБинарное)
+	Если ВыражениеБинарное.ЛевыйОперанд.Тип = Узлы.ВыражениеБинарное Тогда 
+		ПостроитьСписокОпераций(СписокОпераций, ВыражениеБинарное.ЛевыйОперанд);	
+	КонецЕсли;
+	СписокОпераций.Add(ВыражениеБинарное.Операция);
+	Если ВыражениеБинарное.ПравыйОперанд.Тип = Узлы.ВыражениеБинарное Тогда 
+		ПостроитьСписокОпераций(СписокОпераций, ВыражениеБинарное.ПравыйОперанд);	
+	КонецЕсли;
+КонецФункции // ПостроитьСписокОпераций()
 
-Procedure VisitTernaryExpr(TernaryExpr, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-EndProcedure // VisitTernaryExpr()
+Процедура ПосетитьВыражениеТернарное(ВыражениеТернарное, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+КонецПроцедуры // ПосетитьВыражениеТернарное()
 
-Procedure VisitCallStmt(CallStmt, Stack, Counters) Export
-	If CallStmt.Ident.Head.Decl = CurMethod Then
-		CognitiveComplexity = CognitiveComplexity + 1;
-	EndIf;
-EndProcedure // VisitCallStmt()
+Процедура ПосетитьОператорВызоваПроцедуры(ОператорВызоваПроцедуры, Стек, Счетчики) Экспорт
+	Если ОператорВызоваПроцедуры.Идентификатор.Голова.Объявление = ТекущийМетод Тогда 
+		КогнитивнаяСложность = КогнитивнаяСложность + 1;	
+	КонецЕсли;
+КонецПроцедуры // ПосетитьОператорВызоваПроцедуры()
 
-Procedure VisitIfStmt(IfStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1;
-EndProcedure // VisitIfStmt()
+Процедура ПосетитьОператорЕсли(ОператорЕсли, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+	Уровень = Уровень + 1;
+КонецПроцедуры // ПосетитьОператорЕсли()
 
-Procedure AfterVisitIfStmt(IfStmt, Stack, Counters) Export
-	Level = Level - 1;
-EndProcedure // AfterVisitIfStmt()
+Процедура ПокинутьОператорЕсли(ОператорЕсли, Стек, Счетчики) Экспорт
+	Уровень = Уровень - 1;
+КонецПроцедуры // ПокинутьОператорЕсли()
 
-Procedure VisitElsIfStmt(ElsIfStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + 1;
-EndProcedure // VisitElsIfStmt()
+Процедура ПосетитьОператорИначеЕсли(ОператорИначеЕсли, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + 1;
+КонецПроцедуры // ПосетитьОператорИначеЕсли()
 
-Procedure VisitElseStmt(ElseStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + 1;
-EndProcedure // VisitElseStmt()
+Процедура ПосетитьОператорИначе(ОператорИначе, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + 1;
+КонецПроцедуры // ПосетитьОператорИначе()
 
-Procedure VisitWhileStmt(WhileStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1;
-EndProcedure // VisitWhileStmt()
+Процедура ПосетитьОператорПока(ОператорПока, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+	Уровень = Уровень + 1;
+КонецПроцедуры // ПосетитьОператорПока()
 
-Procedure AfterVisitWhileStmt(WhileStmt, Stack, Counters) Export
-	Level = Level - 1;
-EndProcedure // AfterVisitWhileStmt()
+Процедура ПокинутьОператорПока(ОператорПока, Стек, Счетчики) Экспорт
+	Уровень = Уровень - 1;
+КонецПроцедуры // ПокинутьОператорПока()
 
-Procedure VisitForStmt(ForStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1;
-EndProcedure // VisitForStmt()
+Процедура ПосетитьОператорДля(ОператорДля, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+	Уровень = Уровень + 1;
+КонецПроцедуры // ПосетитьОператорДля()
 
-Procedure AfterVisitForStmt(ForStmt, Stack, Counters) Export
-	Level = Level - 1;
-EndProcedure // AfterVisitForStmt()
+Процедура ПокинутьОператорДля(ОператорДля, Стек, Счетчики) Экспорт
+	Уровень = Уровень - 1;
+КонецПроцедуры // ПокинутьОператорДля()
 
-Procedure VisitForEachStmt(ForEachStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1;
-EndProcedure // VisitForEachStmt()
+Процедура ПосетитьОператорДляКаждого(ОператорДляКаждого, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+	Уровень = Уровень + 1;
+КонецПроцедуры // ПосетитьОператорДляКаждого()
 
-Procedure AfterVisitForEachStmt(ForEachStmt, Stack, Counters) Export
-	Level = Level - 1;
-EndProcedure // AfterVisitForEachStmt()
+Процедура ПокинутьОператорДляКаждого(ОператорДляКаждого, Стек, Счетчики) Экспорт
+	Уровень = Уровень - 1;
+КонецПроцедуры // ПокинутьОператорДляКаждого()
 
-Procedure VisitExceptStmt(ExceptStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + Level;
-	Level = Level + 1;
-EndProcedure // VisitExceptStmt()
+Процедура ПосетитьОператорИсключение(ОператорИсключение, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + Уровень;
+	Уровень = Уровень + 1;
+КонецПроцедуры // ПосетитьОператорИсключение()
 
-Procedure VisitGotoStmt(GotoStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + 1;
-EndProcedure // VisitGotoStmt()
+Процедура ПосетитьОператорПерейти(ОператорПерейти, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + 1;
+КонецПроцедуры // ПосетитьОператорПерейти()
 
-Procedure VisitBreakStmt(BreakStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + 1;
-EndProcedure // VisitBreakStmt()
+Процедура ПосетитьОператорПрервать(ОператорПрервать, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + 1;
+КонецПроцедуры // ПосетитьОператорПрервать()
 
-Procedure VisitContinueStmt(ContinueStmt, Stack, Counters) Export
-	CognitiveComplexity = CognitiveComplexity + 1;
-EndProcedure // VisitContinueStmt()
+Процедура ПосетитьОператорПродолжить(ОператорПродолжить, Стек, Счетчики) Экспорт
+	КогнитивнаяСложность = КогнитивнаяСложность + 1;
+КонецПроцедуры // ПосетитьОператорПродолжить()
 
-Function Result() Export
-	Return StrConcat(Result, Chars.LF);
-EndFunction // Result()
-
+Функция Закрыть() Экспорт
+	Возврат СтрСоединить(Результат, Символы.ПС);
+КонецФункции
