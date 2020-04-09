@@ -1,78 +1,79 @@
 ﻿
-// Рекурсивный подсчет серверных вызовов в модулях форм.
-// Выводятся только случаи с количеством серверных вызовов > 1.
+ // Рекурсивный подсчет серверных вызовов в модулях форм.
+ // Выводятся только случаи с количеством серверных вызовов > 1.
 
-// Вызовы других модулей не учитываются.
-// Вызовы типа Таблица.НайтиСтроки() не учитываются.
+ // Вызовы других модулей не учитываются.
+ // Вызовы типа Таблица.НайтиСтроки() не учитываются.
 
-Var Nodes;
-Var Directives;
-Var Result;
+Перем Узлы;
+Перем Директивы;
+Перем Результат;
 
-Var Caller, CallerAtClient;
-Var CallTable;
-Var Methods;
+Перем Вызывающий, ВызывающийНаКлиенте;
+Перем ТаблицаВызовов;
+Перем Методы;
 
-Procedure Init(BSParser) Export
-	Nodes = BSParser.Nodes();
-	Directives = BSParser.Directives();
-	Result = New Array;
-	CallTable = New ValueTable;
-	CallTable.Columns.Add("Caller");
-	CallTable.Columns.Add("AtClient", New TypeDescription("Boolean"));
-	CallTable.Columns.Add("Method");
-	CallTable.Columns.Add("ServerCall", New TypeDescription("Number"));
-	CallTable.Indexes.Add("Method, AtClient");
-	Methods = New Map;
-EndProcedure // Init()
+Процедура Инициализировать(Парсер) Экспорт
+	Узлы = Парсер.Узлы();
+	Директивы = Парсер.Директивы();
+	Результат = Новый Массив;
+	ТаблицаВызовов = Новый ТаблицаЗначений;
+	ТаблицаВызовов.Колонки.Добавить("Вызывающий");
+	ТаблицаВызовов.Колонки.Добавить("НаКлиенте", Новый ОписаниеТипов("Булево"));
+	ТаблицаВызовов.Колонки.Добавить("Метод");
+	ТаблицаВызовов.Колонки.Добавить("ВызовСервера", Новый ОписаниеТипов("Число"));
+	ТаблицаВызовов.Indexes.Добавить("Метод, НаКлиенте");
+	Методы = Новый Соответствие;
+КонецПроцедуры // Init()
 
-Function Hooks() Export
-	Var Hooks;
-	Hooks = New Array;
-	Hooks.Add("VisitMethodDecl");
-	Hooks.Add("VisitIdentExpr");
-	Return Hooks;
-EndFunction // Hooks()
+Функция Подписки() Экспорт
+	Перем Подписки;
+	Подписки = Новый Массив;
+	Подписки.Добавить("ПосетитьОбъявлениеМетода");
+	Подписки.Добавить("ПосетитьВыражениеИдентификатор");
+	Возврат Подписки;
+КонецФункции // Подписки()
 
-Procedure VisitMethodDecl(MethodDecl, Stack, Counters) Export
-	Caller = MethodDecl.Sign;
-	CallerAtClient = (Caller.Directive = Directives.AtClient);
-EndProcedure // VisitMethodDecl()
+Процедура ПосетитьОбъявлениеМетода(ОбъявлениеМетода, Стек, Счетчики) Экспорт
+	Вызывающий = ОбъявлениеМетода.Сигнатура;
+	ВызывающийНаКлиенте = (Вызывающий.Директивы.Количество() > 0 И Вызывающий.Директивы[0].Директива = Директивы.НаКлиенте);
+КонецПроцедуры // ПосетитьОбъявлениеМетода()
 
-Procedure VisitIdentExpr(IdentExpr, Stack, Counters) Export
-	Var CallRow, Method;
-	If IdentExpr.Args <> Undefined And IdentExpr.Tail.Count() = 0 Then // только простые вызовы методов данного модуля
-		Method = IdentExpr.Head.Decl;
-		If Method <> Undefined Then // только известные методы
-			CallRow = CallTable.Add();
-			Callrow.Caller = Caller;
-			Callrow.AtClient = CallerAtClient;
-			CallRow.Method = Method;
-			Methods[Method] = True;
-		EndIf;
-	EndIf;
-EndProcedure // VisitIdentExpr()
+Процедура ПосетитьВыражениеИдентификатор(ВыражениеИдентификатор, Стек, Счетчики) Экспорт
+	Перем НоваяСтрока, Метод;
+	Если ВыражениеИдентификатор.Аргументы <> Неопределено И ВыражениеИдентификатор.Хвост.Количество() = 0 Тогда  // только простые вызовы методов данного модуля
+		Метод = ВыражениеИдентификатор.Голова.Объявление;
+		Если Метод <> Неопределено // только известные методы
+			И Метод.Тип <> Узлы.ГлобальныйМетод Тогда  
+			НоваяСтрока = ТаблицаВызовов.Добавить();
+			НоваяСтрока.Вызывающий = Вызывающий;
+			НоваяСтрока.НаКлиенте = ВызывающийНаКлиенте;
+			НоваяСтрока.Метод = Метод;
+			Методы[Метод] = Истина;		
+		КонецЕсли;	
+	КонецЕсли;
+КонецПроцедуры // ПосетитьВыражениеИдентификатор()
 
-Function Result() Export
-	For Each Method In Methods Do
-		If Method.Key.Directive = Directives.AtServer Then
-			CountServerCalls(Method.Key);
-		EndIf;
-	EndDo;
-	CallTable.GroupBy("Caller", "ServerCall");
-	For Each Row In CallTable Do
-		If Row.ServerCall > 1 Then
-			Result.Add(StrTemplate("Метод `%1()` содержит %2 серверных вызовов", Row.Caller.Name, Row.ServerCall));
-		EndIf;
-	EndDo;
-	Return StrConcat(Result, Chars.LF);
-EndFunction // Result()
+Функция Закрыть() Экспорт
+	Для Каждого Метод Из Методы Цикл 
+		Если Метод.Ключ.Директивы.Количество() = 0 Или Метод.Ключ.Директивы[0].Директива = Директивы.НаСервере Тогда 
+			ПодсчитатьВызовыСервера(Метод.Ключ);		
+		КонецЕсли;	
+	КонецЦикла;
+	ТаблицаВызовов.GroupBy("Вызывающий", "ВызовСервера");
+	Для Каждого Строка Из ТаблицаВызовов Цикл 
+		Если Строка.ВызовСервера > 1 Тогда 
+			Результат.Добавить(СтрШаблон("Метод `%1()` содержит %2 серверных вызовов", Строка.Вызывающий.Имя, Строка.ВызовСервера));		
+		КонецЕсли;	
+	КонецЦикла;
+	Возврат СтрСоединить(Результат, Символы.ПС);
+КонецФункции // Закрыть()
 
-Function CountServerCalls(Method)
-	Var CallsAtClient;
-	CallsAtClient = CallTable.FindRows(New Structure("Method, AtClient", Method, True));
-	For Each CallRow In CallsAtClient Do
-		CallRow.ServerCall = CallRow.ServerCall + 1;
-		CountServerCalls(CallRow.Caller)
-	EndDo;
-EndFunction // CountServerCalls()
+Процедура ПодсчитатьВызовыСервера(Метод)
+	Перем ВызовыНаКлиенте;
+	ВызовыНаКлиенте = ТаблицаВызовов.НайтиСтроки(Новый Структура("Метод, НаКлиенте", Метод, Истина));
+	Для Каждого Строка Из ВызовыНаКлиенте Цикл 
+		Строка.ВызовСервера = Строка.ВызовСервера + 1;
+		ПодсчитатьВызовыСервера(Строка.Вызывающий);	
+	КонецЦикла;
+КонецПроцедуры // ПодсчитатьВызовыСервера()
