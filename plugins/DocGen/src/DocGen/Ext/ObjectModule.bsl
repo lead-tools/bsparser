@@ -110,10 +110,23 @@
 		"<h2 id='#Прочее'>#Прочее</h2>
 		|<h3 id='Место'>Место</h3>
 		|<ul>
-		|	<li><strong>Позиция</strong>: number</li>
-		|	<li><strong>Длина</strong>: number</li>
-		|	<li><strong>НомерПервойСтроки</strong>: number</li>
-		|	<li><strong>НомерПоследнейСтроки</strong>: number</li>
+		|	<li><strong>Позиция</strong>: число</li>
+		|	<li><strong>Длина</strong>: число</li>
+		|	<li><strong>НомерПервойСтроки</strong>: число</li>
+		|	<li><strong>НомерПоследнейСтроки</strong>: число</li>
+		|</ul>
+		|<h3 id='Доступность'>Доступность</h3>
+		|<ul>
+		| <li><strong>Клиент</strong>: булево</li>
+		| <li><strong>ВнешнееСоединение</strong>: булево</li>
+		| <li><strong>МобильноеПриложение</strong>: булево</li>
+		| <li><strong>МобильныйКлиент</strong>: булево</li>
+		| <li><strong>МобильныйСервер</strong>: булево</li>
+		| <li><strong>Сервер</strong>: булево</li>
+		| <li><strong>ТолстыйКлиент</strong>: булево</li>
+		| <li><strong>ТонкийКлиент</strong>: булево</li>
+		| <li><strong>ВебКлиент</strong>: булево</li>
+		| <li><strong>Интеграция</strong>: булево</li>
 		|</ul>
 		|</body>
 		|</html>"
