@@ -1,45 +1,42 @@
 
-AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
-AttachScript("..\plugins\TestVars\src\TestVars\Ext\ObjectModule.bsl", "PluginTestVars");
-AttachScript("..\plugins\TestEnd\src\TestEnd\Ext\ObjectModule.bsl", "PluginTestEnd");
-AttachScript("..\plugins\ReturnCheck\src\ReturnCheck\Ext\ObjectModule.bsl", "PluginReturnCheck");
+ПодключитьСценарий("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl", "Парсер");
+ПодключитьСценарий("..\plugins\ДетекторНеиспользуемыхПеременных\src\ДетекторНеиспользуемыхПеременных\Ext\ObjectModule.bsl", "ДетекторНеиспользуемыхПеременных");
+ПодключитьСценарий("..\plugins\ДетекторОшибочныхЗамыкающихКомментариев\src\ДетекторОшибочныхЗамыкающихКомментариев\Ext\ObjectModule.bsl", "ДетекторОшибочныхЗамыкающихКомментариев");
+ПодключитьСценарий("..\plugins\ДетекторФункцийБезВозвратаВКонце\src\ДетекторФункцийБезВозвратаВКонце\Ext\ObjectModule.bsl", "ДетекторФункцийБезВозвратаВКонце");
 
-If CommandLineArguments.Count() = 0 Then
-	Raise "Укажите в качестве параметра путь к папке с общими модулями os";
-EndIf;
+Если АргументыКоманднойСтроки.Количество() = 0 Тогда
+	ВызватьИсключение "Укажите в качестве параметра путь к папке с модулями os";
+КонецЕсли;
 
-CommonModulesPath = CommandLineArguments[0];
-Files = FindFiles(CommonModulesPath, "*.os", True);
+ПутьКМодулям = АргументыКоманднойСтроки[0];
+Файлы = НайтиФайлы(ПутьКМодулям, "*.os", Истина);
 
-BSParser = New BSParser;
+Парсер = Новый Парсер;
 
-Plugins = New Array;
-Plugins.Add(New PluginTestVars);
-Plugins.Add(New PluginTestEnd);
-Plugins.Add(New PluginReturnCheck);
+Плагины = Новый Массив;
+Плагины.Добавить(Новый ДетекторНеиспользуемыхПеременных);
+Плагины.Добавить(Новый ДетекторОшибочныхЗамыкающихКомментариев);
+Плагины.Добавить(Новый ДетекторФункцийБезВозвратаВКонце);
 
-BSParser.HookUp(Plugins);
+ЧтениеТекста = Новый ЧтениеТекста;
 
-TextReader = New TextReader;
-
-For Each File In Files Do
-	TextReader.Open(File.FullName, "UTF-8");
-	Source = TextReader.Read();
-	Try
-		Module = BSParser.Parse(Source);
-		BSParser.Visit(Module);
-	Except
-		Message(Chars.LF);
-		Message(File.FullName);
-		Message(DetailErrorDescription(ErrorInfo()));
-	EndTry;
-	For Each Plugin In Plugins Do
-		Result = Plugin.Result();
-		If ValueIsFilled(Result) Then
-			Message(Chars.LF);
-			Message(File.FullName);
-			Message(Result);
-		EndIf;
-	EndDo;
-	TextReader.Close()
-EndDo;
+Для Каждого Файл Из Файлы Цикл
+	ЧтениеТекста.Открыть(Файл.ПолноеИмя, "UTF-8");
+	Исходник = ЧтениеТекста.Прочитать();
+	Попытка
+		Парсер.Пуск(Исходник, Плагины);
+		Для Каждого Плагин Из Плагины Цикл
+			Результат = Плагин.Закрыть();
+			Если ЗначениеЗаполнено(Результат) Тогда
+				Сообщить(Символы.ПС);
+				Сообщить(Файл.ПолноеИмя);
+				Сообщить(Результат);
+			КонецЕсли;
+		КонецЦикла;
+	Исключение
+		Сообщить(Символы.ПС);
+		Сообщить(Файл.ПолноеИмя);
+		Сообщить(ПодробноеПредставлениеОшибки(ИнформацияОбОшибке()));
+	КонецПопытки;
+	ЧтениеТекста.Закрыть();
+КонецЦикла;
