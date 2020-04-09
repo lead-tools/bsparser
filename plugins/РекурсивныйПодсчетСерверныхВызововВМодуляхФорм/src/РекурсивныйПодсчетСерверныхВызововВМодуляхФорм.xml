@@ -6,21 +6,17 @@
 				<xr:ClassId>c3831ec8-d8d5-4f93-8a22-f9bfae07327f</xr:ClassId>
 				<xr:ObjectId>0b705b84-bf41-4cd5-bc60-ec69b1d8da59</xr:ObjectId>
 			</xr:ContainedObject>
-			<xr:GeneratedType name="ExternalDataProcessorObject.TestServerCall" category="Object">
+			<xr:GeneratedType name="ExternalDataProcessorObject.РекурсивныйПодсчетСерверныхВызововВМодуляхФорм" category="Object">
 				<xr:TypeId>4562246a-4143-43c8-b9ce-4c5c0206a913</xr:TypeId>
 				<xr:ValueId>46a74894-1395-4527-901f-bdfa781f95ad</xr:ValueId>
 			</xr:GeneratedType>
 		</InternalInfo>
 		<Properties>
-			<Name>TestServerCall</Name>
+			<Name>РекурсивныйПодсчетСерверныхВызововВМодуляхФорм</Name>
 			<Synonym>
 				<v8:item>
-					<v8:lang>en</v8:lang>
-					<v8:content>Test server call</v8:content>
-				</v8:item>
-				<v8:item>
 					<v8:lang>ru</v8:lang>
-					<v8:content>Test server call</v8:content>
+					<v8:content>Рекурсивный подсчет серверных вызовов в модулях форм</v8:content>
 				</v8:item>
 			</Synonym>
 			<Comment/>
