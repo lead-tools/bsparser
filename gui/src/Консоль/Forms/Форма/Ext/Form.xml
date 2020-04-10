@@ -683,10 +683,28 @@
 							</ToolTip>
 							<ExtendedTooltip name="СтраницаОшибкиРасширеннаяПодсказка" id="83"/>
 							<ChildItems>
+								<UsualGroup name="ГруппаПоиска" id="167">
+									<Title>
+										<v8:item>
+											<v8:lang>ru</v8:lang>
+											<v8:content>Группа поиска</v8:content>
+										</v8:item>
+									</Title>
+									<ToolTip>
+										<v8:item>
+											<v8:lang>ru</v8:lang>
+											<v8:content>Группа поиска</v8:content>
+										</v8:item>
+									</ToolTip>
+									<Representation>None</Representation>
+									<ShowTitle>false</ShowTitle>
+									<ExtendedTooltip name="ГруппаПоискаРасширеннаяПодсказка" id="168"/>
+								</UsualGroup>
 								<Table name="Ошибки" id="84">
 									<Representation>List</Representation>
 									<ReadOnly>true</ReadOnly>
 									<ChangeRowSet>false</ChangeRowSet>
+									<ChangeRowOrder>false</ChangeRowOrder>
 									<AutoInsertNewRow>true</AutoInsertNewRow>
 									<EnableStartDrag>true</EnableStartDrag>
 									<EnableDrag>true</EnableDrag>
@@ -694,7 +712,18 @@
 									<RowFilter xsi:nil="true"/>
 									<ContextMenu name="ОшибкиКонтекстноеМеню" id="85"/>
 									<AutoCommandBar name="ОшибкиКоманднаяПанель" id="86">
-										<Autofill>false</Autofill>
+										<ChildItems>
+											<Button name="ОшибкиНайти" id="169">
+												<Type>CommandBarButton</Type>
+												<CommandName>Form.Item.Ошибки.StandardCommand.Find</CommandName>
+												<ExtendedTooltip name="ОшибкиНайтиРасширеннаяПодсказка" id="170"/>
+											</Button>
+											<Button name="ОшибкиОтменитьПоиск" id="171">
+												<Type>CommandBarButton</Type>
+												<CommandName>Form.Item.Ошибки.StandardCommand.CancelSearch</CommandName>
+												<ExtendedTooltip name="ОшибкиОтменитьПоискРасширеннаяПодсказка" id="172"/>
+											</Button>
+										</ChildItems>
 									</AutoCommandBar>
 									<ExtendedTooltip name="ОшибкиРасширеннаяПодсказка" id="87"/>
 									<SearchStringAddition name="ОшибкиСтрокаПоиска" id="88">
