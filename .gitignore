@@ -1,6 +1,6 @@
 *.epf
 temp/*
 build/*
-log.txt
+*.txt
 *.todo
 agentbasedir.json
