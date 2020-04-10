@@ -376,6 +376,16 @@
 							</ToolTip>
 							<ExtendedTooltip name="СтраницаНастройкиРасширеннаяПодсказка" id="163"/>
 							<ChildItems>
+								<CheckBoxField name="СтрогийРежим" id="173">
+									<DataPath>СтрогийРежим</DataPath>
+									<TitleLocation>Right</TitleLocation>
+									<CheckBoxType>Auto</CheckBoxType>
+									<ContextMenu name="СтрогийРежимКонтекстноеМеню" id="174"/>
+									<ExtendedTooltip name="СтрогийРежимРасширеннаяПодсказка" id="175"/>
+									<Events>
+										<Event name="OnChange">СтрогийРежимПриИзменении</Event>
+									</Events>
+								</CheckBoxField>
 								<CheckBoxField name="ИспользоватьКэшАСД" id="164">
 									<DataPath>ИспользоватьКэшАСД</DataPath>
 									<TitleLocation>Right</TitleLocation>
@@ -1337,6 +1347,17 @@
 			<Save>
 				<Field>ИспользоватьКэшАСД</Field>
 			</Save>
+		</Attribute>
+		<Attribute name="СтрогийРежим" id="22">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Строгий режим</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
 		</Attribute>
 		<ConditionalAppearance>
 			<dcsset:item>
