@@ -1,5 +1,5 @@
 ﻿
-$1CPath = "C:\Program Files\1cv8\8.3.15.1778\bin\1cv8.exe"
+$1CPath = "C:\Program Files\1cv8\8.3.13.1809\bin\1cv8.exe"
 if (-not (Test-Path $1CPath)) {
     $1CPath = 'C:\Program Files\1cv8\common\1cestart.exe'
 }
