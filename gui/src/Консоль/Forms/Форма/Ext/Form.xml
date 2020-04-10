@@ -734,7 +734,7 @@
 				</v8:item>
 			</Title>
 			<Type>
-				<v8:Type>cfg:ExternalDataProcessorObject.gui</v8:Type>
+				<v8:Type>cfg:ExternalDataProcessorObject.Консоль</v8:Type>
 			</Type>
 			<MainAttribute>true</MainAttribute>
 		</Attribute>
