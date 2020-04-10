@@ -1,9 +1,8 @@
 
-AttachScript("..\src\BSParser\Ext\ObjectModule.bsl", "BSParser");
-AttachScript(".\TestRunner\src\TestRunner\Ext\ObjectModule.bsl", "TestRunner");
+ПодключитьСценарий("..\src\ПарсерВстроенногоЯзыка\Ext\ObjectModule.bsl", "Парсер");
+ПодключитьСценарий(".\Тестер\src\Тестер\Ext\ObjectModule.bsl", "Тестер");
 
+Парсер = New Парсер;
+Тестер = New Тестер;
 
-BSParser = New BSParser;
-TestRunner = New TestRunner;
-
-TestRunner.Run(BSParser);
+Тестер.Пуск(Парсер);
