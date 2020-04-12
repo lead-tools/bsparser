@@ -194,12 +194,6 @@
 							<ContextMenu name="ЗамерВремениКонтекстноеМеню" id="28"/>
 							<ExtendedTooltip name="ЗамерВремениРасширеннаяПодсказка" id="29"/>
 						</CheckBoxField>
-						<CheckBoxField name="ПоказыватьКомментарии" id="38">
-							<DataPath>ПоказыватьКомментарии</DataPath>
-							<CheckBoxType>Auto</CheckBoxType>
-							<ContextMenu name="ПоказыватьКомментарииКонтекстноеМеню" id="39"/>
-							<ExtendedTooltip name="ПоказыватьКомментарииРасширеннаяПодсказка" id="40"/>
-						</CheckBoxField>
 					</ChildItems>
 				</UsualGroup>
 			</ChildItems>
@@ -879,21 +873,6 @@
 			<Save>
 				<Field>ЗамерВремени</Field>
 			</Save>
-		</Attribute>
-		<Attribute name="ПоказыватьКомментарии" id="12">
-			<Title>
-				<v8:item>
-					<v8:lang>en</v8:lang>
-					<v8:content>Show comments</v8:content>
-				</v8:item>
-				<v8:item>
-					<v8:lang>ru</v8:lang>
-					<v8:content>Показывать комментарии</v8:content>
-				</v8:item>
-			</Title>
-			<Type>
-				<v8:Type>xs:boolean</v8:Type>
-			</Type>
 		</Attribute>
 		<Attribute name="Дерево" id="13">
 			<Title>
