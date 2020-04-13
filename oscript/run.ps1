@@ -1,4 +1,4 @@
-# пример многопоточного анализа для onescript
+﻿# пример многопоточного анализа для onescript
 # каждый поток пишет результат работы плагинов в файлы report_<номер потока>.txt
 
 # папка с выгрузкой конфигурации в файлы
@@ -23,13 +23,13 @@ while ($chunk_i -lt $chunks.Length) {
         if ($null -eq $job -or $job.JobStateInfo.State -ne "Running") {
             if ($null -ne $job) {
                 $result = Receive-Job -Job $job -AutoRemoveJob -Wait
-                #Write-Host $job_i, $result
+                # Write-Host $job_i, $result
             }
+            Write-Progress -Activity "Анализ в $threads потоков" -Status "Прогресс:" -PercentComplete ($chunk_i / $chunks.Length * 100)
             $job = Start-Job -ScriptBlock {
                 Param([string]$workdir, [string]$script, [string]$file, [string]$report)
                 Set-Location $workdir
-                oscript.exe $script $file $report #>"C:\git\bsparser\oscript\log.txt"
-                #return 1
+                oscript.exe $script $file $report
             } -ArgumentList (Get-Location), ".\test4.os", ($chunks[$chunk_i++] -join ";"), "report_$job_i.txt"
             $jobs[$job_i] = $job
         }
