@@ -380,6 +380,13 @@
 										<Event name="OnChange">СтрогийРежимПриИзменении</Event>
 									</Events>
 								</CheckBoxField>
+								<CheckBoxField name="СоздаватьГлобальноеОкружение" id="188">
+									<DataPath>СоздаватьГлобальноеОкружение</DataPath>
+									<TitleLocation>Right</TitleLocation>
+									<CheckBoxType>Auto</CheckBoxType>
+									<ContextMenu name="СоздаватьГлобальноеОкружениеКонтекстноеМеню" id="189"/>
+									<ExtendedTooltip name="СоздаватьГлобальноеОкружениеРасширеннаяПодсказка" id="190"/>
+								</CheckBoxField>
 								<CheckBoxField name="ИспользоватьКэшАСД" id="164">
 									<DataPath>ИспользоватьКэшАСД</DataPath>
 									<TitleLocation>Right</TitleLocation>
@@ -636,29 +643,29 @@
 											<ContextMenu name="ТокеныТокенКонтекстноеМеню" id="142"/>
 											<ExtendedTooltip name="ТокеныТокенРасширеннаяПодсказка" id="143"/>
 										</InputField>
-										<InputField name="ТокеныЛитерал" id="144">
-											<DataPath>Токены.Литерал</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ТокеныЛитералКонтекстноеМеню" id="145"/>
-											<ExtendedTooltip name="ТокеныЛитералРасширеннаяПодсказка" id="146"/>
-										</InputField>
 										<InputField name="ТокеныНомерСтроки" id="147">
 											<DataPath>Токены.НомерСтроки</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ТокеныНомерСтрокиКонтекстноеМеню" id="148"/>
 											<ExtendedTooltip name="ТокеныНомерСтрокиРасширеннаяПодсказка" id="149"/>
 										</InputField>
-										<InputField name="ТокеныПозиция" id="150">
-											<DataPath>Токены.Позиция</DataPath>
+										<InputField name="ТокеныНомерКолонки" id="179">
+											<DataPath>Токены.НомерКолонки</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ТокеныПозицияКонтекстноеМеню" id="151"/>
-											<ExtendedTooltip name="ТокеныПозицияРасширеннаяПодсказка" id="152"/>
+											<ContextMenu name="ТокеныНомерКолонкиКонтекстноеМеню" id="180"/>
+											<ExtendedTooltip name="ТокеныНомерКолонкиРасширеннаяПодсказка" id="181"/>
 										</InputField>
-										<InputField name="ТокеныДлина" id="153">
-											<DataPath>Токены.Длина</DataPath>
+										<InputField name="ТокеныНачало" id="191">
+											<DataPath>Токены.Начало</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ТокеныДлинаКонтекстноеМеню" id="154"/>
-											<ExtendedTooltip name="ТокеныДлинаРасширеннаяПодсказка" id="155"/>
+											<ContextMenu name="ТокеныНачалоКонтекстноеМеню" id="192"/>
+											<ExtendedTooltip name="ТокеныНачалоРасширеннаяПодсказка" id="193"/>
+										</InputField>
+										<InputField name="ТокеныКонец" id="194">
+											<DataPath>Токены.Конец</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ТокеныКонецКонтекстноеМеню" id="195"/>
+											<ExtendedTooltip name="ТокеныКонецРасширеннаяПодсказка" id="196"/>
 										</InputField>
 									</ChildItems>
 								</Table>
@@ -1194,25 +1201,6 @@
 						</v8:StringQualifiers>
 					</Type>
 				</Column>
-				<Column name="Литерал" id="2">
-					<Title>
-						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Lit</v8:content>
-						</v8:item>
-						<v8:item>
-							<v8:lang>ru</v8:lang>
-							<v8:content>Литерал</v8:content>
-						</v8:item>
-					</Title>
-					<Type>
-						<v8:Type>xs:string</v8:Type>
-						<v8:StringQualifiers>
-							<v8:Length>0</v8:Length>
-							<v8:AllowedLength>Variable</v8:AllowedLength>
-						</v8:StringQualifiers>
-					</Type>
-				</Column>
 				<Column name="НомерСтроки" id="3">
 					<Title>
 						<v8:item>
@@ -1233,15 +1221,11 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="Позиция" id="4">
+				<Column name="НомерКолонки" id="6">
 					<Title>
 						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Pos</v8:content>
-						</v8:item>
-						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Позиция</v8:content>
+							<v8:content>Номер колонки</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -1253,15 +1237,27 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="Длина" id="5">
+				<Column name="Начало" id="2">
 					<Title>
 						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Len</v8:content>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Начало</v8:content>
 						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Конец" id="4">
+					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Длина</v8:content>
+							<v8:content>Конец</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -1359,6 +1355,9 @@
 			<Type>
 				<v8:Type>xs:boolean</v8:Type>
 			</Type>
+			<Save>
+				<Field>СтрогийРежим</Field>
+			</Save>
 		</Attribute>
 		<Attribute name="КоличествоОшибок" id="23">
 			<Title>
@@ -1375,6 +1374,35 @@
 					<v8:AllowedSign>Any</v8:AllowedSign>
 				</v8:NumberQualifiers>
 			</Type>
+		</Attribute>
+		<Attribute name="АдресКэшаТокенов" id="24">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Адрес кэша токенов</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:string</v8:Type>
+				<v8:StringQualifiers>
+					<v8:Length>0</v8:Length>
+					<v8:AllowedLength>Variable</v8:AllowedLength>
+				</v8:StringQualifiers>
+			</Type>
+		</Attribute>
+		<Attribute name="СоздаватьГлобальноеОкружение" id="25">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Создавать глобальное окружение</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:boolean</v8:Type>
+			</Type>
+			<Save>
+				<Field>СоздаватьГлобальноеОкружение</Field>
+			</Save>
 		</Attribute>
 		<ConditionalAppearance>
 			<dcsset:item>
