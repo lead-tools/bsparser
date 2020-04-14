@@ -23,7 +23,7 @@
 					<v8:content>Парсер встроенного языка</v8:content>
 				</v8:item>
 			</Synonym>
-			<Comment/>
+			<Comment>https://github.com/lead-tools/bsparser</Comment>
 			<DefaultForm/>
 			<AuxiliaryForm/>
 		</Properties>
