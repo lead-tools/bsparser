@@ -4,6 +4,8 @@
 
 Чат: https://t.me/lead_tools
 
+Видео: [Процесс написания плагина для bsparser](https://www.youtube.com/watch?v=wjDeQ6sFCxE)
+
 Данный проект представляет из себя набор внешних обработок для платформы 1С:Предприятие версии 8.3.13
 
 Обработки совместимы с интерпретатором [OneScript](https://github.com/EvilBeaver/OneScript)
