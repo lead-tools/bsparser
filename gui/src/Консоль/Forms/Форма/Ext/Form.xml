@@ -782,29 +782,59 @@
 										<Event name="Selection">ОшибкиВыбор</Event>
 									</Events>
 									<ChildItems>
-										<InputField name="ОшибкиИсточник" id="176">
+										<InputField name="ОшибкиИсточник" id="201">
 											<DataPath>Ошибки.Источник</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиИсточникКонтекстноеМеню" id="177"/>
-											<ExtendedTooltip name="ОшибкиИсточникРасширеннаяПодсказка" id="178"/>
+											<ContextMenu name="ОшибкиИсточникКонтекстноеМеню" id="202"/>
+											<ExtendedTooltip name="ОшибкиИсточникРасширеннаяПодсказка" id="203"/>
 										</InputField>
-										<InputField name="ОшибкиТекст" id="97">
-											<DataPath>Ошибки.Текст</DataPath>
+										<InputField name="ОшибкиКодОшибки" id="204">
+											<DataPath>Ошибки.КодОшибки</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиТекстКонтекстноеМеню" id="98"/>
-											<ExtendedTooltip name="ОшибкиТекстРасширеннаяПодсказка" id="99"/>
+											<ContextMenu name="ОшибкиКодОшибкиКонтекстноеМеню" id="205"/>
+											<ExtendedTooltip name="ОшибкиКодОшибкиРасширеннаяПодсказка" id="206"/>
 										</InputField>
-										<InputField name="ОшибкиНомерСтроки" id="100">
-											<DataPath>Ошибки.НомерСтроки</DataPath>
+										<InputField name="ОшибкиТекстОшибки" id="207">
+											<DataPath>Ошибки.ТекстОшибки</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиНомерСтрокиКонтекстноеМеню" id="101"/>
-											<ExtendedTooltip name="ОшибкиНомерСтрокиРасширеннаяПодсказка" id="102"/>
+											<ContextMenu name="ОшибкиТекстОшибкиКонтекстноеМеню" id="208"/>
+											<ExtendedTooltip name="ОшибкиТекстОшибкиРасширеннаяПодсказка" id="209"/>
 										</InputField>
-										<InputField name="ОшибкиПозиция" id="103">
-											<DataPath>Ошибки.Позиция</DataPath>
+										<InputField name="ОшибкиПозицияНачала" id="210">
+											<DataPath>Ошибки.ПозицияНачала</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиПозицияКонтекстноеМеню" id="104"/>
-											<ExtendedTooltip name="ОшибкиПозицияРасширеннаяПодсказка" id="105"/>
+											<ContextMenu name="ОшибкиПозицияНачалаКонтекстноеМеню" id="211"/>
+											<ExtendedTooltip name="ОшибкиПозицияНачалаРасширеннаяПодсказка" id="212"/>
+										</InputField>
+										<InputField name="ОшибкиНомерСтрокиНачала" id="213">
+											<DataPath>Ошибки.НомерСтрокиНачала</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ОшибкиНомерСтрокиНачалаКонтекстноеМеню" id="214"/>
+											<ExtendedTooltip name="ОшибкиНомерСтрокиНачалаРасширеннаяПодсказка" id="215"/>
+										</InputField>
+										<InputField name="ОшибкиНомерКолонкиНачала" id="216">
+											<DataPath>Ошибки.НомерКолонкиНачала</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ОшибкиНомерКолонкиНачалаКонтекстноеМеню" id="217"/>
+											<ExtendedTooltip name="ОшибкиНомерКолонкиНачалаРасширеннаяПодсказка" id="218"/>
+										</InputField>
+										<InputField name="ОшибкиПозицияКонца" id="219">
+											<DataPath>Ошибки.ПозицияКонца</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ОшибкиПозицияКонцаКонтекстноеМеню" id="220"/>
+											<ExtendedTooltip name="ОшибкиПозицияКонцаРасширеннаяПодсказка" id="221"/>
+										</InputField>
+										<InputField name="ОшибкиНомерСтрокиКонца" id="222">
+											<DataPath>Ошибки.НомерСтрокиКонца</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ОшибкиНомерСтрокиКонцаКонтекстноеМеню" id="223"/>
+											<ExtendedTooltip name="ОшибкиНомерСтрокиКонцаРасширеннаяПодсказка" id="224"/>
+										</InputField>
+										<InputField name="ОшибкиНомерКолонкиКонца" id="225">
+											<DataPath>Ошибки.НомерКолонкиКонца</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ОшибкиНомерКолонкиКонцаКонтекстноеМеню" id="226"/>
+											<ExtendedTooltip name="ОшибкиНомерКолонкиКонцаРасширеннаяПодсказка" id="227"/>
 										</InputField>
 									</ChildItems>
 								</Table>
@@ -1053,65 +1083,6 @@
 				<v8:Type>v8:ValueTable</v8:Type>
 			</Type>
 			<Columns>
-				<Column name="Текст" id="1">
-					<Title>
-						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Text</v8:content>
-						</v8:item>
-						<v8:item>
-							<v8:lang>ru</v8:lang>
-							<v8:content>Текст</v8:content>
-						</v8:item>
-					</Title>
-					<Type>
-						<v8:Type>xs:string</v8:Type>
-						<v8:StringQualifiers>
-							<v8:Length>0</v8:Length>
-							<v8:AllowedLength>Variable</v8:AllowedLength>
-						</v8:StringQualifiers>
-					</Type>
-				</Column>
-				<Column name="НомерСтроки" id="2">
-					<Title>
-						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Line</v8:content>
-						</v8:item>
-						<v8:item>
-							<v8:lang>ru</v8:lang>
-							<v8:content>Номер строки</v8:content>
-						</v8:item>
-					</Title>
-					<Type>
-						<v8:Type>xs:decimal</v8:Type>
-						<v8:NumberQualifiers>
-							<v8:Digits>10</v8:Digits>
-							<v8:FractionDigits>0</v8:FractionDigits>
-							<v8:AllowedSign>Any</v8:AllowedSign>
-						</v8:NumberQualifiers>
-					</Type>
-				</Column>
-				<Column name="Позиция" id="3">
-					<Title>
-						<v8:item>
-							<v8:lang>en</v8:lang>
-							<v8:content>Pos</v8:content>
-						</v8:item>
-						<v8:item>
-							<v8:lang>ru</v8:lang>
-							<v8:content>Позиция</v8:content>
-						</v8:item>
-					</Title>
-					<Type>
-						<v8:Type>xs:decimal</v8:Type>
-						<v8:NumberQualifiers>
-							<v8:Digits>10</v8:Digits>
-							<v8:FractionDigits>0</v8:FractionDigits>
-							<v8:AllowedSign>Any</v8:AllowedSign>
-						</v8:NumberQualifiers>
-					</Type>
-				</Column>
 				<Column name="Источник" id="4">
 					<Title>
 						<v8:item>
@@ -1125,6 +1096,133 @@
 							<v8:Length>0</v8:Length>
 							<v8:AllowedLength>Variable</v8:AllowedLength>
 						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="КодОшибки" id="1">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Код ошибки</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>0</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="ТекстОшибки" id="2">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Текст ошибки</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="ПозицияНачала" id="3">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Позиция начала</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>0</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="НомерСтрокиНачала" id="5">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Номер строки начала</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="НомерКолонкиНачала" id="6">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Номер колонки начала</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="ПозицияКонца" id="7">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Позиция конца</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>0</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="НомерСтрокиКонца" id="8">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Номер строки конца</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="НомерКолонкиКонца" id="9">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Номер колонки конца</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
 					</Type>
 				</Column>
 			</Columns>
