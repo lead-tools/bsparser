@@ -386,6 +386,9 @@
 									<CheckBoxType>Auto</CheckBoxType>
 									<ContextMenu name="СоздаватьГлобальноеОкружениеКонтекстноеМеню" id="189"/>
 									<ExtendedTooltip name="СоздаватьГлобальноеОкружениеРасширеннаяПодсказка" id="190"/>
+									<Events>
+										<Event name="OnChange">СоздаватьГлобальноеОкружениеПриИзменении</Event>
+									</Events>
 								</CheckBoxField>
 								<CheckBoxField name="ИспользоватьКэшАСД" id="164">
 									<DataPath>ИспользоватьКэшАСД</DataPath>
