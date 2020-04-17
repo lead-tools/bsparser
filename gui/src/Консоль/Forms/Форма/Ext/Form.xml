@@ -327,13 +327,16 @@
 										<ContextMenu name="ПлагиныУправлениеПоискомКонтекстноеМеню" id="121"/>
 										<ExtendedTooltip name="ПлагиныУправлениеПоискомРасширеннаяПодсказка" id="122"/>
 									</SearchControlAddition>
+									<Events>
+										<Event name="BeforeAddRow">ПлагиныПередНачаломДобавления</Event>
+									</Events>
 									<ChildItems>
-										<CheckBoxField name="ПлагиныВыкл" id="156">
-											<DataPath>Плагины.Выкл</DataPath>
+										<CheckBoxField name="ПлагиныВкл" id="156">
+											<DataPath>Плагины.Вкл</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<CheckBoxType>Auto</CheckBoxType>
-											<ContextMenu name="ПлагиныВыклКонтекстноеМеню" id="157"/>
-											<ExtendedTooltip name="ПлагиныВыклРасширеннаяПодсказка" id="158"/>
+											<ContextMenu name="ПлагиныВклКонтекстноеМеню" id="157"/>
+											<ExtendedTooltip name="ПлагиныВклРасширеннаяПодсказка" id="158"/>
 										</CheckBoxField>
 										<InputField name="ПлагиныПуть" id="123">
 											<DataPath>Плагины.Путь</DataPath>
@@ -345,6 +348,16 @@
 											<Events>
 												<Event name="StartChoice">ПлагиныПутьНачалоВыбора</Event>
 												<Event name="Opening">ПлагиныПутьОткрытие</Event>
+											</Events>
+										</InputField>
+										<InputField name="ПлагиныПутьПараметров" id="228">
+											<DataPath>Плагины.ПутьПараметров</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ChoiceButton>true</ChoiceButton>
+											<ContextMenu name="ПлагиныПутьПараметровКонтекстноеМеню" id="229"/>
+											<ExtendedTooltip name="ПлагиныПутьПараметровРасширеннаяПодсказка" id="230"/>
+											<Events>
+												<Event name="StartChoice">ПлагиныПутьПараметровНачалоВыбора</Event>
 											</Events>
 										</InputField>
 									</ChildItems>
@@ -1264,7 +1277,7 @@
 						</v8:StringQualifiers>
 					</Type>
 				</Column>
-				<Column name="Выкл" id="2">
+				<Column name="Вкл" id="2">
 					<Title>
 						<v8:item>
 							<v8:lang>en</v8:lang>
@@ -1272,11 +1285,26 @@
 						</v8:item>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Выкл</v8:content>
+							<v8:content>Вкл</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
 						<v8:Type>xs:boolean</v8:Type>
+					</Type>
+				</Column>
+				<Column name="ПутьПараметров" id="3">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Путь параметров</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
 					</Type>
 				</Column>
 			</Columns>
@@ -1543,9 +1571,9 @@
 				</dcsset:selection>
 				<dcsset:filter>
 					<dcsset:item xsi:type="dcsset:FilterItemComparison">
-						<dcsset:left xsi:type="dcscor:Field">Плагины.Выкл</dcsset:left>
+						<dcsset:left xsi:type="dcscor:Field">Плагины.Вкл</dcsset:left>
 						<dcsset:comparisonType>Equal</dcsset:comparisonType>
-						<dcsset:right xsi:type="xs:boolean">true</dcsset:right>
+						<dcsset:right xsi:type="xs:boolean">false</dcsset:right>
 					</dcsset:item>
 				</dcsset:filter>
 				<dcsset:appearance>
