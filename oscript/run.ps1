@@ -10,7 +10,7 @@ $chunks = for($i = 0; $i -lt $files.length; $i += $chunk_size){, $files[$i..($i+
 $threads = 6
 
 for ($i = 0; $i -lt $threads; $i++) {
-    New-Item "report_$i.txt" -Force
+    New-Item "report_$i.txt" -Force | Out-Null
 }
 
 $jobs = @($null) * $threads
