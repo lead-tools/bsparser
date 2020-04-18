@@ -1,7 +1,7 @@
 ﻿
 // MIT License
 
-// Copyright (c) 2019 Tsukanov Alexander
+// Copyright (c) 2020 Tsukanov Alexander
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -72,12 +72,12 @@
 Перем ТочкиВходаМетодов;
 
 Процедура Инициализировать(Парсер)
-		
+
 	Узлы = Парсер.Узлы();
 	Токены = Парсер.Токены();
 	Исходник = Парсер.Исходник();
 	ТаблицаТокенов = Парсер.ТаблицаТокенов();
-	
+
 	РазделКоманд.Очистить();
 	РазделКонстант.Очистить();
 	РазделПеременных.Очистить();
