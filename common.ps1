@@ -7,6 +7,11 @@ if (-not (Test-Path $1CPath)) {
     $1CPath = 'C:\Program Files (x86)\1cv8\common\1cestart.exe'
 }
 
+if (-not (Test-Path '.\temp')) {
+    $ArgList = @('CREATEINFOBASE', 'File=".\temp\"', '/UseTemplate temp.dt')
+    Start-Process $1CPath -ArgumentList $ArgList
+}
+
 function complete($percent, $activity) {
     Write-Progress -Activity $activity -Status "Прогресс:" -PercentComplete $percent
 }
