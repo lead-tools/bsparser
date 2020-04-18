@@ -68,6 +68,8 @@
 
 Пример выгрузки ошибок в [SonarQube](https://www.sonarqube.org/): [test7.os](https://github.com/lead-tools/bsparser/blob/master/oscript/test7.os)
 
+![sonar](img/SQ.png)
+
 ## Цели проекта
 
 * Создать удобный инструмент для работы с исходным кодом на языке 1С как с данными
