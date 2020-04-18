@@ -801,17 +801,17 @@
 											<ContextMenu name="ОшибкиИсточникКонтекстноеМеню" id="202"/>
 											<ExtendedTooltip name="ОшибкиИсточникРасширеннаяПодсказка" id="203"/>
 										</InputField>
-										<InputField name="ОшибкиКодОшибки" id="204">
-											<DataPath>Ошибки.КодОшибки</DataPath>
+										<InputField name="ОшибкиКод" id="204">
+											<DataPath>Ошибки.Код</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиКодОшибкиКонтекстноеМеню" id="205"/>
-											<ExtendedTooltip name="ОшибкиКодОшибкиРасширеннаяПодсказка" id="206"/>
+											<ContextMenu name="ОшибкиКодКонтекстноеМеню" id="205"/>
+											<ExtendedTooltip name="ОшибкиКодРасширеннаяПодсказка" id="206"/>
 										</InputField>
-										<InputField name="ОшибкиТекстОшибки" id="207">
-											<DataPath>Ошибки.ТекстОшибки</DataPath>
+										<InputField name="ОшибкиТекст" id="207">
+											<DataPath>Ошибки.Текст</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиТекстОшибкиКонтекстноеМеню" id="208"/>
-											<ExtendedTooltip name="ОшибкиТекстОшибкиРасширеннаяПодсказка" id="209"/>
+											<ContextMenu name="ОшибкиТекстКонтекстноеМеню" id="208"/>
+											<ExtendedTooltip name="ОшибкиТекстРасширеннаяПодсказка" id="209"/>
 										</InputField>
 										<InputField name="ОшибкиПозицияНачала" id="210">
 											<DataPath>Ошибки.ПозицияНачала</DataPath>
@@ -1111,7 +1111,7 @@
 						</v8:StringQualifiers>
 					</Type>
 				</Column>
-				<Column name="КодОшибки" id="1">
+				<Column name="Код" id="1">
 					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
@@ -1127,7 +1127,7 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="ТекстОшибки" id="2">
+				<Column name="Текст" id="2">
 					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
