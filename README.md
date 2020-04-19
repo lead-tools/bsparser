@@ -66,6 +66,8 @@
 
 Пример на OneScript, демонстрирующий прогон проверок исходного кода: [test.os](https://github.com/lead-tools/bsparser/blob/master/oscript/test.os)
 
+Пример на OneScript, демонстрирующий автоматическое исправление исходного кода: [test8.os](https://github.com/lead-tools/bsparser/blob/master/oscript/test8.os)
+
 Пример выгрузки ошибок в [SonarQube](https://www.sonarqube.org/): [test7.os](https://github.com/lead-tools/bsparser/blob/master/oscript/test7.os)
 
 ![sonar](img/SQ.png)
