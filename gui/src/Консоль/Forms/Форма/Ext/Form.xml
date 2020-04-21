@@ -153,6 +153,19 @@
 								<Value xsi:type="xs:string">Бакенд</Value>
 							</xr:Value>
 						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation>
+									<v8:item>
+										<v8:lang>ru</v8:lang>
+										<v8:content>Замены</v8:content>
+									</v8:item>
+								</Presentation>
+								<Value xsi:type="xs:string">Замены</Value>
+							</xr:Value>
+						</xr:Item>
 					</ChoiceList>
 					<ContextMenu name="ВыводКонтекстноеМеню" id="15"/>
 					<ExtendedTooltip name="ВыводРасширеннаяПодсказка" id="16"/>
@@ -635,11 +648,13 @@
 										<ChildItems>
 											<Button name="ТокеныНайти" id="197">
 												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
 												<CommandName>Form.Item.Токены.StandardCommand.Find</CommandName>
 												<ExtendedTooltip name="ТокеныНайтиРасширеннаяПодсказка" id="198"/>
 											</Button>
 											<Button name="ТокеныОтменитьПоиск" id="199">
 												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
 												<CommandName>Form.Item.Токены.StandardCommand.CancelSearch</CommandName>
 												<ExtendedTooltip name="ТокеныОтменитьПоискРасширеннаяПодсказка" id="200"/>
 											</Button>
@@ -764,11 +779,13 @@
 										<ChildItems>
 											<Button name="ОшибкиНайти" id="169">
 												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
 												<CommandName>Form.Item.Ошибки.StandardCommand.Find</CommandName>
 												<ExtendedTooltip name="ОшибкиНайтиРасширеннаяПодсказка" id="170"/>
 											</Button>
 											<Button name="ОшибкиОтменитьПоиск" id="171">
 												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
 												<CommandName>Form.Item.Ошибки.StandardCommand.CancelSearch</CommandName>
 												<ExtendedTooltip name="ОшибкиОтменитьПоискРасширеннаяПодсказка" id="172"/>
 											</Button>
@@ -856,6 +873,106 @@
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ОшибкиНомерКолонкиКонцаКонтекстноеМеню" id="226"/>
 											<ExtendedTooltip name="ОшибкиНомерКолонкиКонцаРасширеннаяПодсказка" id="227"/>
+										</InputField>
+									</ChildItems>
+								</Table>
+							</ChildItems>
+						</Page>
+						<Page name="СтраницаЗамены" id="233">
+							<Title>
+								<v8:item>
+									<v8:lang>ru</v8:lang>
+									<v8:content>Замены</v8:content>
+								</v8:item>
+							</Title>
+							<ToolTip>
+								<v8:item>
+									<v8:lang>ru</v8:lang>
+									<v8:content>Страница замены</v8:content>
+								</v8:item>
+							</ToolTip>
+							<TitleDataPath>КоличествоЗамен</TitleDataPath>
+							<ExtendedTooltip name="СтраницаЗаменыРасширеннаяПодсказка" id="234"/>
+							<ChildItems>
+								<Table name="Замены" id="235">
+									<Representation>List</Representation>
+									<ReadOnly>true</ReadOnly>
+									<ChangeRowSet>false</ChangeRowSet>
+									<ChangeRowOrder>false</ChangeRowOrder>
+									<AutoInsertNewRow>true</AutoInsertNewRow>
+									<EnableStartDrag>true</EnableStartDrag>
+									<EnableDrag>true</EnableDrag>
+									<DataPath>Замены</DataPath>
+									<RowFilter xsi:nil="true"/>
+									<ContextMenu name="ЗаменыКонтекстноеМеню" id="236"/>
+									<AutoCommandBar name="ЗаменыКоманднаяПанель" id="237">
+										<ChildItems>
+											<Button name="ЗаменыНайти" id="260">
+												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
+												<CommandName>Form.Item.Замены.StandardCommand.Find</CommandName>
+												<ExtendedTooltip name="ЗаменыНайтиРасширеннаяПодсказка" id="261"/>
+											</Button>
+											<Button name="ЗаменыОтменитьПоиск" id="262">
+												<Type>CommandBarButton</Type>
+												<Representation>PictureAndText</Representation>
+												<CommandName>Form.Item.Замены.StandardCommand.CancelSearch</CommandName>
+												<ExtendedTooltip name="ЗаменыОтменитьПоискРасширеннаяПодсказка" id="263"/>
+											</Button>
+										</ChildItems>
+									</AutoCommandBar>
+									<ExtendedTooltip name="ЗаменыРасширеннаяПодсказка" id="238"/>
+									<SearchStringAddition name="ЗаменыСтрокаПоиска" id="239">
+										<AdditionSource>
+											<Item>Замены</Item>
+											<Type>SearchStringRepresentation</Type>
+										</AdditionSource>
+										<ContextMenu name="ЗаменыСтрокаПоискаКонтекстноеМеню" id="240"/>
+										<ExtendedTooltip name="ЗаменыСтрокаПоискаРасширеннаяПодсказка" id="241"/>
+									</SearchStringAddition>
+									<ViewStatusAddition name="ЗаменыСостояниеПросмотра" id="242">
+										<AdditionSource>
+											<Item>Замены</Item>
+											<Type>ViewStatusRepresentation</Type>
+										</AdditionSource>
+										<ContextMenu name="ЗаменыСостояниеПросмотраКонтекстноеМеню" id="243"/>
+										<ExtendedTooltip name="ЗаменыСостояниеПросмотраРасширеннаяПодсказка" id="244"/>
+									</ViewStatusAddition>
+									<SearchControlAddition name="ЗаменыУправлениеПоиском" id="245">
+										<AdditionSource>
+											<Item>Замены</Item>
+											<Type>SearchControl</Type>
+										</AdditionSource>
+										<ContextMenu name="ЗаменыУправлениеПоискомКонтекстноеМеню" id="246"/>
+										<ExtendedTooltip name="ЗаменыУправлениеПоискомРасширеннаяПодсказка" id="247"/>
+									</SearchControlAddition>
+									<Events>
+										<Event name="Selection">ЗаменыВыбор</Event>
+									</Events>
+									<ChildItems>
+										<InputField name="ЗаменыИсточник" id="248">
+											<DataPath>Замены.Источник</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ЗаменыИсточникКонтекстноеМеню" id="249"/>
+											<ExtendedTooltip name="ЗаменыИсточникРасширеннаяПодсказка" id="250"/>
+										</InputField>
+										<InputField name="ЗаменыНачало" id="251">
+											<DataPath>Замены.Начало</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ЗаменыНачалоКонтекстноеМеню" id="252"/>
+											<ExtendedTooltip name="ЗаменыНачалоРасширеннаяПодсказка" id="253"/>
+										</InputField>
+										<InputField name="ЗаменыКонец" id="254">
+											<DataPath>Замены.Конец</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ЗаменыКонецКонтекстноеМеню" id="255"/>
+											<ExtendedTooltip name="ЗаменыКонецРасширеннаяПодсказка" id="256"/>
+										</InputField>
+										<InputField name="ЗаменыТекст" id="257">
+											<DataPath>Замены.Текст</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ЗаменыТекстКонтекстноеМеню" id="258"/>
+											<ExtendedTooltip name="ЗаменыТекстРасширеннаяПодсказка" id="259"/>
 										</InputField>
 									</ChildItems>
 								</Table>
@@ -1565,6 +1682,97 @@
 				<v8:Type>xs:decimal</v8:Type>
 				<v8:NumberQualifiers>
 					<v8:Digits>10</v8:Digits>
+					<v8:FractionDigits>0</v8:FractionDigits>
+					<v8:AllowedSign>Any</v8:AllowedSign>
+				</v8:NumberQualifiers>
+			</Type>
+		</Attribute>
+		<Attribute name="Замены" id="27">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Замены</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>v8:ValueTable</v8:Type>
+			</Type>
+			<Columns>
+				<Column name="Источник" id="1">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Источник</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
+					</Type>
+				</Column>
+				<Column name="Начало" id="2">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Начало</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Конец" id="3">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Конец</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Текст" id="4">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Текст</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:string</v8:Type>
+						<v8:StringQualifiers>
+							<v8:Length>0</v8:Length>
+							<v8:AllowedLength>Variable</v8:AllowedLength>
+						</v8:StringQualifiers>
+					</Type>
+				</Column>
+			</Columns>
+		</Attribute>
+		<Attribute name="КоличествоЗамен" id="28">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Количество замен</v8:content>
+				</v8:item>
+			</Title>
+			<Type>
+				<v8:Type>xs:decimal</v8:Type>
+				<v8:NumberQualifiers>
+					<v8:Digits>0</v8:Digits>
 					<v8:FractionDigits>0</v8:FractionDigits>
 					<v8:AllowedSign>Any</v8:AllowedSign>
 				</v8:NumberQualifiers>
