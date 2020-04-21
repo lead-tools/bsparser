@@ -463,7 +463,15 @@
 								<TextDocumentField name="Результат" id="6">
 									<DataPath>Результат</DataPath>
 									<TitleLocation>None</TitleLocation>
-									<ContextMenu name="РезультатКонтекстноеМеню" id="7"/>
+									<ContextMenu name="РезультатКонтекстноеМеню" id="7">
+										<ChildItems>
+											<Button name="РезультатКонтекстноеМенюСравнитьСИсходником" id="231">
+												<Type>CommandBarButton</Type>
+												<CommandName>Form.Command.СравнитьСИсходником</CommandName>
+												<ExtendedTooltip name="РезультатКонтекстноеМенюСравнитьСИсходникомРасширеннаяПодсказка" id="232"/>
+											</Button>
+										</ChildItems>
+									</ContextMenu>
 									<ExtendedTooltip name="РезультатРасширеннаяПодсказка" id="8"/>
 								</TextDocumentField>
 							</ChildItems>
@@ -1605,6 +1613,21 @@
 			</ToolTip>
 			<Action>КомандаВыполнить</Action>
 			<CurrentRowUse>DontUse</CurrentRowUse>
+		</Command>
+		<Command name="СравнитьСИсходником" id="2">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Сравнить с исходником</v8:content>
+				</v8:item>
+			</Title>
+			<ToolTip>
+				<v8:item>
+					<v8:lang>en</v8:lang>
+					<v8:content>Сравнить с исходником</v8:content>
+				</v8:item>
+			</ToolTip>
+			<Action>КомандаСравнитьСИсходником</Action>
 		</Command>
 	</Commands>
 </Form>
