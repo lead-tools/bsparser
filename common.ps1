@@ -8,7 +8,7 @@ if (-not (Test-Path $1CPath)) {
 }
 
 if (-not (Test-Path '.\temp')) {
-    $ArgList = @('CREATEINFOBASE', 'File=".\temp\"', '/UseTemplate temp.dt')
+    $ArgList = @('CREATEINFOBASE', 'File=".\temp\"')
     Start-Process $1CPath -ArgumentList $ArgList
 }
 
@@ -44,7 +44,6 @@ function run ($command, $description){
         $ArgList =  "DESIGNER", "/DumpResult designer_result.txt", "/Out designer_out.txt",
                     "/DisableStartupDialogs",
                     "/F .\temp\",
-                    "/N Admin",
                     "/$command `".$($item.Value[1])\$($item.Name).xml`" `".\build\$($item.Value[0])\$($item.Name).epf`""
         Start-Process $1CPath -ArgumentList $ArgList -Wait
         if ((Get-Content .\designer_result.txt) -ne '0') {
