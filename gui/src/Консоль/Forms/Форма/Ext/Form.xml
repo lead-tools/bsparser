@@ -483,6 +483,11 @@
 												<CommandName>Form.Command.СравнитьСИсходником</CommandName>
 												<ExtendedTooltip name="РезультатКонтекстноеМенюСравнитьСИсходникомРасширеннаяПодсказка" id="232"/>
 											</Button>
+											<Button name="РезультатКонтекстноеМенюСравнитьСИсходникомWinMerge" id="267">
+												<Type>CommandBarButton</Type>
+												<CommandName>Form.Command.СравнитьСИсходникомWinMerge</CommandName>
+												<ExtendedTooltip name="РезультатКонтекстноеМенюСравнитьСИсходникомWinMergeРасширеннаяПодсказка" id="268"/>
+											</Button>
 										</ChildItems>
 									</ContextMenu>
 									<ExtendedTooltip name="РезультатРасширеннаяПодсказка" id="8"/>
@@ -1858,6 +1863,21 @@
 				</v8:item>
 			</ToolTip>
 			<Action>КомандаСравнитьСИсходником</Action>
+		</Command>
+		<Command name="СравнитьСИсходникомWinMerge" id="3">
+			<Title>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Сравнить с исходником (WinMerge)</v8:content>
+				</v8:item>
+			</Title>
+			<ToolTip>
+				<v8:item>
+					<v8:lang>ru</v8:lang>
+					<v8:content>Сравнить с исходником win merge</v8:content>
+				</v8:item>
+			</ToolTip>
+			<Action>КомандаСравнитьСИсходникомWinMerge</Action>
 		</Command>
 	</Commands>
 </Form>
