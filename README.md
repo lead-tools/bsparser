@@ -2,7 +2,7 @@
 
 ## Парсер встроенного языка платформы 1С:Предприятие 8
 
-Чат: https://t.me/lead_tools
+Чат (инвайт): https://t.me/joinchat/Bai7Z1I5G5ZmrtzkTLZ28Q
 
 Видео: [Процесс написания плагина для bsparser](https://www.youtube.com/watch?v=wjDeQ6sFCxE)
 
