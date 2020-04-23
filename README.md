@@ -2,7 +2,9 @@
 
 ## Парсер встроенного языка платформы 1С:Предприятие 8
 
-Чат (инвайт): https://t.me/joinchat/Bai7Z1I5G5ZmrtzkTLZ28Q
+По всем вопросам можно обращаться в личку: https://t.me/astsukanov
+
+Приватный чат (инвайт): https://t.me/joinchat/Bai7Z1I5G5ZmrtzkTLZ28Q
 
 Видео: [Процесс написания плагина для bsparser](https://www.youtube.com/watch?v=wjDeQ6sFCxE)
 
