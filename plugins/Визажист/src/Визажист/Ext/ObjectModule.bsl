@@ -63,6 +63,7 @@
 	|table {
 	|    border-spacing: 0;
 	|    border-collapse: collapse;
+	|    tab-size: 4;
 	|}
 	|
 	|.linum {
