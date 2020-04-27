@@ -794,6 +794,12 @@
 										<Event name="Selection">ТокеныВыбор</Event>
 									</Events>
 									<ChildItems>
+										<InputField name="ТокеныИндекс" id="272">
+											<DataPath>Токены.Индекс</DataPath>
+											<EditMode>EnterOnInput</EditMode>
+											<ContextMenu name="ТокеныИндексКонтекстноеМеню" id="273"/>
+											<ExtendedTooltip name="ТокеныИндексРасширеннаяПодсказка" id="274"/>
+										</InputField>
 										<InputField name="ТокеныТокен" id="141">
 											<DataPath>Токены.Токен</DataPath>
 											<EditMode>EnterOnInput</EditMode>
@@ -1548,6 +1554,22 @@
 						<v8:item>
 							<v8:lang>ru</v8:lang>
 							<v8:content>Длина</v8:content>
+						</v8:item>
+					</Title>
+					<Type>
+						<v8:Type>xs:decimal</v8:Type>
+						<v8:NumberQualifiers>
+							<v8:Digits>10</v8:Digits>
+							<v8:FractionDigits>0</v8:FractionDigits>
+							<v8:AllowedSign>Any</v8:AllowedSign>
+						</v8:NumberQualifiers>
+					</Type>
+				</Column>
+				<Column name="Индекс" id="4">
+					<Title>
+						<v8:item>
+							<v8:lang>ru</v8:lang>
+							<v8:content>Индекс</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
