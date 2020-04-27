@@ -691,17 +691,17 @@
 											<ContextMenu name="ЗаменыИсточникКонтекстноеМеню" id="249"/>
 											<ExtendedTooltip name="ЗаменыИсточникРасширеннаяПодсказка" id="250"/>
 										</InputField>
-										<InputField name="ЗаменыНачало" id="251">
-											<DataPath>Замены.Начало</DataPath>
+										<InputField name="ЗаменыПозиция" id="251">
+											<DataPath>Замены.Позиция</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ЗаменыНачалоКонтекстноеМеню" id="252"/>
-											<ExtendedTooltip name="ЗаменыНачалоРасширеннаяПодсказка" id="253"/>
+											<ContextMenu name="ЗаменыПозицияКонтекстноеМеню" id="252"/>
+											<ExtendedTooltip name="ЗаменыПозицияРасширеннаяПодсказка" id="253"/>
 										</InputField>
-										<InputField name="ЗаменыКонец" id="254">
-											<DataPath>Замены.Конец</DataPath>
+										<InputField name="ЗаменыДлина" id="254">
+											<DataPath>Замены.Длина</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ЗаменыКонецКонтекстноеМеню" id="255"/>
-											<ExtendedTooltip name="ЗаменыКонецРасширеннаяПодсказка" id="256"/>
+											<ContextMenu name="ЗаменыДлинаКонтекстноеМеню" id="255"/>
+											<ExtendedTooltip name="ЗаменыДлинаРасширеннаяПодсказка" id="256"/>
 										</InputField>
 										<InputField name="ЗаменыТекст" id="257">
 											<DataPath>Замены.Текст</DataPath>
@@ -812,17 +812,11 @@
 											<ContextMenu name="ТокеныНомерКолонкиКонтекстноеМеню" id="180"/>
 											<ExtendedTooltip name="ТокеныНомерКолонкиРасширеннаяПодсказка" id="181"/>
 										</InputField>
-										<InputField name="ТокеныНачало" id="191">
-											<DataPath>Токены.Начало</DataPath>
+										<InputField name="ТокеныПозиция" id="191">
+											<DataPath>Токены.Позиция</DataPath>
 											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ТокеныНачалоКонтекстноеМеню" id="192"/>
-											<ExtendedTooltip name="ТокеныНачалоРасширеннаяПодсказка" id="193"/>
-										</InputField>
-										<InputField name="ТокеныКонец" id="194">
-											<DataPath>Токены.Конец</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ТокеныКонецКонтекстноеМеню" id="195"/>
-											<ExtendedTooltip name="ТокеныКонецРасширеннаяПодсказка" id="196"/>
+											<ContextMenu name="ТокеныПозицияКонтекстноеМеню" id="192"/>
+											<ExtendedTooltip name="ТокеныПозицияРасширеннаяПодсказка" id="193"/>
 										</InputField>
 										<InputField name="ТокеныДлина" id="264">
 											<DataPath>Токены.Длина</DataPath>
@@ -1533,27 +1527,11 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="Начало" id="2">
+				<Column name="Позиция" id="2">
 					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Начало</v8:content>
-						</v8:item>
-					</Title>
-					<Type>
-						<v8:Type>xs:decimal</v8:Type>
-						<v8:NumberQualifiers>
-							<v8:Digits>10</v8:Digits>
-							<v8:FractionDigits>0</v8:FractionDigits>
-							<v8:AllowedSign>Any</v8:AllowedSign>
-						</v8:NumberQualifiers>
-					</Type>
-				</Column>
-				<Column name="Конец" id="4">
-					<Title>
-						<v8:item>
-							<v8:lang>ru</v8:lang>
-							<v8:content>Конец</v8:content>
+							<v8:content>Позиция</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -1758,11 +1736,11 @@
 						</v8:StringQualifiers>
 					</Type>
 				</Column>
-				<Column name="Начало" id="2">
+				<Column name="Позиция" id="2">
 					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Начало</v8:content>
+							<v8:content>Позиция</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
@@ -1774,11 +1752,11 @@
 						</v8:NumberQualifiers>
 					</Type>
 				</Column>
-				<Column name="Конец" id="3">
+				<Column name="Длина" id="3">
 					<Title>
 						<v8:item>
 							<v8:lang>ru</v8:lang>
-							<v8:content>Конец</v8:content>
+							<v8:content>Длина</v8:content>
 						</v8:item>
 					</Title>
 					<Type>
