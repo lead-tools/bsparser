@@ -1,6 +1,9 @@
 html {
 	scroll-behavior: smooth;
 	margin-bottom: 25%;
+	max-width: 950px;
+	/* margin: auto; */
+	margin-left: 50px;
 }
 
 body {
@@ -23,7 +26,7 @@ h2 {
 
 pre {
 	background: #dce5e9;
-	width: 50%;
+	width: 100%;
 	padding: 15px;
 	overflow: auto;
 	min-width: 80ch
