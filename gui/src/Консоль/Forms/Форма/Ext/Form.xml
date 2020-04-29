@@ -396,6 +396,11 @@
 							</ToolTip>
 							<ExtendedTooltip name="СтраницаНастройкиРасширеннаяПодсказка" id="163"/>
 							<ChildItems>
+								<Button name="ИзменитьФорму" id="287">
+									<Type>UsualButton</Type>
+									<CommandName>Form.StandardCommand.CustomizeForm</CommandName>
+									<ExtendedTooltip name="ИзменитьФормуРасширеннаяПодсказка" id="288"/>
+								</Button>
 								<CheckBoxField name="СтрогийРежим" id="173">
 									<DataPath>СтрогийРежим</DataPath>
 									<TitleLocation>Right</TitleLocation>
@@ -931,67 +936,172 @@
 										<Event name="Selection">ОшибкиВыбор</Event>
 									</Events>
 									<ChildItems>
-										<InputField name="ОшибкиИсточник" id="201">
-											<DataPath>Ошибки.Источник</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиИсточникКонтекстноеМеню" id="202"/>
-											<ExtendedTooltip name="ОшибкиИсточникРасширеннаяПодсказка" id="203"/>
-										</InputField>
-										<InputField name="ОшибкиКод" id="204">
-											<DataPath>Ошибки.Код</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиКодКонтекстноеМеню" id="205"/>
-											<ExtendedTooltip name="ОшибкиКодРасширеннаяПодсказка" id="206"/>
-										</InputField>
+										<ColumnGroup name="ОшибкиГруппаИсточник" id="279">
+											<Title>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа источник</v8:content>
+												</v8:item>
+											</Title>
+											<ToolTip>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа источник</v8:content>
+												</v8:item>
+											</ToolTip>
+											<ExtendedTooltip name="ОшибкиГруппаИсточникРасширеннаяПодсказка" id="280"/>
+											<ChildItems>
+												<InputField name="ОшибкиИсточник" id="201">
+													<DataPath>Ошибки.Источник</DataPath>
+													<EditMode>EnterOnInput</EditMode>
+													<ContextMenu name="ОшибкиИсточникКонтекстноеМеню" id="202"/>
+													<ExtendedTooltip name="ОшибкиИсточникРасширеннаяПодсказка" id="203"/>
+												</InputField>
+												<ColumnGroup name="ОшибкиГруппаКодЗамена" id="285">
+													<Title>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа код замена</v8:content>
+														</v8:item>
+													</Title>
+													<ToolTip>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа код замена</v8:content>
+														</v8:item>
+													</ToolTip>
+													<Group>Horizontal</Group>
+													<ExtendedTooltip name="ОшибкиГруппаКодЗаменаРасширеннаяПодсказка" id="286"/>
+													<ChildItems>
+														<InputField name="ОшибкиКод" id="204">
+															<DataPath>Ошибки.Код</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<ContextMenu name="ОшибкиКодКонтекстноеМеню" id="205"/>
+															<ExtendedTooltip name="ОшибкиКодРасширеннаяПодсказка" id="206"/>
+														</InputField>
+														<CheckBoxField name="ОшибкиЕстьЗамена" id="269">
+															<DataPath>Ошибки.ЕстьЗамена</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<CheckBoxType>Auto</CheckBoxType>
+															<ContextMenu name="ОшибкиЕстьЗаменаКонтекстноеМеню" id="270"/>
+															<ExtendedTooltip name="ОшибкиЕстьЗаменаРасширеннаяПодсказка" id="271"/>
+														</CheckBoxField>
+													</ChildItems>
+												</ColumnGroup>
+											</ChildItems>
+										</ColumnGroup>
 										<InputField name="ОшибкиТекст" id="207">
 											<DataPath>Ошибки.Текст</DataPath>
 											<EditMode>EnterOnInput</EditMode>
 											<ContextMenu name="ОшибкиТекстКонтекстноеМеню" id="208"/>
 											<ExtendedTooltip name="ОшибкиТекстРасширеннаяПодсказка" id="209"/>
 										</InputField>
-										<InputField name="ОшибкиПозицияНачала" id="210">
-											<DataPath>Ошибки.ПозицияНачала</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиПозицияНачалаКонтекстноеМеню" id="211"/>
-											<ExtendedTooltip name="ОшибкиПозицияНачалаРасширеннаяПодсказка" id="212"/>
-										</InputField>
-										<InputField name="ОшибкиНомерСтрокиНачала" id="213">
-											<DataPath>Ошибки.НомерСтрокиНачала</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиНомерСтрокиНачалаКонтекстноеМеню" id="214"/>
-											<ExtendedTooltip name="ОшибкиНомерСтрокиНачалаРасширеннаяПодсказка" id="215"/>
-										</InputField>
-										<InputField name="ОшибкиНомерКолонкиНачала" id="216">
-											<DataPath>Ошибки.НомерКолонкиНачала</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиНомерКолонкиНачалаКонтекстноеМеню" id="217"/>
-											<ExtendedTooltip name="ОшибкиНомерКолонкиНачалаРасширеннаяПодсказка" id="218"/>
-										</InputField>
-										<InputField name="ОшибкиПозицияКонца" id="219">
-											<DataPath>Ошибки.ПозицияКонца</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиПозицияКонцаКонтекстноеМеню" id="220"/>
-											<ExtendedTooltip name="ОшибкиПозицияКонцаРасширеннаяПодсказка" id="221"/>
-										</InputField>
-										<InputField name="ОшибкиНомерСтрокиКонца" id="222">
-											<DataPath>Ошибки.НомерСтрокиКонца</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиНомерСтрокиКонцаКонтекстноеМеню" id="223"/>
-											<ExtendedTooltip name="ОшибкиНомерСтрокиКонцаРасширеннаяПодсказка" id="224"/>
-										</InputField>
-										<InputField name="ОшибкиНомерКолонкиКонца" id="225">
-											<DataPath>Ошибки.НомерКолонкиКонца</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<ContextMenu name="ОшибкиНомерКолонкиКонцаКонтекстноеМеню" id="226"/>
-											<ExtendedTooltip name="ОшибкиНомерКолонкиКонцаРасширеннаяПодсказка" id="227"/>
-										</InputField>
-										<CheckBoxField name="ОшибкиЕстьЗамена" id="269">
-											<DataPath>Ошибки.ЕстьЗамена</DataPath>
-											<EditMode>EnterOnInput</EditMode>
-											<CheckBoxType>Auto</CheckBoxType>
-											<ContextMenu name="ОшибкиЕстьЗаменаКонтекстноеМеню" id="270"/>
-											<ExtendedTooltip name="ОшибкиЕстьЗаменаРасширеннаяПодсказка" id="271"/>
-										</CheckBoxField>
+										<ColumnGroup name="ОшибкиГруппаНачало" id="275">
+											<Title>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа начало</v8:content>
+												</v8:item>
+											</Title>
+											<ToolTip>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа начало</v8:content>
+												</v8:item>
+											</ToolTip>
+											<ExtendedTooltip name="ОшибкиГруппаНачалоРасширеннаяПодсказка" id="276"/>
+											<ChildItems>
+												<InputField name="ОшибкиПозицияНачала" id="210">
+													<DataPath>Ошибки.ПозицияНачала</DataPath>
+													<EditMode>EnterOnInput</EditMode>
+													<ContextMenu name="ОшибкиПозицияНачалаКонтекстноеМеню" id="211"/>
+													<ExtendedTooltip name="ОшибкиПозицияНачалаРасширеннаяПодсказка" id="212"/>
+												</InputField>
+												<ColumnGroup name="ОшибкиГруппаСтрокаКолонкаНачала" id="281">
+													<Title>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа строка колонка начала</v8:content>
+														</v8:item>
+													</Title>
+													<ToolTip>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа строка колонка начала</v8:content>
+														</v8:item>
+													</ToolTip>
+													<Group>Horizontal</Group>
+													<ExtendedTooltip name="ОшибкиГруппаСтрокаКолонкаНачалаРасширеннаяПодсказка" id="282"/>
+													<ChildItems>
+														<InputField name="ОшибкиНомерСтрокиНачала" id="213">
+															<DataPath>Ошибки.НомерСтрокиНачала</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<ContextMenu name="ОшибкиНомерСтрокиНачалаКонтекстноеМеню" id="214"/>
+															<ExtendedTooltip name="ОшибкиНомерСтрокиНачалаРасширеннаяПодсказка" id="215"/>
+														</InputField>
+														<InputField name="ОшибкиНомерКолонкиНачала" id="216">
+															<DataPath>Ошибки.НомерКолонкиНачала</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<ContextMenu name="ОшибкиНомерКолонкиНачалаКонтекстноеМеню" id="217"/>
+															<ExtendedTooltip name="ОшибкиНомерКолонкиНачалаРасширеннаяПодсказка" id="218"/>
+														</InputField>
+													</ChildItems>
+												</ColumnGroup>
+											</ChildItems>
+										</ColumnGroup>
+										<ColumnGroup name="ОшибкиГруппаКонец" id="277">
+											<Title>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа конец</v8:content>
+												</v8:item>
+											</Title>
+											<ToolTip>
+												<v8:item>
+													<v8:lang>ru</v8:lang>
+													<v8:content>Ошибки группа конец</v8:content>
+												</v8:item>
+											</ToolTip>
+											<ExtendedTooltip name="ОшибкиГруппаКонецРасширеннаяПодсказка" id="278"/>
+											<ChildItems>
+												<InputField name="ОшибкиПозицияКонца" id="219">
+													<DataPath>Ошибки.ПозицияКонца</DataPath>
+													<EditMode>EnterOnInput</EditMode>
+													<ContextMenu name="ОшибкиПозицияКонцаКонтекстноеМеню" id="220"/>
+													<ExtendedTooltip name="ОшибкиПозицияКонцаРасширеннаяПодсказка" id="221"/>
+												</InputField>
+												<ColumnGroup name="ОшибкиГруппаСтрокаКолонкаКонца" id="283">
+													<Title>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа строка колонка конца</v8:content>
+														</v8:item>
+													</Title>
+													<ToolTip>
+														<v8:item>
+															<v8:lang>ru</v8:lang>
+															<v8:content>Ошибки группа строка колонка конца</v8:content>
+														</v8:item>
+													</ToolTip>
+													<Group>Horizontal</Group>
+													<ExtendedTooltip name="ОшибкиГруппаСтрокаКолонкаКонцаРасширеннаяПодсказка" id="284"/>
+													<ChildItems>
+														<InputField name="ОшибкиНомерСтрокиКонца" id="222">
+															<DataPath>Ошибки.НомерСтрокиКонца</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<ContextMenu name="ОшибкиНомерСтрокиКонцаКонтекстноеМеню" id="223"/>
+															<ExtendedTooltip name="ОшибкиНомерСтрокиКонцаРасширеннаяПодсказка" id="224"/>
+														</InputField>
+														<InputField name="ОшибкиНомерКолонкиКонца" id="225">
+															<DataPath>Ошибки.НомерКолонкиКонца</DataPath>
+															<EditMode>EnterOnInput</EditMode>
+															<ContextMenu name="ОшибкиНомерКолонкиКонцаКонтекстноеМеню" id="226"/>
+															<ExtendedTooltip name="ОшибкиНомерКолонкиКонцаРасширеннаяПодсказка" id="227"/>
+														</InputField>
+													</ChildItems>
+												</ColumnGroup>
+											</ChildItems>
+										</ColumnGroup>
 									</ChildItems>
 								</Table>
 							</ChildItems>
@@ -1841,6 +1951,39 @@
 					<dcscor:item xsi:type="dcsset:SettingsParameterValue">
 						<dcscor:parameter>ЦветТекста</dcscor:parameter>
 						<dcscor:value xsi:type="v8ui:Color">web:LightGray</dcscor:value>
+					</dcscor:item>
+				</dcsset:appearance>
+			</dcsset:item>
+			<dcsset:item>
+				<dcsset:selection>
+					<dcsset:item>
+						<dcsset:field>ОшибкиКод</dcsset:field>
+					</dcsset:item>
+				</dcsset:selection>
+				<dcsset:filter>
+					<dcsset:item xsi:type="dcsset:FilterItemComparison">
+						<dcsset:left xsi:type="dcscor:Field">Ошибки.Код</dcsset:left>
+						<dcsset:comparisonType>Equal</dcsset:comparisonType>
+						<dcsset:right xsi:type="xs:decimal">0</dcsset:right>
+					</dcsset:item>
+				</dcsset:filter>
+				<dcsset:appearance>
+					<dcscor:item xsi:type="dcsset:SettingsParameterValue">
+						<dcscor:parameter>ЦветТекста</dcscor:parameter>
+						<dcscor:value xsi:type="v8ui:Color">web:LightGray</dcscor:value>
+					</dcscor:item>
+					<dcscor:item xsi:type="dcsset:SettingsParameterValue">
+						<dcscor:parameter>Текст</dcscor:parameter>
+						<dcscor:value xsi:type="v8:LocalStringType">
+							<v8:item>
+								<v8:lang>en</v8:lang>
+								<v8:content>plugin</v8:content>
+							</v8:item>
+							<v8:item>
+								<v8:lang>ru</v8:lang>
+								<v8:content>плагин</v8:content>
+							</v8:item>
+						</dcscor:value>
 					</dcscor:item>
 				</dcsset:appearance>
 			</dcsset:item>
