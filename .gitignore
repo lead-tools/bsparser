@@ -1,5 +1,5 @@
 *.epf
-temp/*
+.tempdb/*
 build/*
 *.txt
 *.todo

@@ -7,8 +7,8 @@ if (-not (Test-Path $1CPath)) {
     $1CPath = 'C:\Program Files (x86)\1cv8\common\1cestart.exe'
 }
 
-if (-not (Test-Path '.\temp')) {
-    $ArgList = @('CREATEINFOBASE', 'File=".\temp\"')
+if (-not (Test-Path '.\.tempdb')) {
+    $ArgList = @('CREATEINFOBASE', 'File=".\.tempdb\"')
     Start-Process $1CPath -ArgumentList $ArgList
 }
 
@@ -45,7 +45,7 @@ function run ($command, $description){
     foreach ($item in $list.GetEnumerator()) {
         $ArgList =  "DESIGNER", "/DumpResult designer_result.txt", "/Out designer_out.txt",
                     "/DisableStartupDialogs",
-                    "/F .\temp\",
+                    "/F .\.tempdb\",
                     "/$command `".$($item.Value[1])\$($item.Name).xml`" `".\build\$($item.Value[0])\$($item.Name).epf`""
         Start-Process $1CPath -ArgumentList $ArgList -Wait
         if ((Get-Content .\designer_result.txt) -ne '0') {
