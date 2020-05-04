@@ -75,23 +75,6 @@
 								<Presentation>
 									<v8:item>
 										<v8:lang>ru</v8:lang>
-										<v8:content>АСД (JSON)</v8:content>
-									</v8:item>
-									<v8:item>
-										<v8:lang>en</v8:lang>
-										<v8:content>AST (JSON)</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">АСД</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
 										<v8:content>АСД (Дерево)</v8:content>
 									</v8:item>
 									<v8:item>
@@ -100,40 +83,6 @@
 									</v8:item>
 								</Presentation>
 								<Value xsi:type="xs:string">Дерево</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
-										<v8:content>Плагины</v8:content>
-									</v8:item>
-									<v8:item>
-										<v8:lang>en</v8:lang>
-										<v8:content>Plugins</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">Плагины</Value>
-							</xr:Value>
-						</xr:Item>
-						<xr:Item>
-							<xr:Presentation/>
-							<xr:CheckState>0</xr:CheckState>
-							<xr:Value xsi:type="FormChoiceListDesTimeValue">
-								<Presentation>
-									<v8:item>
-										<v8:lang>ru</v8:lang>
-										<v8:content>Токены</v8:content>
-									</v8:item>
-									<v8:item>
-										<v8:lang>en</v8:lang>
-										<v8:content>Tokens</v8:content>
-									</v8:item>
-								</Presentation>
-								<Value xsi:type="xs:string">Токены</Value>
 							</xr:Value>
 						</xr:Item>
 						<xr:Item>
@@ -160,10 +109,44 @@
 								<Presentation>
 									<v8:item>
 										<v8:lang>ru</v8:lang>
+										<v8:content>Плагины</v8:content>
+									</v8:item>
+									<v8:item>
+										<v8:lang>en</v8:lang>
+										<v8:content>Plugins</v8:content>
+									</v8:item>
+								</Presentation>
+								<Value xsi:type="xs:string">Плагины</Value>
+							</xr:Value>
+						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation>
+									<v8:item>
+										<v8:lang>ru</v8:lang>
 										<v8:content>Замены</v8:content>
 									</v8:item>
 								</Presentation>
 								<Value xsi:type="xs:string">Замены</Value>
+							</xr:Value>
+						</xr:Item>
+						<xr:Item>
+							<xr:Presentation/>
+							<xr:CheckState>0</xr:CheckState>
+							<xr:Value xsi:type="FormChoiceListDesTimeValue">
+								<Presentation>
+									<v8:item>
+										<v8:lang>ru</v8:lang>
+										<v8:content>Токены</v8:content>
+									</v8:item>
+									<v8:item>
+										<v8:lang>en</v8:lang>
+										<v8:content>Tokens</v8:content>
+									</v8:item>
+								</Presentation>
+								<Value xsi:type="xs:string">Токены</Value>
 							</xr:Value>
 						</xr:Item>
 					</ChoiceList>
@@ -423,6 +406,7 @@
 								</CheckBoxField>
 								<CheckBoxField name="ИспользоватьКэшАСД" id="164">
 									<DataPath>ИспользоватьКэшАСД</DataPath>
+									<Visible>false</Visible>
 									<TitleLocation>Right</TitleLocation>
 									<CheckBoxType>Auto</CheckBoxType>
 									<ContextMenu name="ИспользоватьКэшАСДКонтекстноеМеню" id="165"/>
