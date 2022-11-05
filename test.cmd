@@ -1,3 +1,3 @@
 @chcp 65001
 
-call vrunner xunit ./tests/async.epf --xdddebug   %*
+call vrunner xunit .tempdb/async.epf --xdddebug   %*
