@@ -1,0 +1,8 @@
+{
+	"$schema": "https://raw.githubusercontent.com/vanessa-opensource/vanessa-runner/develop/xunit-schema.json",
+	"ДелатьЛогВыполненияСценариевВТекстовыйФайл": true,
+	"ИмяФайлаЛогВыполненияСценариев": "$workspaceRoot/.tempdb/log-xunit.txt",
+	"Отладка": true,
+	"ДобавлятьИмяПользователяВПредставлениеТеста": true
+
+}
