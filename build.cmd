@@ -4,8 +4,8 @@ call vrunner init-dev %*
 
 @call vrunner restore --db-user ""%*
 
-@rem собрать внешние обработчики и отчеты в каталоге build
-call vrunner compileepf src/ПарсерВстроенногоЯзыка .tempdb %*
-call vrunner compileepf console/src/Консоль .tempdb %*
-call vrunner compileepf testa/async .tempdb %*
+@rem собрать внешние обработчики и отчеты в каталоге .tempdb
+call vrunner compileepf src/ПарсерВстроенногоЯзыка .tempdb/ПарсерВстроенногоЯзыка.epf %*
+call vrunner compileepf console/src/Консоль .tempdb/Консоль.epf %*
+call vrunner compileepf tests/async .tempdb/tests/async.epf %*
                                
